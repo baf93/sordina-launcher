@@ -61,6 +61,8 @@ fun AllAppsScreen(
     onInfo: (AppEntry) -> Unit,
     onUninstall: (AppEntry) -> Unit,
     onToggleHidden: (AppEntry) -> Unit,
+    isBraked: (AppEntry) -> Boolean = { false },
+    onToggleBrake: (AppEntry) -> Unit = {},
 ) {
     val c = S.c
     var filter by remember { mutableStateOf("") }
@@ -117,12 +119,12 @@ fun AllAppsScreen(
                 items(rows, key = { r -> if (r is Row_.Item) r.app.key else "h_" + (r as Row_.Header).letter }) { r ->
                     when (r) {
                         is Row_.Header -> Cap(r.letter, Modifier.padding(top = 14.dp, bottom = 2.dp))
-                        is Row_.Item -> AppRow(r.app, false, onLaunch, onInfo, onUninstall, onToggleHidden)
+                        is Row_.Item -> AppRow(r.app, false, onLaunch, onInfo, onUninstall, onToggleHidden, isBraked, onToggleBrake)
                     }
                 }
                 if (work.isNotEmpty() && filter.isBlank()) {
                     item { Cap("Lavoro", Modifier.padding(top = 20.dp, bottom = 2.dp)) }
-                    items(work, key = { "w_" + it.key }) { AppRow(it, false, onLaunch, onInfo, onUninstall, onToggleHidden) }
+                    items(work, key = { "w_" + it.key }) { AppRow(it, false, onLaunch, onInfo, onUninstall, onToggleHidden, isBraked, onToggleBrake) }
                 }
                 if (hiddenApps.isNotEmpty() && filter.isBlank()) {
                     item {
@@ -133,7 +135,7 @@ fun AllAppsScreen(
                         )
                     }
                     if (showHidden) items(hiddenApps, key = { "x_" + it.key }) {
-                        AppRow(it, true, onLaunch, onInfo, onUninstall, onToggleHidden)
+                        AppRow(it, true, onLaunch, onInfo, onUninstall, onToggleHidden, isBraked, onToggleBrake)
                     }
                 }
                 item { Spacer(Modifier.height(40.dp)) }
@@ -151,6 +153,8 @@ private fun AppRow(
     onInfo: (AppEntry) -> Unit,
     onUninstall: (AppEntry) -> Unit,
     onToggleHidden: (AppEntry) -> Unit,
+    isBraked: (AppEntry) -> Boolean,
+    onToggleBrake: (AppEntry) -> Unit,
 ) {
     val c = S.c
     var menu by remember { mutableStateOf(false) }
@@ -163,6 +167,10 @@ private fun AppRow(
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
             DropdownMenuItem(text = { Text("Informazioni app") }, onClick = { menu = false; onInfo(app) })
             DropdownMenuItem(text = { Text("Disinstalla") }, onClick = { menu = false; onUninstall(app) })
+            DropdownMenuItem(
+                text = { Text(if (isBraked(app)) "Non frenare più" else "Frena (attrito)") },
+                onClick = { menu = false; onToggleBrake(app) },
+            )
             DropdownMenuItem(
                 text = { Text(if (isHidden) "Mostra nell'elenco" else "Nascondi dall'elenco") },
                 onClick = { menu = false; onToggleHidden(app) },

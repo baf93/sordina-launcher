@@ -100,18 +100,19 @@ class Proposals(private val context: Context) {
         val byPackage = apps.filter { !it.isWork }.groupBy { it.packageName }.mapValues { it.value.first() }
         val pinned = prefs.pinned.mapNotNull { k -> apps.firstOrNull { it.key == k } }
         val excluded = prefs.excluded
+        val braked = prefs.braked
         val learned = contextual.entries
             .filter { it.value >= MIN_SCORE }
             .sortedByDescending { it.value }
             .mapNotNull { byPackage[it.key] }
-            .filter { it.key !in excluded && pinned.none { p -> p.key == it.key } }
+            .filter { it.key !in excluded && it.packageName !in braked && pinned.none { p -> p.key == it.key } }
 
         val result = (pinned + learned).distinctBy { it.key }.take(COUNT)
         val filled = if (result.size < COUNT) {
             // Poca storia: completa con le più usate in assoluto
             val extra = overall.entries.sortedByDescending { it.value }
                 .mapNotNull { byPackage[it.key] }
-                .filter { e -> result.none { it.key == e.key } && e.key !in excluded }
+                .filter { e -> result.none { it.key == e.key } && e.key !in excluded && e.packageName !in braked }
             (result + extra).take(COUNT)
         } else result
         return Result(filled, overall, false, slot)
