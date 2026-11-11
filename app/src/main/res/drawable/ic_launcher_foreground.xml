@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Una sordina stilizzata: un cono che attenua, con un punto d'accento -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#2B2722"
+        android:pathData="M40,38 L68,46 L68,62 L40,70 Z" />
+    <path android:fillColor="#F2EDE3"
+        android:pathData="M45,45 L63,50 L63,58 L45,63 Z" />
+    <path android:fillColor="#B4523A"
+        android:pathData="M74,54 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+</vector>
