@@ -123,8 +123,8 @@ class Prefs(context: Context) {
         get() = sp.getStringSet("braked", emptySet())!!.toSet()
         set(v) = put { putStringSet("braked", v) }
     var brakeSeconds: Int
-        get() = sp.getInt("brakeSeconds", 5)
-        set(v) = put { putInt("brakeSeconds", v.coerceIn(0, 15)) }
+        get() = sp.getInt("brakeSeconds", 10)
+        set(v) = put { putInt("brakeSeconds", v.coerceIn(3, 60)) }
 
     var mirrorEnabled: Boolean
         get() = sp.getBoolean("mirrorEnabled", true)

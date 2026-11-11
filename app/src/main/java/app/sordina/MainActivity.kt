@@ -542,6 +542,10 @@ class MainActivity : ComponentActivity(), Ops {
                 refreshProposals(force = true)
             },
             info = { a -> catalog.openInfo(a) },
+            brake = { a ->
+                prefs.braked = prefs.braked + a.packageName
+                changed()
+            },
             why = { a ->
                 when {
                     a.key in prefs.pinned -> "La tieni qui tu."

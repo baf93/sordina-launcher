@@ -68,6 +68,9 @@ object Classifier {
             return Verdict(Level.SUBITO, "promemoria")
         }
 
+        // App frenata: aspetta sempre il riepilogo (persone importanti e codici passano comunque)
+        if (n.pkg in prefs.braked) return Verdict(Level.RIEPILOGO, "app frenata")
+
         // 5. Livello dell'app, ma di notte e in auto aspetta anche "Subito"
         if (appLevel == Level.SUBITO) {
             return if (moment == Moment.NONE) Verdict(Level.SUBITO, "scelta per l'app")

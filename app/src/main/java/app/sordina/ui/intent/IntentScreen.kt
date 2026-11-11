@@ -70,6 +70,7 @@ data class ProposalActions(
     val exclude: (AppEntry) -> Unit,
     val info: (AppEntry) -> Unit,
     val why: (AppEntry) -> String,
+    val brake: (AppEntry) -> Unit = {},
 )
 
 /** Un avviso breve in basso, con Annulla per le azioni verso te stesso. */
@@ -350,6 +351,7 @@ private fun ProposalTile(
                 text = { Text(if (pinned) "Non tenere più qui" else "Tieni qui") },
                 onClick = { menu = false; actions.togglePin(app) },
             )
+            DropdownMenuItem(text = { Text("Frena") }, onClick = { menu = false; actions.brake(app) })
             DropdownMenuItem(text = { Text("Non propormela più") }, onClick = { menu = false; actions.exclude(app) })
             DropdownMenuItem(text = { Text("Informazioni app") }, onClick = { menu = false; actions.info(app) })
         }

@@ -130,6 +130,9 @@ fun SettingsScreen(
                 change { if (v) app.silence.enable() else app.silence.disable() }
             }
 
+            Section("Attrito")
+            Line("App da frenare", if (prefs.braked.isEmpty()) "nessuna" else "${prefs.braked.size} app", "Notifiche al riepilogo, attesa ${prefs.brakeSeconds} s") { sub = Sub.BRAKED }
+
             Section("Schede")
             val ctx = androidx.compose.ui.platform.LocalContext.current
             val loc = ctx.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -203,9 +206,8 @@ private fun BrakedPage(app: SordinaApp, apps: List<AppEntry>, onChange: () -> Un
     var secs by remember { mutableIntStateOf(prefs.brakeSeconds) }
     var q by remember { mutableStateOf("") }
     Header("App da frenare", onBack)
-    Hint("Prima di aprirle Sordina chiede «Perché lo apri?». Non le propone mai.")
-    val opts = listOf(0, 3, 5, 10, 15)
-    Hint("Attesa se rispondi «per abitudine»")
+    Hint("Notifiche al riepilogo. Prima di aprirle, un'attesa:")
+    val opts = listOf(5, 10, 20, 30, 60)
     FlowPills(opts.map { "$it s" }, { opts[it] == secs }) { secs = opts[it]; prefs.brakeSeconds = secs }
     Field(q, { q = it }, "Aggiungi un'app…")
     val nq = Search.normalize(q)
