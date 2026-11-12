@@ -238,6 +238,6 @@ class Prefs(context: Context) {
     fun clearAll() = sp.edit().clear().apply()
 
     companion object {
-        const val MAX_PINNED = 2
+        const val MAX_PINNED = 4
     }
 }

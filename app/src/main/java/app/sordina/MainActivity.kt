@@ -1,5 +1,6 @@
 package app.sordina
 
+import app.sordina.data.Prefs
 import app.sordina.ui.Feel
 import app.sordina.ui.LocalFeel
 import app.sordina.ui.theme.Backdrop
@@ -627,7 +628,18 @@ class MainActivity : ComponentActivity(), Ops {
             isPinned = { a -> prefsVersion.let { prefs.pinned.contains(a.key) } },
             togglePin = { a ->
                 val p = prefs.pinned
-                prefs.pinned = if (a.key in p) p - a.key else (listOf(a.key) + p)
+                when {
+                    a.key in p -> prefs.pinned = p - a.key
+                    // Al massimo 4 fisse su 6: le altre due restano a chi impara dalle tue abitudini
+                    p.size >= Prefs.MAX_PINNED -> {
+                        notice = Notice("Hai già ${Prefs.MAX_PINNED} app fisse. Togline una per tenere qui ${a.label}.")
+                        if (prefs.haptics) window.decorView.performHapticFeedback(
+                            if (Build.VERSION.SDK_INT >= 30) android.view.HapticFeedbackConstants.REJECT else android.view.HapticFeedbackConstants.LONG_PRESS,
+                        )
+                        return@ProposalActions
+                    }
+                    else -> prefs.pinned = p + a.key
+                }
                 prefsVersion++
                 refreshProposals(force = true)
             },
