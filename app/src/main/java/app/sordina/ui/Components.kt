@@ -10,6 +10,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -125,54 +132,97 @@ fun Header(title: String, onBack: (() -> Unit)? = null) {
     val c = S.c
     androidx.compose.foundation.layout.Row(
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = 8.dp, top = 8.dp, bottom = 8.dp),
     ) {
         if (onBack != null) {
-            Serif("←", Modifier.clickableNoRipple(onBack).padding(end = 14.dp, top = 4.dp, bottom = 4.dp), size = 20.sp, color = c.soft)
+            androidx.compose.material3.Icon(
+                androidx.compose.material.icons.Icons.AutoMirrored.Rounded.ArrowBack, "Indietro",
+                Modifier.clickableNoRipple(onBack).padding(end = 14.dp, top = 6.dp, bottom = 6.dp).size(24.dp), tint = c.ink,
+            )
         }
-        Serif(title, size = 26.sp)
+        Text(title, style = TextStyle(fontSize = 28.sp, color = c.ink))
     }
 }
 
+/** Titolo piccolo sopra un gruppo. */
 @Composable
 fun Section(title: String) {
-    androidx.compose.foundation.layout.Spacer(Modifier.height(22.dp))
-    Cap(title)
-    androidx.compose.foundation.layout.Spacer(Modifier.height(6.dp))
+    androidx.compose.foundation.layout.Spacer(Modifier.height(20.dp))
+    Text(title, Modifier.padding(start = 16.dp, bottom = 8.dp), style = TextStyle(fontSize = 13.sp, color = S.c.soft))
+}
+
+/** Un gruppo di righe in un riquadro arrotondato, separate da una linea sottile. */
+@Composable
+fun Group(content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
+    androidx.compose.foundation.layout.Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(S.c.line),
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(0.5.dp),
+        content = content,
+    )
 }
 
 @Composable
 fun Rule() {
-    androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().height(1.dp).background(S.c.line))
+    androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().height(0.5.dp).background(S.c.line))
 }
 
 @Composable
 fun Hint(text: String, modifier: Modifier = Modifier) {
-    Serif(text, modifier.padding(top = 2.dp, bottom = 6.dp), size = 13.sp, color = S.c.soft, italic = true)
+    Text(text, modifier.padding(start = 4.dp, top = 6.dp, bottom = 6.dp), style = TextStyle(fontSize = 13.sp, color = S.c.soft))
 }
 
-/** Riga con etichetta e valore; il valore è nel colore d'accento se si può toccare. */
 @Composable
-fun Line(label: String, value: String = "", hint: String? = null, onClick: (() -> Unit)? = null) {
+private fun RowIcon(icon: androidx.compose.ui.graphics.vector.ImageVector) {
     val c = S.c
-    androidx.compose.foundation.layout.Column(Modifier.fillMaxWidth().let { if (onClick != null) it.clickableNoRipple(onClick) else it }) {
-        Rule()
-        androidx.compose.foundation.layout.Row(
-            Modifier.fillMaxWidth().padding(vertical = 12.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-        ) {
-            androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
-                Serif(label, size = 16.sp)
-                if (hint != null) Serif(hint, size = 13.sp, color = c.soft, italic = true)
-            }
-            if (value.isNotEmpty()) Serif(value, Modifier.padding(start = 12.dp), size = 14.sp, color = if (onClick != null) c.accent else c.soft, italic = true)
+    androidx.compose.foundation.layout.Box(
+        Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)).background(c.dot.copy(alpha = 0.35f)),
+        contentAlignment = androidx.compose.ui.Alignment.Center,
+    ) { androidx.compose.material3.Icon(icon, null, Modifier.size(20.dp), tint = c.ink) }
+}
+
+/** Riga: icona, etichetta (e sotto una nota), valore a destra, freccia se porta altrove. */
+@Composable
+fun Line(
+    label: String,
+    value: String = "",
+    hint: String? = null,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    trailing: (@Composable () -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
+) {
+    val c = S.c
+    androidx.compose.foundation.layout.Row(
+        Modifier.fillMaxWidth().background(c.card)
+            .let { if (onClick != null) it.clickable(onClick = onClick) else it }
+            .padding(horizontal = 16.dp, vertical = 14.dp).heightIn(min = 34.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
+        if (icon != null) { RowIcon(icon); androidx.compose.foundation.layout.Spacer(Modifier.width(12.dp)) }
+        androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
+            Text(label, style = TextStyle(fontSize = 16.sp, color = c.ink))
+            if (hint != null) Text(hint, style = TextStyle(fontSize = 13.sp, color = c.soft))
         }
+        if (value.isNotEmpty()) Text(value, Modifier.padding(start = 12.dp).widthIn(max = 150.dp), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, style = TextStyle(fontSize = 15.sp, color = c.soft))
+        if (trailing != null) { androidx.compose.foundation.layout.Spacer(Modifier.width(8.dp)); trailing() }
+        else if (onClick != null) androidx.compose.material3.Icon(
+            androidx.compose.material.icons.Icons.AutoMirrored.Rounded.KeyboardArrowRight, null,
+            Modifier.padding(start = 4.dp).size(20.dp), tint = c.soft,
+        )
     }
 }
 
 @Composable
-fun Toggle(label: String, checked: Boolean, hint: String? = null, onChange: (Boolean) -> Unit) {
-    Line(label, if (checked) "sì" else "no", hint) { onChange(!checked) }
+fun Toggle(label: String, checked: Boolean, hint: String? = null, icon: androidx.compose.ui.graphics.vector.ImageVector? = null, onChange: (Boolean) -> Unit) {
+    val c = S.c
+    Line(label, hint = hint, icon = icon, trailing = {
+        androidx.compose.material3.Switch(
+            checked, onChange,
+            colors = androidx.compose.material3.SwitchDefaults.colors(
+                checkedTrackColor = c.accent, checkedThumbColor = androidx.compose.ui.graphics.Color.White,
+                uncheckedTrackColor = c.bg, uncheckedBorderColor = c.dot, uncheckedThumbColor = c.soft,
+            ),
+        )
+    }) { onChange(!checked) }
 }
 
 /** Scelte a pillola, una sola attiva. */

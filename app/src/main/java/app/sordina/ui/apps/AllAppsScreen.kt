@@ -5,7 +5,12 @@ package app.sordina.ui.apps
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,8 +47,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.sordina.data.AppEntry
 import app.sordina.data.Search
-import app.sordina.ui.Cap
-import app.sordina.ui.Serif
 import app.sordina.ui.theme.S
 import kotlinx.coroutines.launch
 
@@ -52,7 +55,7 @@ private sealed interface Row_ {
     data class Item(val app: AppEntry) : Row_
 }
 
-/** Tutte le app: elenco alfabetico, solo nomi, indice delle lettere. Niente pallini. */
+/** Tutte le app: solo nomi, grandi e leggibili. Lettere in rilievo, indice a destra, filtro in basso. */
 @Composable
 fun AllAppsScreen(
     apps: List<AppEntry>,
@@ -63,10 +66,12 @@ fun AllAppsScreen(
     onToggleHidden: (AppEntry) -> Unit,
     isBraked: (AppEntry) -> Boolean = { false },
     onToggleBrake: (AppEntry) -> Unit = {},
+    icon: ((AppEntry) -> androidx.compose.ui.graphics.ImageBitmap?)? = null,
 ) {
     val c = S.c
     var filter by remember { mutableStateOf("") }
     var showHidden by remember { mutableStateOf(false) }
+    var scrubbing by remember { mutableStateOf<String?>(null) }
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
@@ -88,59 +93,74 @@ fun AllAppsScreen(
         out
     }
     val letters = remember(rows) { rows.filterIsInstance<Row_.Header>().map { it.letter } }
+    // +1: la prima riga della lista è il conteggio
     fun jump(letter: String) {
         val idx = rows.indexOfFirst { it is Row_.Header && it.letter == letter }
-        if (idx >= 0) scope.launch { listState.scrollToItem(idx) }
+        if (idx >= 0) scope.launch { listState.scrollToItem(idx + 1) }
     }
 
-    Column(Modifier.fillMaxSize().systemBarsPadding().imePadding().padding(horizontal = 20.dp, vertical = 20.dp)) {
-        Row(Modifier.fillMaxWidth()) {
-            Cap("Tutte le app")
-            Spacer(Modifier.weight(1f))
-            Cap("${visible.size + work.size}", color = c.soft)
-        }
-        Spacer(Modifier.height(10.dp))
-        Box {
-            if (filter.isEmpty()) Serif("Filtra…", size = 17.sp, color = c.soft, italic = true)
-            BasicTextField(
-                value = filter,
-                onValueChange = { filter = it },
-                singleLine = true,
-                textStyle = TextStyle(fontFamily = S.style.serif, fontSize = 17.sp, color = c.ink),
-                cursorBrush = SolidColor(c.accent),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        Box(Modifier.fillMaxWidth().height(1.5.dp).background(c.ink))
-        Spacer(Modifier.height(4.dp))
-
-        Row(Modifier.fillMaxSize()) {
-            LazyColumn(Modifier.weight(1f).fillMaxHeight(), state = listState) {
+    Column(Modifier.fillMaxSize().systemBarsPadding().imePadding().padding(bottom = 12.dp)) {
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            LazyColumn(Modifier.fillMaxSize().padding(start = 28.dp, end = 40.dp), state = listState) {
+                item(key = "count") {
+                    Text("${visible.size + work.size} app", Modifier.padding(top = 20.dp, bottom = 4.dp), style = TextStyle(fontSize = 13.sp, color = c.soft))
+                }
                 items(rows, key = { r -> if (r is Row_.Item) r.app.key else "h_" + (r as Row_.Header).letter }) { r ->
                     when (r) {
-                        is Row_.Header -> Cap(r.letter, Modifier.padding(top = 14.dp, bottom = 2.dp))
-                        is Row_.Item -> AppRow(r.app, false, onLaunch, onInfo, onUninstall, onToggleHidden, isBraked, onToggleBrake)
+                        is Row_.Header -> Text(r.letter, Modifier.padding(top = 18.dp, bottom = 2.dp), style = TextStyle(fontSize = 26.sp, color = c.accent))
+                        is Row_.Item -> AppRow(r.app, icon, false, onLaunch, onInfo, onUninstall, onToggleHidden, isBraked, onToggleBrake)
                     }
                 }
                 if (work.isNotEmpty() && filter.isBlank()) {
-                    item { Cap("Lavoro", Modifier.padding(top = 20.dp, bottom = 2.dp)) }
-                    items(work, key = { "w_" + it.key }) { AppRow(it, false, onLaunch, onInfo, onUninstall, onToggleHidden, isBraked, onToggleBrake) }
+                    item { Text("Lavoro", Modifier.padding(top = 26.dp, bottom = 2.dp), style = TextStyle(fontSize = 26.sp, color = c.accent)) }
+                    items(work, key = { "w_" + it.key }) { AppRow(it, icon, false, onLaunch, onInfo, onUninstall, onToggleHidden, isBraked, onToggleBrake) }
                 }
                 if (hiddenApps.isNotEmpty() && filter.isBlank()) {
                     item {
-                        Serif(
-                            if (showHidden) "Nascoste (${hiddenApps.size}) ▴" else "Nascoste (${hiddenApps.size}) ▾",
-                            Modifier.padding(top = 20.dp, bottom = 8.dp).combinedClickable { showHidden = !showHidden },
-                            size = 13.sp, color = c.soft, italic = true,
+                        Text(
+                            if (showHidden) "Nascondi le app nascoste" else "Nascoste · ${hiddenApps.size}",
+                            Modifier.padding(top = 26.dp, bottom = 8.dp).combinedClickable { showHidden = !showHidden },
+                            style = TextStyle(fontSize = 15.sp, color = c.soft),
                         )
                     }
                     if (showHidden) items(hiddenApps, key = { "x_" + it.key }) {
-                        AppRow(it, true, onLaunch, onInfo, onUninstall, onToggleHidden, isBraked, onToggleBrake)
+                        AppRow(it, icon, true, onLaunch, onInfo, onUninstall, onToggleHidden, isBraked, onToggleBrake)
                     }
                 }
-                item { Spacer(Modifier.height(40.dp)) }
+                if (visible.isEmpty() && filter.isNotBlank()) item {
+                    Text("Nessuna app con «$filter»", Modifier.padding(top = 24.dp), style = TextStyle(fontSize = 17.sp, color = c.soft))
+                }
+                item { Spacer(Modifier.height(24.dp)) }
             }
-            if (filter.isBlank() && letters.size > 3) LetterIndex(letters, ::jump)
+            if (filter.isBlank() && letters.size > 3) {
+                LetterIndex(letters, scrubbing, Modifier.align(Alignment.CenterEnd).padding(end = 8.dp)) { l -> scrubbing = l; if (l != null) jump(l) }
+            }
+            // La lettera grande mentre scorri l'indice
+            scrubbing?.let { l ->
+                Box(
+                    Modifier.align(Alignment.Center).size(96.dp).clip(RoundedCornerShape(28.dp)).background(c.card),
+                    contentAlignment = Alignment.Center,
+                ) { Text(l, style = TextStyle(fontSize = 48.sp, color = c.ink)) }
+            }
+        }
+        // Filtro in basso, sotto il pollice
+        Row(
+            Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(52.dp).clip(RoundedCornerShape(26.dp)).background(c.card)
+                .padding(horizontal = 22.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.weight(1f)) {
+                if (filter.isEmpty()) Text("Filtra", style = TextStyle(fontSize = 16.sp, color = c.soft))
+                BasicTextField(
+                    value = filter,
+                    onValueChange = { filter = it; scope.launch { listState.scrollToItem(0) } },
+                    singleLine = true,
+                    textStyle = TextStyle(fontSize = 16.sp, color = c.ink),
+                    cursorBrush = SolidColor(c.accent),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            if (filter.isNotEmpty()) Text("Cancella", Modifier.combinedClickable { filter = "" }.padding(start = 12.dp), style = TextStyle(fontSize = 14.sp, color = c.soft))
         }
     }
 }
@@ -148,6 +168,7 @@ fun AllAppsScreen(
 @Composable
 private fun AppRow(
     app: AppEntry,
+    icon: ((AppEntry) -> androidx.compose.ui.graphics.ImageBitmap?)?,
     isHidden: Boolean,
     onLaunch: (AppEntry) -> Unit,
     onInfo: (AppEntry) -> Unit,
@@ -159,10 +180,14 @@ private fun AppRow(
     val c = S.c
     var menu by remember { mutableStateOf(false) }
     Box {
-        Column(Modifier.fillMaxWidth().combinedClickable(onClick = { onLaunch(app) }, onLongClick = { menu = true })) {
-            Serif(app.label, Modifier.padding(vertical = 9.dp), size = 17.sp, maxLines = 1,
-                color = if (isHidden) c.soft else c.ink)
-            Box(Modifier.fillMaxWidth().height(1.dp).background(c.line))
+        Row(Modifier.fillMaxWidth().combinedClickable(onClick = { onLaunch(app) }, onLongClick = { menu = true }).padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
+        val bmp = remember(app.key) { icon?.invoke(app) }
+        if (bmp != null) androidx.compose.foundation.Image(bmp, null, Modifier.padding(end = 16.dp).size(30.dp))
+        Text(
+            app.label,
+            maxLines = 1, overflow = TextOverflow.Ellipsis,
+            style = TextStyle(fontSize = 20.sp, color = if (isHidden) c.soft else c.ink),
+        )
         }
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
             DropdownMenuItem(text = { Text("Informazioni app") }, onClick = { menu = false; onInfo(app) })
@@ -179,20 +204,30 @@ private fun AppRow(
     }
 }
 
-/** Indice delle lettere sul bordo destro: tocca o scorri col pollice. */
+/** Indice delle lettere sul bordo destro: tocca o scorri col pollice. null quando lo lasci. */
 @Composable
-private fun LetterIndex(letters: List<String>, onLetter: (String) -> Unit) {
+private fun LetterIndex(letters: List<String>, current: String?, modifier: Modifier, onLetter: (String?) -> Unit) {
     val c = S.c
     var height by remember { mutableStateOf(1) }
     fun at(y: Float) = letters[((y / height) * letters.size).toInt().coerceIn(0, letters.size - 1)]
     Column(
-        Modifier
-            .width(22.dp)
-            .fillMaxHeight()
+        modifier
+            .width(24.dp)
+            .fillMaxHeight(0.82f)
             .onSizeChanged { height = it.height.coerceAtLeast(1) }
-            .pointerInput(letters) { detectTapGestures { onLetter(at(it.y)) } }
             .pointerInput(letters) {
-                detectVerticalDragGestures { change, _ -> onLetter(at(change.position.y)) }
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    onLetter(at(down.position.y))
+                    while (true) {
+                        val ev = awaitPointerEvent()
+                        val ch = ev.changes.firstOrNull() ?: break
+                        if (!ch.pressed) break
+                        ch.consume()
+                        onLetter(at(ch.position.y))
+                    }
+                    onLetter(null)
+                }
             },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -200,7 +235,7 @@ private fun LetterIndex(letters: List<String>, onLetter: (String) -> Unit) {
             Text(
                 it,
                 Modifier.weight(1f),
-                style = TextStyle(fontFamily = S.style.sans, fontSize = 10.sp, color = c.soft, textAlign = TextAlign.Center),
+                style = TextStyle(fontSize = 11.sp, color = if (it == current) c.accent else c.soft, textAlign = TextAlign.Center),
             )
         }
     }

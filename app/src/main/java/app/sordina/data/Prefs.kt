@@ -32,6 +32,34 @@ class Prefs(context: Context) {
         set(v) = put { putBoolean("onboarded", v) }
 
     // Aspetto
+    /** Sfondo di Casa: 0 tinta unita, 1 sfondo del telefono, 2 foto scelta */
+    var wallpaperMode: Int
+        get() = sp.getInt("wallpaperMode", 0)
+        set(v) = put { putInt("wallpaperMode", v) }
+    /** Quale degli sfondi astratti di Sordina (wallpaperMode 3) */
+    var wallpaperPreset: Int
+        get() = sp.getInt("wallpaperPreset", 0)
+        set(v) = put { putInt("wallpaperPreset", v) }
+    /** Animazioni morbide (spente: tutto scatta subito) */
+    var animations: Boolean
+        get() = sp.getBoolean("animations", true)
+        set(v) = put { putBoolean("animations", v) }
+    /** Vibrazioni leggere al tocco */
+    var haptics: Boolean
+        get() = sp.getBoolean("haptics", true)
+        set(v) = put { putBoolean("haptics", v) }
+    /** Icone accanto ai nomi delle app (spente di serie: le icone invitano ad aprire) */
+    var appIcons: Boolean
+        get() = sp.getBoolean("appIcons", false)
+        set(v) = put { putBoolean("appIcons", v) }
+    /** Schede e barra semitrasparenti sopra lo sfondo */
+    var glass: Boolean
+        get() = sp.getBoolean("glass", false)
+        set(v) = put { putBoolean("glass", v) }
+    /** Colore di rilievo: 0 predefinito, 1 dallo sfondo, altrimenti il colore */
+    var accent: Int
+        get() = sp.getInt("accent", 0)
+        set(v) = put { putInt("accent", v) }
     var family: ThemeFamily
         get() = runCatching { ThemeFamily.valueOf(str("family", "CARTA")) }.getOrDefault(ThemeFamily.CARTA)
         set(v) = put { putString("family", v.name) }
@@ -142,6 +170,10 @@ class Prefs(context: Context) {
     var haTokenEnc: String
         get() = str("haToken", "")
         set(v) = put { putString("haToken", v) }
+    /** Calendari di Home Assistant da mostrare in Casa (entity_id) */
+    var haCalendars: Set<String>
+        get() = sp.getStringSet("haCalendars", emptySet())!!.toSet()
+        set(v) = put { putStringSet("haCalendars", v) }
     var haStatusEntity: String
         get() = str("haStatusEntity", "")
         set(v) = put { putString("haStatusEntity", v.trim()) }

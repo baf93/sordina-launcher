@@ -23,6 +23,10 @@ interface Ops {
     fun exportSettings()
     fun importSettings()
     fun openUrl(url: String)
+    /** Sceglie una foto come sfondo di Casa */
+    fun pickWallpaper()
+    /** Ricarica lo sfondo e il colore di rilievo */
+    fun backdropChanged()
     /** Dopo un cambio delle impostazioni: ricalcola proposte, scheda, silenzio. */
     fun changed()
 }

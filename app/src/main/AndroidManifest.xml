@@ -58,6 +58,11 @@
         <package android:name="com.google.android.apps.maps" />
     </queries>
 
+    <!-- Per sapere se Android Auto è collegato -->
+    <queries>
+        <provider android:authorities="androidx.car.app.connection" />
+    </queries>
+
     <application
         android:name=".SordinaApp"
         android:allowBackup="false"

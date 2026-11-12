@@ -54,8 +54,8 @@ class StatusNotification(private val context: Context) {
     private fun postNow() {
         val app = SordinaApp.of(context)
         val prefs = app.prefs
-        if (!prefs.lockRecap || !prefs.onboarded) { nm.cancel(ID_STATUS); return }
-        runCatching { nm.notify(ID_STATUS, build(app)) }
+        // Niente notifica fissa: il conteggio "in sordina" sta in Casa
+        nm.cancel(ID_STATUS)
     }
 
     private fun build(app: SordinaApp): Notification {

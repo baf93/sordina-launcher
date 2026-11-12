@@ -19,7 +19,7 @@ class Moments(private val context: Context, private val prefs: Prefs) {
     fun isCar(): Boolean {
         if (!prefs.carEnabled) return false
         val ui = context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
-        return ui.currentModeType == Configuration.UI_MODE_TYPE_CAR
+        return ui.currentModeType == Configuration.UI_MODE_TYPE_CAR || androidAuto(context)
     }
 
     fun isNight(t: LocalDateTime = LocalDateTime.now()): Boolean =
@@ -53,7 +53,7 @@ class Moments(private val context: Context, private val prefs: Prefs) {
 
     /** Il prossimo riepilogo dopo [now], saltando quelli che cadono di notte. */
     fun nextSummary(now: LocalDateTime = LocalDateTime.now()): LocalDateTime {
-        val hours = prefs.summaryHours
+        val hours = prefs.summaryHours.sorted()
         for (d in 0..2) {
             val day = now.toLocalDate().plusDays(d.toLong())
             for (h in hours) {
@@ -68,7 +68,7 @@ class Moments(private val context: Context, private val prefs: Prefs) {
 
     /** L'ultimo riepilogo passato oggi, se c'è. */
     fun lastSummaryToday(now: LocalDateTime = LocalDateTime.now()): Int? =
-        prefs.summaryHours.lastOrNull { it * 60 <= now.hour * 60 + now.minute }
+        prefs.summaryHours.sorted().lastOrNull { it * 60 <= now.hour * 60 + now.minute }
 
     /** Prossimo confine di notte (inizio o fine) dopo [now]. */
     fun nextNightEdge(now: LocalDateTime = LocalDateTime.now()): LocalDateTime? {
@@ -89,3 +89,23 @@ class Moments(private val context: Context, private val prefs: Prefs) {
         fun fmt(min: Int) = "%d:%02d".format(min / 60, min % 60)
     }
 }
+
+/**
+ * Android Auto (anche senza "modalità auto"): lo stato che Android Auto pubblica per le app,
+ * lo stesso letto da CarConnection di androidx. 0 = non collegato.
+ */
+@Volatile private var carCache = false
+@Volatile private var carAt = 0L
+
+fun androidAuto(context: Context, force: Boolean = false): Boolean {
+    val now = System.currentTimeMillis()
+    if (!force && now - carAt < 30_000) return carCache
+    carCache = runCatching {
+        context.contentResolver.query(android.net.Uri.parse("content://androidx.car.app.connection"),
+            arrayOf("CarConnectionState"), null, null, null)?.use { c -> c.moveToFirst() && c.getInt(0) != 0 } ?: false
+    }.getOrDefault(false)
+    carAt = now
+    return carCache
+}
+
+const val ACTION_CAR_CONNECTION = "androidx.car.app.connection.action.CAR_CONNECTION_UPDATED"

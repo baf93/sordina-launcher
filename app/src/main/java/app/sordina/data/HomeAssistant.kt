@@ -101,6 +101,48 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
         }.getOrDefault("Fatto")
     }
 
+    /** I calendari di Home Assistant: (entity_id, nome). */
+    fun calendars(): List<Pair<String, String>> {
+        val r = request("/api/calendars") ?: return emptyList()
+        return runCatching {
+            val a = JSONArray(r)
+            (0 until a.length()).map { a.getJSONObject(it).let { o -> o.getString("entity_id") to o.optString("name", o.getString("entity_id")) } }
+        }.getOrDefault(emptyList())
+    }
+
+    @Volatile private var calCache: Pair<Long, List<Upcoming>> = 0L to emptyList()
+
+    fun resetCalendarCache() { calCache = 0L to emptyList() }
+
+    /** Gli eventi con orario dei calendari scelti, da adesso a [days] giorni. In cache 10 minuti. */
+    fun calendarEvents(ids: Set<String>, days: Int = 7): List<Upcoming> {
+        if (!configured || ids.isEmpty()) return emptyList()
+        val now = System.currentTimeMillis()
+        if (now - calCache.first < 600_000) return calCache.second.filter { it.end > now }
+        val zone = java.time.ZoneId.systemDefault()
+        val start = java.time.OffsetDateTime.now()
+        val end = start.plusDays(days.toLong())
+        val out = ArrayList<Upcoming>()
+        for (id in ids) {
+            val r = request("/api/calendars/$id?start=${java.net.URLEncoder.encode(start.toString(), "UTF-8")}&end=${java.net.URLEncoder.encode(end.toString(), "UTF-8")}") ?: continue
+            runCatching {
+                val a = JSONArray(r)
+                for (i in 0 until a.length()) {
+                    val o = a.getJSONObject(i)
+                    val s = o.optJSONObject("start")?.optString("dateTime").orEmpty()
+                    val e = o.optJSONObject("end")?.optString("dateTime").orEmpty()
+                    if (s.isBlank()) continue // giornata intera
+                    val b = java.time.OffsetDateTime.parse(s).toInstant().toEpochMilli()
+                    val f = if (e.isBlank()) b + 3600_000 else java.time.OffsetDateTime.parse(e).toInstant().toEpochMilli()
+                    out += Upcoming((id + s).hashCode().toLong(), o.optString("summary").ifBlank { "Evento" }, b, f,
+                        o.optString("location").takeIf { it.isNotBlank() }, "ha", false)
+                }
+            }
+        }
+        calCache = now to out
+        return out.filter { it.end > now }
+    }
+
     fun cached(): List<HaEntity> = cache
 
     fun state(entityId: String): HaEntity? {

@@ -64,14 +64,16 @@ class SordinaListener : NotificationListenerService() {
         card(sbn, info)
         val now = System.currentTimeMillis()
         val existing = store.get(key)
-        // Torna dal riepilogo: adesso si vede, resta "in attesa" finché non la leggi
-        if (existing != null && existing.releaseAt > 0 && now >= existing.releaseAt - 60_000 &&
-            (existing.postTime == sbn.postTime || existing.text == info.text)
-        ) {
+        // Torna dal riepilogo: adesso si vede, resta "in attesa" finché non la leggi.
+        // Basta la stessa chiave dopo l'ora di rilascio: Android può cambiarle orario o testo quando la ripubblica.
+        if (existing != null && existing.releaseAt > 0 && now >= existing.releaseAt - 60_000) {
             store.put(existing.copy(releaseAt = 0), sbn.notification.contentIntent)
             app.status.update()
             return
         }
+        // Rete di sicurezza: arrivata prima del riepilogo appena passato e ripubblicata subito dopo
+        // (es. Sordina riavviata nel frattempo): è una che torna, non va posticipata di nuovo.
+        val returning = existing == null && justAfterSummary(now) && sbn.postTime < lastSummaryMillis(now)
 
         // Notifiche già silenziose (importanza bassa o minima): sono tecniche, non disturbano, restano dove sono
         val importance = runCatching {
@@ -88,14 +90,14 @@ class SordinaListener : NotificationListenerService() {
             // Il riassunto del gruppo segue i suoi messaggi: aspetta solo se tutti i suoi messaggi aspettano
             val mine = store.held.value.values.filter { it.pkg == sbn.packageName }
             val allWaiting = mine.isNotEmpty() && mine.all { it.level == Level.RIEPILOGO && it.releaseAt > now }
-            if (level == Level.RIEPILOGO && allWaiting && existing == null) snoozeNotification(key, releaseAt() - now)
+            if (level == Level.RIEPILOGO && allWaiting && existing == null && !returning) snoozeNotification(key, releaseAt() - now)
             return
         }
         if (info.text.isBlank() && info.title.isBlank()) return
 
         val text = if (info.isMessage) info.text.ifBlank { info.title }
         else listOf(info.title, info.text).filter { it.isNotBlank() }.distinct().joinToString(": ")
-        val release = if (level == Level.RIEPILOGO) releaseAt() else 0L
+        val release = if (level == Level.RIEPILOGO && !returning) releaseAt() else 0L
         val held = Held(
             key = key, pkg = sbn.packageName, appLabel = label,
             person = if (info.isMessage) info.person else null,
@@ -103,7 +105,7 @@ class SordinaListener : NotificationListenerService() {
             text = text, time = sbn.postTime, level = level, count = info.count,
             isMessage = info.isMessage, releaseAt = release, postTime = sbn.postTime,
         )
-        if (level == Level.RIEPILOGO) snoozeNotification(key, release - now)
+        if (release > 0) snoozeNotification(key, release - now)
         store.put(held, sbn.notification.contentIntent)
         if (level == Level.SEMPRE && app.silence.isActive()) app.status.alert(held, sbn.notification.contentIntent)
         store.log(Decision(now, sbn.packageName, label, level, verdict.reason))
@@ -120,6 +122,19 @@ class SordinaListener : NotificationListenerService() {
     }
 
     private fun releaseAt(): Long = Moments.millis(SordinaApp.of(this).moments.nextSummary())
+
+    /** L'ultimo riepilogo di oggi, in millisecondi (0 se non ce n'è ancora stato). */
+    private fun lastSummaryMillis(now: Long): Long {
+        val t = java.time.Instant.ofEpochMilli(now).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime()
+        val h = SordinaApp.of(this).moments.lastSummaryToday(t) ?: return 0
+        return Moments.millis(t.toLocalDate().atTime(h, 0))
+    }
+
+    /** Siamo nei 10 minuti dopo un riepilogo: è il momento in cui Android restituisce le posticipate. */
+    private fun justAfterSummary(now: Long): Boolean {
+        val last = lastSummaryMillis(now)
+        return last > 0 && now - last in 0..10 * 60_000
+    }
 
     private fun label(pkg: String): String = labels.getOrPut(pkg) {
         runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString() }

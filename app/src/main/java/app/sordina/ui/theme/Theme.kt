@@ -72,7 +72,7 @@ fun isLowRam(context: Context): Boolean {
 }
 
 @Composable
-fun SordinaTheme(family: ThemeFamily, mode: ThemeMode, content: @Composable () -> Unit) {
+fun SordinaTheme(family: ThemeFamily, mode: ThemeMode, accent: Color? = null, content: @Composable () -> Unit) {
     val dark = when (mode) {
         ThemeMode.AUTO -> isSystemInDarkTheme()
         ThemeMode.LIGHT -> false
@@ -80,7 +80,7 @@ fun SordinaTheme(family: ThemeFamily, mode: ThemeMode, content: @Composable () -
     }
     val context = LocalContext.current
     val low = remember { isLowRam(context) }
-    val colors = if (dark) Dark else Light
+    val colors = (if (dark) Dark else Light).let { if (accent != null) it.copy(accent = accent) else it }
     val style = SordinaStyle(family = family, colors = colors, light = low)
     val scheme = if (dark) {
         darkColorScheme(primary = colors.accent, background = colors.bg, surface = colors.card, onSurface = colors.ink, onBackground = colors.ink)

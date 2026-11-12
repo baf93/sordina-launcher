@@ -71,8 +71,14 @@ class Signals {
         val meta = c?.metadata
         val state = c?.playbackState?.state
         val playing = state == PlaybackState.STATE_PLAYING || state == PlaybackState.STATE_BUFFERING
-        if (c == null || meta == null) { _music.value = null; return }
-        if (playing) pausedAt = 0 else if (pausedAt == 0L) pausedAt = System.currentTimeMillis()
+        if (c == null || meta == null || (!playing && state != PlaybackState.STATE_PAUSED)) { _music.value = null; pausedAt = 0; return }
+        if (playing) pausedAt = 0 else if (pausedAt == 0L) {
+            // Quando è stata messa in pausa davvero: lo dice il lettore. Così, se Sordina si riavvia,
+            // una pausa vecchia non ricompare per altri 2 minuti. Se non si sa, la si considera vecchia.
+            val since = c.playbackState?.lastPositionUpdateTime ?: 0L
+            val er = android.os.SystemClock.elapsedRealtime()
+            pausedAt = if (since in 1..er) System.currentTimeMillis() - (er - since) else 1L // 1: pausa vecchia, la scheda è già scaduta
+        }
         val title = meta.getString(android.media.MediaMetadata.METADATA_KEY_TITLE).orEmpty()
         val artist = meta.getString(android.media.MediaMetadata.METADATA_KEY_ARTIST)
             ?: meta.getString(android.media.MediaMetadata.METADATA_KEY_ALBUM_ARTIST)
@@ -84,8 +90,8 @@ class Signals {
                 CardAction(if (playing) "Pausa" else "Riprendi", CardOp.MusicToggle, if (playing) "pause" else "play"),
                 CardAction("Avanti", CardOp.MusicNext, "next"),
             ),
-            // In pausa resta 15 minuti, poi sparisce
-            expiresAt = if (playing) Long.MAX_VALUE else pausedAt + 15 * 60_000,
+            // In pausa resta 2 minuti, poi sparisce
+            expiresAt = if (playing) Long.MAX_VALUE else pausedAt + 2 * 60_000,
         )
     }
 

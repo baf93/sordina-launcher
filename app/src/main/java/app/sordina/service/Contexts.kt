@@ -24,6 +24,8 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import app.sordina.SordinaApp
+import app.sordina.data.ACTION_CAR_CONNECTION
+import app.sordina.data.androidAuto
 import java.time.LocalTime
 
 /**
@@ -34,6 +36,7 @@ class Contexts(private val service: SordinaListener) {
     private val app = SordinaApp.of(service)
     private val main = Handler(Looper.getMainLooper())
     private var receiver: BroadcastReceiver? = null
+    private var carReceiver: BroadcastReceiver? = null
     private var net: ConnectivityManager.NetworkCallback? = null
     private var audio: AudioDeviceCallback? = null
     private var sessions: MediaSessionManager.OnActiveSessionsChangedListener? = null
@@ -49,6 +52,7 @@ class Contexts(private val service: SordinaListener) {
 
     fun stop() {
         receiver?.let { runCatching { service.unregisterReceiver(it) } }
+        carReceiver?.let { runCatching { service.unregisterReceiver(it) } }
         net?.let { runCatching { service.getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(it) } }
         audio?.let { runCatching { service.getSystemService(AudioManager::class.java).unregisterAudioDeviceCallback(it) } }
         sessions?.let { runCatching { service.getSystemService(MediaSessionManager::class.java).removeOnActiveSessionsChangedListener(it) } }
@@ -73,6 +77,16 @@ class Contexts(private val service: SordinaListener) {
         }
         if (Build.VERSION.SDK_INT >= 33) service.registerReceiver(r, f, Context.RECEIVER_NOT_EXPORTED) else service.registerReceiver(r, f)
         receiver = r
+        // Android Auto: lo annuncia un'altra app, serve un ricevitore esportato
+        val car = object : BroadcastReceiver() {
+            override fun onReceive(c: Context, i: Intent) {
+                if (androidAuto(c, force = true)) app.routines.onContext("car")
+                Scheduler.refresh(c)
+            }
+        }
+        val cf = IntentFilter(ACTION_CAR_CONNECTION)
+        if (Build.VERSION.SDK_INT >= 33) service.registerReceiver(car, cf, Context.RECEIVER_EXPORTED) else service.registerReceiver(car, cf)
+        carReceiver = car
     }
 
     /** Il nome del Wi-Fi si legge solo con il permesso di posizione: senza, niente "A casa". */
@@ -133,7 +147,10 @@ class Contexts(private val service: SordinaListener) {
             val cb = object : MediaController.Callback() {
                 override fun onPlaybackStateChanged(state: PlaybackState?) = pick()
                 override fun onMetadataChanged(metadata: MediaMetadata?) = pick()
-                override fun onSessionDestroyed() = pick()
+                override fun onSessionDestroyed() {
+                    callbacks.keys.firstOrNull { it.sessionToken == c.sessionToken }?.let { callbacks.remove(it) }
+                    pick()
+                }
             }
             c.registerCallback(cb, main)
             callbacks[c] = cb
@@ -145,6 +162,7 @@ class Contexts(private val service: SordinaListener) {
         val all = callbacks.keys.toList()
         fun playing(c: MediaController) = c.playbackState?.state.let { it == PlaybackState.STATE_PLAYING || it == PlaybackState.STATE_BUFFERING }
         val c = all.firstOrNull { playing(it) } ?: all.firstOrNull { it.metadata != null && it.playbackState?.state == PlaybackState.STATE_PAUSED }
+        if (c == null) { app.signals.setMusic(null, null); return }
         val label = c?.packageName?.let { pkg ->
             runCatching { service.packageManager.getApplicationLabel(service.packageManager.getApplicationInfo(pkg, 0)).toString() }.getOrNull()
         }

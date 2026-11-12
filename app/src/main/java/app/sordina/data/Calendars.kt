@@ -145,3 +145,29 @@ fun Calendars.next(context: Context, now: Long = System.currentTimeMillis()): Up
         }
     }.getOrNull()
 }
+
+/** Il programma: gli eventi con orario rimasti oggi (al massimo 3); se non ce ne sono, il prossimo nei 7 giorni. */
+fun Calendars.agenda(context: Context, now: Long = System.currentTimeMillis()): List<Upcoming> {
+    if (context.checkSelfPermission(Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) return emptyList()
+    val endOfDay = java.time.LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    val out = ArrayList<Upcoming>()
+    runCatching {
+        val b = CalendarContract.Instances.CONTENT_URI.buildUpon()
+        ContentUris.appendId(b, now)
+        ContentUris.appendId(b, endOfDay)
+        context.contentResolver.query(
+            b.build(),
+            arrayOf(CalendarContract.Instances.EVENT_ID, CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN,
+                CalendarContract.Instances.END, CalendarContract.Instances.EVENT_LOCATION),
+            "${CalendarContract.Instances.VISIBLE}=1 AND ${CalendarContract.Instances.ALL_DAY}=0", null,
+            "${CalendarContract.Instances.BEGIN} ASC",
+        )?.use { c ->
+            while (c.moveToNext() && out.size < 3) {
+                if (c.getLong(3) <= now) continue
+                out += Upcoming(c.getLong(0), c.getString(1).orEmpty().ifBlank { "Evento" }, c.getLong(2), c.getLong(3),
+                    c.getString(4)?.takeIf { it.isNotBlank() }, null, false)
+            }
+        }
+    }
+    return out.ifEmpty { listOfNotNull(next(context, now)) }
+}

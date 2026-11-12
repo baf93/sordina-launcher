@@ -1,5 +1,9 @@
 package app.sordina
 
+import app.sordina.ui.Feel
+import app.sordina.ui.LocalFeel
+import app.sordina.ui.theme.Backdrop
+import app.sordina.ui.theme.Backdrops
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
@@ -48,7 +52,7 @@ import app.sordina.data.CardKind
 import app.sordina.data.CardOp
 import app.sordina.data.Upcoming
 import app.sordina.data.upcoming
-import app.sordina.data.next
+import app.sordina.data.agenda
 import app.sordina.data.Level
 import app.sordina.data.Moment
 import app.sordina.data.Proposals
@@ -64,6 +68,7 @@ import app.sordina.ui.SettingsScreen
 import app.sordina.ui.apps.AllAppsScreen
 import app.sordina.ui.home.HomeScreen
 import app.sordina.ui.home.HomeState
+import app.sordina.ui.home.AgendaRow
 import app.sordina.ui.intent.IntentScreen
 import app.sordina.ui.intent.Notice
 import app.sordina.ui.intent.ProposalActions
@@ -74,14 +79,13 @@ import app.sordina.ui.theme.SordinaTheme
 import app.sordina.ui.theme.ThemeFamily
 import app.sordina.ui.theme.ThemeMode
 import app.sordina.ui.theme.paper
-import app.sordina.ui.waiting.WaitingScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import java.util.Locale
 
-enum class Screen { HOME, INTENT, ALL_APPS, SETTINGS, WAITING, BRAKE, ONBOARDING }
+enum class Screen { HOME, INTENT, ALL_APPS, SETTINGS, BRAKE, ONBOARDING }
 
 class MainActivity : ComponentActivity(), Ops {
 
@@ -107,7 +111,11 @@ class MainActivity : ComponentActivity(), Ops {
     private var events by mutableStateOf<List<Upcoming>>(emptyList())
     private var habitCards by mutableStateOf<List<Card>>(emptyList())
     private var doneHabits by mutableStateOf<Set<String>>(emptySet())
-    private var nextEvent by mutableStateOf<Upcoming?>(null)
+    private var sheetOpen by mutableStateOf(false)
+    private var backdrop by mutableStateOf(Backdrop())
+    private var accentPref by mutableIntStateOf(0)
+    private var glassPref by mutableStateOf(false)
+    private var agendaEvents by mutableStateOf<List<Upcoming>>(emptyList())
     private var weatherNow by mutableStateOf<String?>(null)
     private var moment by mutableStateOf(Moment.NONE)
     private var recognizer: SpeechRecognizer? = null
@@ -115,6 +123,12 @@ class MainActivity : ComponentActivity(), Ops {
     private val permLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         refreshPerms()
         changed()
+    }
+    private val wallpaperLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) lifecycleScope.launch {
+            val ok = withContext(Dispatchers.IO) { Backdrops.save(this@MainActivity, uri) }
+            if (ok) { prefs.wallpaperMode = 2; backdropChanged() }
+        }
     }
     private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) runCatching {
@@ -145,14 +159,24 @@ class MainActivity : ComponentActivity(), Ops {
         hidden = prefs.hidden
         if (!prefs.onboarded) screen = Screen.ONBOARDING
         handleIntent(intent)
+        backdropChanged()
 
         appsCallback = catalog.registerChanges { reloadApps(forceProposals = true) }
         reloadApps(forceProposals = true)
 
         setContent {
-            SordinaTheme(family, mode) {
-                SystemBars()
-                Root()
+            val accentColor = when (accentPref) {
+                0 -> null
+                1 -> backdrop.accent?.let { androidx.compose.ui.graphics.Color(it) }
+                else -> androidx.compose.ui.graphics.Color(accentPref)
+            }
+            SordinaTheme(family, mode, accentColor) {
+                val view = androidx.compose.ui.platform.LocalView.current
+                val feel = remember(prefsVersion) { Feel(prefs.animations, prefs.haptics, view) }
+                androidx.compose.runtime.CompositionLocalProvider(LocalFeel provides feel) {
+                    SystemBars()
+                    Root()
+                }
             }
         }
     }
@@ -171,7 +195,7 @@ class MainActivity : ComponentActivity(), Ops {
     private fun handleIntent(intent: Intent?) {
         if (screen == Screen.ONBOARDING) return
         when {
-            intent?.action == ACTION_WAITING -> screen = Screen.WAITING
+            intent?.action == ACTION_WAITING -> { screen = Screen.HOME; sheetOpen = true }
             intent?.hasCategory(Intent.CATEGORY_HOME) == true -> { screen = Screen.HOME; query = "" }
         }
     }
@@ -191,6 +215,7 @@ class MainActivity : ComponentActivity(), Ops {
         if (screen != Screen.SETTINGS && screen != Screen.ONBOARDING) screen = Screen.HOME
         query = ""
         notice = null
+        sheetOpen = false
     }
 
     // Dati
@@ -220,7 +245,9 @@ class MainActivity : ComponentActivity(), Ops {
         val current = apps
         lifecycleScope.launch(Dispatchers.IO) {
             events = app.calendars.upcoming(this@MainActivity)
-            nextEvent = app.calendars.next(this@MainActivity)
+            val endOfDay = java.time.LocalDate.now().plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+            val all = (app.calendars.agenda(this@MainActivity) + app.ha.calendarEvents(prefs.haCalendars)).sortedBy { it.begin }
+            agendaEvents = all.filter { it.begin < endOfDay }.take(3).ifEmpty { all.take(1) }
             weatherNow = app.weather.now()
             if (current.isNotEmpty()) habitCards = app.routines.suggestions(current)
         }
@@ -320,7 +347,42 @@ class MainActivity : ComponentActivity(), Ops {
             else -> t.format(java.time.format.DateTimeFormatter.ofPattern("EEE", Locale.getDefault())).replace(".", "").replaceFirstChar { it.uppercase() }
         }
         val hour = t.format(java.time.format.DateTimeFormatter.ofPattern("H:mm"))
-        return if (day == "Ora") "Ora: ${e.title}" else "$day $hour ${e.title}"
+        return if (day == "Ora") "Ora · ${e.title}" else "$day $hour · ${e.title}"
+    }
+
+    /** Il programma di Casa: meteo e momento adesso, poi eventi e ritorno delle notifiche in ordine di ora. */
+    private fun agendaRows(waiting: Int): List<AgendaRow> {
+        val zone = java.time.ZoneId.systemDefault()
+        val today = java.time.LocalDate.now()
+        val hm = java.time.format.DateTimeFormatter.ofPattern("H:mm")
+        val out = ArrayList<AgendaRow>()
+        if (moment != Moment.NONE) out += AgendaRow("ora", moment.phrase, "moment")
+        val timed = ArrayList<Pair<Long, AgendaRow>>()
+        for (e in agendaEvents) {
+            val key = if (e.link == "ha") "ha" else "event:${e.id}"
+            val t = java.time.Instant.ofEpochMilli(e.begin).atZone(zone)
+            val d = t.toLocalDate()
+            val row = when {
+                e.begin <= System.currentTimeMillis() -> AgendaRow("adesso", e.title, key)
+                d == today -> AgendaRow(t.format(hm), e.title, key)
+                d == today.plusDays(1) -> AgendaRow("domani", "${e.title} · ${t.format(hm)}", key)
+                else -> AgendaRow(t.format(java.time.format.DateTimeFormatter.ofPattern("EEE", Locale.getDefault())).replace(".", ""),
+                    "${e.title} · ${t.format(hm)}", key)
+            }
+            timed += e.begin to row
+        }
+        return out + timed.sortedBy { it.first }.map { it.second }
+    }
+
+    private fun onAgenda(key: String) {
+        when {
+            key == "weather" -> openWeather()
+            key == "sordina" -> sheetOpen = true
+            key == "ha" -> packageManager.getLaunchIntentForPackage("io.homeassistant.companion.android")?.let { start(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            key.startsWith("event:") -> key.removePrefix("event:").toLongOrNull()?.let {
+                start(Intent(Intent.ACTION_VIEW, android.content.ContentUris.withAppendedId(android.provider.CalendarContract.Events.CONTENT_URI, it)))
+            }
+        }
     }
 
     private fun openWeather() {
@@ -413,7 +475,7 @@ class MainActivity : ComponentActivity(), Ops {
                 // Azioni verso te stesso, con sicurezza alta: fatte subito
                 val u = understand(t)
                 val top = u.top
-                if (u.confident && top != null && !top.toOthers) run(top, 0)
+                if (u.confident && top != null && !top.toOthers) run(top, 0) else screen = Screen.INTENT
             }
             override fun onError(error: Int) {
                 voice = voice.copy(listening = false, partial = "")
@@ -423,12 +485,16 @@ class MainActivity : ComponentActivity(), Ops {
                     SpeechRecognizer.ERROR_CLIENT -> null
                     else -> Notice("Microfono non disponibile")
                 }
+                if (screen == Screen.HOME) notice?.let { android.widget.Toast.makeText(this@MainActivity, it.text, android.widget.Toast.LENGTH_SHORT).show() }
             }
         })
         val i = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
             .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             .putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             .putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag())
+            // Si ascolta finché tieni premuto: le pause non chiudono l'ascolto
+            .putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 60_000L)
+            .putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 60_000L)
         if (Build.VERSION.SDK_INT >= 33) {
             // Nomi insoliti di persone, app e dispositivi di casa capiti meglio
             val bias = ArrayList<String>()
@@ -437,13 +503,29 @@ class MainActivity : ComponentActivity(), Ops {
             bias += app.ha.cached().filter { it.controllable }.map { it.name }
             i.putStringArrayListExtra(RecognizerIntent.EXTRA_BIASING_STRINGS, ArrayList(bias.distinct().take(100)))
         }
+        voiceDownAt = System.currentTimeMillis()
         voice = voice.copy(listening = true, partial = "")
         query = ""
         runCatching { r.startListening(i) }.onFailure { voice = voice.copy(listening = false) }
     }
 
+    private var voiceDownAt = 0L
+
+    private fun hint(text: String) {
+        if (screen == Screen.HOME) android.widget.Toast.makeText(this, text, android.widget.Toast.LENGTH_SHORT).show()
+        else notice = Notice(text)
+    }
+
+    /** Rilasci: se era solo un tocco, niente ascolto e un suggerimento; altrimenti si chiude e si capisce. */
     private fun voiceUp() {
-        if (voice.listening) runCatching { recognizer?.stopListening() }
+        if (!voice.listening) return
+        if (System.currentTimeMillis() - voiceDownAt < 350) {
+            runCatching { recognizer?.cancel() }
+            voice = voice.copy(listening = false, partial = "")
+            hint("Tieni premuto e parla")
+            return
+        }
+        runCatching { recognizer?.stopListening() }
     }
 
     // Ops
@@ -468,6 +550,17 @@ class MainActivity : ComponentActivity(), Ops {
     override fun exportSettings() { runCatching { exportLauncher.launch("sordina.json") } }
     override fun importSettings() { runCatching { importLauncher.launch(arrayOf("application/json", "text/plain", "*/*")) } }
     override fun openUrl(url: String) { start(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+    override fun pickWallpaper() {
+        runCatching { wallpaperLauncher.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+    }
+    override fun backdropChanged() {
+        accentPref = prefs.accent
+        glassPref = prefs.glass
+        val m = prefs.wallpaperMode
+        if (m == 1) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
+        else window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
+        lifecycleScope.launch { backdrop = withContext(Dispatchers.IO) { Backdrops.load(this@MainActivity, m, prefs.wallpaperPreset) } }
+    }
     override fun changed() {
         prefsVersion++
         moment = app.moments.current()
@@ -515,6 +608,8 @@ class MainActivity : ComponentActivity(), Ops {
 
     @Composable
     private fun Root() {
+        // In Casa "indietro" non porta da nessuna parte: lo si ignora, così Android non mostra l'animazione di uscita
+        BackHandler(enabled = screen == Screen.HOME) { sheetOpen = false }
         BackHandler(enabled = screen != Screen.HOME && screen != Screen.ONBOARDING) {
             screen = when (screen) {
                 Screen.ALL_APPS -> Screen.INTENT
@@ -558,20 +653,27 @@ class MainActivity : ComponentActivity(), Ops {
             if (screen == Screen.INTENT) refreshProposals(force = false)
             if (screen == Screen.HOME) refreshExtras()
         }
-        Box(Modifier.fillMaxSize().paper()) {
+        val feelNow = LocalFeel.current
+        val bare = (screen == Screen.HOME || screen == Screen.INTENT) && backdrop.active
+        Box(if (bare) Modifier.fillMaxSize() else Modifier.fillMaxSize().paper()) {
+            if (bare) backdrop.image?.let { img ->
+                androidx.compose.foundation.Image(img, null, Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+            }
             AnimatedContent(
                 targetState = screen,
-                transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(160)) },
+                transitionSpec = {
+                    // Verso l'alto si sale (Casa → ricerca → app), tornando si scende; spente le animazioni, si cambia e basta
+                    val up = targetState.ordinal > initialState.ordinal
+                    val d = if (up) 1 else -1
+                    if (!feelNow.animations) androidx.compose.animation.EnterTransition.None togetherWith androidx.compose.animation.ExitTransition.None
+                    else (fadeIn(tween(240, delayMillis = 40)) + androidx.compose.animation.slideInVertically(tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it / 14 * d }) togetherWith
+                        (fadeOut(tween(140)) + androidx.compose.animation.slideOutVertically(tween(220)) { -it / 24 * d })
+                },
                 label = "screen",
             ) { s ->
                 when (s) {
                     Screen.HOME -> {
                         val waiting = groups.sumOf { g -> g.sumOf { it.count } }
-                        val line = when {
-                            moment != Moment.NONE -> moment.label.lowercase()
-                            waiting > 0 -> "$waiting in attesa"
-                            else -> "tutto calmo"
-                        }
                         val ms = now.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
                         val cards = remember(signalCards, music, events, habitCards, doneHabits, now) {
                             (signalCards.values + listOfNotNull(music) + events.map { eventCard(it, ms) } +
@@ -580,19 +682,43 @@ class MainActivity : ComponentActivity(), Ops {
                                 .sortedWith(compareBy<Card> { it.kind.priority }.thenByDescending { it.time })
                                 .take(6)
                         }
+                        val until = remember(now, prefsVersion) { "alle " + app.moments.nextSummary().hour }
                         HomeScreen(
-                            state = HomeState(line, waiting, cards, weatherNow, remember(nextEvent, now) { nextEvent?.let { nextLabel(it) } }),
-                            onWeather = ::openWeather,
-                            onNext = { nextEvent?.let { cardAction(eventCard(it, ms), CardAction("", CardOp.OpenEvent(it.id))) } },
+                            state = HomeState(
+                                waiting = waiting,
+                                until = until,
+                                moment = if (moment == Moment.NONE) null else moment.label,
+                                cards = cards,
+                                agenda = remember(agendaEvents, moment, now) { agendaRows(waiting) },
+                                weather = weatherNow,
+                                listening = voice.listening,
+                                partial = voice.partial,
+                                topDark = backdrop.topDark,
+                                bottomDark = backdrop.bottomDark,
+                                translucent = backdrop.active,
+                                glass = backdrop.active && glassPref,
+                            ),
+                            groups = groups,
                             onSwipeUp = { screen = Screen.INTENT },
                             onSwipeDown = { expandNotifications() },
                             onLongPress = { screen = Screen.SETTINGS },
-                            onLine = { if (waiting > 0) screen = Screen.WAITING },
+                            onSearch = { screen = Screen.INTENT },
+                            onMicDown = ::voiceDown,
+                            onMicUp = ::voiceUp,
                             onAction = ::cardAction,
                             onCard = ::cardTap,
+                            onAgenda = ::onAgenda,
+                            sheetOpen = sheetOpen,
+                            onSheet = { sheetOpen = it },
+                            onOpenHeld = { h -> sheetOpen = false; SordinaListener.open(this@MainActivity, h.key) },
+                            onReadAll = { SordinaListener.readAll(this@MainActivity) },
+                            onReadGroup = { k -> SordinaListener.readGroup(this@MainActivity, k) },
                         )
                     }
                     Screen.INTENT -> IntentScreen(
+                        showIcons = remember(prefsVersion) { prefs.appIcons },
+                        topDark = backdrop.topDark,
+                        glass = backdrop.active && glassPref,
                         catalog = catalog,
                         query = query,
                         onQuery = { query = it },
@@ -611,6 +737,7 @@ class MainActivity : ComponentActivity(), Ops {
                         onVoiceUp = ::voiceUp,
                     )
                     Screen.ALL_APPS -> AllAppsScreen(
+                        icon = if (remember(prefsVersion) { prefs.appIcons }) { a -> catalog.icon(a, (30 * resources.displayMetrics.density).toInt()) } else null,
                         apps = apps,
                         hidden = hidden,
                         onLaunch = ::launch,
@@ -634,19 +761,13 @@ class MainActivity : ComponentActivity(), Ops {
                         family = family,
                         mode = mode,
                         version = versionName,
+                        backdrop = backdrop.mode,
+                        backdropAccent = backdrop.accent,
+                        accent = accentPref,
                         onFamily = { family = it; prefs.family = it },
                         onMode = { mode = it; prefs.mode = it },
                         onWipe = ::wipe,
                         ops = this@MainActivity,
-                        onBack = { screen = Screen.HOME },
-                    )
-                    Screen.WAITING -> WaitingScreen(
-                        groups = groups,
-                        listenerEnabled = perms.listener,
-                        onEnableListener = ::openListenerSettings,
-                        onOpen = { h -> SordinaListener.open(this@MainActivity, h.key) },
-                        onReadGroup = { g -> SordinaListener.readGroup(this@MainActivity, g) },
-                        onReadAll = { SordinaListener.readAll(this@MainActivity) },
                         onBack = { screen = Screen.HOME },
                     )
                     Screen.BRAKE -> brakeTarget?.let { a ->
