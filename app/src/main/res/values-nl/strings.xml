@@ -101,7 +101,7 @@
     <string name="time_back">Ongeveer %1$s terug voor jou.</string>
     <string name="stat_today">vandaag</string>
     <string name="stat_in_7_days">in 7 dagen</string>
-    <string name="back_home">Terug naar start…</string>
+    <string name="back_home">Terug…</string>
     <string name="less_than_minute">minder dan een minuut</string>
     <string name="minutes_short">%1$d min</string>
     <string name="hours_short">%1$d u</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">Hoe lang wachten</string>
     <string name="s_stay_hint">Komen niet terug bij het overzicht</string>
     <string name="s_stay">In Sordina blijven</string>
-    <string name="s_home">Thuis</string>
+    <string name="s_home">Scherm</string>
     <string name="s_weather">Weer</string>
     <string name="on_m">aan</string>
     <string name="turn_on">aanzetten</string>
@@ -213,7 +213,7 @@
     <string name="yes">ja</string>
     <string name="none_m">geen</string>
     <string name="s_events_go">Afspraken gaan naar</string>
-    <string name="s_ha_calendars">Agenda\'s van Thuis</string>
+    <string name="s_ha_calendars">Getoonde agenda\'s</string>
     <string name="loading">Laden…</string>
     <string name="s_no_calendar">Geen agenda\'s.</string>
     <string name="s_tap_app">Tik op een app om te kiezen.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">Meldingen toestaan</string>
     <string name="onb_important_sub">Komen altijd door.</string>
     <string name="onb_done_sub">Omhoog: doen. Omlaag: meldingen.\nVasthouden: instellingen.</string>
-    <string name="onb_go_home">Naar start</string>
+    <string name="onb_go_home">Beginnen</string>
     <string name="onb_allow_contacts">Toegang tot contacten toestaan</string>
     <string name="onb_important">Belangrijk</string>
     <string name="remove_l">verwijderen</string>
@@ -461,4 +461,6 @@
     <string name="rain_chance">%1$d%% kans</string>
     <string name="birthday">Verjaardag</string>
     <string name="birthday_age">Wordt %1$d</string>
+    <string name="pinned_heading">Altijd hier</string>
+    <string name="now_heading">Nu</string>
 </resources>

@@ -31,8 +31,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -51,6 +49,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.sordina.data.AppEntry
 import app.sordina.data.Search
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.PanTool
+import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.DeleteOutline
+import app.sordina.ui.Sheet
+import app.sordina.ui.SheetRow
 import app.sordina.ui.theme.S
 import kotlinx.coroutines.launch
 
@@ -107,7 +113,11 @@ fun AllAppsScreen(
         Box(Modifier.weight(1f).fillMaxWidth()) {
             LazyColumn(Modifier.fillMaxSize().padding(start = 28.dp, end = 40.dp), state = listState) {
                 item(key = "count") {
-                    Text(trn(R.plurals.n_apps, visible.size + work.size), Modifier.padding(top = 20.dp, bottom = 4.dp), style = TextStyle(fontSize = 13.sp, color = c.soft))
+                    // Testata come nelle altre pagine: titolo grande, sotto quante sono
+                    Column(Modifier.padding(top = 12.dp, bottom = 4.dp)) {
+                        Text(tr(R.string.all_apps), style = TextStyle(fontSize = 30.sp, lineHeight = 36.sp, color = c.ink))
+                        Text(trn(R.plurals.n_apps, visible.size + work.size), Modifier.padding(top = 2.dp), style = TextStyle(fontSize = 15.sp, color = c.soft))
+                    }
                 }
                 items(rows, key = { r -> if (r is Row_.Item) r.app.key else "h_" + (r as Row_.Header).letter }) { r ->
                     when (r) {
@@ -193,24 +203,18 @@ private fun AppRow(
             style = TextStyle(fontSize = 20.sp, color = if (isHidden) c.soft else c.ink),
         )
         }
-        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-            DropdownMenuItem(text = { Text(tr(R.string.app_info)) }, onClick = { menu = false; onInfo(app) })
-            DropdownMenuItem(text = { Text(tr(R.string.uninstall)) }, onClick = { menu = false; onUninstall(app) })
-            DropdownMenuItem(
-                text = { Text(if (isBraked(app)) tr(R.string.unbrake) else tr(R.string.brake)) },
-                onClick = { menu = false; onToggleBrake(app) },
-            )
-            DropdownMenuItem(
-                text = { Text(if (isHidden) tr(R.string.show_in_list) else tr(R.string.hide_from_list)) },
-                onClick = { menu = false; onToggleHidden(app) },
-            )
+        if (menu) Sheet(app.label, onDismiss = { menu = false }, leading = remember(app.key) { icon?.invoke(app) }?.let { b -> { androidx.compose.foundation.Image(b, null, Modifier.size(28.dp)) } }) {
+            SheetRow(if (isBraked(app)) tr(R.string.unbrake) else tr(R.string.brake), Icons.Rounded.PanTool) { menu = false; onToggleBrake(app) }
+            SheetRow(if (isHidden) tr(R.string.show_in_list) else tr(R.string.hide_from_list), if (isHidden) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff) { menu = false; onToggleHidden(app) }
+            SheetRow(tr(R.string.app_info), Icons.Rounded.Info) { menu = false; onInfo(app) }
+            SheetRow(tr(R.string.uninstall), Icons.Rounded.DeleteOutline) { menu = false; onUninstall(app) }
         }
     }
 }
 
 /** Indice delle lettere sul bordo destro: tocca o scorri col pollice. null quando lo lasci. */
 @Composable
-private fun LetterIndex(letters: List<String>, current: String?, modifier: Modifier, onLetter: (String?) -> Unit) {
+internal fun LetterIndex(letters: List<String>, current: String?, modifier: Modifier, onLetter: (String?) -> Unit) {
     val c = S.c
     var height by remember { mutableStateOf(1) }
     fun at(y: Float) = letters[((y / height) * letters.size).toInt().coerceIn(0, letters.size - 1)]
@@ -245,7 +249,7 @@ private fun LetterIndex(letters: List<String>, current: String?, modifier: Modif
     }
 }
 
-private fun letterOf(label: String): String {
+internal fun letterOf(label: String): String {
     val ch = Search.normalize(label).firstOrNull() ?: return "#"
     return if (ch.isLetter()) ch.uppercaseChar().toString() else "#"
 }

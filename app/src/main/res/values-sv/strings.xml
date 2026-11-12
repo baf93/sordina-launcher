@@ -101,7 +101,7 @@
     <string name="time_back">Ungefär %1$s tillbaka till dig.</string>
     <string name="stat_today">i dag</string>
     <string name="stat_in_7_days">på 7 dagar</string>
-    <string name="back_home">Tillbaka till start…</string>
+    <string name="back_home">Går tillbaka…</string>
     <string name="less_than_minute">under en minut</string>
     <string name="minutes_short">%1$d min</string>
     <string name="hours_short">%1$d h</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">Hur länge vänta</string>
     <string name="s_stay_hint">Kommer inte tillbaka vid sammanfattningen</string>
     <string name="s_stay">Stanna i Sordina</string>
-    <string name="s_home">Hemma</string>
+    <string name="s_home">Skärm</string>
     <string name="s_weather">Väder</string>
     <string name="on_m">på</string>
     <string name="turn_on">slå på</string>
@@ -213,7 +213,7 @@
     <string name="yes">ja</string>
     <string name="none_m">ingen</string>
     <string name="s_events_go">Händelser hamnar i</string>
-    <string name="s_ha_calendars">Kalendrar i Hemma</string>
+    <string name="s_ha_calendars">Visade kalendrar</string>
     <string name="loading">Laddar…</string>
     <string name="s_no_calendar">Inga kalendrar.</string>
     <string name="s_tap_app">Tryck på en app för att välja.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">Tillåt aviseringar</string>
     <string name="onb_important_sub">Kommer alltid fram.</string>
     <string name="onb_done_sub">Upp: gör. Ned: aviseringar.\nHåll in: inställningar.</string>
-    <string name="onb_go_home">Till start</string>
+    <string name="onb_go_home">Börja</string>
     <string name="onb_allow_contacts">Tillåt åtkomst till kontakter</string>
     <string name="onb_important">Viktiga</string>
     <string name="remove_l">ta bort</string>
@@ -461,4 +461,6 @@
     <string name="rain_chance">%1$d%% sannolikhet</string>
     <string name="birthday">Födelsedag</string>
     <string name="birthday_age">Fyller %1$d</string>
+    <string name="pinned_heading">Alltid här</string>
+    <string name="now_heading">Nu</string>
 </resources>

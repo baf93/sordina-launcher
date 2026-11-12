@@ -187,8 +187,8 @@ class StatusNotification(private val context: Context) {
             val waiting = app.store.groups().sumOf { g -> g.sumOf { it.count } }
             val last = app.moments.lastSummaryToday(now)
             if (last != null && waiting > 0) {
-                val since = Duration.between(now.toLocalDate().atTime(last, 0), now).toMinutes()
-                if (since in 0..59) return tr(R.string.summary_of, "$last", trn(R.plurals.n_things, waiting))
+                val since = Duration.between(now.toLocalDate().atTime(last / 60, last % 60), now).toMinutes()
+                if (since in 0..59) return tr(R.string.summary_of, if (last % 60 == 0) "${last / 60}" else java.time.LocalTime.of(last / 60, last % 60).format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)), trn(R.plurals.n_things, waiting))
             }
             val next = app.moments.nextSummary(now)
             val t = next.format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))

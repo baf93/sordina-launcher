@@ -78,7 +78,8 @@ class People(private val context: Context, private val prefs: Prefs) {
         val set = prefs.importantNames
         if (n in set) return true
         // "Anna Rossi" importante riconosce anche la notifica che dice solo "Anna"... ma non il contrario
-        return set.any { it.startsWith("$n ") || n.startsWith("$it ") }
+        // (Un importante salvato solo come "Marco" non fa passare ogni "Marco Bianchi")
+        return set.any { it.startsWith("$n ") }
     }
 
     fun importantList(): List<String> = prefs.importantNames.sorted()

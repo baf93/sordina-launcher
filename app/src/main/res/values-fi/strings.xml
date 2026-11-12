@@ -101,7 +101,7 @@
     <string name="time_back">Noin %1$s takaisin sinulle.</string>
     <string name="stat_today">tänään</string>
     <string name="stat_in_7_days">7 päivässä</string>
-    <string name="back_home">Takaisin alkuun…</string>
+    <string name="back_home">Palataan…</string>
     <string name="less_than_minute">alle minuutti</string>
     <string name="minutes_short">%1$d min</string>
     <string name="hours_short">%1$d t</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">Kuinka kauan odottaa</string>
     <string name="s_stay_hint">Eivät palaa yhteenvedossa</string>
     <string name="s_stay">Jää Sordinaan</string>
-    <string name="s_home">Koti</string>
+    <string name="s_home">Näyttö</string>
     <string name="s_weather">Sää</string>
     <string name="on_m">päällä</string>
     <string name="turn_on">ota käyttöön</string>
@@ -213,7 +213,7 @@
     <string name="yes">kyllä</string>
     <string name="none_m">ei mitään</string>
     <string name="s_events_go">Tapahtumat menevät</string>
-    <string name="s_ha_calendars">Kodin kalenterit</string>
+    <string name="s_ha_calendars">Näytettävät kalenterit</string>
     <string name="loading">Ladataan…</string>
     <string name="s_no_calendar">Ei kalentereita.</string>
     <string name="s_tap_app">Valitse sovellus napauttamalla.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">Salli ilmoitukset</string>
     <string name="onb_important_sub">Pääsevät aina läpi.</string>
     <string name="onb_done_sub">Ylös: tee. Alas: ilmoitukset.\nPidä: asetukset.</string>
-    <string name="onb_go_home">Alkuun</string>
+    <string name="onb_go_home">Aloita</string>
     <string name="onb_allow_contacts">Salli yhteystietojen käyttö</string>
     <string name="onb_important">Tärkeät</string>
     <string name="remove_l">poista</string>
@@ -461,4 +461,6 @@
     <string name="rain_chance">Todennäköisyys %1$d%%</string>
     <string name="birthday">Syntymäpäivä</string>
     <string name="birthday_age">Täyttää %1$d</string>
+    <string name="pinned_heading">Aina tässä</string>
+    <string name="now_heading">Nyt</string>
 </resources>

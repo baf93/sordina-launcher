@@ -132,19 +132,23 @@ fun DayLine(now: LocalDateTime, summaries: List<Int>, modifier: Modifier = Modif
 // Elementi comuni delle schermate di servizio (impostazioni, primo avvio, Oggi)
 
 @Composable
-fun Header(title: String, onBack: (() -> Unit)? = null) {
+fun Header(title: String, onBack: (() -> Unit)? = null, subtitle: String? = null, modifier: Modifier = Modifier) {
     val c = S.c
-    androidx.compose.foundation.layout.Row(
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(start = 8.dp, top = 8.dp, bottom = 8.dp),
-    ) {
+    // La stessa testata in ogni pagina: freccia in un tondo da 44 (comodo col pollice), titolo grande, sotto la nota
+    androidx.compose.foundation.layout.Row(modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp), verticalAlignment = androidx.compose.ui.Alignment.Top) {
         if (onBack != null) {
-            androidx.compose.material3.Icon(
-                androidx.compose.material.icons.Icons.AutoMirrored.Rounded.ArrowBack, app.sordina.tr(app.sordina.R.string.back),
-                Modifier.clickableNoRipple(onBack).padding(end = 14.dp, top = 6.dp, bottom = 6.dp).size(24.dp), tint = c.ink,
-            )
+            androidx.compose.foundation.layout.Box(
+                Modifier.size(44.dp).clip(androidx.compose.foundation.shape.CircleShape).clickableNoRipple(onBack),
+                contentAlignment = androidx.compose.ui.Alignment.Center,
+            ) {
+                androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.ArrowBack, app.sordina.tr(app.sordina.R.string.back), Modifier.size(24.dp), tint = c.ink)
+            }
+            androidx.compose.foundation.layout.Spacer(Modifier.width(4.dp))
         }
-        Text(title, style = TextStyle(fontSize = 28.sp, color = c.ink))
+        androidx.compose.foundation.layout.Column(Modifier.weight(1f).padding(top = 4.dp)) {
+            Text(title, style = TextStyle(fontSize = 30.sp, lineHeight = 36.sp, color = c.ink))
+            if (subtitle != null) Text(subtitle, Modifier.padding(top = 2.dp), style = TextStyle(fontSize = 15.sp, color = c.soft))
+        }
     }
 }
 
@@ -206,7 +210,9 @@ fun Line(
             Text(label, style = TextStyle(fontSize = 16.sp, color = c.ink))
             if (hint != null) Text(hint, style = TextStyle(fontSize = 13.sp, color = c.soft))
         }
-        if (value.isNotEmpty()) Text(value, Modifier.padding(start = 12.dp).widthIn(max = 150.dp), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, style = TextStyle(fontSize = 15.sp, color = c.soft))
+        // Il valore cede per primo: su un telefono stretto con caratteri grandi l'etichetta non va spezzata a metà parola
+        val valueMax = (androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp * 0.32f).dp.coerceAtMost(150.dp)
+        if (value.isNotEmpty()) Text(value, Modifier.padding(start = 12.dp).widthIn(max = valueMax), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, style = TextStyle(fontSize = 15.sp, color = c.soft))
         if (trailing != null) { androidx.compose.foundation.layout.Spacer(Modifier.width(8.dp)); trailing() }
         else if (onClick != null) androidx.compose.material3.Icon(
             androidx.compose.material.icons.Icons.AutoMirrored.Rounded.KeyboardArrowRight, null,
@@ -263,18 +269,19 @@ fun Pill(text: String, on: Boolean, onClick: () -> Unit) {
     ) { Serif(text, size = 14.sp, color = if (on) c.bg else c.ink) }
 }
 
-/** Pulsante principale, pieno nel colore dell'inchiostro. */
+/** Pulsante principale: la pillola alta 52, piena nel colore dell'inchiostro. Uguale ovunque. */
 @Composable
 fun Primary(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val c = S.c
     androidx.compose.foundation.layout.Box(
         modifier
-            .clip(androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
+            .height(52.dp)
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(26.dp))
             .background(c.ink)
             .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 14.dp),
+            .padding(horizontal = 22.dp),
         contentAlignment = androidx.compose.ui.Alignment.Center,
-    ) { Serif(text, size = 16.sp, color = c.bg) }
+    ) { Text(text, maxLines = 1, style = TextStyle(fontSize = 16.sp, color = c.bg)) }
 }
 
 @Composable
@@ -282,12 +289,13 @@ fun Secondary(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) 
     val c = S.c
     androidx.compose.foundation.layout.Box(
         modifier
-            .clip(androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
-            .border(1.dp, c.line, androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
+            .height(52.dp)
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(26.dp))
+            .border(1.dp, c.line, androidx.compose.foundation.shape.RoundedCornerShape(26.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 14.dp),
+            .padding(horizontal = 22.dp),
         contentAlignment = androidx.compose.ui.Alignment.Center,
-    ) { Serif(text, size = 16.sp, color = c.ink) }
+    ) { Text(text, maxLines = 1, style = TextStyle(fontSize = 16.sp, color = c.ink)) }
 }
 
 /** Scheda con bordo sottile, sfondo "card" del tema. */
@@ -401,7 +409,7 @@ fun Pick(
 /** Il foglio dal basso, uguale ovunque. */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-fun Sheet(title: String, hint: String? = null, onDismiss: () -> Unit, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
+fun Sheet(title: String, hint: String? = null, onDismiss: () -> Unit, leading: (@Composable () -> Unit)? = null, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
     val c = S.c
     androidx.compose.material3.ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -418,7 +426,10 @@ fun Sheet(title: String, hint: String? = null, onDismiss: () -> Unit, content: @
             Modifier.navigationBarsPadding().padding(bottom = 12.dp)
                 .verticalScroll(androidx.compose.foundation.rememberScrollState()),
         ) {
-            Text(title, Modifier.padding(horizontal = 24.dp), style = TextStyle(fontSize = 21.sp, color = c.ink))
+            androidx.compose.foundation.layout.Row(Modifier.padding(horizontal = 24.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                if (leading != null) { leading(); androidx.compose.foundation.layout.Spacer(Modifier.width(12.dp)) }
+                Text(title, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, style = TextStyle(fontSize = 21.sp, color = c.ink))
+            }
             if (hint != null) Text(hint, Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp), style = TextStyle(fontSize = 14.sp, color = c.soft))
             androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
             content()
@@ -429,15 +440,70 @@ fun Sheet(title: String, hint: String? = null, onDismiss: () -> Unit, content: @
 /** Conferma per le cose che non si possono annullare. */
 @Composable
 fun Confirm(title: String, text: String, action: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    Sheet(title, text, onDismiss) {
+        androidx.compose.foundation.layout.Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp)) {
+            Primary(action, Modifier.fillMaxWidth()) { onDismiss(); onConfirm() }
+            androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
+            Secondary(app.sordina.tr(app.sordina.R.string.cancel), Modifier.fillMaxWidth(), onDismiss)
+        }
+    }
+}
+
+/** Una riga del foglio: simbolo, etichetta, e a destra una nota. */
+@Composable
+fun SheetRow(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector? = null, hint: String? = null, accent: Boolean = false, onClick: () -> Unit) {
     val c = S.c
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = c.card,
-        title = { Text(title, style = TextStyle(fontSize = 20.sp, color = c.ink)) },
-        text = { Text(text, style = TextStyle(fontSize = 15.sp, color = c.soft)) },
-        confirmButton = {
-            androidx.compose.material3.TextButton(onClick = { onDismiss(); onConfirm() }) { Text(action, color = c.accent) }
-        },
-        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text(app.sordina.tr(app.sordina.R.string.cancel), color = c.ink) } },
-    )
+    androidx.compose.foundation.layout.Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 14.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
+        if (icon != null) { androidx.compose.material3.Icon(icon, null, Modifier.size(22.dp), tint = if (accent) c.accent else c.soft); androidx.compose.foundation.layout.Spacer(Modifier.width(16.dp)) }
+        Text(label, Modifier.weight(1f), style = TextStyle(fontSize = 17.sp, color = if (accent) c.accent else c.ink))
+        if (hint != null) Text(hint, Modifier.padding(start = 12.dp), style = TextStyle(fontSize = 14.sp, color = c.soft))
+    }
+}
+
+/** Un messaggio breve da mostrare (l'id distingue due messaggi uguali di fila). */
+data class Said(val text: String, val id: Long = System.nanoTime())
+
+/** La pillola dei messaggi brevi: compare sopra la barra, sparisce da sola. */
+@Composable
+fun androidx.compose.foundation.layout.BoxScope.Bubble(said: Said?, onGone: () -> Unit) {
+    val c = S.c
+    var shown by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(said) }
+    if (said != null) shown = said
+    androidx.compose.runtime.LaunchedEffect(said?.id) { if (said != null) { kotlinx.coroutines.delay(2200); onGone() } }
+    androidx.compose.animation.AnimatedVisibility(
+        said != null,
+        Modifier.align(androidx.compose.ui.Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 170.dp, start = 28.dp, end = 28.dp),
+        enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it / 2 },
+        exit = androidx.compose.animation.fadeOut(),
+    ) {
+        Text(
+            shown?.text.orEmpty(),
+            Modifier.clip(RoundedCornerShape(22.dp)).background(c.ink).padding(horizontal = 20.dp, vertical = 12.dp),
+            style = TextStyle(fontSize = 15.sp, color = c.bg, textAlign = androidx.compose.ui.text.style.TextAlign.Center),
+        )
+    }
+}
+
+/** Pillola piccola, per le azioni dentro una riga ("Rimuovi", "Frena"). */
+@Composable
+fun SmallPill(text: String, onClick: () -> Unit) {
+    val c = S.c
+    androidx.compose.foundation.layout.Box(
+        Modifier.height(34.dp).clip(RoundedCornerShape(17.dp)).background(c.accent.copy(alpha = 0.14f)).clickableNoRipple(onClick).padding(horizontal = 14.dp),
+        contentAlignment = androidx.compose.ui.Alignment.Center,
+    ) { Text(text, maxLines = 1, style = TextStyle(fontSize = 14.sp, color = c.accent)) }
+}
+
+/** Tondo con un simbolo, per le frecce dentro una riga. */
+@Composable
+fun RoundIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, enabled: Boolean = true, onClick: () -> Unit) {
+    val c = S.c
+    androidx.compose.foundation.layout.Box(
+        Modifier.size(36.dp).clip(androidx.compose.foundation.shape.CircleShape).background(if (enabled) c.tile else c.tile.copy(alpha = 0.4f))
+            .let { if (enabled) it.clickableNoRipple(onClick) else it },
+        contentAlignment = androidx.compose.ui.Alignment.Center,
+    ) { androidx.compose.material3.Icon(icon, label, Modifier.size(20.dp), tint = if (enabled) c.ink else c.dot) }
 }

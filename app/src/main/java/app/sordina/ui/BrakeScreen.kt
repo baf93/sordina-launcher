@@ -166,7 +166,7 @@ private fun Waiting(
         Week(streak.week)
         Spacer(Modifier.height(16.dp))
         Box(
-            Modifier.fillMaxWidth().height(54.dp).clip(RoundedCornerShape(27.dp)).background(c.accent).clickable(onClick = onSkip),
+            Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(26.dp)).background(c.accent).clickable(onClick = onSkip),
             contentAlignment = Alignment.Center,
         ) { Text(tr(R.string.leave_it), style = TextStyle(fontSize = 17.sp, color = c.bg)) }
         Text(

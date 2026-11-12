@@ -101,7 +101,7 @@
     <string name="time_back">Cirka %1$s tilbage til dig.</string>
     <string name="stat_today">i dag</string>
     <string name="stat_in_7_days">på 7 dage</string>
-    <string name="back_home">Tilbage til start…</string>
+    <string name="back_home">Går tilbage…</string>
     <string name="less_than_minute">under et minut</string>
     <string name="minutes_short">%1$d min</string>
     <string name="hours_short">%1$d t</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">Hvor længe at vente</string>
     <string name="s_stay_hint">Vender ikke tilbage ved oversigten</string>
     <string name="s_stay">Bliv i Sordina</string>
-    <string name="s_home">Hjem</string>
+    <string name="s_home">Skærm</string>
     <string name="s_weather">Vejr</string>
     <string name="on_m">til</string>
     <string name="turn_on">slå til</string>
@@ -213,7 +213,7 @@
     <string name="yes">ja</string>
     <string name="none_m">ingen</string>
     <string name="s_events_go">Begivenheder går til</string>
-    <string name="s_ha_calendars">Kalendere i Hjem</string>
+    <string name="s_ha_calendars">Viste kalendere</string>
     <string name="loading">Indlæser…</string>
     <string name="s_no_calendar">Ingen kalendere.</string>
     <string name="s_tap_app">Tryk på en app for at vælge.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">Tillad beskeder</string>
     <string name="onb_important_sub">Kommer altid igennem.</string>
     <string name="onb_done_sub">Op: gør. Ned: notifikationer.\nHold: indstillinger.</string>
-    <string name="onb_go_home">Gå til start</string>
+    <string name="onb_go_home">Start</string>
     <string name="onb_allow_contacts">Giv adgang til kontakter</string>
     <string name="onb_important">Vigtige</string>
     <string name="remove_l">fjern</string>
@@ -461,4 +461,6 @@
     <string name="rain_chance">%1$d%% sandsynlighed</string>
     <string name="birthday">Fødselsdag</string>
     <string name="birthday_age">Fylder %1$d</string>
+    <string name="pinned_heading">Altid her</string>
+    <string name="now_heading">Nu</string>
 </resources>

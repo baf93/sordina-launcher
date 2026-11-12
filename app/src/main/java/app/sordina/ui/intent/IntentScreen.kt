@@ -33,6 +33,13 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material.icons.rounded.PanTool
+import androidx.compose.material.icons.rounded.PushPin
+import androidx.compose.material.icons.rounded.HelpOutline
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Mic
@@ -43,8 +50,6 @@ import androidx.compose.material.icons.rounded.Calculate
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.automirrored.rounded.KeyboardReturn
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -70,11 +75,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.sordina.data.Act
 import app.sordina.data.AppCatalog
 import app.sordina.data.AppEntry
 import app.sordina.data.Candidate
 import app.sordina.data.Kind
 import app.sordina.data.Understanding
+import app.sordina.ui.Sheet
+import app.sordina.ui.SheetRow
 import app.sordina.ui.clickableNoRipple
 import app.sordina.ui.LocalFeel
 import app.sordina.ui.surface
@@ -152,9 +160,9 @@ fun IntentScreen(
     ) {
         OnBackdrop(topDark) {
             // Tutte le app: un'icona sola, in alto a destra, lontana dal pollice
-            // Il titolo della sezione e l'icona sulla stessa riga
             Row(Modifier.fillMaxWidth().padding(start = 28.dp, top = 6.dp, end = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (query.isBlank()) Text(tr(R.string.home_search), style = TextStyle(fontSize = 28.sp, lineHeight = 32.sp, color = S.c.ink))
+                // Il titolo: la domanda della barra di Casa, qui scritta in grande
+                if (query.isBlank()) Text(tr(R.string.home_search), style = TextStyle(fontSize = 30.sp, lineHeight = 36.sp, color = S.c.ink))
                 Spacer(Modifier.weight(1f))
                 Box(
                     Modifier.size(44.dp).clip(CircleShape).background(surface())
@@ -163,7 +171,7 @@ fun IntentScreen(
                 ) { Icon(Icons.Rounded.Apps, tr(R.string.all_apps), Modifier.size(22.dp), tint = S.c.ink) }
             }
             Column(
-                Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 14.dp),
+                Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
             ) {
                 Spacer(Modifier.height(8.dp))
                 if (query.isNotBlank()) {
@@ -196,11 +204,16 @@ fun IntentScreen(
                     }
                     if (proposals.isNotEmpty()) {
                         Spacer(Modifier.height(10.dp))
-                        // A blocchetti, due per riga: comodi col pollice, leggibili su qualsiasi sfondo
-                        proposals.chunked(2).forEach { row ->
+                        // A blocchetti, due per riga: comodi col pollice. Le fissate in cima, sotto il loro titoletto; poi quelle di adesso
+                        val (fixed, now) = proposals.partition { actions.isPinned(it) }
+                        listOf(tr(R.string.pinned_heading) to fixed, tr(R.string.now_heading) to now).forEach { (head, list) ->
+                            if (list.isEmpty()) return@forEach
+                            if (fixed.isNotEmpty()) Text(head, Modifier.padding(start = 12.dp, top = if (list === fixed) 0.dp else 8.dp, bottom = 6.dp), style = TextStyle(fontSize = 13.sp, color = c.soft))
+                            list.chunked(2).forEach { row ->
                             Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 row.forEach { app -> ProposalLine(app, actions, appIcon(app), Modifier.weight(1f)) { onLaunch(app) } }
                                 if (row.size == 1) Spacer(Modifier.weight(1f))
+                            }
                             }
                         }
                     }
@@ -263,7 +276,7 @@ private fun Mic(listening: Boolean, onDown: () -> Unit, onUp: () -> Unit) {
                 }
             },
         contentAlignment = Alignment.Center,
-    ) { Icon(Icons.Rounded.Mic, tr(R.string.speak), Modifier.size(22.dp), tint = if (listening) c.bg else c.ink) }
+    ) { Icon(Icons.Rounded.Mic, tr(R.string.speak), Modifier.size(22.dp), tint = if (listening) c.bg else c.accent) }
 }
 
 /** La parte già scritta resta in evidenza, il resto è più tenue. */
@@ -286,10 +299,10 @@ private fun ReadyBlock(cand: Candidate, onGo: () -> Unit) {
     Text(cand.title, style = TextStyle(fontSize = 24.sp, color = c.ink))
     cand.subtitle?.let { Text(it, maxLines = 3, style = TextStyle(fontSize = 15.sp, color = c.soft)) }
     Box(
-        Modifier.padding(top = 12.dp).height(46.dp).clip(RoundedCornerShape(23.dp)).background(c.accent)
+        Modifier.padding(top = 12.dp).height(52.dp).clip(RoundedCornerShape(26.dp)).background(c.accent)
             .clickableNoRipple(onGo).padding(horizontal = 24.dp),
         contentAlignment = Alignment.Center,
-    ) { Text(if (cand.title.startsWith("Chiama")) tr(R.string.call) else tr(R.string.open_chat), style = TextStyle(fontSize = 15.sp, color = androidx.compose.ui.graphics.Color.White)) }
+    ) { Text(if (cand.act is Act.Call) tr(R.string.call) else tr(R.string.open_chat), style = TextStyle(fontSize = 16.sp, color = c.bg)) }
 }
 
 private val KIND_ORDER = listOf(Kind.APP, Kind.PERSON, Kind.HOME, Kind.ACTION, Kind.SETTING, Kind.CALC, Kind.WEB)
@@ -400,7 +413,8 @@ private fun Leading(cand: Candidate, icon: androidx.compose.ui.graphics.ImageBit
         }
         if (glyph != null) Icon(glyph, null, Modifier.size(size * 0.5f), tint = c.soft)
         else Text(
-            cand.title.removePrefix("Apri ").trim().take(1).uppercase(),
+            // L'iniziale di chi o di cosa: il nome vero, non il titolo (che cambia con la lingua: "Chiama …", "Apri …")
+            when (val a = cand.act) { is Act.Call -> a.contact.name; is Act.Message -> a.contact.name; else -> cand.app?.label ?: cand.title }.trim().take(1).uppercase(),
             style = TextStyle(fontSize = (size.value * 0.42f).sp, color = if (person) c.accent else c.soft),
         )
     }
@@ -424,15 +438,14 @@ private fun ProposalLine(app: AppEntry, actions: ProposalActions, icon: androidx
         ) {
             AppIcon(icon, 24.dp)
             Text(app.label, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 17.sp, color = c.ink))
-            if (pinned) Box(Modifier.padding(start = 8.dp).size(6.dp).clip(CircleShape).background(c.accent))
         }
-        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-            why?.let { w -> DropdownMenuItem(text = { Text(w) }, onClick = { menu = false }) }
-            if (why == null) DropdownMenuItem(text = { Text(tr(R.string.why_here)) }, onClick = { why = actions.why(app) })
-            DropdownMenuItem(text = { Text(if (pinned) tr(R.string.unpin) else tr(R.string.pin)) }, onClick = { menu = false; actions.togglePin(app) })
-            DropdownMenuItem(text = { Text(tr(R.string.brake)) }, onClick = { menu = false; actions.brake(app) })
-            DropdownMenuItem(text = { Text(tr(R.string.dont_suggest)) }, onClick = { menu = false; actions.exclude(app) })
-            DropdownMenuItem(text = { Text(tr(R.string.app_info)) }, onClick = { menu = false; actions.info(app) })
+        // Tieni premuto: il foglio di Sordina, con l'app in testa
+        if (menu) Sheet(app.label, hint = why, onDismiss = { menu = false }, leading = icon?.let { b -> { androidx.compose.foundation.Image(b, null, Modifier.size(28.dp)) } }) {
+            if (why == null) SheetRow(tr(R.string.why_here), Icons.Rounded.HelpOutline) { why = actions.why(app) }
+            SheetRow(if (pinned) tr(R.string.unpin) else tr(R.string.pin), Icons.Rounded.PushPin) { menu = false; actions.togglePin(app) }
+            SheetRow(tr(R.string.brake), Icons.Rounded.PanTool) { menu = false; actions.brake(app) }
+            SheetRow(tr(R.string.dont_suggest), Icons.Rounded.VisibilityOff) { menu = false; actions.exclude(app) }
+            SheetRow(tr(R.string.app_info), Icons.Rounded.Info) { menu = false; actions.info(app) }
         }
     }
 }

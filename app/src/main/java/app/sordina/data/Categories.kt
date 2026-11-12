@@ -62,6 +62,9 @@ object Categories {
         "it.italotreno", "com.ntvspa", "com.ita", "com.lufthansa", "com.uber", "com.flixbus", "com.google.android.apps.maps",
         "com.waze", "com.trainline", "com.skyscanner", "com.tripadvisor", "com.telepass", "it.autostrade",
     )
+    fun isSocial(pkg: String) = SOCIAL.hit(pkg)
+    fun isHome(pkg: String) = HOME.hit(pkg)
+
     private val SOCIAL = listOf(
         "com.instagram", "com.facebook.katana", "com.facebook.lite", "com.twitter.android", "com.zhiliaoapp.musically",
         "com.ss.android.ugc", "com.reddit", "com.linkedin", "com.snapchat", "com.pinterest", "com.bereal",

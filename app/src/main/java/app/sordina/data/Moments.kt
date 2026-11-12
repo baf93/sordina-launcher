@@ -59,22 +59,22 @@ class Moments(private val context: Context, private val prefs: Prefs) {
 
     /** Il prossimo riepilogo dopo [now], saltando quelli che cadono di notte. */
     fun nextSummary(now: LocalDateTime = LocalDateTime.now()): LocalDateTime {
-        val hours = prefs.summaryHours.sorted()
+        val times = prefs.summaryTimes
         for (d in 0..2) {
             val day = now.toLocalDate().plusDays(d.toLong())
-            for (h in hours) {
-                val t = day.atTime(h, 0)
+            for (m in times) {
+                val t = day.atTime(m / 60, m % 60)
                 if (!t.isAfter(now)) continue
-                if (prefs.nightEnabled && inWindow(h * 60, prefs.nightStart, prefs.nightEnd)) continue
+                if (prefs.nightEnabled && inWindow(m, prefs.nightStart, prefs.nightEnd)) continue
                 return t
             }
         }
         return now.plusHours(6)
     }
 
-    /** L'ultimo riepilogo passato oggi, se c'è. */
+    /** L'ultimo riepilogo passato oggi, se c'è (in minuti dalla mezzanotte). */
     fun lastSummaryToday(now: LocalDateTime = LocalDateTime.now()): Int? =
-        prefs.summaryHours.sorted().lastOrNull { it * 60 <= now.hour * 60 + now.minute }
+        prefs.summaryTimes.lastOrNull { it <= now.hour * 60 + now.minute }
 
     /** Prossimo confine di notte (inizio o fine) dopo [now]. */
     fun nextNightEdge(now: LocalDateTime = LocalDateTime.now()): LocalDateTime? {

@@ -81,8 +81,10 @@ class Routines(private val context: Context) {
         val labels = apps.associate { it.packageName to it.label }
         val skip = setOf(context.packageName, "com.android.systemui", "com.sec.android.app.launcher", "com.google.android.apps.nexuslauncher")
         val out = ArrayList<Card>()
+        val horizon = usageHorizon(usm, now)
         for ((ctx, start) in active) {
-            val before = past.filter { it.first == ctx && it.second < start - 60 * 60_000 }
+            // Solo gli episodi di cui Android ricorda ancora le aperture: gli altri conterebbero come "non hai aperto niente"
+            val before = past.filter { it.first == ctx && it.second < start - 60 * 60_000 && it.second >= horizon }
             if (before.size < 3) continue
             val counts = HashMap<String, Int>()
             for ((_, t) in before) {
@@ -111,6 +113,17 @@ class Routines(private val context: Context) {
         }
         return out
     }
+
+    /**
+     * Il primo istante di cui Android conserva ancora gli eventi d'uso (di solito una decina di giorni,
+     * mentre gli episodi restano 45). Senza questo limite, con la storia lunga nessuna abitudine
+     * arriva più alla metà degli episodi e le schede smettono di comparire.
+     */
+    private fun usageHorizon(usm: UsageStatsManager, now: Long): Long = runCatching {
+        val ev = usm.queryEvents(now - 45L * 86_400_000, now)
+        val e = UsageEvents.Event()
+        if (ev.hasNextEvent()) { ev.getNextEvent(e); e.timeStamp } else now
+    }.getOrDefault(now)
 
     private fun opened(usm: UsageStatsManager, from: Long, to: Long): List<String> = runCatching {
         val ev = usm.queryEvents(from, to)

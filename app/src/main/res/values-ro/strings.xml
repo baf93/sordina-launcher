@@ -101,7 +101,7 @@
     <string name="time_back">Cam %1$s se întorc la tine.</string>
     <string name="stat_today">azi</string>
     <string name="stat_in_7_days">în 7 zile</string>
-    <string name="back_home">Înapoi la ecranul principal…</string>
+    <string name="back_home">Mă întorc…</string>
     <string name="less_than_minute">sub un minut</string>
     <string name="minutes_short">%1$d min</string>
     <string name="hours_short">%1$d h</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">Cât să aștepți</string>
     <string name="s_stay_hint">Nu revin la rezumat</string>
     <string name="s_stay">Rămân în Sordina</string>
-    <string name="s_home">Acasă</string>
+    <string name="s_home">Ecran</string>
     <string name="s_weather">Vreme</string>
     <string name="on_m">activat</string>
     <string name="turn_on">activează</string>
@@ -213,7 +213,7 @@
     <string name="yes">da</string>
     <string name="none_m">niciunul</string>
     <string name="s_events_go">Evenimentele merg în</string>
-    <string name="s_ha_calendars">Calendare în Acasă</string>
+    <string name="s_ha_calendars">Calendare afișate</string>
     <string name="loading">Se încarcă…</string>
     <string name="s_no_calendar">Niciun calendar.</string>
     <string name="s_tap_app">Atinge o aplicație ca s-o alegi.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">Permite alertele</string>
     <string name="onb_important_sub">Trec mereu.</string>
     <string name="onb_done_sub">Sus: fă. Jos: notificări.\nȚine apăsat: setări.</string>
-    <string name="onb_go_home">Mergi la ecranul principal</string>
+    <string name="onb_go_home">Începe</string>
     <string name="onb_allow_contacts">Permite accesul la contacte</string>
     <string name="onb_important">Importanți</string>
     <string name="remove_l">elimină</string>
@@ -473,4 +473,6 @@
     <string name="rain_chance">Probabilitate %1$d%%</string>
     <string name="birthday">Zi de naștere</string>
     <string name="birthday_age">Împlinește %1$d ani</string>
+    <string name="pinned_heading">Mereu aici</string>
+    <string name="now_heading">Acum</string>
 </resources>

@@ -101,7 +101,7 @@
     <string name="time_back">ราว %1$s กลับมาเป็นของคุณ</string>
     <string name="stat_today">วันนี้</string>
     <string name="stat_in_7_days">ใน 7 วัน</string>
-    <string name="back_home">กลับหน้าหลัก…</string>
+    <string name="back_home">กำลังกลับ…</string>
     <string name="less_than_minute">ไม่ถึงนาที</string>
     <string name="minutes_short">%1$d นาที</string>
     <string name="hours_short">%1$d ชม.</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">รอนานเท่าไร</string>
     <string name="s_stay_hint">ไม่กลับมาตอนสรุป</string>
     <string name="s_stay">อยู่ใน Sordina</string>
-    <string name="s_home">บ้าน</string>
+    <string name="s_home">หน้าจอ</string>
     <string name="s_weather">สภาพอากาศ</string>
     <string name="on_m">เปิด</string>
     <string name="turn_on">เปิด</string>
@@ -213,7 +213,7 @@
     <string name="yes">ใช่</string>
     <string name="none_m">ไม่มี</string>
     <string name="s_events_go">นัดหมายไปที่</string>
-    <string name="s_ha_calendars">ปฏิทินในบ้าน</string>
+    <string name="s_ha_calendars">ปฏิทินที่แสดง</string>
     <string name="loading">กำลังโหลด…</string>
     <string name="s_no_calendar">ไม่มีปฏิทิน</string>
     <string name="s_tap_app">แตะแอปเพื่อเลือก</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">อนุญาตการแจ้งเตือน</string>
     <string name="onb_important_sub">ผ่านเสมอ</string>
     <string name="onb_done_sub">ขึ้น: ทำ ลง: การแจ้งเตือน\nกดค้าง: การตั้งค่า</string>
-    <string name="onb_go_home">ไปหน้าหลัก</string>
+    <string name="onb_go_home">เริ่ม</string>
     <string name="onb_allow_contacts">อนุญาตให้เข้าถึงรายชื่อ</string>
     <string name="onb_important">สำคัญ</string>
     <string name="remove_l">นำออก</string>
@@ -449,4 +449,6 @@
     <string name="rain_chance">โอกาส %1$d%%</string>
     <string name="birthday">วันเกิด</string>
     <string name="birthday_age">อายุครบ %1$d ปี</string>
+    <string name="pinned_heading">อยู่ตรงนี้เสมอ</string>
+    <string name="now_heading">ตอนนี้</string>
 </resources>

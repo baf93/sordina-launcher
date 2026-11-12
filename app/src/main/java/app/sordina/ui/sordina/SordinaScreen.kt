@@ -80,6 +80,7 @@ import androidx.compose.ui.unit.sp
 import app.sordina.data.Categories
 import app.sordina.data.Category
 import app.sordina.data.Held
+import app.sordina.ui.Header
 import app.sordina.ui.LocalFeel
 import app.sordina.ui.clickableNoRipple
 import app.sordina.ui.theme.S
@@ -139,31 +140,16 @@ fun SordinaScreen(
     Box(Modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 110.dp)) {
             item(key = "top") {
-                Column(Modifier.statusBarsPadding()) {
-                    // Indietro e titolo sulla stessa riga
-                    Row(Modifier.padding(start = 8.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            Modifier.size(44.dp).clip(CircleShape).clickableNoRipple(onBack),
-                            contentAlignment = Alignment.Center,
-                        ) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, tr(R.string.back), tint = c.ink) }
-                        Spacer(Modifier.width(6.dp))
-                        Text("Sordina", style = TextStyle(fontSize = 30.sp, lineHeight = 34.sp, color = c.ink))
-                    }
-                    Text(
-                        when (total) {
+                Header("Sordina", onBack, subtitle = when (total) {
                             0 -> tr(R.string.sordina_empty)
                             1 -> listOfNotNull(trn(R.plurals.n_notifications, 1), until).joinToString(" · ")
                             else -> listOfNotNull(trn(R.plurals.n_notifications, total), until).joinToString(" · ")
-                        },
-                        Modifier.padding(start = 58.dp, end = 24.dp, top = 2.dp, bottom = 8.dp),
-                        style = TextStyle(fontSize = 15.sp, color = c.soft),
-                    )
-                }
+                        }, modifier = Modifier.statusBarsPadding().padding(horizontal = 16.dp))
             }
             sections.forEach { s ->
                 if (s.label == null) item(key = "h_" + s.key) { Spacer(Modifier.height(10.dp)) }
                 else item(key = "h_" + s.key) {
-                    Row(Modifier.animateItem().padding(start = 26.dp, end = 26.dp, top = 18.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.animateItem().padding(start = 28.dp, end = 28.dp, top = 18.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (s.braked) Icon(Icons.Rounded.Lock, null, Modifier.padding(end = 6.dp).size(16.dp), tint = c.soft)
                         Text(s.label, style = TextStyle(fontSize = 20.sp, color = c.ink))
                         Spacer(Modifier.width(8.dp))
@@ -175,7 +161,7 @@ fun SordinaScreen(
                 }
                 items(s.groups, key = { it.first().groupKey }) { g ->
                     val key = g.first().groupKey
-                    Box(Modifier.animateItem().padding(horizontal = 12.dp, vertical = 4.dp)) {
+                    Box(Modifier.animateItem().padding(horizontal = 16.dp, vertical = 4.dp)) {
                         Block(
                             g, open = key in expanded, dim = s.braked, icon = icon,
                             onToggle = { feel.tick(); expanded = if (key in expanded) expanded - key else expanded + key },
@@ -187,9 +173,11 @@ fun SordinaScreen(
             }
         }
         if (total > 0) Box(
-            Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 18.dp)
+            // Il pulsante principale, uguale ovunque: largo, alto 52
+            Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 16.dp).fillMaxWidth().height(52.dp)
                 .clip(RoundedCornerShape(26.dp)).background(c.ink)
-                .clickable { feel.confirm(); onReadAll() }.padding(horizontal = 30.dp, vertical = 15.dp),
+                .clickable { feel.confirm(); onReadAll() },
+            contentAlignment = Alignment.Center,
         ) { Text(tr(R.string.all_read), style = TextStyle(fontSize = 16.sp, color = c.bg)) }
     }
 

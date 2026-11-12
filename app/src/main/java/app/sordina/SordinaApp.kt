@@ -30,7 +30,7 @@ class SordinaApp : Application() {
     val habits by lazy { Habits(this) }
     val calendars by lazy { Calendars(this, prefs) }
     val intents by lazy { Intents(this, prefs, people, store, ha) }
-    val signals by lazy { Signals() }
+    val signals by lazy { Signals(this) }
     val routines by lazy { Routines(this) }
     val weather by lazy { app.sordina.data.Weather(this) }
 

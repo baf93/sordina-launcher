@@ -96,10 +96,15 @@ class Prefs(context: Context) {
         set(v) = put { putStringSet("excluded", v) }
 
     // Notifiche
-    var summaryHours: List<Int>
-        get() = str("summaryHours", "8,13,19").split(',').mapNotNull { it.trim().toIntOrNull() }.sorted()
-            .ifEmpty { listOf(8, 13, 19) }
-        set(v) = put { putString("summaryHours", v.distinct().sorted().joinToString(",")) }
+    /** Orari dei riepiloghi in minuti dalla mezzanotte (8:30 = 510). Prima erano ore intere in "summaryHours": si leggono da lì finché non si salva. */
+    var summaryTimes: List<Int>
+        get() {
+            val raw = sp.getString("summaryTimes", null)
+            val list = raw?.split(',')?.mapNotNull { it.trim().toIntOrNull() }
+                ?: str("summaryHours", "8,13,19").split(',').mapNotNull { it.trim().toIntOrNull()?.times(60) }
+            return list.filter { it in 0 until 24 * 60 }.distinct().sorted().ifEmpty { listOf(8 * 60, 13 * 60, 19 * 60) }
+        }
+        set(v) = put { putString("summaryTimes", v.map { ((it % 1440) + 1440) % 1440 }.distinct().sorted().joinToString(",")) }
 
     /** Livello scelto dall'utente per app (pacchetto → livello). */
     var appLevels: Map<String, Level>
@@ -172,6 +177,10 @@ class Prefs(context: Context) {
         set(v) = put { putString("momentOverrideBase", v) }
 
     // Attrito
+    /** Le app da frenare sono già state proposte al primo avvio (una volta sola) */
+    var brakeSuggested: Boolean
+        get() = sp.getBoolean("brakeSuggested", false)
+        set(v) = put { putBoolean("brakeSuggested", v) }
     var braked: Set<String>
         get() = sp.getStringSet("braked", emptySet())!!.toSet()
         set(v) = put { putStringSet("braked", v) }

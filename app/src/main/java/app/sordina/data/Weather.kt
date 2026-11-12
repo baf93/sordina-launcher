@@ -20,6 +20,7 @@ import java.util.Locale
 class Weather(private val context: Context) {
     @Volatile private var cached: String? = null
     @Volatile private var at = 0L
+    @Volatile private var failedAt = 0L
 
     /** Pioggia in arrivo nelle prossime ore: quando (inizio dell'ora) e con che probabilità. null se non piove o piove già. */
     @Volatile var rain: Pair<Long, Int>? = null
@@ -32,6 +33,9 @@ class Weather(private val context: Context) {
     fun now(): String? {
         if (!hasPermission()) return null
         if (System.currentTimeMillis() - at < 3600_000 && cached != null) return cached
+        // Dopo un tentativo fallito (senza rete, senza posizione) si riprova fra 10 minuti, non a ogni ritorno a Casa
+        if (System.currentTimeMillis() - failedAt < 600_000) return cached
+        failedAt = System.currentTimeMillis()
         val lm = context.getSystemService(LocationManager::class.java) ?: return cached
         val loc = runCatching {
             listOf(LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER, LocationManager.GPS_PROVIDER)
@@ -51,7 +55,7 @@ class Weather(private val context: Context) {
             rain = runCatching { rainSoon(root, cur.getInt("weather_code")) }.getOrNull()
             "${Math.round(cur.getDouble("temperature_2m"))}° ${describe(cur.getInt("weather_code"))}"
         }.getOrNull() ?: return cached
-        cached = text; at = System.currentTimeMillis()
+        cached = text; at = System.currentTimeMillis(); failedAt = 0
         return text
     }
 

@@ -101,7 +101,7 @@
     <string name="time_back">Asi %1$s se ti vrací.</string>
     <string name="stat_today">dnes</string>
     <string name="stat_in_7_days">za 7 dní</string>
-    <string name="back_home">Zpět na plochu…</string>
+    <string name="back_home">Vracím se…</string>
     <string name="less_than_minute">méně než minuta</string>
     <string name="minutes_short">%1$d min</string>
     <string name="hours_short">%1$d h</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">Jak dlouho čekat</string>
     <string name="s_stay_hint">Nevrátí se v přehledu</string>
     <string name="s_stay">Zůstat v Sordině</string>
-    <string name="s_home">Domov</string>
+    <string name="s_home">Obrazovka</string>
     <string name="s_weather">Počasí</string>
     <string name="on_m">zapnuto</string>
     <string name="turn_on">zapnout</string>
@@ -213,7 +213,7 @@
     <string name="yes">ano</string>
     <string name="none_m">žádný</string>
     <string name="s_events_go">Události jdou do</string>
-    <string name="s_ha_calendars">Kalendáře v Domově</string>
+    <string name="s_ha_calendars">Zobrazené kalendáře</string>
     <string name="loading">Načítání…</string>
     <string name="s_no_calendar">Žádné kalendáře.</string>
     <string name="s_tap_app">Klepni na aplikaci.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">Povolit upozornění</string>
     <string name="onb_important_sub">Projdou vždy.</string>
     <string name="onb_done_sub">Nahoru: dělat. Dolů: oznámení.\nPodržet: nastavení.</string>
-    <string name="onb_go_home">Na plochu</string>
+    <string name="onb_go_home">Začít</string>
     <string name="onb_allow_contacts">Povolit přístup ke kontaktům</string>
     <string name="onb_important">Důležití</string>
     <string name="remove_l">odebrat</string>
@@ -485,4 +485,6 @@
     <string name="rain_chance">Pravděpodobnost %1$d%%</string>
     <string name="birthday">Narozeniny</string>
     <string name="birthday_age">Slaví %1$d</string>
+    <string name="pinned_heading">Vždy tady</string>
+    <string name="now_heading">Teď</string>
 </resources>

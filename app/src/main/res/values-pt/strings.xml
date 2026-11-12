@@ -101,7 +101,7 @@
     <string name="time_back">Cerca de %1$s de volta para você.</string>
     <string name="stat_today">hoje</string>
     <string name="stat_in_7_days">em 7 dias</string>
-    <string name="back_home">Voltando ao início…</string>
+    <string name="back_home">Voltando…</string>
     <string name="less_than_minute">menos de um minuto</string>
     <string name="minutes_short">%1$d min</string>
     <string name="hours_short">%1$d h</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">Quanto esperar</string>
     <string name="s_stay_hint">Não voltam no resumo</string>
     <string name="s_stay">Ficar na Sordina</string>
-    <string name="s_home">Casa</string>
+    <string name="s_home">Tela</string>
     <string name="s_weather">Tempo</string>
     <string name="on_m">ligado</string>
     <string name="turn_on">ligar</string>
@@ -213,7 +213,7 @@
     <string name="yes">sim</string>
     <string name="none_m">nenhum</string>
     <string name="s_events_go">Os eventos vão para</string>
-    <string name="s_ha_calendars">Agendas da Casa</string>
+    <string name="s_ha_calendars">Calendários exibidos</string>
     <string name="loading">Carregando…</string>
     <string name="s_no_calendar">Nenhuma agenda.</string>
     <string name="s_tap_app">Toque num app para escolher.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">Permitir avisos</string>
     <string name="onb_important_sub">Passam sempre.</string>
     <string name="onb_done_sub">Para cima: fazer. Para baixo: notificações.\nSegurar: configurações.</string>
-    <string name="onb_go_home">Ir para o início</string>
+    <string name="onb_go_home">Começar</string>
     <string name="onb_allow_contacts">Permitir acesso aos contatos</string>
     <string name="onb_important">Importantes</string>
     <string name="remove_l">remover</string>
@@ -461,4 +461,6 @@
     <string name="rain_chance">%1$d%% de probabilidade</string>
     <string name="birthday">Aniversário</string>
     <string name="birthday_age">Faz %1$d anos</string>
+    <string name="pinned_heading">Sempre aqui</string>
+    <string name="now_heading">Agora</string>
 </resources>

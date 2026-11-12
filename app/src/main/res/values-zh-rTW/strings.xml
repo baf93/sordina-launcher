@@ -101,7 +101,7 @@
     <string name="time_back">大約 %1$s 回到你手中。</string>
     <string name="stat_today">今天</string>
     <string name="stat_in_7_days">7 天內</string>
-    <string name="back_home">正在返回主畫面…</string>
+    <string name="back_home">正在返回…</string>
     <string name="less_than_minute">不到一分鐘</string>
     <string name="minutes_short">%1$d 分鐘</string>
     <string name="hours_short">%1$d 小時</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">等待多久</string>
     <string name="s_stay_hint">摘要時不回來</string>
     <string name="s_stay">留在 Sordina</string>
-    <string name="s_home">家</string>
+    <string name="s_home">螢幕</string>
     <string name="s_weather">天氣</string>
     <string name="on_m">開</string>
     <string name="turn_on">開啟</string>
@@ -213,7 +213,7 @@
     <string name="yes">是</string>
     <string name="none_m">無</string>
     <string name="s_events_go">活動儲存到</string>
-    <string name="s_ha_calendars">家中的日曆</string>
+    <string name="s_ha_calendars">顯示的日曆</string>
     <string name="loading">載入中…</string>
     <string name="s_no_calendar">沒有日曆。</string>
     <string name="s_tap_app">輕觸一個應用程式來選擇。</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">允許提醒</string>
     <string name="onb_important_sub">一律送達。</string>
     <string name="onb_done_sub">上滑：做事。下滑：通知。\n長按：設定。</string>
-    <string name="onb_go_home">前往主畫面</string>
+    <string name="onb_go_home">開始</string>
     <string name="onb_allow_contacts">允許存取聯絡人</string>
     <string name="onb_important">重要</string>
     <string name="remove_l">移除</string>
@@ -449,4 +449,6 @@
     <string name="rain_chance">機率 %1$d%%</string>
     <string name="birthday">生日</string>
     <string name="birthday_age">滿 %1$d 歲</string>
+    <string name="pinned_heading">常駐</string>
+    <string name="now_heading">現在</string>
 </resources>

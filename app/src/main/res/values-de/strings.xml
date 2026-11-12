@@ -101,7 +101,7 @@
     <string name="time_back">Etwa %1$s gehören wieder dir.</string>
     <string name="stat_today">heute</string>
     <string name="stat_in_7_days">in 7 Tagen</string>
-    <string name="back_home">Zurück zum Start…</string>
+    <string name="back_home">Zurück…</string>
     <string name="less_than_minute">unter einer Minute</string>
     <string name="minutes_short">%1$d Min.</string>
     <string name="hours_short">%1$d Std.</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">Wie lange warten</string>
     <string name="s_stay_hint">Kommen bei der Übersicht nicht zurück</string>
     <string name="s_stay">In Sordina bleiben</string>
-    <string name="s_home">Zuhause</string>
+    <string name="s_home">Bildschirm</string>
     <string name="s_weather">Wetter</string>
     <string name="on_m">an</string>
     <string name="turn_on">einschalten</string>
@@ -213,7 +213,7 @@
     <string name="yes">ja</string>
     <string name="none_m">keiner</string>
     <string name="s_events_go">Termine gehen in</string>
-    <string name="s_ha_calendars">Kalender von Zuhause</string>
+    <string name="s_ha_calendars">Angezeigte Kalender</string>
     <string name="loading">Lädt…</string>
     <string name="s_no_calendar">Keine Kalender.</string>
     <string name="s_tap_app">Tippe auf eine App.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">Hinweise erlauben</string>
     <string name="onb_important_sub">Kommen immer durch.</string>
     <string name="onb_done_sub">Oben: tun. Unten: Benachrichtigungen.\nHalten: Einstellungen.</string>
-    <string name="onb_go_home">Zum Start</string>
+    <string name="onb_go_home">Los geht\'s</string>
     <string name="onb_allow_contacts">Zugriff auf Kontakte erlauben</string>
     <string name="onb_important">Wichtig</string>
     <string name="remove_l">entfernen</string>
@@ -461,4 +461,6 @@
     <string name="rain_chance">%1$d%% Wahrscheinlichkeit</string>
     <string name="birthday">Geburtstag</string>
     <string name="birthday_age">Wird %1$d</string>
+    <string name="pinned_heading">Immer hier</string>
+    <string name="now_heading">Jetzt</string>
 </resources>

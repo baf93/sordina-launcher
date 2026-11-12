@@ -101,7 +101,7 @@
     <string name="time_back">Environ %1$s de retrouvées.</string>
     <string name="stat_today">aujourd\'hui</string>
     <string name="stat_in_7_days">en 7 jours</string>
-    <string name="back_home">Retour à l\'accueil…</string>
+    <string name="back_home">Retour…</string>
     <string name="less_than_minute">moins d\'une minute</string>
     <string name="minutes_short">%1$d min</string>
     <string name="hours_short">%1$d h</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">Combien attendre</string>
     <string name="s_stay_hint">Ne reviennent pas au résumé</string>
     <string name="s_stay">Rester dans Sordina</string>
-    <string name="s_home">Maison</string>
+    <string name="s_home">Écran</string>
     <string name="s_weather">Météo</string>
     <string name="on_m">activé</string>
     <string name="turn_on">activer</string>
@@ -213,7 +213,7 @@
     <string name="yes">oui</string>
     <string name="none_m">aucun</string>
     <string name="s_events_go">Les événements vont dans</string>
-    <string name="s_ha_calendars">Agendas de la maison</string>
+    <string name="s_ha_calendars">Calendriers affichés</string>
     <string name="loading">Chargement…</string>
     <string name="s_no_calendar">Aucun agenda.</string>
     <string name="s_tap_app">Touchez une app pour choisir.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">Autoriser les alertes</string>
     <string name="onb_important_sub">Passent toujours.</string>
     <string name="onb_done_sub">En haut : agir. En bas : notifications.\nAppui long : réglages.</string>
-    <string name="onb_go_home">Aller à l\'accueil</string>
+    <string name="onb_go_home">Commencer</string>
     <string name="onb_allow_contacts">Autoriser l\'accès aux contacts</string>
     <string name="onb_important">Importants</string>
     <string name="remove_l">retirer</string>
@@ -461,4 +461,6 @@
     <string name="rain_chance">%1$d%% de probabilité</string>
     <string name="birthday">Anniversaire</string>
     <string name="birthday_age">Fête ses %1$d ans</string>
+    <string name="pinned_heading">Toujours là</string>
+    <string name="now_heading">Maintenant</string>
 </resources>

@@ -6,6 +6,8 @@ import app.sordina.R
 import app.sordina.data.Categories
 import androidx.core.graphics.drawable.toBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import app.sordina.ui.Said
+import app.sordina.ui.Bubble
 import app.sordina.ui.sordina.SordinaScreen
 import app.sordina.ui.Feel
 import app.sordina.ui.LocalFeel
@@ -121,6 +123,7 @@ class MainActivity : ComponentActivity(), Ops {
     private var brakeTarget by mutableStateOf<AppEntry?>(null)
     private var events by mutableStateOf<List<Upcoming>>(emptyList())
     private var habitCards by mutableStateOf<List<Card>>(emptyList())
+    private var onbStep by mutableIntStateOf(0)
     private var doneHabits by mutableStateOf<Set<String>>(emptySet())
     private var backdrop by mutableStateOf(Backdrop())
     private var accentPref by mutableIntStateOf(0)
@@ -189,7 +192,10 @@ class MainActivity : ComponentActivity(), Ops {
                 val feel = remember(prefsVersion) { Feel(prefs.animations, prefs.haptics, view) }
                 androidx.compose.runtime.CompositionLocalProvider(LocalFeel provides feel, LocalGlass provides (backdrop.active && glassPref)) {
                     SystemBars()
-                    Root()
+                    androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
+                        Root()
+                        Bubble(bubble) { bubble = null }
+                    }
                 }
             }
         }
@@ -207,6 +213,11 @@ class MainActivity : ComponentActivity(), Ops {
     }
 
     private fun handleIntent(intent: Intent?) {
+        // Solo nella versione di prova: riapre il primo avvio senza cancellare nulla
+        if (intent?.getBooleanExtra("onboarding", false) == true && (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            onbStep = intent.getIntExtra("step", 0)
+            screen = Screen.ONBOARDING; return
+        }
         if (screen == Screen.ONBOARDING) return
         when {
             intent?.action == ACTION_WAITING -> { screen = Screen.SORDINA }
@@ -218,6 +229,7 @@ class MainActivity : ComponentActivity(), Ops {
         super.onResume()
         refreshPerms()
         SordinaListener.rebind(this)
+        SordinaListener.sync()
         moment = app.moments.current()
         refreshProposals(force = false)
         refreshExtras()
@@ -254,7 +266,14 @@ class MainActivity : ComponentActivity(), Ops {
     }
 
     /** Casa: eventi vicini e schede "di solito". */
+    private var extrasAt = 0L
+    private var birthdaysDay: java.time.LocalDate? = null
+
     private fun refreshExtras() {
+        // Tornando a Casa arrivano insieme onResume e il cambio di schermata: basta un giro solo
+        val t = System.currentTimeMillis()
+        if (t - extrasAt < 2_000) return
+        extrasAt = t
         val current = apps
         lifecycleScope.launch(Dispatchers.IO) {
             events = app.calendars.upcoming(this@MainActivity)
@@ -263,7 +282,13 @@ class MainActivity : ComponentActivity(), Ops {
             agendaEvents = all.filter { it.begin < endOfDay }.take(3).ifEmpty { all.take(1) }
             weatherNow = app.weather.now()
             rainAt = app.weather.rain
-            birthdays = birthdaysToday(this@MainActivity)
+            // I compleanni cambiano col giorno: la rubrica si rilegge una volta al giorno, non a ogni ritorno a Casa
+            val today = java.time.LocalDate.now()
+            if (birthdaysDay != today) {
+                birthdays = birthdaysToday(this@MainActivity)
+                // Senza permesso della rubrica non si fissa il giorno: appena lo concedi, i compleanni compaiono
+                if (checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) birthdaysDay = today
+            }
             if (current.isNotEmpty()) habitCards = app.routines.suggestions(current)
         }
     }
@@ -313,7 +338,7 @@ class MainActivity : ComponentActivity(), Ops {
                 if (stays && out.ok) query = ""
                 val undo = out.undo
                 if (out.message != null) notice = Notice(out.message, undo?.let { u -> { lifecycleScope.launch { u(); notice = Notice(tr(R.string.undone)) } } })
-                if (out.message != null && screen == Screen.HOME) android.widget.Toast.makeText(this@MainActivity, out.message, android.widget.Toast.LENGTH_SHORT).show()
+                if (out.message != null && screen == Screen.HOME) say(out.message)
                 if (out.ok) app.routines.onCommand(c.title, query.ifBlank { c.title })
             }
         }
@@ -401,9 +426,10 @@ class MainActivity : ComponentActivity(), Ops {
             val row = when {
                 e.begin <= System.currentTimeMillis() -> AgendaRow(tr(R.string.now_l), e.title, key)
                 d == today -> AgendaRow(t.format(hm), e.title, key)
-                d == today.plusDays(1) -> AgendaRow(tr(R.string.tomorrow_l), tr(R.string.title_time, e.title, t.format(hm)), key)
-                else -> AgendaRow(t.format(java.time.format.DateTimeFormatter.ofPattern("EEE", Locale.getDefault())).replace(".", ""),
-                    tr(R.string.title_time, e.title, t.format(hm)), key)
+                // Gli altri giorni: l'ora resta a sinistra come oggi, il giorno va sopra come titoletto
+                d == today.plusDays(1) -> AgendaRow(t.format(hm), e.title, key, day = tr(R.string.tomorrow_cap))
+                else -> AgendaRow(t.format(hm), e.title, key,
+                    day = t.format(java.time.format.DateTimeFormatter.ofPattern("EEEE d", Locale.getDefault())).replaceFirstChar { it.uppercase() })
             }
             timed += e.begin to row
         }
@@ -449,7 +475,7 @@ class MainActivity : ComponentActivity(), Ops {
                 val clip = android.content.ClipData.newPlainText("codice", op.text)
                 clip.description.extras = android.os.PersistableBundle().apply { putBoolean("android.content.extra.IS_SENSITIVE", true) }
                 cm.setPrimaryClip(clip)
-                if (Build.VERSION.SDK_INT < 33) android.widget.Toast.makeText(this, tr(R.string.copied), android.widget.Toast.LENGTH_SHORT).show()
+                if (Build.VERSION.SDK_INT < 33) say(tr(R.string.copied))
                 app.signals.dismiss(card.key)
             }
             is CardOp.OpenNotif -> SordinaListener.open(this, op.key)
@@ -462,7 +488,7 @@ class MainActivity : ComponentActivity(), Ops {
                 if (!app.calendars.hasPermission()) { request(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR); return }
                 lifecycleScope.launch {
                     val id = withContext(Dispatchers.IO) { app.calendars.default()?.let { app.calendars.insert(it, op.title, op.whenAt) } }
-                    android.widget.Toast.makeText(this@MainActivity, if (id != null) tr(R.string.added) else tr(R.string.failed), android.widget.Toast.LENGTH_SHORT).show()
+                    say(if (id != null) tr(R.string.added) else tr(R.string.failed))
                     if (id != null) app.signals.dismiss(card.key)
                 }
             }
@@ -485,7 +511,12 @@ class MainActivity : ComponentActivity(), Ops {
             is CardOp.Done -> { SordinaListener.done(op.key); app.signals.dismiss(card.key) }
             is CardOp.Later -> { SordinaListener.later(op.key); app.signals.remove(card.key) }
             CardOp.Weather -> openWeather()
-            CardOp.Dismiss -> { if (card.kind == CardKind.HABIT || card.kind == CardKind.BIRTHDAY) doneHabits = doneHabits + card.key; app.signals.dismiss(card.key) }
+            CardOp.Dismiss -> {
+                if (card.kind == CardKind.HABIT || card.kind == CardKind.BIRTHDAY) doneHabits = doneHabits + card.key
+                // "Ok" toglie la scheda e chiude anche la notifica (o le notifiche) da cui è nata
+                if (card.sources.isNotEmpty()) SordinaListener.readKeys(this, card.sources)
+                app.signals.dismiss(card.key)
+            }
         }
     }
 
@@ -530,7 +561,7 @@ class MainActivity : ComponentActivity(), Ops {
                     SpeechRecognizer.ERROR_CLIENT -> null
                     else -> Notice(tr(R.string.mic_unavailable))
                 }
-                if (screen == Screen.HOME) notice?.let { android.widget.Toast.makeText(this@MainActivity, it.text, android.widget.Toast.LENGTH_SHORT).show() }
+                if (screen == Screen.HOME) notice?.let { say(it.text) }
             }
         })
         val i = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
@@ -556,8 +587,12 @@ class MainActivity : ComponentActivity(), Ops {
 
     private var voiceDownAt = 0L
 
+    // I messaggi brevi ("Copiato", "Aggiunto"…): una pillola nel tema, non il toast di Android
+    private var bubble by mutableStateOf<Said?>(null)
+    private fun say(text: String) { bubble = Said(text) }
+
     private fun hint(text: String) {
-        if (screen == Screen.HOME || screen == Screen.SORDINA) android.widget.Toast.makeText(this, text, android.widget.Toast.LENGTH_SHORT).show()
+        if (screen == Screen.HOME || screen == Screen.SORDINA) say(text)
         else notice = Notice(text)
     }
 
@@ -602,8 +637,15 @@ class MainActivity : ComponentActivity(), Ops {
         accentPref = prefs.accent
         glassPref = prefs.glass
         val m = prefs.wallpaperMode
-        if (m == 1) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
-        else window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
+        // Lo sfondo della finestra (carta, dal tema) coprirebbe quello del telefono: con lo sfondo del telefono diventa trasparente.
+        // Le schermate che non lo mostrano hanno comunque la loro carta (Modifier.paper).
+        if (m == 1) {
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
+            window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+        } else {
+            window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
+            window.setBackgroundDrawableResource(R.color.paper)
+        }
         lifecycleScope.launch { backdrop = withContext(Dispatchers.IO) { Backdrops.load(this@MainActivity, m, prefs.wallpaperPreset) } }
     }
     private val notifIcons = HashMap<String, androidx.compose.ui.graphics.ImageBitmap?>()
@@ -698,7 +740,7 @@ class MainActivity : ComponentActivity(), Ops {
                 val p = prefs.pinned
                 when {
                     a.key in p -> prefs.pinned = p - a.key
-                    // Al massimo 4 fisse su 6: le altre due restano a chi impara dalle tue abitudini
+                    // Al massimo 4 fisse, sopra le 6 consigliate
                     p.size >= Prefs.MAX_PINNED -> {
                         notice = Notice(tr(R.string.pins_full, Prefs.MAX_PINNED, a.label))
                         if (prefs.haptics) window.decorView.performHapticFeedback(
@@ -883,10 +925,9 @@ class MainActivity : ComponentActivity(), Ops {
                     Screen.ONBOARDING -> Onboarding(
                         app = app,
                         perms = perms,
-                        family = family,
-                        mode = mode,
-                        onFamily = { family = it; prefs.family = it },
-                        onMode = { mode = it; prefs.mode = it },
+                        apps = apps,
+                        usage = proposals.usage,
+                        startStep = onbStep,
                         ops = this@MainActivity,
                         onDone = {
                             prefs.onboarded = true

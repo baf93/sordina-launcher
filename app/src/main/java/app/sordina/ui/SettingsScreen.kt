@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -48,13 +49,12 @@ import app.sordina.ui.theme.Abstracts
 import app.sordina.ui.theme.S
 import app.sordina.data.Categories
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import app.sordina.ui.theme.ThemeFamily
 import app.sordina.ui.theme.ThemeMode
 
 
 /** Le sottopagine: solo per le liste vere (persone, app, sfondi, Home Assistant). */
-private enum class Sub { MAIN, PEOPLE, LEVELS, BRAKED, ORDER, PINNED, EXCLUDED, HA, PERMS, LOOK }
+private enum class Sub { MAIN, HOURS, PEOPLE, LEVELS, BRAKED, ORDER, PINNED, EXCLUDED, HA, PERMS, LOOK }
 
 private fun hm(min: Int) = Moments.fmt(min)
 
@@ -81,14 +81,23 @@ fun SettingsScreen(
 ) {
     var sub by rememberSaveable { mutableStateOf(Sub.MAIN) }
     var tick by remember { mutableIntStateOf(0) }
+    // Fuori da key(tick): un interruttore ricostruisce la pagina ma non deve riportarla in cima.
+    // Resta viva anche nelle sottopagine, così tornando indietro sei dove eri.
+    val mainScroll = rememberScrollState()
+    val haScroll = rememberScrollState()
     fun change(block: () -> Unit) { block(); tick++; ops.changed() }
     BackHandler(sub != Sub.MAIN) { sub = Sub.MAIN }
     val prefs = app.prefs
     val back = { sub = Sub.MAIN }
 
     if (sub != Sub.MAIN) {
-        Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 12.dp, vertical = 16.dp)) {
+        Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 16.dp, vertical = 16.dp)) {
             when (sub) {
+                Sub.HOURS -> {
+                    Header(tr(R.string.s_summaries), back)
+                    Hint(tr(R.string.ob5_sub))
+                    SummaryHours(app, ops, Modifier.weight(1f).padding(top = 8.dp))
+                }
                 Sub.PEOPLE -> {
                     Header(tr(R.string.s_important), back)
                     Hint(tr(R.string.s_important_hint))
@@ -108,8 +117,9 @@ fun SettingsScreen(
                             }
                             Line("${i + 1}.  ${cat.label}", trailing = {
                                 androidx.compose.foundation.layout.Row {
-                                    IconButton(onClick = { move(-1) }, enabled = i > 0) { Icon(Icons.Rounded.KeyboardArrowUp, tr(R.string.up), tint = if (i > 0) S.c.ink else S.c.dot) }
-                                    IconButton(onClick = { move(1) }, enabled = i < order.lastIndex) { Icon(Icons.Rounded.KeyboardArrowDown, tr(R.string.down), tint = if (i < order.lastIndex) S.c.ink else S.c.dot) }
+                                    RoundIcon(Icons.Rounded.KeyboardArrowUp, tr(R.string.up), i > 0) { move(-1) }
+                                    Spacer(Modifier.width(8.dp))
+                                    RoundIcon(Icons.Rounded.KeyboardArrowDown, tr(R.string.down), i < order.lastIndex) { move(1) }
                                 }
                             })
                         }
@@ -124,17 +134,17 @@ fun SettingsScreen(
                     Group {
                         keys.forEach { k ->
                             Line(byKey[k]?.label ?: k, trailing = {
-                                androidx.compose.material3.TextButton(onClick = {
+                                SmallPill(tr(R.string.remove)) {
                                     change { if (pinned) prefs.pinned = prefs.pinned - k else prefs.excluded = prefs.excluded - k }
                                     if (keys.size == 1) sub = Sub.MAIN
-                                }) { Text(tr(R.string.remove), color = S.c.accent) }
+                                }
                             })
                         }
                     }
                 }
                 Sub.HA -> key(tick) {
                     Header(tr(R.string.s_ha), back)
-                    Column(Modifier.verticalScroll(rememberScrollState())) {
+                    Column(Modifier.verticalScroll(haScroll)) {
                         HaForm(app, ops)
                         if (app.ha.configured) {
                             HaCalendars(app, ops)
@@ -192,8 +202,8 @@ fun SettingsScreen(
 
     key(tick) {
         Column(
-            Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState())
-                .padding(horizontal = 12.dp, vertical = 16.dp),
+            Modifier.fillMaxSize().systemBarsPadding().verticalScroll(mainScroll)
+                .padding(horizontal = 16.dp, vertical = 16.dp),
         ) {
             Header(tr(R.string.s_settings), onBack)
             val ctx = androidx.compose.ui.platform.LocalContext.current
@@ -204,21 +214,9 @@ fun SettingsScreen(
             Group {
                 Line(tr(R.string.s_important), "${prefs.importantNames.size}", icon = Icons.Rounded.FavoriteBorder) { sub = Sub.PEOPLE }
                 Line(tr(R.string.s_apps_pass), "${prefs.appLevels.size}", icon = Icons.Rounded.Bolt) { sub = Sub.LEVELS }
-                val hours = prefs.summaryHours.sorted()
-                Pick(
-                    tr(R.string.s_summaries), hours.joinToString(" · "), (7..22).map { Option(java.time.LocalTime.of(it, 0).format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))) }, { (it + 7) in hours },
-                    icon = Icons.Rounded.Schedule, title = tr(R.string.s_summaries_title), multi = true,
-                ) { i ->
-                    val h = i + 7
-                    change { prefs.summaryHours = if (h in prefs.summaryHours) (prefs.summaryHours - h).ifEmpty { prefs.summaryHours } else prefs.summaryHours + h }
-                }
-                Toggle(tr(R.string.s_night), prefs.nightEnabled, if (prefs.nightEnabled) "${hm(prefs.nightStart)} – ${hm(prefs.nightEnd)}" else tr(R.string.s_night_hint), Icons.Rounded.Bedtime) { v -> change { prefs.nightEnabled = v } }
-                if (prefs.nightEnabled) {
-                    val starts = listOf(21 * 60, 22 * 60, 23 * 60, 0)
-                    Pick(tr(R.string.s_starts), hm(prefs.nightStart), starts.map { Option(hm(it)) }, { starts[it] == prefs.nightStart }, title = tr(R.string.s_night_starts)) { change { prefs.nightStart = starts[it] } }
-                    val ends = listOf(5 * 60, 6 * 60, 7 * 60, 8 * 60, 9 * 60)
-                    Pick(tr(R.string.s_ends), hm(prefs.nightEnd), ends.map { Option(hm(it)) }, { ends[it] == prefs.nightEnd }, title = tr(R.string.s_night_ends)) { change { prefs.nightEnd = ends[it] } }
-                }
+                // Riepiloghi e notte si scelgono sul quadrante, come nella prima configurazione
+                val times = prefs.summaryTimes.joinToString(" · ") { if (it % 60 == 0) "${it / 60}" else hm(it) }
+                Line(tr(R.string.s_summaries), times, if (prefs.nightEnabled) "${tr(R.string.s_night)} ${hm(prefs.nightStart)} – ${hm(prefs.nightEnd)}" else null, Icons.Rounded.Schedule) { sub = Sub.HOURS }
                 Toggle(tr(R.string.s_car), prefs.carEnabled, tr(R.string.s_calls_only), Icons.Rounded.DirectionsCar) { v -> change { prefs.carEnabled = v } }
                 if (perms.policy) Toggle(tr(R.string.s_dnd), prefs.silenceManaged, tr(R.string.s_dnd_hint), Icons.Rounded.DoNotDisturbOn) { v ->
                     change { if (v) app.silence.enable() else app.silence.disable() }
@@ -305,7 +303,7 @@ fun SettingsScreen(
                 Line(tr(R.string.s_import), icon = Icons.Rounded.Download, trailing = {}) { ops.importSettings() }
                 var ask by remember { mutableStateOf(false) }
                 Line(tr(R.string.s_wipe), icon = Icons.Rounded.DeleteOutline, trailing = {}) { ask = true }
-                if (ask) Confirm(tr(R.string.s_wipe_title), tr(R.string.s_wipe_text), "Cancella",
+                if (ask) Confirm(tr(R.string.s_wipe_title), tr(R.string.s_wipe_text), tr(R.string.s_wipe),
                     onConfirm = { app.routines.wipe(); onWipe() }, onDismiss = { ask = false })
             }
 
@@ -434,11 +432,11 @@ private fun BrakedPage(app: SordinaApp, apps: List<AppEntry>, onChange: () -> Un
         items(list, key = { it.key }) { a ->
             val on = a.packageName in braked
             Line(a.label, trailing = {
-                androidx.compose.material3.TextButton(onClick = {
+                SmallPill(if (on) tr(R.string.remove) else tr(R.string.brake)) {
                     braked = if (on) braked - a.packageName else braked + a.packageName
                     prefs.braked = braked
                     onChange()
-                }) { Text(if (on) tr(R.string.remove) else tr(R.string.brake), color = S.c.accent) }
+                }
             })
         }
     }

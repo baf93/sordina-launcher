@@ -101,7 +101,7 @@
     <string name="time_back">Около %1$s вернулось к вам.</string>
     <string name="stat_today">сегодня</string>
     <string name="stat_in_7_days">за 7 дней</string>
-    <string name="back_home">Возврат на главный экран…</string>
+    <string name="back_home">Возвращаюсь…</string>
     <string name="less_than_minute">меньше минуты</string>
     <string name="minutes_short">%1$d мин</string>
     <string name="hours_short">%1$d ч</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">Сколько ждать</string>
     <string name="s_stay_hint">Не возвращаются в сводке</string>
     <string name="s_stay">Оставаться в Sordina</string>
-    <string name="s_home">Дом</string>
+    <string name="s_home">Экран</string>
     <string name="s_weather">Погода</string>
     <string name="on_m">вкл.</string>
     <string name="turn_on">включить</string>
@@ -213,7 +213,7 @@
     <string name="yes">да</string>
     <string name="none_m">нет</string>
     <string name="s_events_go">События идут в</string>
-    <string name="s_ha_calendars">Календари в Доме</string>
+    <string name="s_ha_calendars">Показываемые календари</string>
     <string name="loading">Загрузка…</string>
     <string name="s_no_calendar">Нет календарей.</string>
     <string name="s_tap_app">Нажмите на приложение.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">Разрешить оповещения</string>
     <string name="onb_important_sub">Проходят всегда.</string>
     <string name="onb_done_sub">Вверх: дела. Вниз: уведомления.\nУдержание: настройки.</string>
-    <string name="onb_go_home">На главный экран</string>
+    <string name="onb_go_home">Начать</string>
     <string name="onb_allow_contacts">Разрешить доступ к контактам</string>
     <string name="onb_important">Важные</string>
     <string name="remove_l">убрать</string>
@@ -485,4 +485,6 @@
     <string name="rain_chance">Вероятность %1$d%%</string>
     <string name="birthday">День рождения</string>
     <string name="birthday_age">Исполняется %1$d</string>
+    <string name="pinned_heading">Всегда здесь</string>
+    <string name="now_heading">Сейчас</string>
 </resources>

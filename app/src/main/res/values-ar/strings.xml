@@ -101,7 +101,7 @@
     <string name="time_back">نحو %1$s عادت إليك.</string>
     <string name="stat_today">اليوم</string>
     <string name="stat_in_7_days">في 7 أيام</string>
-    <string name="back_home">العودة إلى الشاشة الرئيسية…</string>
+    <string name="back_home">أعود…</string>
     <string name="less_than_minute">أقل من دقيقة</string>
     <string name="minutes_short">%1$d د</string>
     <string name="hours_short">%1$d س</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">مدة الانتظار</string>
     <string name="s_stay_hint">لا تعود في الملخص</string>
     <string name="s_stay">البقاء في Sordina</string>
-    <string name="s_home">المنزل</string>
+    <string name="s_home">الشاشة</string>
     <string name="s_weather">الطقس</string>
     <string name="on_m">مفعّل</string>
     <string name="turn_on">تفعيل</string>
@@ -213,7 +213,7 @@
     <string name="yes">نعم</string>
     <string name="none_m">لا شيء</string>
     <string name="s_events_go">تذهب الأحداث إلى</string>
-    <string name="s_ha_calendars">تقاويم المنزل</string>
+    <string name="s_ha_calendars">التقويمات المعروضة</string>
     <string name="loading">جارٍ التحميل…</string>
     <string name="s_no_calendar">لا توجد تقاويم.</string>
     <string name="s_tap_app">المس تطبيقًا لاختياره.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">السماح بالتنبيهات</string>
     <string name="onb_important_sub">يصلون دائمًا.</string>
     <string name="onb_done_sub">لأعلى: افعل. لأسفل: الإشعارات.\nضغط مطول: الإعدادات.</string>
-    <string name="onb_go_home">إلى الشاشة الرئيسية</string>
+    <string name="onb_go_home">ابدأ</string>
     <string name="onb_allow_contacts">السماح بالوصول إلى جهات الاتصال</string>
     <string name="onb_important">مهمون</string>
     <string name="remove_l">إزالة</string>
@@ -509,4 +509,6 @@
     <string name="rain_chance">احتمال %1$d%%</string>
     <string name="birthday">عيد ميلاد</string>
     <string name="birthday_age">يبلغ %1$d عامًا</string>
+    <string name="pinned_heading">دائمًا هنا</string>
+    <string name="now_heading">الآن</string>
 </resources>

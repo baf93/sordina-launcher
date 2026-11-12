@@ -101,7 +101,7 @@
     <string name="time_back">Близько %1$s повернулося до вас.</string>
     <string name="stat_today">сьогодні</string>
     <string name="stat_in_7_days">за 7 днів</string>
-    <string name="back_home">Повернення на головний екран…</string>
+    <string name="back_home">Повертаюся…</string>
     <string name="less_than_minute">менше хвилини</string>
     <string name="minutes_short">%1$d хв</string>
     <string name="hours_short">%1$d год</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">Скільки чекати</string>
     <string name="s_stay_hint">Не повертаються у зведенні</string>
     <string name="s_stay">Лишатися в Sordina</string>
-    <string name="s_home">Дім</string>
+    <string name="s_home">Екран</string>
     <string name="s_weather">Погода</string>
     <string name="on_m">увімк.</string>
     <string name="turn_on">увімкнути</string>
@@ -213,7 +213,7 @@
     <string name="yes">так</string>
     <string name="none_m">немає</string>
     <string name="s_events_go">Події йдуть у</string>
-    <string name="s_ha_calendars">Календарі в Домі</string>
+    <string name="s_ha_calendars">Показані календарі</string>
     <string name="loading">Завантаження…</string>
     <string name="s_no_calendar">Немає календарів.</string>
     <string name="s_tap_app">Торкніться застосунку.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">Дозволити сповіщення</string>
     <string name="onb_important_sub">Проходять завжди.</string>
     <string name="onb_done_sub">Вгору: справи. Вниз: сповіщення.\nУтримання: налаштування.</string>
-    <string name="onb_go_home">На головний екран</string>
+    <string name="onb_go_home">Почати</string>
     <string name="onb_allow_contacts">Дозволити доступ до контактів</string>
     <string name="onb_important">Важливі</string>
     <string name="remove_l">прибрати</string>
@@ -485,4 +485,6 @@
     <string name="rain_chance">Імовірність %1$d%%</string>
     <string name="birthday">День народження</string>
     <string name="birthday_age">Виповнюється %1$d</string>
+    <string name="pinned_heading">Завжди тут</string>
+    <string name="now_heading">Зараз</string>
 </resources>

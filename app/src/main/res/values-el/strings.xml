@@ -101,7 +101,7 @@
     <string name="time_back">Περίπου %1$s γυρίζουν σε σένα.</string>
     <string name="stat_today">σήμερα</string>
     <string name="stat_in_7_days">σε 7 ημέρες</string>
-    <string name="back_home">Επιστροφή στην αρχική…</string>
+    <string name="back_home">Επιστροφή…</string>
     <string name="less_than_minute">κάτω από ένα λεπτό</string>
     <string name="minutes_short">%1$d λ</string>
     <string name="hours_short">%1$d ώ</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">Πόση αναμονή</string>
     <string name="s_stay_hint">Δεν επιστρέφουν στη σύνοψη</string>
     <string name="s_stay">Μένουν στη Sordina</string>
-    <string name="s_home">Σπίτι</string>
+    <string name="s_home">Οθόνη</string>
     <string name="s_weather">Καιρός</string>
     <string name="on_m">ενεργό</string>
     <string name="turn_on">ενεργοποίηση</string>
@@ -213,7 +213,7 @@
     <string name="yes">ναι</string>
     <string name="none_m">κανένα</string>
     <string name="s_events_go">Τα γεγονότα πάνε στο</string>
-    <string name="s_ha_calendars">Ημερολόγια στο Σπίτι</string>
+    <string name="s_ha_calendars">Ημερολόγια που εμφανίζονται</string>
     <string name="loading">Φόρτωση…</string>
     <string name="s_no_calendar">Κανένα ημερολόγιο.</string>
     <string name="s_tap_app">Άγγιξε μια εφαρμογή για επιλογή.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">Να επιτρέπονται ειδοποιήσεις</string>
     <string name="onb_important_sub">Περνούν πάντα.</string>
     <string name="onb_done_sub">Πάνω: κάνε. Κάτω: ειδοποιήσεις.\nΚράτα: ρυθμίσεις.</string>
-    <string name="onb_go_home">Στην αρχική</string>
+    <string name="onb_go_home">Ξεκίνα</string>
     <string name="onb_allow_contacts">Πρόσβαση στις επαφές</string>
     <string name="onb_important">Σημαντικοί</string>
     <string name="remove_l">αφαίρεση</string>
@@ -461,4 +461,6 @@
     <string name="rain_chance">Πιθανότητα %1$d%%</string>
     <string name="birthday">Γενέθλια</string>
     <string name="birthday_age">Κλείνει τα %1$d</string>
+    <string name="pinned_heading">Πάντα εδώ</string>
+    <string name="now_heading">Τώρα</string>
 </resources>

@@ -101,7 +101,7 @@
     <string name="time_back">Khoảng %1$s trở lại với bạn.</string>
     <string name="stat_today">hôm nay</string>
     <string name="stat_in_7_days">trong 7 ngày</string>
-    <string name="back_home">Đang về màn hình chính…</string>
+    <string name="back_home">Đang quay lại…</string>
     <string name="less_than_minute">chưa tới một phút</string>
     <string name="minutes_short">%1$d phút</string>
     <string name="hours_short">%1$d giờ</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">Chờ bao lâu</string>
     <string name="s_stay_hint">Không quay lại lúc tóm tắt</string>
     <string name="s_stay">Ở lại Sordina</string>
-    <string name="s_home">Nhà</string>
+    <string name="s_home">Màn hình</string>
     <string name="s_weather">Thời tiết</string>
     <string name="on_m">bật</string>
     <string name="turn_on">bật</string>
@@ -213,7 +213,7 @@
     <string name="yes">có</string>
     <string name="none_m">không có</string>
     <string name="s_events_go">Sự kiện lưu vào</string>
-    <string name="s_ha_calendars">Lịch trong Nhà</string>
+    <string name="s_ha_calendars">Lịch được hiển thị</string>
     <string name="loading">Đang tải…</string>
     <string name="s_no_calendar">Không có lịch.</string>
     <string name="s_tap_app">Chạm vào ứng dụng để chọn.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">Cho phép cảnh báo</string>
     <string name="onb_important_sub">Luôn đến.</string>
     <string name="onb_done_sub">Lên: làm. Xuống: thông báo.\nGiữ: cài đặt.</string>
-    <string name="onb_go_home">Về màn hình chính</string>
+    <string name="onb_go_home">Bắt đầu</string>
     <string name="onb_allow_contacts">Cho phép truy cập danh bạ</string>
     <string name="onb_important">Quan trọng</string>
     <string name="remove_l">gỡ</string>
@@ -449,4 +449,6 @@
     <string name="rain_chance">Khả năng %1$d%%</string>
     <string name="birthday">Sinh nhật</string>
     <string name="birthday_age">Tròn %1$d tuổi</string>
+    <string name="pinned_heading">Luôn ở đây</string>
+    <string name="now_heading">Bây giờ</string>
 </resources>

@@ -101,7 +101,7 @@
     <string name="time_back">Około %1$s wraca do ciebie.</string>
     <string name="stat_today">dziś</string>
     <string name="stat_in_7_days">w 7 dni</string>
-    <string name="back_home">Wracam do ekranu głównego…</string>
+    <string name="back_home">Wracam…</string>
     <string name="less_than_minute">mniej niż minuta</string>
     <string name="minutes_short">%1$d min</string>
     <string name="hours_short">%1$d godz.</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">Jak długo czekać</string>
     <string name="s_stay_hint">Nie wracają w podsumowaniu</string>
     <string name="s_stay">Zostają w Sordinie</string>
-    <string name="s_home">Dom</string>
+    <string name="s_home">Ekran</string>
     <string name="s_weather">Pogoda</string>
     <string name="on_m">wł.</string>
     <string name="turn_on">włącz</string>
@@ -213,7 +213,7 @@
     <string name="yes">tak</string>
     <string name="none_m">brak</string>
     <string name="s_events_go">Wydarzenia trafiają do</string>
-    <string name="s_ha_calendars">Kalendarze w Domu</string>
+    <string name="s_ha_calendars">Pokazywane kalendarze</string>
     <string name="loading">Wczytywanie…</string>
     <string name="s_no_calendar">Brak kalendarzy.</string>
     <string name="s_tap_app">Dotknij aplikacji, aby wybrać.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">Zezwól na alerty</string>
     <string name="onb_important_sub">Zawsze docierają.</string>
     <string name="onb_done_sub">W górę: działaj. W dół: powiadomienia.\nPrzytrzymaj: ustawienia.</string>
-    <string name="onb_go_home">Do ekranu głównego</string>
+    <string name="onb_go_home">Zaczynamy</string>
     <string name="onb_allow_contacts">Zezwól na dostęp do kontaktów</string>
     <string name="onb_important">Ważne</string>
     <string name="remove_l">usuń</string>
@@ -485,4 +485,6 @@
     <string name="rain_chance">Prawdopodobieństwo %1$d%%</string>
     <string name="birthday">Urodziny</string>
     <string name="birthday_age">Kończy %1$d lat</string>
+    <string name="pinned_heading">Zawsze tutaj</string>
+    <string name="now_heading">Teraz</string>
 </resources>

@@ -33,7 +33,7 @@ object Scheduler {
             app.moments.nextSummary(now),
             app.moments.nextNightEdge(now),
             // Fine della frase "Riepilogo delle 13": un'ora dopo l'ultimo riepilogo
-            app.moments.lastSummaryToday(now)?.let { now.toLocalDate().atTime(it, 0).plusHours(1) }?.takeIf { it.isAfter(now) },
+            app.moments.lastSummaryToday(now)?.let { now.toLocalDate().atTime(it / 60, it % 60).plusHours(1) }?.takeIf { it.isAfter(now) },
         )
         val next = candidates.minOrNull() ?: return
         val am = context.getSystemService(AlarmManager::class.java)

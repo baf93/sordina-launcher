@@ -101,7 +101,7 @@
     <string name="time_back">Yaklaşık %1$s sana döndü.</string>
     <string name="stat_today">bugün</string>
     <string name="stat_in_7_days">7 günde</string>
-    <string name="back_home">Ana ekrana dönülüyor…</string>
+    <string name="back_home">Geri dönülüyor…</string>
     <string name="less_than_minute">bir dakikadan az</string>
     <string name="minutes_short">%1$d dk</string>
     <string name="hours_short">%1$d sa</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">Ne kadar beklensin</string>
     <string name="s_stay_hint">Özette geri gelmez</string>
     <string name="s_stay">Sordina\'da kalsın</string>
-    <string name="s_home">Ev</string>
+    <string name="s_home">Ekran</string>
     <string name="s_weather">Hava</string>
     <string name="on_m">açık</string>
     <string name="turn_on">aç</string>
@@ -213,7 +213,7 @@
     <string name="yes">evet</string>
     <string name="none_m">yok</string>
     <string name="s_events_go">Etkinlikler şuraya gider</string>
-    <string name="s_ha_calendars">Ev takvimleri</string>
+    <string name="s_ha_calendars">Gösterilen takvimler</string>
     <string name="loading">Yükleniyor…</string>
     <string name="s_no_calendar">Takvim yok.</string>
     <string name="s_tap_app">Seçmek için bir uygulamaya dokun.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">Uyarılara izin ver</string>
     <string name="onb_important_sub">Her zaman geçer.</string>
     <string name="onb_done_sub">Yukarı: yap. Aşağı: bildirimler.\nBasılı tut: ayarlar.</string>
-    <string name="onb_go_home">Ana ekrana git</string>
+    <string name="onb_go_home">Başla</string>
     <string name="onb_allow_contacts">Kişilere erişime izin ver</string>
     <string name="onb_important">Önemli</string>
     <string name="remove_l">kaldır</string>
@@ -461,4 +461,6 @@
     <string name="rain_chance">%%%1$d olasılık</string>
     <string name="birthday">Doğum günü</string>
     <string name="birthday_age">%1$d yaşına giriyor</string>
+    <string name="pinned_heading">Hep burada</string>
+    <string name="now_heading">Şimdi</string>
 </resources>

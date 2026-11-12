@@ -70,13 +70,17 @@ data class Card(
     val step: Int? = null,
     /** Un cerchio con l'iniziale del titolo (persone) */
     val avatar: Boolean = false,
+    /** Le notifiche da cui nasce (un pagamento può arrivare da due app): "Ok" le chiude tutte */
+    val sources: List<String> = emptyList(),
 )
 
 /**
  * Le schede che nascono dalle notifiche (OTP, chiamate, timer, biglietti, pacchi) e dalla musica.
  * Solo in memoria: dopo un riavvio si ricostruiscono dalle notifiche ancora presenti.
  */
-class Signals {
+class Signals(context: android.content.Context) {
+    // Le schede tolte con "Ok" restano tolte anche se Sordina si riavvia: un giorno, poi si dimenticano
+    private val dismissedFile = java.io.File(context.filesDir, "dismissed_cards.txt")
     private val _cards = MutableStateFlow<Map<String, Card>>(emptyMap())
     val cards: StateFlow<Map<String, Card>> = _cards
 
@@ -92,22 +96,37 @@ class Signals {
         if (c.key in dismissed) return
         val old = _cards.value[c.key]
         // Lo stesso pagamento visto da due app (banca e portafoglio): una scheda, con entrambi i nomi
-        val merged = if (old != null && old.kind == CardKind.PAYMENT && c.kind == CardKind.PAYMENT && c.label !in old.label.split(" · "))
-            old.copy(label = old.label + " · " + c.label) else if (old != null && old.kind == CardKind.PAYMENT) old else c
+        val merged = if (old != null && old.kind == CardKind.PAYMENT && c.kind == CardKind.PAYMENT) old.copy(
+            label = if (c.label in old.label.split(" · ")) old.label else old.label + " · " + c.label,
+            sources = (old.sources + c.sources).distinct(),
+        ) else c
         _cards.value = _cards.value + (c.key to merged)
     }
 
     @Synchronized
     fun remove(key: String) { if (key in _cards.value) _cards.value = _cards.value - key }
 
-    private val dismissed = LinkedHashSet<String>()
+    /** Chiave → quando è stata tolta. */
+    private val dismissed = LinkedHashMap<String, Long>()
 
-    /** Tolta a mano: non torna se la notifica viene ripubblicata. */
+    init {
+        runCatching {
+            val since = System.currentTimeMillis() - 86_400_000L
+            if (dismissedFile.exists()) dismissedFile.readLines().forEach { l ->
+                val (k, t) = l.split('\t').let { it.getOrNull(0) to it.getOrNull(1)?.toLongOrNull() }
+                if (k != null && t != null && t > since) dismissed[k] = t
+            }
+        }
+    }
+
+    /** Tolta a mano: non torna se la notifica viene ripubblicata, né dopo un riavvio. */
     @Synchronized
     fun dismiss(key: String) {
-        dismissed += key
-        while (dismissed.size > 200) dismissed.remove(dismissed.first())
+        dismissed[key] = System.currentTimeMillis()
+        while (dismissed.size > 200) dismissed.remove(dismissed.keys.first())
         remove(key)
+        val snap = dismissed.entries.joinToString("\n") { "${it.key}\t${it.value}" }
+        runCatching { dismissedFile.writeText(snap) }
     }
 
     /** La sessione multimediale più rilevante (quella che suona, o l'ultima messa in pausa da poco). */
@@ -169,7 +188,8 @@ object CardDetector {
     )
 
     fun otpCode(text: String): String? {
-        val all = Regex("(?<![\\d.,])\\d{4,8}(?![\\d.,])").findAll(text).map { it.value }.toList()
+        // Il punto o la virgola contano solo dentro un numero (12.50, 1.234): "è 482913." resta un codice
+        val all = Regex("(?<!\\d|\\d[.,])\\d{4,8}(?!\\d|[.,]\\d)").findAll(text).map { it.value }.toList()
         return all.firstOrNull { it.length == 6 } ?: all.firstOrNull()
             ?: Regex("\\b(\\d{3})[- ](\\d{3})\\b").find(text)?.let { it.groupValues[1] + it.groupValues[2] }
     }
@@ -197,8 +217,10 @@ object CardDetector {
     fun detect(
         key: String, pkg: String, appLabel: String, category: String?, title: String, text: String, ongoing: Boolean, otp: Boolean,
         buttons: List<String> = emptyList(), progress: Float? = null,
+        /** Quando è arrivata la notifica: le scadenze contano da lì, non da quando Sordina la rilegge (dopo un riavvio, al riepilogo) */
+        postTime: Long = System.currentTimeMillis(),
     ): Card? {
-        val now = System.currentTimeMillis()
+        val now = postTime.takeIf { it in 1..System.currentTimeMillis() } ?: System.currentTimeMillis()
         val all = "$title $text"
         if (otp) {
             val code = otpCode(all) ?: return null
@@ -249,7 +271,7 @@ object CardDetector {
             // Stessa chiave per lo stesso importo: banca e portafoglio fanno una scheda sola
             return Card("pay:$cents", CardKind.PAYMENT, appLabel, money(cents), rest.take(70).ifBlank { null },
                 actions = listOf(CardAction(tr(R.string.open), CardOp.OpenNotif(key)), CardAction(tr(R.string.ok), CardOp.Dismiss)),
-                expiresAt = now + 30 * 60_000, look = CardLook.AMOUNT)
+                expiresAt = now + 30 * 60_000, look = CardLook.AMOUNT, sources = listOf(key))
         }
         if (PARCEL.containsMatchIn(all) && !ongoing) {
             val step = STEPS.firstOrNull { it.second.containsMatchIn(all) }?.first

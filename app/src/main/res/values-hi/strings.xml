@@ -101,7 +101,7 @@
     <string name="time_back">लगभग %1$s आपको वापस मिले।</string>
     <string name="stat_today">आज</string>
     <string name="stat_in_7_days">7 दिन में</string>
-    <string name="back_home">होम पर लौट रहे हैं…</string>
+    <string name="back_home">वापस जा रहे हैं…</string>
     <string name="less_than_minute">एक मिनट से कम</string>
     <string name="minutes_short">%1$d मि.</string>
     <string name="hours_short">%1$d घं.</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">कितना इंतज़ार</string>
     <string name="s_stay_hint">सारांश में नहीं लौटतीं</string>
     <string name="s_stay">Sordina में रहें</string>
-    <string name="s_home">घर</string>
+    <string name="s_home">स्क्रीन</string>
     <string name="s_weather">मौसम</string>
     <string name="on_m">चालू</string>
     <string name="turn_on">चालू करें</string>
@@ -213,7 +213,7 @@
     <string name="yes">हाँ</string>
     <string name="none_m">कोई नहीं</string>
     <string name="s_events_go">इवेंट यहाँ जाते हैं</string>
-    <string name="s_ha_calendars">घर के कैलेंडर</string>
+    <string name="s_ha_calendars">दिखाए गए कैलेंडर</string>
     <string name="loading">लोड हो रहा है…</string>
     <string name="s_no_calendar">कोई कैलेंडर नहीं।</string>
     <string name="s_tap_app">चुनने के लिए ऐप छुएँ।</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">अलर्ट की अनुमति दें</string>
     <string name="onb_important_sub">हमेशा पहुँचते हैं।</string>
     <string name="onb_done_sub">ऊपर: करें। नीचे: सूचनाएँ।\nदबाकर रखें: सेटिंग।</string>
-    <string name="onb_go_home">होम पर जाएँ</string>
+    <string name="onb_go_home">शुरू करें</string>
     <string name="onb_allow_contacts">संपर्कों तक पहुँच दें</string>
     <string name="onb_important">ज़रूरी</string>
     <string name="remove_l">हटाएँ</string>
@@ -461,4 +461,6 @@
     <string name="rain_chance">%1$d%% संभावना</string>
     <string name="birthday">जन्मदिन</string>
     <string name="birthday_age">%1$d साल के हो रहे हैं</string>
+    <string name="pinned_heading">हमेशा यहाँ</string>
+    <string name="now_heading">अभी</string>
 </resources>

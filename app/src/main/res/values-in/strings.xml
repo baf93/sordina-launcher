@@ -101,7 +101,7 @@
     <string name="time_back">Sekitar %1$s kembali untukmu.</string>
     <string name="stat_today">hari ini</string>
     <string name="stat_in_7_days">dalam 7 hari</string>
-    <string name="back_home">Kembali ke beranda…</string>
+    <string name="back_home">Kembali…</string>
     <string name="less_than_minute">kurang dari semenit</string>
     <string name="minutes_short">%1$d mnt</string>
     <string name="hours_short">%1$d j</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">Berapa lama menunggu</string>
     <string name="s_stay_hint">Tidak kembali saat ringkasan</string>
     <string name="s_stay">Tetap di Sordina</string>
-    <string name="s_home">Rumah</string>
+    <string name="s_home">Layar</string>
     <string name="s_weather">Cuaca</string>
     <string name="on_m">aktif</string>
     <string name="turn_on">aktifkan</string>
@@ -213,7 +213,7 @@
     <string name="yes">ya</string>
     <string name="none_m">tidak ada</string>
     <string name="s_events_go">Acara masuk ke</string>
-    <string name="s_ha_calendars">Kalender di Rumah</string>
+    <string name="s_ha_calendars">Kalender yang ditampilkan</string>
     <string name="loading">Memuat…</string>
     <string name="s_no_calendar">Tidak ada kalender.</string>
     <string name="s_tap_app">Ketuk aplikasi untuk memilih.</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">Izinkan peringatan</string>
     <string name="onb_important_sub">Selalu sampai.</string>
     <string name="onb_done_sub">Atas: kerjakan. Bawah: notifikasi.\nTahan: setelan.</string>
-    <string name="onb_go_home">Ke layar utama</string>
+    <string name="onb_go_home">Mulai</string>
     <string name="onb_allow_contacts">Izinkan akses kontak</string>
     <string name="onb_important">Penting</string>
     <string name="remove_l">hapus</string>
@@ -449,4 +449,6 @@
     <string name="rain_chance">Peluang %1$d%%</string>
     <string name="birthday">Ulang tahun</string>
     <string name="birthday_age">Berusia %1$d</string>
+    <string name="pinned_heading">Selalu di sini</string>
+    <string name="now_heading">Sekarang</string>
 </resources>

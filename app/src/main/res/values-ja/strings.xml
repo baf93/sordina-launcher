@@ -101,7 +101,7 @@
     <string name="time_back">約 %1$s があなたに戻りました。</string>
     <string name="stat_today">今日</string>
     <string name="stat_in_7_days">7日間</string>
-    <string name="back_home">ホームに戻ります…</string>
+    <string name="back_home">戻ります…</string>
     <string name="less_than_minute">1分未満</string>
     <string name="minutes_short">%1$d 分</string>
     <string name="hours_short">%1$d 時間</string>
@@ -172,7 +172,7 @@
     <string name="s_wait_title">待つ時間</string>
     <string name="s_stay_hint">まとめで戻らない</string>
     <string name="s_stay">Sordina に残す</string>
-    <string name="s_home">ホーム</string>
+    <string name="s_home">画面</string>
     <string name="s_weather">天気</string>
     <string name="on_m">オン</string>
     <string name="turn_on">オンにする</string>
@@ -213,7 +213,7 @@
     <string name="yes">はい</string>
     <string name="none_m">なし</string>
     <string name="s_events_go">予定の追加先</string>
-    <string name="s_ha_calendars">ホームのカレンダー</string>
+    <string name="s_ha_calendars">表示するカレンダー</string>
     <string name="loading">読み込み中…</string>
     <string name="s_no_calendar">カレンダーがありません。</string>
     <string name="s_tap_app">アプリをタップして選択。</string>
@@ -266,7 +266,7 @@
     <string name="onb_allow_alerts">お知らせを許可</string>
     <string name="onb_important_sub">常に届きます。</string>
     <string name="onb_done_sub">上: やること。下: 通知。\n長押し: 設定。</string>
-    <string name="onb_go_home">ホームへ</string>
+    <string name="onb_go_home">はじめる</string>
     <string name="onb_allow_contacts">連絡先へのアクセスを許可</string>
     <string name="onb_important">大事な人</string>
     <string name="remove_l">削除</string>
@@ -449,4 +449,6 @@
     <string name="rain_chance">確率 %1$d%%</string>
     <string name="birthday">誕生日</string>
     <string name="birthday_age">%1$d歳に</string>
+    <string name="pinned_heading">いつもここに</string>
+    <string name="now_heading">いま</string>
 </resources>

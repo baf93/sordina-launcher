@@ -49,7 +49,7 @@ object Classifier {
         "\\b(codice|code)\\s+(id|fiscale|cliente|pratica|ordine|order|sconto|promo|promozionale|coupon|tracking|spedizione|postale|iban|articolo|prodotto|protocollo|riferimento|reference|identificativo|segnalazione|partner)\\b",
         RegexOption.IGNORE_CASE,
     )
-    /** Un numero da solo: niente pezzi di date, orari, importi, carte mascherate (XXXX0278) o codici alfanumerici. */
+    /** Un numero da solo: niente pezzi di date, orari, importi, carte mascherate (XXXX1234) o codici alfanumerici. */
     private val OTP_NUMBER = Regex("(?<![\\w/.,:€$#+-])(\\d{4,8}|\\d{3}[- ]\\d{3})(?![\\w/,:%€$]|[.,]\\d)|(?<=\\bG-)\\d{6}\\b")
     private val YEAR = Regex("(19|20)\\d\\d")
     /** Il corpo di una mail (risposte, inoltri): lì "codice" e numeri sono quasi sempre altro. */

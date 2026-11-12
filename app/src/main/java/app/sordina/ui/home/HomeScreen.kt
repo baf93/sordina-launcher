@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -104,7 +105,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /** Una riga del programma: a sinistra l'ora (o "ora"), a destra cosa. */
-data class AgendaRow(val label: String, val text: String, val key: String, val accent: Boolean = false)
+/** Una riga del programma: a sinistra l'ora (o "adesso"), a destra cosa. [day]: il giorno, se non è oggi; fa da titoletto sopra. */
+data class AgendaRow(val label: String, val text: String, val key: String, val accent: Boolean = false, val day: String? = null)
 
 /** Quello che Casa mostra, preparato da fuori. */
 data class HomeState(
@@ -181,7 +183,10 @@ fun HomeScreen(
                 }
             }
             if (state.agenda.isNotEmpty()) Spacer(Modifier.height(24.dp))
-            state.agenda.forEach { r -> AgendaLine(r) { onAgenda(r.key) } }
+            state.agenda.forEachIndexed { i, r ->
+                if (r.day != null && r.day != state.agenda.getOrNull(i - 1)?.day) Text(r.day, Modifier.padding(top = if (i == 0) 0.dp else 10.dp, bottom = 2.dp), style = TextStyle(fontSize = 13.sp, color = c.soft))
+                AgendaLine(r) { onAgenda(r.key) }
+            }
         } }
         Spacer(Modifier.weight(1f))
         if (state.cards.isNotEmpty()) {
@@ -201,8 +206,9 @@ fun HomeScreen(
 private fun AgendaLine(r: AgendaRow, onClick: () -> Unit) {
     val c = S.c
     Row(Modifier.fillMaxWidth().clickableNoRipple(onClick).padding(vertical = 5.dp), verticalAlignment = Alignment.Top) {
-        Text(r.label, Modifier.width(64.dp), maxLines = 1, style = TextStyle(fontSize = 17.sp, color = if (r.accent) c.accent else c.soft))
-        Text(r.text, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 17.sp, color = if (r.accent) c.accent else c.ink))
+        // Colonna dell'ora: almeno 64, mai attaccata al testo (anche con "11:30 PM")
+        Text(r.label, Modifier.widthIn(min = 64.dp).padding(end = 12.dp), maxLines = 1, style = TextStyle(fontSize = 17.sp, color = if (r.accent) c.accent else c.soft))
+        Text(r.text, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 17.sp, color = c.ink))
     }
 }
 
@@ -212,12 +218,10 @@ private fun SearchBar(state: HomeState, onSearch: () -> Unit, onMicDown: () -> U
     val c = S.c
     val feel = LocalFeel.current
     Row(
-        Modifier.padding(horizontal = 20.dp).fillMaxWidth().height(56.dp).clip(RoundedCornerShape(28.dp))
-            .background(surface()).clickable(onClick = onSearch).padding(start = 18.dp, end = 7.dp),
+        Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(56.dp).clip(RoundedCornerShape(28.dp))
+            .background(surface()).clickable(onClick = onSearch).padding(start = 22.dp, end = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Rounded.Search, null, Modifier.size(22.dp), tint = c.accent)
-        Spacer(Modifier.width(12.dp))
         val text = if (state.listening) state.partial.ifBlank { tr(R.string.home_listening) } else tr(R.string.home_search)
         Text(text, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
             style = TextStyle(fontSize = 16.sp, color = if (state.listening) c.ink else c.soft))
@@ -244,7 +248,8 @@ private fun weatherIcon(w: String): ImageVector = when {
 private fun SordinaRow(state: HomeState, pill: Boolean = false, onClick: () -> Unit) {
     val c = S.c
     val on = state.waiting > 0
-    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Row(
+    // Con caratteri molto grandi la riga si accorcia in coda invece di toccare i bordi
+    Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp), contentAlignment = Alignment.Center) { Row(
         (if (pill) Modifier.clip(RoundedCornerShape(18.dp)).background(surface()).padding(horizontal = 14.dp) else Modifier)
             .heightIn(min = 36.dp).clickableNoRipple(onClick),
         horizontalArrangement = Arrangement.Center,
@@ -254,7 +259,7 @@ private fun SordinaRow(state: HomeState, pill: Boolean = false, onClick: () -> U
         Spacer(Modifier.width(6.dp))
         Text(if (on) trn(R.plurals.n_waiting, state.waiting) else tr(R.string.nothing_waiting), style = TextStyle(fontSize = 14.sp, color = c.soft))
         val tail = listOfNotNull(state.moment, if (on) state.until else null)
-        if (tail.isNotEmpty()) Text(" · " + tail.joinToString(" · "), style = TextStyle(fontSize = 14.sp, color = c.soft))
+        if (tail.isNotEmpty()) Text(" · " + tail.joinToString(" · "), Modifier.weight(1f, fill = false), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 14.sp, color = c.soft))
     } }
 }
 
@@ -271,7 +276,7 @@ private fun Stack(cards: List<Card>, glass: Boolean, onAction: (Card, CardAction
     LaunchedEffect(first) { if (pager.currentPage != 0) pager.scrollToPage(0) }
     LaunchedEffect(pager) { snapshotFlow { pager.settledPage }.drop(1).collect { feel.tick() } }
     Box(
-        Modifier.padding(horizontal = 20.dp).fillMaxWidth().height(160.dp).clip(RoundedCornerShape(24.dp))
+        Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(160.dp).clip(RoundedCornerShape(24.dp))
             .background(surface()),
     ) {
         VerticalPager(
