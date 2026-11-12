@@ -1,5 +1,8 @@
 package app.sordina.data
 
+import app.sordina.R
+import app.sordina.tr
+
 import android.content.Context
 import android.content.SharedPreferences
 import app.sordina.ui.theme.ThemeFamily
@@ -7,17 +10,23 @@ import app.sordina.ui.theme.ThemeMode
 import org.json.JSONObject
 
 /** Come arriva una notifica. */
-enum class Level(val label: String, val hint: String) {
-    SEMPRE("Sempre", "subito, con suono, anche di notte"),
-    SUBITO("Subito in silenzio", "subito, senza suono"),
-    RIEPILOGO("Riepilogo", "agli orari dei riepiloghi"),
+enum class Level(private val labelRes: Int, private val hintRes: Int) {
+    SEMPRE(R.string.lv_always, R.string.lv_always_hint),
+    SUBITO(R.string.lv_silent, R.string.lv_silent_hint),
+    RIEPILOGO(R.string.lv_summary, R.string.lv_summary_hint),
+    ;
+    val label: String get() = tr(labelRes)
+    val hint: String get() = tr(hintRes)
 }
 
 /** Quanto mostrare sulla schermata di blocco. */
-enum class LockPrivacy(val label: String, val example: String) {
-    NUMBERS("Solo numeri", "3 in attesa"),
-    NAMES("Nomi", "Anna, Paolo, Calcetto"),
-    MESSAGES("Messaggi", "Anna: passi tu a prendere il pane?"),
+enum class LockPrivacy(private val labelRes: Int, private val exampleRes: Int) {
+    NUMBERS(R.string.lock_numbers, R.string.lock_numbers_ex),
+    NAMES(R.string.lock_names, R.string.lock_names_ex),
+    MESSAGES(R.string.lock_messages, R.string.lock_messages_ex),
+    ;
+    val label: String get() = tr(labelRes)
+    val example: String get() = tr(exampleRes)
 }
 
 /** Impostazioni locali. Niente cloud, niente account. */
@@ -50,7 +59,7 @@ class Prefs(context: Context) {
         set(v) = put { putBoolean("haptics", v) }
     /** Icone accanto ai nomi delle app (spente di serie: le icone invitano ad aprire) */
     var appIcons: Boolean
-        get() = sp.getBoolean("appIcons", false)
+        get() = sp.getBoolean("appIcons", true)
         set(v) = put { putBoolean("appIcons", v) }
     /** Schede e barra semitrasparenti sopra lo sfondo */
     var glass: Boolean
@@ -104,6 +113,22 @@ class Prefs(context: Context) {
         appLevels = if (level == null) appLevels - pkg else appLevels + (pkg to level)
     }
 
+    /** "Lascia passare": contatto o app (chiave del gruppo, es. "p:anna" o "a:com.app") → fino a quando (millisecondi) */
+    var passUntil: Map<String, Long>
+        get() = str("passUntil", "").split('|').mapNotNull {
+            val i = it.lastIndexOf('=')
+            if (i > 0) it.substring(i + 1).toLongOrNull()?.let { t -> it.substring(0, i) to t } else null
+        }.toMap()
+        set(v) = put { putString("passUntil", v.filterValues { it > System.currentTimeMillis() }.entries.joinToString("|") { "${it.key}=${it.value}" }) }
+
+    /** Categoria scelta da te per un contatto o un'app (chiave del gruppo → nome della categoria) */
+    var categoryOverrides: Map<String, String>
+        get() = str("categoryOverrides", "").split('|').mapNotNull {
+            val i = it.lastIndexOf('=')
+            if (i > 0) it.substring(0, i) to it.substring(i + 1) else null
+        }.toMap()
+        set(v) = put { putString("categoryOverrides", v.entries.joinToString("|") { "${it.key}=${it.value}" }) }
+
     /** Nomi delle persone importanti (normalizzati), per riconoscere i loro messaggi. */
     var importantNames: Set<String>
         get() = sp.getStringSet("importantNames", emptySet())!!.toSet()
@@ -150,6 +175,22 @@ class Prefs(context: Context) {
     var braked: Set<String>
         get() = sp.getStringSet("braked", emptySet())!!.toSet()
         set(v) = put { putStringSet("braked", v) }
+    /** Le notifiche di sistema (auricolari, Bluetooth, Play Services…) passano senza sordina */
+    var systemPass: Boolean
+        get() = sp.getBoolean("systemPass", true)
+        set(v) = put { putBoolean("systemPass", v) }
+    /** Come ordinare la pagina Sordina: 0 automatico (per priorità), 1 per arrivo, 2 ordine tuo */
+    var sordinaOrder: Int
+        get() = sp.getInt("sordinaOrder", 0)
+        set(v) = put { putInt("sordinaOrder", v) }
+    /** Le categorie nell'ordine scelto da te (nomi dell'enum Category) */
+    var categoryOrder: List<String>
+        get() = sp.getString("categoryOrder", "")!!.split(",").filter { it.isNotBlank() }
+        set(v) = put { putString("categoryOrder", v.joinToString(",")) }
+    /** Le notifiche delle app frenate restano in Sordina: non tornano al riepilogo, solo se le leggi. */
+    var brakedStay: Boolean
+        get() = sp.getBoolean("brakedStay", true)
+        set(v) = put { putBoolean("brakedStay", v) }
     var brakeSeconds: Int
         get() = sp.getInt("brakeSeconds", 10)
         set(v) = put { putInt("brakeSeconds", v.coerceIn(3, 60)) }

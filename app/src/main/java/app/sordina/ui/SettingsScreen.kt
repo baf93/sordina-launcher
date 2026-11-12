@@ -1,10 +1,17 @@
 package app.sordina.ui
 
+import app.sordina.R
+import app.sordina.tr
+import app.sordina.trn
+import app.sordina.Lang
+
 import android.Manifest
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,12 +46,22 @@ import app.sordina.data.Moments
 import app.sordina.data.Search
 import app.sordina.ui.theme.Abstracts
 import app.sordina.ui.theme.S
+import app.sordina.data.Categories
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import app.sordina.ui.theme.ThemeFamily
 import app.sordina.ui.theme.ThemeMode
 
-private enum class Sub { MAIN, PEOPLE, LEVELS, PROPOSALS, BRAKED, HA, SUMMARY, NIGHT, CALENDAR, PERMS, HACAL, LOOK }
 
-/** Impostazioni: una sola lista, nell'ordine di UX.md, con poche sottopagine. */
+/** Le sottopagine: solo per le liste vere (persone, app, sfondi, Home Assistant). */
+private enum class Sub { MAIN, PEOPLE, LEVELS, BRAKED, ORDER, PINNED, EXCLUDED, HA, PERMS, LOOK }
+
+private fun hm(min: Int) = Moments.fmt(min)
+
+/**
+ * Impostazioni. Tre regole: un interruttore accende o spegne; una riga con › apre una lista;
+ * una riga con un valore apre un foglio con le opzioni, e niente cambia finché non scegli.
+ */
 @Composable
 fun SettingsScreen(
     app: SordinaApp,
@@ -67,121 +84,104 @@ fun SettingsScreen(
     fun change(block: () -> Unit) { block(); tick++; ops.changed() }
     BackHandler(sub != Sub.MAIN) { sub = Sub.MAIN }
     val prefs = app.prefs
-    val c = S.c
+    val back = { sub = Sub.MAIN }
 
     if (sub != Sub.MAIN) {
         Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 12.dp, vertical = 16.dp)) {
             when (sub) {
                 Sub.PEOPLE -> {
-                    Header("Persone importanti") { sub = Sub.MAIN }
-                    Hint("Passano sempre, anche di notte.")
+                    Header(tr(R.string.s_important), back)
+                    Hint(tr(R.string.s_important_hint))
                     Column(Modifier.verticalScroll(rememberScrollState())) { ImportantPicker(app, perms, ops) }
                 }
-                Sub.LEVELS -> LevelsPage(app, apps) { sub = Sub.MAIN }
-                Sub.PROPOSALS -> key(tick) {
-                    Header("Barra") { sub = Sub.MAIN }
-                    Column(Modifier.verticalScroll(rememberScrollState())) {
-                        Toggle("Tastiera subito aperta", prefs.keyboardOnOpen, "Scorrendo in su si scrive subito") { v -> change { prefs.keyboardOnOpen = v } }
-                        Section("Fisse")
-                        val byKey = apps.associateBy { it.key }
-                        if (prefs.pinned.isEmpty()) Hint("Nessuna. Pressione lunga su una proposta: «Tieni qui».")
-                        prefs.pinned.forEach { k -> Line(byKey[k]?.label ?: k, "togli") { change { prefs.pinned = prefs.pinned - k } } }
-                        Section("Escluse")
-                        if (prefs.excluded.isEmpty()) Hint("Nessuna.")
-                        prefs.excluded.forEach { k -> Line(byKey[k]?.label ?: k, "rimetti") { change { prefs.excluded = prefs.excluded - k } } }
-                        Section("Quanto ci prende")
-                        val t = prefs.intentTotal
-                        Hint(if (t == 0) "Ancora nessuna ricerca." else "La prima proposta della barra era quella giusta ${prefs.intentFirst} volte su $t (${prefs.intentFirst * 100 / t}%).")
-                        Line("Dimentica le correzioni imparate", "azzera") { change { prefs.aliases = emptyMap(); prefs.intentFirst = 0; prefs.intentTotal = 0 } }
+                Sub.LEVELS -> LevelsPage(app, apps, back)
+                Sub.BRAKED -> BrakedPage(app, apps, onChange = { ops.changed() }, onBack = back)
+                Sub.ORDER -> key(tick) {
+                    Header(tr(R.string.s_your_order), back)
+                    Hint(tr(R.string.s_use_arrows))
+                    val order = Categories.custom(prefs.categoryOrder)
+                    Group {
+                        order.forEachIndexed { i, cat ->
+                            fun move(d: Int) = change {
+                                val l = order.toMutableList(); val j = i + d
+                                if (j in l.indices) { l[i] = l[j].also { l[j] = l[i] }; prefs.categoryOrder = l.map { it.name } }
+                            }
+                            Line("${i + 1}.  ${cat.label}", trailing = {
+                                androidx.compose.foundation.layout.Row {
+                                    IconButton(onClick = { move(-1) }, enabled = i > 0) { Icon(Icons.Rounded.KeyboardArrowUp, tr(R.string.up), tint = if (i > 0) S.c.ink else S.c.dot) }
+                                    IconButton(onClick = { move(1) }, enabled = i < order.lastIndex) { Icon(Icons.Rounded.KeyboardArrowDown, tr(R.string.down), tint = if (i < order.lastIndex) S.c.ink else S.c.dot) }
+                                }
+                            })
+                        }
                     }
                 }
-                Sub.BRAKED -> BrakedPage(app, apps, onChange = { ops.changed() }) { sub = Sub.MAIN }
-                Sub.HA -> {
-                    Header("Home Assistant") { sub = Sub.MAIN }
+                Sub.PINNED, Sub.EXCLUDED -> key(tick) {
+                    val pinned = sub == Sub.PINNED
+                    Header(if (pinned) tr(R.string.s_pinned) else tr(R.string.s_excluded), back)
+                    Hint(if (pinned) tr(R.string.s_always_suggested) else tr(R.string.s_never_suggested))
+                    val byKey = apps.associateBy { it.key }
+                    val keys = if (pinned) prefs.pinned else prefs.excluded.toList()
+                    Group {
+                        keys.forEach { k ->
+                            Line(byKey[k]?.label ?: k, trailing = {
+                                androidx.compose.material3.TextButton(onClick = {
+                                    change { if (pinned) prefs.pinned = prefs.pinned - k else prefs.excluded = prefs.excluded - k }
+                                    if (keys.size == 1) sub = Sub.MAIN
+                                }) { Text(tr(R.string.remove), color = S.c.accent) }
+                            })
+                        }
+                    }
+                }
+                Sub.HA -> key(tick) {
+                    Header(tr(R.string.s_ha), back)
                     Column(Modifier.verticalScroll(rememberScrollState())) {
                         HaForm(app, ops)
-                        Spacer(Modifier.height(12.dp))
-                        Line("Scollega Home Assistant", "scollega") { change { app.ha.setToken(""); prefs.haUrl = ""; prefs.haStatusEntity = "" } }
+                        if (app.ha.configured) {
+                            HaCalendars(app, ops)
+                            Section(" ")
+                            var ask by remember { mutableStateOf(false) }
+                            Group { Line(tr(R.string.disconnect), icon = Icons.Rounded.LinkOff) { ask = true } }
+                            if (ask) Confirm(tr(R.string.s_ha_disc_title), tr(R.string.s_ha_disc_text), tr(R.string.disconnect),
+                                onConfirm = { change { app.ha.setToken(""); prefs.haUrl = ""; prefs.haStatusEntity = ""; prefs.haCalendars = emptySet() } },
+                                onDismiss = { ask = false })
+                        }
+                        Spacer(Modifier.height(40.dp))
                     }
-                }
-                Sub.SUMMARY -> key(tick) {
-                    Header("Riepiloghi") { sub = Sub.MAIN }
-                    Hint("Il non urgente torna a quest'ore.")
-                    val hours = prefs.summaryHours
-                    FlowPills((7..22).map { "$it" }, { (it + 7) in hours }) { i ->
-                        val h = i + 7
-                        change { prefs.summaryHours = if (h in hours) (hours - h).ifEmpty { hours } else hours + h }
-                    }
-                }
-                Sub.NIGHT -> key(tick) {
-                    Header("Notte") { sub = Sub.MAIN }
-                    Group { Toggle("Notte", prefs.nightEnabled, "Solo persone importanti", Icons.Rounded.Bedtime) { v -> change { prefs.nightEnabled = v } } }
-                    if (prefs.nightEnabled) {
-                        Section("Inizio")
-                        val starts = listOf(22 * 60, 23 * 60, 0)
-                        FlowPills(starts.map { Moments.fmt(it) }, { starts[it] == prefs.nightStart }) { change { prefs.nightStart = starts[it] } }
-                        Section("Fine")
-                        val ends = listOf(6 * 60, 7 * 60, 8 * 60)
-                        FlowPills(ends.map { Moments.fmt(it) }, { ends[it] == prefs.nightEnd }) { change { prefs.nightEnd = ends[it] } }
-                    }
-                }
-                Sub.CALENDAR -> {
-                    Header("Calendario") { sub = Sub.MAIN }
-                    CalendarPicker(app, ops)
                 }
                 Sub.PERMS -> key(tick) {
-                    Header("Permessi") { sub = Sub.MAIN }
+                    Header(tr(R.string.s_perms), back)
+                    Hint(tr(R.string.s_tap_grant))
                     Group {
-                        Line("Home", if (perms.home) "sì" else "imposta", icon = Icons.Rounded.Home) { ops.openHomeSettings() }
-                        Line("Notifiche", if (perms.listener) "sì" else "concedi", icon = Icons.Rounded.Notifications) { ops.openListenerSettings() }
-                        Line("Utilizzo app", if (perms.usage) "sì" else "concedi", icon = Icons.Rounded.BarChart) { ops.openUsageSettings() }
-                        Line("Contatti", if (perms.contacts) "sì" else "concedi", icon = Icons.Rounded.Contacts) { ops.request(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS) }
-                        Line("Microfono", if (perms.mic) "sì" else "concedi", icon = Icons.Rounded.Mic) { ops.request(Manifest.permission.RECORD_AUDIO) }
-                        Line("Chiamate", if (perms.call) "sì" else "concedi", icon = Icons.Rounded.Call) { ops.request(Manifest.permission.CALL_PHONE) }
+                        PermLine(tr(R.string.perm_home), perms.home, Icons.Rounded.Home) { ops.openHomeSettings() }
+                        PermLine(tr(R.string.perm_notifications), perms.listener, Icons.Rounded.Notifications) { ops.openListenerSettings() }
+                        PermLine(tr(R.string.perm_usage), perms.usage, Icons.Rounded.BarChart) { ops.openUsageSettings() }
+                        PermLine(tr(R.string.perm_contacts), perms.contacts, Icons.Rounded.Contacts) { ops.request(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS) }
+                        PermLine(tr(R.string.perm_mic), perms.mic, Icons.Rounded.Mic) { ops.request(Manifest.permission.RECORD_AUDIO) }
+                        PermLine(tr(R.string.perm_calls), perms.call, Icons.Rounded.Call) { ops.request(Manifest.permission.CALL_PHONE) }
+                        PermLine(tr(R.string.s_calendar), perms.calendar, Icons.Rounded.CalendarToday) { ops.request(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR) }
                     }
                 }
                 Sub.LOOK -> {
-                    Header("Sfondo e colore") { sub = Sub.MAIN }
+                    Header(tr(R.string.s_look), back)
                     Column(Modifier.verticalScroll(rememberScrollState())) {
-                    Section("Sfondo")
-                    FlowPills(listOf("Tinta unita", "Del telefono", "Una foto"), { it == backdrop }) { i ->
-                        if (i == 2) ops.pickWallpaper() else { prefs.wallpaperMode = i; ops.backdropChanged() }
-                    }
-                    Hint(if (backdrop == 0) "Il colore del tema." else "Le scritte diventano chiare o scure secondo lo sfondo.")
-                    Abstracts.Kind.entries.forEach { kind ->
-                        Section(kind.label)
-                        PresetPicker(kind, if (backdrop == 3) prefs.wallpaperPreset else -1) { i -> prefs.wallpaperPreset = i; prefs.wallpaperMode = 3; ops.backdropChanged() }
-                    }
-                    if (backdrop != 0) Group {
-                        var g by remember { mutableStateOf(prefs.glass) }
-                        Toggle("Schede trasparenti", g, "Schede e barra lasciano vedere lo sfondo") { v -> g = v; prefs.glass = v; ops.backdropChanged() }
-                    }
-                    Section("Colore di rilievo")
-                    AccentPicker(accent, backdropAccent) { v -> prefs.accent = v; ops.backdropChanged() }
-                    Spacer(Modifier.height(40.dp))
-                    }
-                }
-                Sub.HACAL -> {
-                    Header("Calendari di casa") { sub = Sub.MAIN }
-                    var list by remember { mutableStateOf<List<Pair<String, String>>?>(null) }
-                    var chosen by remember { mutableStateOf(prefs.haCalendars) }
-                    androidx.compose.runtime.LaunchedEffect(Unit) {
-                        list = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { app.ha.calendars() }
-                    }
-                    Hint("Da Home Assistant, nel programma di Casa.")
-                    when {
-                        list == null -> Hint("Carico…")
-                        list!!.isEmpty() -> Hint("Nessun calendario trovato.")
-                        else -> Group {
-                            list!!.forEach { (id, name) ->
-                                Toggle(name, id in chosen, icon = Icons.Rounded.CalendarToday) { v ->
-                                    chosen = if (v) chosen + id else chosen - id
-                                    prefs.haCalendars = chosen
-                                    app.ha.resetCalendarCache()
-                                    ops.changed()
-                                }
+                        Section(tr(R.string.s_wallpaper))
+                        FlowPills(listOf(tr(R.string.wp_solid), tr(R.string.wp_phone), tr(R.string.wp_photo)), { it == backdrop }) { i ->
+                            if (i == 2) ops.pickWallpaper() else { prefs.wallpaperMode = i; ops.backdropChanged() }
+                        }
+                        Abstracts.Kind.entries.forEach { kind ->
+                            Section(kind.label)
+                            PresetPicker(kind, if (backdrop == 3) prefs.wallpaperPreset else -1) { i -> prefs.wallpaperPreset = i; prefs.wallpaperMode = 3; ops.backdropChanged() }
+                        }
+                        if (backdrop != 0) {
+                            Section(" ")
+                            Group {
+                                var g by remember { mutableStateOf(prefs.glass) }
+                                Toggle(tr(R.string.s_glass), g, tr(R.string.s_glass_hint)) { v -> g = v; prefs.glass = v; ops.backdropChanged() }
                             }
                         }
+                        Section(tr(R.string.s_color))
+                        AccentPicker(accent, backdropAccent) { v -> prefs.accent = v; ops.backdropChanged() }
+                        Spacer(Modifier.height(40.dp))
                     }
                 }
                 Sub.MAIN -> Unit
@@ -195,121 +195,251 @@ fun SettingsScreen(
             Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState())
                 .padding(horizontal = 12.dp, vertical = 16.dp),
         ) {
-            Header("Impostazioni", onBack)
+            Header(tr(R.string.s_settings), onBack)
             val ctx = androidx.compose.ui.platform.LocalContext.current
             fun granted(p: String) = ctx.checkSelfPermission(p) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
-            Section("Notifiche")
+            // ── Sordina
+            Section(tr(R.string.s_sordina))
             Group {
-                val names = prefs.importantNames
-                Line("Persone importanti", "${names.size}", icon = Icons.Rounded.FavoriteBorder) { sub = Sub.PEOPLE }
-                Line("Passano subito", "${prefs.appLevels.size} app", icon = Icons.Rounded.Bolt) { sub = Sub.LEVELS }
-                Line("Riepiloghi", prefs.summaryHours.sorted().joinToString(" · "), icon = Icons.Rounded.Schedule) { sub = Sub.SUMMARY }
-                Line("Notte", if (prefs.nightEnabled) "${Moments.fmt(prefs.nightStart)}–${Moments.fmt(prefs.nightEnd)}" else "no", icon = Icons.Rounded.Bedtime) { sub = Sub.NIGHT }
-                Toggle("In auto", prefs.carEnabled, "Solo chiamate", Icons.Rounded.DirectionsCar) { v -> change { prefs.carEnabled = v } }
-                if (perms.policy) Toggle("Non disturbare", prefs.silenceManaged, "Gestito da Sordina", Icons.Rounded.DoNotDisturbOn) { v ->
+                Line(tr(R.string.s_important), "${prefs.importantNames.size}", icon = Icons.Rounded.FavoriteBorder) { sub = Sub.PEOPLE }
+                Line(tr(R.string.s_apps_pass), "${prefs.appLevels.size}", icon = Icons.Rounded.Bolt) { sub = Sub.LEVELS }
+                val hours = prefs.summaryHours.sorted()
+                Pick(
+                    tr(R.string.s_summaries), hours.joinToString(" · "), (7..22).map { Option(java.time.LocalTime.of(it, 0).format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))) }, { (it + 7) in hours },
+                    icon = Icons.Rounded.Schedule, title = tr(R.string.s_summaries_title), multi = true,
+                ) { i ->
+                    val h = i + 7
+                    change { prefs.summaryHours = if (h in prefs.summaryHours) (prefs.summaryHours - h).ifEmpty { prefs.summaryHours } else prefs.summaryHours + h }
+                }
+                Toggle(tr(R.string.s_night), prefs.nightEnabled, if (prefs.nightEnabled) "${hm(prefs.nightStart)} – ${hm(prefs.nightEnd)}" else tr(R.string.s_night_hint), Icons.Rounded.Bedtime) { v -> change { prefs.nightEnabled = v } }
+                if (prefs.nightEnabled) {
+                    val starts = listOf(21 * 60, 22 * 60, 23 * 60, 0)
+                    Pick(tr(R.string.s_starts), hm(prefs.nightStart), starts.map { Option(hm(it)) }, { starts[it] == prefs.nightStart }, title = tr(R.string.s_night_starts)) { change { prefs.nightStart = starts[it] } }
+                    val ends = listOf(5 * 60, 6 * 60, 7 * 60, 8 * 60, 9 * 60)
+                    Pick(tr(R.string.s_ends), hm(prefs.nightEnd), ends.map { Option(hm(it)) }, { ends[it] == prefs.nightEnd }, title = tr(R.string.s_night_ends)) { change { prefs.nightEnd = ends[it] } }
+                }
+                Toggle(tr(R.string.s_car), prefs.carEnabled, tr(R.string.s_calls_only), Icons.Rounded.DirectionsCar) { v -> change { prefs.carEnabled = v } }
+                if (perms.policy) Toggle(tr(R.string.s_dnd), prefs.silenceManaged, tr(R.string.s_dnd_hint), Icons.Rounded.DoNotDisturbOn) { v ->
                     change { if (v) app.silence.enable() else app.silence.disable() }
                 }
+                Toggle(tr(R.string.s_system), prefs.systemPass, if (prefs.systemPass) tr(R.string.s_system_on) else tr(R.string.s_system_off), Icons.Rounded.Settings) { v -> change { prefs.systemPass = v } }
+                val orders = listOf(
+                    Option(tr(R.string.s_order_auto), tr(R.string.s_order_auto_hint)),
+                    Option(tr(R.string.s_order_arrival), tr(R.string.s_order_arrival_hint)),
+                    Option(tr(R.string.s_order_yours), tr(R.string.s_order_yours_hint)),
+                )
+                Pick(tr(R.string.s_order), orders[prefs.sordinaOrder.coerceIn(0, 2)].label, orders, { it == prefs.sordinaOrder }, icon = Icons.Rounded.Sort, title = tr(R.string.s_order_title)) { i ->
+                    change { prefs.sordinaOrder = i }
+                    if (i == 2) sub = Sub.ORDER
+                }
+                if (prefs.sordinaOrder == 2) Line(tr(R.string.s_your_order), icon = Icons.Rounded.Reorder) { sub = Sub.ORDER }
             }
 
-            Section("Attrito")
+            // ── Freno
+            Section(tr(R.string.s_brake))
             Group {
-                Line("App da frenare", if (prefs.braked.isEmpty()) "nessuna" else "${prefs.braked.size} · ${prefs.brakeSeconds} s", icon = Icons.Rounded.PanTool) { sub = Sub.BRAKED }
+                Line(tr(R.string.s_braked_apps), if (prefs.braked.isEmpty()) tr(R.string.none_f) else "${prefs.braked.size}", icon = Icons.Rounded.PanTool) { sub = Sub.BRAKED }
+                val secs = listOf(5, 10, 20, 30, 60)
+                Pick(tr(R.string.s_wait), "${prefs.brakeSeconds} s", secs.map { Option(trn(R.plurals.n_seconds, it)) }, { secs[it] == prefs.brakeSeconds }, icon = Icons.Rounded.HourglassEmpty, title = tr(R.string.s_wait_title)) { change { prefs.brakeSeconds = secs[it] } }
+                Toggle(tr(R.string.s_stay), prefs.brakedStay, tr(R.string.s_stay_hint), Icons.Rounded.NotificationsOff) { v -> change { prefs.brakedStay = v } }
             }
 
-            Section("Casa")
+            // ── Casa
+            Section(tr(R.string.s_home))
             Group {
                 val wx = granted(Manifest.permission.ACCESS_COARSE_LOCATION)
-                Line("Meteo", if (wx) "sì" else "attiva", icon = Icons.Rounded.Cloud, onClick = if (wx) null else ({ ops.request(Manifest.permission.ACCESS_COARSE_LOCATION) }))
-                if (!perms.calendar) Line("Calendario", "attiva", icon = Icons.Rounded.CalendarToday) { ops.request(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR) }
-                else Line("Calendario", app.calendars.default()?.name.orEmpty(), icon = Icons.Rounded.CalendarToday) { sub = Sub.CALENDAR }
+                if (wx) Line(tr(R.string.s_weather), tr(R.string.on_m), icon = Icons.Rounded.Cloud)
+                else Line(tr(R.string.s_weather), tr(R.string.turn_on), icon = Icons.Rounded.Cloud) { ops.request(Manifest.permission.ACCESS_COARSE_LOCATION) }
+                if (!perms.calendar) Line(tr(R.string.s_calendar), tr(R.string.turn_on), icon = Icons.Rounded.CalendarToday) { ops.request(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR) }
+                else CalendarPick(app, ops)
                 val loc = granted(Manifest.permission.ACCESS_FINE_LOCATION)
-                Line("Riconosci casa", if (loc) "sì" else "attiva", "Dal nome del Wi-Fi", Icons.Rounded.Wifi, onClick = if (loc) null else ({ ops.request(Manifest.permission.ACCESS_FINE_LOCATION) }))
-                Line("Home Assistant", if (app.ha.configured) "sì" else "collega", icon = Icons.Rounded.Home) { sub = Sub.HA }
-                if (app.ha.configured) Line("Calendari di casa", if (prefs.haCalendars.isEmpty()) "nessuno" else "${prefs.haCalendars.size}", icon = Icons.Rounded.EventNote) { sub = Sub.HACAL }
+                if (loc) Line(tr(R.string.s_recognize_home), tr(R.string.on_m), tr(R.string.s_wifi_hint), Icons.Rounded.Wifi)
+                else Line(tr(R.string.s_recognize_home), tr(R.string.turn_on), tr(R.string.s_wifi_hint), Icons.Rounded.Wifi) { ops.request(Manifest.permission.ACCESS_FINE_LOCATION) }
+                Line(tr(R.string.s_ha), if (app.ha.configured) tr(R.string.connected) else tr(R.string.connect), icon = Icons.Rounded.Home) { sub = Sub.HA }
             }
 
-            Section("Aspetto")
+            // ── Aspetto
+            Section(tr(R.string.s_appearance))
             Group {
-                Line("Tema", mode.label, icon = Icons.Rounded.Contrast) { onMode(ThemeMode.entries[(mode.ordinal + 1) % ThemeMode.entries.size]) }
-                Line("Sfondo e colore", listOf("tinta unita", "del telefono", "foto", "astratto")[backdrop.coerceIn(0, 3)], icon = Icons.Rounded.Wallpaper) { sub = Sub.LOOK }
-                Line("Barra", icon = Icons.Rounded.Search) { sub = Sub.PROPOSALS }
-                Toggle("Icone delle app", prefs.appIcons, "Senza icone viene meno voglia di aprire", Icons.Rounded.Apps) { v -> change { prefs.appIcons = v } }
-                Toggle("Animazioni", prefs.animations, "Movimenti morbidi", Icons.Rounded.Animation) { v -> change { prefs.animations = v } }
-                Toggle("Vibrazioni", prefs.haptics, "Un tocco leggero quando premi", Icons.Rounded.Vibration) { v -> change { prefs.haptics = v } }
-            }
-
-            Section("Altro")
-            Group {
-                Line("Permessi", icon = Icons.Rounded.Lock) { sub = Sub.PERMS }
-                Line("Esporta", icon = Icons.Rounded.Upload) { ops.exportSettings() }
-                Line("Importa", icon = Icons.Rounded.Download) { ops.importSettings() }
-                var confirm by remember { mutableStateOf(false) }
-                Line("Cancella tutto", if (confirm) "sicuro?" else "", icon = Icons.Rounded.DeleteOutline) {
-                    if (confirm) { app.routines.wipe(); onWipe() } else confirm = true
+                val chosenLang = Lang.chosen(ctx)
+                val langs = listOf(Option(tr(R.string.lang_phone))) + Lang.ALL.map { Option(it.second) }
+                Pick(
+                    tr(R.string.s_language), Lang.label(ctx) ?: tr(R.string.lang_phone), langs,
+                    { i -> if (i == 0) chosenLang == null else chosenLang != null && (chosenLang.equals(Lang.ALL[i - 1].first, true) || chosenLang.startsWith(Lang.ALL[i - 1].first + "-", true)) },
+                    icon = Icons.Rounded.Language,
+                ) { i ->
+                    Lang.choose(ctx, if (i == 0) null else Lang.ALL[i - 1].first)
+                    if (android.os.Build.VERSION.SDK_INT < 33) (ctx as? android.app.Activity)?.recreate()
                 }
+                val themes = ThemeMode.entries.map { Option(it.label, if (it == ThemeMode.AUTO) tr(R.string.s_like_phone) else null) }
+                Pick(tr(R.string.s_theme), mode.label, themes, { it == mode.ordinal }, icon = Icons.Rounded.Contrast) { onMode(ThemeMode.entries[it]) }
+                Line(tr(R.string.s_look), listOf(tr(R.string.wp_solid_l), tr(R.string.wp_phone_l), tr(R.string.wp_photo_l), tr(R.string.wp_abstract_l))[backdrop.coerceIn(0, 3)], icon = Icons.Rounded.Wallpaper) { sub = Sub.LOOK }
+                Toggle(tr(R.string.s_icons), prefs.appIcons, tr(R.string.s_icons_hint), Icons.Rounded.Apps) { v -> change { prefs.appIcons = v } }
+                Toggle(tr(R.string.s_animations), prefs.animations, icon = Icons.Rounded.Animation) { v -> change { prefs.animations = v } }
+                Toggle(tr(R.string.s_haptics), prefs.haptics, icon = Icons.Rounded.Vibration) { v -> change { prefs.haptics = v } }
             }
 
-            Section("Informazioni")
+            // ── Ricerca
+            Section(tr(R.string.s_search))
             Group {
-                Line("Versione", version, icon = Icons.Rounded.Info)
-                Line("Codice sorgente", "GitHub", icon = Icons.Rounded.Code) { ops.openUrl("https://github.com/baf93/sordina-launcher") }
+                Toggle(tr(R.string.s_keyboard), prefs.keyboardOnOpen, icon = Icons.Rounded.Keyboard) { v -> change { prefs.keyboardOnOpen = v } }
+                if (prefs.pinned.isEmpty()) Line(tr(R.string.s_pinned), tr(R.string.none_f), tr(R.string.s_hold_suggestion), Icons.Rounded.PushPin)
+                else Line(tr(R.string.s_pinned), "${prefs.pinned.size}", icon = Icons.Rounded.PushPin) { sub = Sub.PINNED }
+                if (prefs.excluded.isEmpty()) Line(tr(R.string.s_excluded), tr(R.string.none_f), tr(R.string.s_hold_suggestion), Icons.Rounded.Block)
+                else Line(tr(R.string.s_excluded), "${prefs.excluded.size}", icon = Icons.Rounded.Block) { sub = Sub.EXCLUDED }
+                val t = prefs.intentTotal
+                var ask by remember { mutableStateOf(false) }
+                Line(tr(R.string.s_first_hit), if (t == 0) "–" else "${prefs.intentFirst * 100 / t}%", icon = Icons.Rounded.TrackChanges)
+                if (prefs.aliases.isNotEmpty() || t > 0) Line(tr(R.string.s_forget), icon = Icons.Rounded.Restore, trailing = {}) { ask = true }
+                if (ask) Confirm(tr(R.string.s_forget_title), tr(R.string.s_forget_text), tr(R.string.forget),
+                    onConfirm = { change { prefs.aliases = emptyMap(); prefs.intentFirst = 0; prefs.intentTotal = 0 } },
+                    onDismiss = { ask = false })
             }
-            Hint("Open source, GPL-3.0.")
+
+            // ── Altro
+            Section(tr(R.string.s_other))
+            Group {
+                Line(tr(R.string.s_perms), icon = Icons.Rounded.Lock) { sub = Sub.PERMS }
+                Line(tr(R.string.s_export), icon = Icons.Rounded.Upload, trailing = {}) { ops.exportSettings() }
+                Line(tr(R.string.s_import), icon = Icons.Rounded.Download, trailing = {}) { ops.importSettings() }
+                var ask by remember { mutableStateOf(false) }
+                Line(tr(R.string.s_wipe), icon = Icons.Rounded.DeleteOutline, trailing = {}) { ask = true }
+                if (ask) Confirm(tr(R.string.s_wipe_title), tr(R.string.s_wipe_text), "Cancella",
+                    onConfirm = { app.routines.wipe(); onWipe() }, onDismiss = { ask = false })
+            }
+
+            Section(tr(R.string.s_info))
+            Group {
+                Line(tr(R.string.s_version), version, icon = Icons.Rounded.Info)
+                Line(tr(R.string.s_source), "GitHub", icon = Icons.Rounded.Code) { ops.openUrl("https://github.com/baf93/sordina-launcher") }
+            }
+            Hint(tr(R.string.s_license))
             Spacer(Modifier.height(40.dp))
         }
     }
 }
 
-/** Livello per app: tocco per cambiare. In cima le app che hanno scritto oggi. */
 @Composable
-private fun LevelsPage(app: SordinaApp, apps: List<AppEntry>, onBack: () -> Unit) {
+private fun PermLine(label: String, ok: Boolean, icon: androidx.compose.ui.graphics.vector.ImageVector, onAsk: () -> Unit) {
+    if (ok) Line(label, tr(R.string.yes), icon = icon) else Line(label, tr(R.string.grant), icon = icon, onClick = onAsk)
+}
+
+/** Il calendario in cui scrivere gli impegni, da un foglio. */
+@Composable
+private fun CalendarPick(app: SordinaApp, ops: Ops) {
+    var cals by remember { mutableStateOf(emptyList<app.sordina.data.Cal>()) }
+    var sel by remember { mutableStateOf(app.prefs.calendarId) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        cals = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { app.calendars.list() }
+    }
+    if (cals.isEmpty()) { Line(tr(R.string.s_calendar), tr(R.string.none_m), icon = Icons.Rounded.CalendarToday); return }
+    val current = cals.firstOrNull { it.id == sel } ?: cals.first()
+    val dup = { n: String -> cals.count { it.name == n } > 1 }
+    Pick(
+        tr(R.string.s_calendar), current.name,
+        cals.map { Option(it.name, if (dup(it.name)) it.account else null) }, { cals[it].id == current.id },
+        icon = Icons.Rounded.CalendarToday, title = tr(R.string.s_events_go),
+    ) { sel = cals[it].id; app.prefs.calendarId = sel; ops.changed() }
+}
+
+/** I calendari di Home Assistant da mostrare in Casa, dentro la pagina di Home Assistant. */
+@Composable
+private fun HaCalendars(app: SordinaApp, ops: Ops) {
     val prefs = app.prefs
-    var levels by remember { mutableStateOf(prefs.appLevels) }
-    var q by remember { mutableStateOf("") }
-    val todayPkgs = remember { app.store.today.value.groupBy { it.pkg }.mapValues { it.value.size } }
-    val pkgs = remember(apps) { apps.distinctBy { it.packageName } }
-    Header("Cosa passa subito", onBack)
-    Hint("Tocca per cambiare.")
-    Field(q, { q = it }, "Cerca un'app…")
-    val nq = Search.normalize(q)
-    val list = pkgs.filter { nq.isEmpty() || it.normalized.contains(nq) }
-        .sortedWith(compareByDescending<AppEntry> { todayPkgs[it.packageName] ?: 0 }.thenByDescending { if (it.packageName in levels) 1 else 0 })
-    LazyColumn(Modifier.fillMaxWidth()) {
-        items(list, key = { it.key }) { a ->
-            val lv = levels[a.packageName]
-            val n = todayPkgs[a.packageName]
-            Line(a.label, lv?.label ?: "Automatico", n?.let { "$it notifiche oggi" }) {
-                val next = when (lv) { null -> Level.SEMPRE; Level.SEMPRE -> Level.SUBITO; Level.SUBITO -> Level.RIEPILOGO; Level.RIEPILOGO -> null }
-                prefs.setAppLevel(a.packageName, next)
-                levels = prefs.appLevels
+    var list by remember { mutableStateOf<List<Pair<String, String>>?>(null) }
+    var chosen by remember { mutableStateOf(prefs.haCalendars) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        list = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { app.ha.calendars() }
+    }
+    Section(tr(R.string.s_ha_calendars))
+    when {
+        list == null -> Hint(tr(R.string.loading))
+        list!!.isEmpty() -> Hint(tr(R.string.s_no_calendar))
+        else -> Group {
+            list!!.forEach { (id, name) ->
+                Toggle(name, id in chosen, icon = Icons.Rounded.CalendarToday) { v ->
+                    chosen = if (v) chosen + id else chosen - id
+                    prefs.haCalendars = chosen
+                    app.ha.resetCalendarCache()
+                    ops.changed()
+                }
             }
         }
     }
 }
 
+/** Cosa passa subito, app per app. Tocco: un foglio con i livelli. In cima le app che hanno scritto oggi. */
+@Composable
+private fun LevelsPage(app: SordinaApp, apps: List<AppEntry>, onBack: () -> Unit) {
+    val prefs = app.prefs
+    var levels by remember { mutableStateOf(prefs.appLevels) }
+    var q by remember { mutableStateOf("") }
+    var editing by remember { mutableStateOf<AppEntry?>(null) }
+    val todayPkgs = remember { app.store.today.value.groupBy { it.pkg }.mapValues { it.value.size } }
+    val pkgs = remember(apps) { apps.distinctBy { it.packageName } }
+    Header(tr(R.string.s_apps_pass), onBack)
+    Hint(tr(R.string.s_tap_app))
+    Field(q, { q = it }, tr(R.string.s_search_app))
+    val nq = Search.normalize(q)
+    val list = pkgs.filter { nq.isEmpty() || it.normalized.contains(nq) }
+        .sortedWith(compareByDescending<AppEntry> { todayPkgs[it.packageName] ?: 0 }.thenByDescending { if (it.packageName in levels) 1 else 0 })
+    LazyColumn(Modifier.fillMaxWidth()) {
+        items(list, key = { it.key }) { a ->
+            val n = todayPkgs[a.packageName]
+            Line(a.label, levels[a.packageName]?.label ?: tr(R.string.s_order_auto), n?.let { trn(R.plurals.n_today, it) }) { editing = a }
+        }
+    }
+    editing?.let { a ->
+        val opts = listOf<Pair<Level?, Option>>(
+            null to Option(tr(R.string.s_order_auto), tr(R.string.lv_auto_hint)),
+            Level.SEMPRE to Option(tr(R.string.lv_always), tr(R.string.lv_always_hint)),
+            Level.SUBITO to Option(tr(R.string.lv_silent), tr(R.string.lv_silent_hint)),
+            Level.RIEPILOGO to Option(tr(R.string.lv_summary), tr(R.string.lv_summary_hint)),
+        )
+        Sheet(a.label, onDismiss = { editing = null }) {
+            opts.forEach { (lv, o) ->
+                val on = levels[a.packageName] == lv
+                androidx.compose.foundation.layout.Row(
+                    Modifier.fillMaxWidth().clickable {
+                        prefs.setAppLevel(a.packageName, lv); levels = prefs.appLevels; editing = null
+                    }.padding(horizontal = 24.dp, vertical = 13.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(o.label, style = androidx.compose.ui.text.TextStyle(fontSize = 17.sp, color = if (on) S.c.accent else S.c.ink))
+                        Text(o.hint.orEmpty(), style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = S.c.soft))
+                    }
+                    if (on) Icon(Icons.Rounded.Check, null, tint = S.c.accent)
+                }
+            }
+        }
+    }
+}
+
+/** Le app frenate: cerca per aggiungere, tocca tr(R.string.remove) per liberarla. */
 @Composable
 private fun BrakedPage(app: SordinaApp, apps: List<AppEntry>, onChange: () -> Unit, onBack: () -> Unit) {
     val prefs = app.prefs
     var braked by remember { mutableStateOf(prefs.braked) }
-    var secs by remember { mutableIntStateOf(prefs.brakeSeconds) }
     var q by remember { mutableStateOf("") }
-    Header("App da frenare", onBack)
-    Hint("Notifiche al riepilogo. Prima di aprirle, un'attesa:")
-    val opts = listOf(5, 10, 20, 30, 60)
-    FlowPills(opts.map { "$it s" }, { opts[it] == secs }) { secs = opts[it]; prefs.brakeSeconds = secs }
-    Field(q, { q = it }, "Aggiungi un'app…")
+    Header(tr(R.string.s_braked_apps), onBack)
+    Hint(tr(R.string.s_braked_hint))
+    Field(q, { q = it }, tr(R.string.s_add_app))
     val nq = Search.normalize(q)
     val list = if (nq.isEmpty()) apps.filter { it.packageName in braked }.distinctBy { it.packageName }
     else Search.apps(q, apps, emptyMap(), 8)
+    if (nq.isEmpty() && list.isEmpty()) Hint(tr(R.string.s_braked_none))
     LazyColumn(Modifier.fillMaxWidth()) {
         items(list, key = { it.key }) { a ->
             val on = a.packageName in braked
-            Line(a.label, if (on) "togli" else "frena") {
-                braked = if (on) braked - a.packageName else braked + a.packageName
-                prefs.braked = braked
-                onChange()
-            }
+            Line(a.label, trailing = {
+                androidx.compose.material3.TextButton(onClick = {
+                    braked = if (on) braked - a.packageName else braked + a.packageName
+                    prefs.braked = braked
+                    onChange()
+                }) { Text(if (on) tr(R.string.remove) else tr(R.string.brake), color = S.c.accent) }
+            })
         }
     }
 }
@@ -326,11 +456,11 @@ private fun AccentPicker(current: Int, fromBackdrop: Int?, onPick: (Int) -> Unit
         verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
     ) {
-        Swatch(null, "Tema", current == 0) { onPick(0) }
-        if (fromBackdrop != null) Swatch(androidx.compose.ui.graphics.Color(fromBackdrop), "Sfondo", current == 1) { onPick(1) }
+        Swatch(null, tr(R.string.s_theme), current == 0) { onPick(0) }
+        if (fromBackdrop != null) Swatch(androidx.compose.ui.graphics.Color(fromBackdrop), tr(R.string.s_wallpaper), current == 1) { onPick(1) }
         ACCENTS.forEach { a -> Swatch(androidx.compose.ui.graphics.Color(a), null, current == a) { onPick(a) } }
     }
-    Hint(if (fromBackdrop == null && current == 1) "Lo sfondo non suggerisce un colore." else "Per i numeri in sordina, il microfono, le cose da notare.")
+    Hint(if (fromBackdrop == null && current == 1) tr(R.string.s_no_bg_color) else tr(R.string.s_accent_hint))
 }
 
 @Composable

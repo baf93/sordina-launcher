@@ -1,5 +1,9 @@
 package app.sordina.data
 
+import app.sordina.tr
+
+import app.sordina.R
+
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
@@ -67,9 +71,9 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
 
     /** Verifica la connessione. Restituisce il messaggio da mostrare. */
     fun test(): String {
-        if (!configured) return "Manca l'indirizzo o il token"
-        val r = request("/api/") ?: return "Non risponde: controlla indirizzo e token"
-        return runCatching { JSONObject(r).optString("message", "Collegato") }.getOrDefault("Collegato")
+        if (!configured) return tr(R.string.ha_missing)
+        val r = request("/api/") ?: return tr(R.string.ha_unreachable)
+        return runCatching { JSONObject(r).optString("message", tr(R.string.ha_connected)) }.getOrDefault(tr(R.string.ha_connected))
     }
 
     /** Entità (in cache per un minuto). */
@@ -98,7 +102,7 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
         val r = request("/api/conversation/process", body) ?: return null
         return runCatching {
             JSONObject(r).getJSONObject("response").getJSONObject("speech").getJSONObject("plain").getString("speech")
-        }.getOrDefault("Fatto")
+        }.getOrDefault(tr(R.string.done))
     }
 
     /** I calendari di Home Assistant: (entity_id, nome). */
@@ -134,7 +138,7 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
                     if (s.isBlank()) continue // giornata intera
                     val b = java.time.OffsetDateTime.parse(s).toInstant().toEpochMilli()
                     val f = if (e.isBlank()) b + 3600_000 else java.time.OffsetDateTime.parse(e).toInstant().toEpochMilli()
-                    out += Upcoming((id + s).hashCode().toLong(), o.optString("summary").ifBlank { "Evento" }, b, f,
+                    out += Upcoming((id + s).hashCode().toLong(), o.optString("summary").ifBlank { tr(R.string.event) }, b, f,
                         o.optString("location").takeIf { it.isNotBlank() }, "ha", false)
                 }
             }

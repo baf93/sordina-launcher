@@ -34,8 +34,12 @@ class SordinaApp : Application() {
     val routines by lazy { Routines(this) }
     val weather by lazy { app.sordina.data.Weather(this) }
 
+    override fun attachBaseContext(base: Context) { super.attachBaseContext(Lang.wrap(base)) }
+
     override fun onCreate() {
         super.onCreate()
+        Lang.init(this)
+        Lang.applyLegacy(this)
         status.createChannels()
         Scheduler.refresh(this)
     }

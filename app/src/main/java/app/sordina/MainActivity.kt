@@ -1,8 +1,15 @@
 package app.sordina
 
 import app.sordina.data.Prefs
+import app.sordina.data.Held
+import app.sordina.R
+import app.sordina.data.Categories
+import androidx.core.graphics.drawable.toBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import app.sordina.ui.sordina.SordinaScreen
 import app.sordina.ui.Feel
 import app.sordina.ui.LocalFeel
+import app.sordina.ui.LocalGlass
 import app.sordina.ui.theme.Backdrop
 import app.sordina.ui.theme.Backdrops
 import android.Manifest
@@ -48,6 +55,9 @@ import app.sordina.data.Actions
 import app.sordina.data.AppEntry
 import app.sordina.data.Candidate
 import app.sordina.data.Card
+import app.sordina.data.Bar
+import app.sordina.data.Birthday
+import app.sordina.data.birthdaysToday
 import app.sordina.data.CardAction
 import app.sordina.data.CardKind
 import app.sordina.data.CardOp
@@ -86,7 +96,7 @@ import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import java.util.Locale
 
-enum class Screen { HOME, INTENT, ALL_APPS, SETTINGS, BRAKE, ONBOARDING }
+enum class Screen { HOME, INTENT, ALL_APPS, SETTINGS, BRAKE, ONBOARDING, SORDINA }
 
 class MainActivity : ComponentActivity(), Ops {
 
@@ -112,12 +122,13 @@ class MainActivity : ComponentActivity(), Ops {
     private var events by mutableStateOf<List<Upcoming>>(emptyList())
     private var habitCards by mutableStateOf<List<Card>>(emptyList())
     private var doneHabits by mutableStateOf<Set<String>>(emptySet())
-    private var sheetOpen by mutableStateOf(false)
     private var backdrop by mutableStateOf(Backdrop())
     private var accentPref by mutableIntStateOf(0)
     private var glassPref by mutableStateOf(false)
     private var agendaEvents by mutableStateOf<List<Upcoming>>(emptyList())
     private var weatherNow by mutableStateOf<String?>(null)
+    private var rainAt by mutableStateOf<Pair<Long, Int>?>(null)
+    private var birthdays by mutableStateOf<List<Birthday>>(emptyList())
     private var moment by mutableStateOf(Moment.NONE)
     private var recognizer: SpeechRecognizer? = null
 
@@ -134,7 +145,7 @@ class MainActivity : ComponentActivity(), Ops {
     private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) runCatching {
             contentResolver.openOutputStream(uri)?.use { it.write(prefs.export().toByteArray()) }
-            notice = Notice("Configurazione esportata")
+            notice = Notice(tr(R.string.cfg_exported))
         }
     }
     private val importLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -146,9 +157,11 @@ class MainActivity : ComponentActivity(), Ops {
             family = prefs.family; mode = prefs.mode; hidden = prefs.hidden
             prefsVersion++
             changed()
-            notice = Notice(if (ok) "Configurazione importata" else "File non valido")
+            notice = Notice(if (ok) tr(R.string.cfg_imported) else tr(R.string.file_invalid))
         }
     }
+
+    override fun attachBaseContext(newBase: android.content.Context) { super.attachBaseContext(Lang.wrap(newBase)) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -174,7 +187,7 @@ class MainActivity : ComponentActivity(), Ops {
             SordinaTheme(family, mode, accentColor) {
                 val view = androidx.compose.ui.platform.LocalView.current
                 val feel = remember(prefsVersion) { Feel(prefs.animations, prefs.haptics, view) }
-                androidx.compose.runtime.CompositionLocalProvider(LocalFeel provides feel) {
+                androidx.compose.runtime.CompositionLocalProvider(LocalFeel provides feel, LocalGlass provides (backdrop.active && glassPref)) {
                     SystemBars()
                     Root()
                 }
@@ -196,7 +209,7 @@ class MainActivity : ComponentActivity(), Ops {
     private fun handleIntent(intent: Intent?) {
         if (screen == Screen.ONBOARDING) return
         when {
-            intent?.action == ACTION_WAITING -> { screen = Screen.HOME; sheetOpen = true }
+            intent?.action == ACTION_WAITING -> { screen = Screen.SORDINA }
             intent?.hasCategory(Intent.CATEGORY_HOME) == true -> { screen = Screen.HOME; query = "" }
         }
     }
@@ -216,7 +229,6 @@ class MainActivity : ComponentActivity(), Ops {
         if (screen != Screen.SETTINGS && screen != Screen.ONBOARDING) screen = Screen.HOME
         query = ""
         notice = null
-        sheetOpen = false
     }
 
     // Dati
@@ -250,6 +262,8 @@ class MainActivity : ComponentActivity(), Ops {
             val all = (app.calendars.agenda(this@MainActivity) + app.ha.calendarEvents(prefs.haCalendars)).sortedBy { it.begin }
             agendaEvents = all.filter { it.begin < endOfDay }.take(3).ifEmpty { all.take(1) }
             weatherNow = app.weather.now()
+            rainAt = app.weather.rain
+            birthdays = birthdaysToday(this@MainActivity)
             if (current.isNotEmpty()) habitCards = app.routines.suggestions(current)
         }
     }
@@ -298,7 +312,7 @@ class MainActivity : ComponentActivity(), Ops {
                     act is Act.Media || act is Act.Ha || act is Act.Calc
                 if (stays && out.ok) query = ""
                 val undo = out.undo
-                if (out.message != null) notice = Notice(out.message, undo?.let { u -> { lifecycleScope.launch { u(); notice = Notice("Annullato") } } })
+                if (out.message != null) notice = Notice(out.message, undo?.let { u -> { lifecycleScope.launch { u(); notice = Notice(tr(R.string.undone)) } } })
                 if (out.message != null && screen == Screen.HOME) android.widget.Toast.makeText(this@MainActivity, out.message, android.widget.Toast.LENGTH_SHORT).show()
                 if (out.ok) app.routines.onCommand(c.title, query.ifBlank { c.title })
             }
@@ -310,17 +324,38 @@ class MainActivity : ComponentActivity(), Ops {
     private fun eventCard(e: Upcoming, now: Long): Card {
         val min = ((e.begin - now) / 60_000).toInt()
         val label = when {
-            min <= 0 -> "Adesso"
-            min < 60 -> "Tra $min min"
-            else -> "Alle " + java.time.Instant.ofEpochMilli(e.begin).atZone(java.time.ZoneId.systemDefault())
-                .format(java.time.format.DateTimeFormatter.ofPattern("H:mm"))
+            min <= 0 -> tr(R.string.now_cap)
+            min < 60 -> tr(R.string.in_min, min)
+            else -> tr(R.string.at_time, java.time.Instant.ofEpochMilli(e.begin).atZone(java.time.ZoneId.systemDefault())
+                .format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)))
         }
         val actions = buildList {
-            e.link?.let { add(CardAction("Partecipa", CardOp.OpenUrl(it))) }
-            e.location?.let { add(CardAction("Naviga", CardOp.Navigate(it))) }
-            if (isEmpty()) add(CardAction("Apri", CardOp.OpenEvent(e.id)))
+            e.link?.let { add(CardAction(tr(R.string.join), CardOp.OpenUrl(it))) }
+            e.location?.let { add(CardAction(tr(R.string.navigate), CardOp.Navigate(it))) }
+            if (isEmpty()) add(CardAction(tr(R.string.open), CardOp.OpenEvent(e.id)))
         }
-        return Card("event:${e.id}:${e.begin}", CardKind.EVENT, label, e.title, e.location, actions, e.begin, e.end)
+        return Card("event:${e.id}:${e.begin}", CardKind.EVENT, label, e.title, e.location, actions, e.begin, e.end,
+            bar = if (e.begin <= now) Bar(e.begin, e.end) else null)
+    }
+
+    /** Pioggia in arrivo: una scheda finché non comincia. */
+    private fun rainCard(now: Long): Card? {
+        val (at, p) = rainAt ?: return null
+        val min = ((at - now) / 60_000).toInt()
+        val title = when {
+            min < 10 -> tr(R.string.rain_soon)
+            min < 60 -> tr(R.string.rain_in, min)
+            else -> tr(R.string.rain_around, java.time.Instant.ofEpochMilli(at).atZone(java.time.ZoneId.systemDefault())
+                .format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)))
+        }
+        return Card("rain:$at", CardKind.RAIN, tr(R.string.weather), title, tr(R.string.rain_chance, p),
+            actions = listOf(CardAction(tr(R.string.open), CardOp.Weather)), time = now, expiresAt = at + 30 * 60_000)
+    }
+
+    private fun birthdayCards(): List<Card> = birthdays.map { b ->
+        Card("birthday:${b.name}", CardKind.BIRTHDAY, b.age?.let { tr(R.string.birthday_age, it) } ?: tr(R.string.birthday), b.name,
+            actions = listOf(CardAction(tr(R.string.write), CardOp.Query("scrivi a ${b.name}")), CardAction(tr(R.string.call), CardOp.Query("chiama ${b.name}"))),
+            avatar = true)
     }
 
     /** Apre il lettore: prima la sua schermata "in riproduzione", altrimenti l'app. */
@@ -343,42 +378,43 @@ class MainActivity : ComponentActivity(), Ops {
         val t = java.time.Instant.ofEpochMilli(e.begin).atZone(java.time.ZoneId.systemDefault())
         val today = java.time.LocalDate.now()
         val day = when (t.toLocalDate()) {
-            today -> if (e.begin <= System.currentTimeMillis()) "Ora" else "Alle"
-            today.plusDays(1) -> "Domani"
+            today -> if (e.begin <= System.currentTimeMillis()) "" else null
+            today.plusDays(1) -> tr(R.string.tomorrow_cap)
             else -> t.format(java.time.format.DateTimeFormatter.ofPattern("EEE", Locale.getDefault())).replace(".", "").replaceFirstChar { it.uppercase() }
         }
-        val hour = t.format(java.time.format.DateTimeFormatter.ofPattern("H:mm"))
-        return if (day == "Ora") "Ora · ${e.title}" else "$day $hour · ${e.title}"
+        val hour = t.format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
+        return if (day == "") tr(R.string.now_dot, e.title) else if (day == null) tr(R.string.at_time, hour) + " · " + e.title else tr(R.string.day_hour_title, day, hour, e.title)
     }
 
     /** Il programma di Casa: meteo e momento adesso, poi eventi e ritorno delle notifiche in ordine di ora. */
     private fun agendaRows(waiting: Int): List<AgendaRow> {
         val zone = java.time.ZoneId.systemDefault()
         val today = java.time.LocalDate.now()
-        val hm = java.time.format.DateTimeFormatter.ofPattern("H:mm")
+        val hm = java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)
         val out = ArrayList<AgendaRow>()
-        if (moment != Moment.NONE) out += AgendaRow("ora", moment.phrase, "moment")
+        if (moment != Moment.NONE) out += AgendaRow(tr(R.string.now_l), moment.phrase, "moment")
         val timed = ArrayList<Pair<Long, AgendaRow>>()
         for (e in agendaEvents) {
             val key = if (e.link == "ha") "ha" else "event:${e.id}"
             val t = java.time.Instant.ofEpochMilli(e.begin).atZone(zone)
             val d = t.toLocalDate()
             val row = when {
-                e.begin <= System.currentTimeMillis() -> AgendaRow("adesso", e.title, key)
+                e.begin <= System.currentTimeMillis() -> AgendaRow(tr(R.string.now_l), e.title, key)
                 d == today -> AgendaRow(t.format(hm), e.title, key)
-                d == today.plusDays(1) -> AgendaRow("domani", "${e.title} · ${t.format(hm)}", key)
+                d == today.plusDays(1) -> AgendaRow(tr(R.string.tomorrow_l), tr(R.string.title_time, e.title, t.format(hm)), key)
                 else -> AgendaRow(t.format(java.time.format.DateTimeFormatter.ofPattern("EEE", Locale.getDefault())).replace(".", ""),
-                    "${e.title} · ${t.format(hm)}", key)
+                    tr(R.string.title_time, e.title, t.format(hm)), key)
             }
             timed += e.begin to row
         }
-        return out + timed.sortedBy { it.first }.map { it.second }
+        // Il prossimo appuntamento in accento, gli altri neutri
+        return out + timed.sortedBy { it.first }.mapIndexed { i, p -> if (i == 0) p.second.copy(accent = true) else p.second }
     }
 
     private fun onAgenda(key: String) {
         when {
             key == "weather" -> openWeather()
-            key == "sordina" -> sheetOpen = true
+            key == "sordina" -> screen = Screen.SORDINA
             key == "ha" -> packageManager.getLaunchIntentForPackage("io.homeassistant.companion.android")?.let { start(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             key.startsWith("event:") -> key.removePrefix("event:").toLongOrNull()?.let {
                 start(Intent(Intent.ACTION_VIEW, android.content.ContentUris.withAppendedId(android.provider.CalendarContract.Events.CONTENT_URI, it)))
@@ -398,6 +434,9 @@ class MainActivity : ComponentActivity(), Ops {
             card.kind == CardKind.MUSIC -> openMusic()
             card.kind == CardKind.EVENT -> card.key.split(':').getOrNull(1)?.toLongOrNull()?.let { cardAction(card, CardAction("", CardOp.OpenEvent(it))) }
             card.kind == CardKind.HABIT -> card.actions.firstOrNull()?.let { cardAction(card, it) }
+            card.kind == CardKind.RAIN -> openWeather()
+            card.kind == CardKind.BIRTHDAY -> card.actions.firstOrNull()?.let { cardAction(card, it) }
+            card.kind == CardKind.PAYMENT -> card.actions.firstOrNull()?.let { cardAction(card, it) }
             else -> SordinaListener.open(this, card.key)
         }
     }
@@ -410,7 +449,7 @@ class MainActivity : ComponentActivity(), Ops {
                 val clip = android.content.ClipData.newPlainText("codice", op.text)
                 clip.description.extras = android.os.PersistableBundle().apply { putBoolean("android.content.extra.IS_SENSITIVE", true) }
                 cm.setPrimaryClip(clip)
-                if (Build.VERSION.SDK_INT < 33) android.widget.Toast.makeText(this, "Copiato", android.widget.Toast.LENGTH_SHORT).show()
+                if (Build.VERSION.SDK_INT < 33) android.widget.Toast.makeText(this, tr(R.string.copied), android.widget.Toast.LENGTH_SHORT).show()
                 app.signals.dismiss(card.key)
             }
             is CardOp.OpenNotif -> SordinaListener.open(this, op.key)
@@ -423,7 +462,7 @@ class MainActivity : ComponentActivity(), Ops {
                 if (!app.calendars.hasPermission()) { request(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR); return }
                 lifecycleScope.launch {
                     val id = withContext(Dispatchers.IO) { app.calendars.default()?.let { app.calendars.insert(it, op.title, op.whenAt) } }
-                    android.widget.Toast.makeText(this@MainActivity, if (id != null) "Aggiunto" else "Non riuscito", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(this@MainActivity, if (id != null) tr(R.string.added) else tr(R.string.failed), android.widget.Toast.LENGTH_SHORT).show()
                     if (id != null) app.signals.dismiss(card.key)
                 }
             }
@@ -433,7 +472,7 @@ class MainActivity : ComponentActivity(), Ops {
                     ?: packageManager.getLaunchIntentForPackage(op.pkg)?.let { start(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             }
             is CardOp.Query -> {
-                if (card.kind == CardKind.HABIT) doneHabits = doneHabits + card.key
+                if (card.kind == CardKind.HABIT || card.kind == CardKind.BIRTHDAY) doneHabits = doneHabits + card.key
                 query = op.query
                 val u = understand(op.query)
                 val top = u.top
@@ -442,6 +481,11 @@ class MainActivity : ComponentActivity(), Ops {
             CardOp.MusicPrev -> music?.skipToPrevious()
             CardOp.MusicNext -> music?.skipToNext()
             CardOp.MusicToggle -> if (app.signals.musicPlaying()) music?.pause() else music?.play()
+            is CardOp.Fire -> { if (SordinaListener.fire(this, op.key, op.index)) app.signals.dismiss(card.key) else SordinaListener.open(this, op.key) }
+            is CardOp.Done -> { SordinaListener.done(op.key); app.signals.dismiss(card.key) }
+            is CardOp.Later -> { SordinaListener.later(op.key); app.signals.remove(card.key) }
+            CardOp.Weather -> openWeather()
+            CardOp.Dismiss -> { if (card.kind == CardKind.HABIT || card.kind == CardKind.BIRTHDAY) doneHabits = doneHabits + card.key; app.signals.dismiss(card.key) }
         }
     }
 
@@ -453,7 +497,7 @@ class MainActivity : ComponentActivity(), Ops {
             request(Manifest.permission.RECORD_AUDIO); return
         }
         if (!SpeechRecognizer.isOnDeviceRecognitionAvailable(this)) {
-            notice = Notice("Il riconoscimento vocale sul telefono non è disponibile. Scarica la lingua nelle impostazioni della dettatura.")
+            notice = Notice(tr(R.string.voice_offline))
             return
         }
         val r = recognizer ?: SpeechRecognizer.createOnDeviceSpeechRecognizer(this).also { recognizer = it }
@@ -471,7 +515,7 @@ class MainActivity : ComponentActivity(), Ops {
             override fun onResults(results: Bundle?) {
                 val t = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty()
                 voice = voice.copy(listening = false, partial = "")
-                if (t.isBlank()) { notice = Notice("Non ho capito"); return }
+                if (t.isBlank()) { notice = Notice(tr(R.string.not_understood)); return }
                 query = t
                 // Azioni verso te stesso, con sicurezza alta: fatte subito
                 val u = understand(t)
@@ -481,10 +525,10 @@ class MainActivity : ComponentActivity(), Ops {
             override fun onError(error: Int) {
                 voice = voice.copy(listening = false, partial = "")
                 notice = when (error) {
-                    12, 13 -> Notice("Manca la lingua per il riconoscimento sul telefono: scaricala nelle impostazioni della dettatura.")
-                    SpeechRecognizer.ERROR_NO_MATCH, SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> Notice("Non ho capito")
+                    12, 13 -> Notice(tr(R.string.voice_no_lang))
+                    SpeechRecognizer.ERROR_NO_MATCH, SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> Notice(tr(R.string.not_understood))
                     SpeechRecognizer.ERROR_CLIENT -> null
-                    else -> Notice("Microfono non disponibile")
+                    else -> Notice(tr(R.string.mic_unavailable))
                 }
                 if (screen == Screen.HOME) notice?.let { android.widget.Toast.makeText(this@MainActivity, it.text, android.widget.Toast.LENGTH_SHORT).show() }
             }
@@ -513,7 +557,7 @@ class MainActivity : ComponentActivity(), Ops {
     private var voiceDownAt = 0L
 
     private fun hint(text: String) {
-        if (screen == Screen.HOME) android.widget.Toast.makeText(this, text, android.widget.Toast.LENGTH_SHORT).show()
+        if (screen == Screen.HOME || screen == Screen.SORDINA) android.widget.Toast.makeText(this, text, android.widget.Toast.LENGTH_SHORT).show()
         else notice = Notice(text)
     }
 
@@ -523,7 +567,7 @@ class MainActivity : ComponentActivity(), Ops {
         if (System.currentTimeMillis() - voiceDownAt < 350) {
             runCatching { recognizer?.cancel() }
             voice = voice.copy(listening = false, partial = "")
-            hint("Tieni premuto e parla")
+            hint(tr(R.string.hold_speak))
             return
         }
         runCatching { recognizer?.stopListening() }
@@ -562,6 +606,30 @@ class MainActivity : ComponentActivity(), Ops {
         else window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
         lifecycleScope.launch { backdrop = withContext(Dispatchers.IO) { Backdrops.load(this@MainActivity, m, prefs.wallpaperPreset) } }
     }
+    private val notifIcons = HashMap<String, androidx.compose.ui.graphics.ImageBitmap?>()
+
+    /** L'icona dell'app di una notifica (anche app di sistema senza voce nel cassetto). */
+    private fun notifIcon(pkg: String): androidx.compose.ui.graphics.ImageBitmap? = notifIcons.getOrPut(pkg) {
+        runCatching {
+            val px = (40 * resources.displayMetrics.density).toInt()
+            packageManager.getApplicationIcon(pkg).toBitmap(px, px).asImageBitmap()
+        }.getOrNull()
+    }
+
+    /** Lascia passare un contatto o un'app: per qualche ora, oppure sempre (importante / livello Subito). */
+    private fun letPass(h: Held, hours: Int?) {
+        val k = h.groupKey
+        when {
+            hours != null -> prefs.passUntil = prefs.passUntil + (k to System.currentTimeMillis() + hours * 3_600_000L)
+            k.startsWith("a:") -> prefs.setAppLevel(h.pkg, Level.SUBITO)
+            h.conversation == null -> prefs.importantNames = prefs.importantNames + k.removePrefix("p:")
+            else -> prefs.passUntil = prefs.passUntil + (k to Long.MAX_VALUE)
+        }
+        SordinaListener.releaseGroup(this, k)
+        changed()
+        hint(if (hours == null) tr(R.string.passes_always_x, h.groupTitle) else tr(R.string.passes_for_x, h.groupTitle, trn(R.plurals.n_hours, hours)))
+    }
+
     override fun changed() {
         prefsVersion++
         moment = app.moments.current()
@@ -610,7 +678,7 @@ class MainActivity : ComponentActivity(), Ops {
     @Composable
     private fun Root() {
         // In Casa "indietro" non porta da nessuna parte: lo si ignora, così Android non mostra l'animazione di uscita
-        BackHandler(enabled = screen == Screen.HOME) { sheetOpen = false }
+        BackHandler(enabled = screen == Screen.HOME) { }
         BackHandler(enabled = screen != Screen.HOME && screen != Screen.ONBOARDING) {
             screen = when (screen) {
                 Screen.ALL_APPS -> Screen.INTENT
@@ -632,7 +700,7 @@ class MainActivity : ComponentActivity(), Ops {
                     a.key in p -> prefs.pinned = p - a.key
                     // Al massimo 4 fisse su 6: le altre due restano a chi impara dalle tue abitudini
                     p.size >= Prefs.MAX_PINNED -> {
-                        notice = Notice("Hai già ${Prefs.MAX_PINNED} app fisse. Togline una per tenere qui ${a.label}.")
+                        notice = Notice(tr(R.string.pins_full, Prefs.MAX_PINNED, a.label))
                         if (prefs.haptics) window.decorView.performHapticFeedback(
                             if (Build.VERSION.SDK_INT >= 30) android.view.HapticFeedbackConstants.REJECT else android.view.HapticFeedbackConstants.LONG_PRESS,
                         )
@@ -655,9 +723,9 @@ class MainActivity : ComponentActivity(), Ops {
             },
             why = { a ->
                 when {
-                    a.key in prefs.pinned -> "La tieni qui tu."
-                    (proposals.usage[a.packageName] ?: 0.0) > 0.3 -> "La apri spesso attorno a quest'ora, nelle ultime quattro settimane."
-                    else -> "È tra le app che usi di più."
+                    a.key in prefs.pinned -> tr(R.string.why_pinned)
+                    (proposals.usage[a.packageName] ?: 0.0) > 0.3 -> tr(R.string.why_time)
+                    else -> tr(R.string.why_used)
                 }
             },
         )
@@ -687,14 +755,14 @@ class MainActivity : ComponentActivity(), Ops {
                     Screen.HOME -> {
                         val waiting = groups.sumOf { g -> g.sumOf { it.count } }
                         val ms = now.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
-                        val cards = remember(signalCards, music, events, habitCards, doneHabits, now) {
-                            (signalCards.values + listOfNotNull(music) + events.map { eventCard(it, ms) } +
-                                habitCards.filter { it.key !in doneHabits })
+                        val cards = remember(signalCards, music, events, habitCards, doneHabits, now, rainAt, birthdays) {
+                            (signalCards.values + listOfNotNull(music, rainCard(ms)) + events.map { eventCard(it, ms) } +
+                                (habitCards + birthdayCards()).filter { it.key !in doneHabits })
                                 .filter { it.expiresAt > ms }
                                 .sortedWith(compareBy<Card> { it.kind.priority }.thenByDescending { it.time })
                                 .take(6)
                         }
-                        val until = remember(now, prefsVersion) { "alle " + app.moments.nextSummary().hour }
+                        val until = remember(now, prefsVersion) { tr(R.string.until_time, app.moments.nextSummary().format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))) }
                         HomeScreen(
                             state = HomeState(
                                 waiting = waiting,
@@ -720,9 +788,8 @@ class MainActivity : ComponentActivity(), Ops {
                             onAction = ::cardAction,
                             onCard = ::cardTap,
                             onAgenda = ::onAgenda,
-                            sheetOpen = sheetOpen,
-                            onSheet = { sheetOpen = it },
-                            onOpenHeld = { h -> sheetOpen = false; SordinaListener.open(this@MainActivity, h.key) },
+                            onSheet = { if (it) screen = Screen.SORDINA },
+                            onOpenHeld = { h -> SordinaListener.open(this@MainActivity, h.key) },
                             onReadAll = { SordinaListener.readAll(this@MainActivity) },
                             onReadGroup = { k -> SordinaListener.readGroup(this@MainActivity, k) },
                         )
@@ -785,15 +852,34 @@ class MainActivity : ComponentActivity(), Ops {
                     Screen.BRAKE -> brakeTarget?.let { a ->
                         BrakeScreen(
                             app = a,
-                            opensToday = remember(a.key) { app.habits.opensToday(a.packageName) },
+                            icon = remember(a.key) { catalog.icon(a, (26 * resources.displayMetrics.density).toInt()) },
+                            today = remember(a.key) { app.habits.appToday(a.packageName) },
                             seconds = prefs.brakeSeconds,
+                            streak = remember(a.key) { app.habits.streak() },
                             onOpen = { habit ->
                                 app.habits.logBrake(a.packageName, habit)
                                 catalog.launch(a)
                             },
-                            onCancel = { screen = Screen.HOME },
+                            onSkip = { app.habits.minutesPerVisit(a.packageName).also { app.habits.logSkip(a.packageName, it) } },
+                            onDone = { screen = Screen.HOME },
                         )
                     } ?: run { screen = Screen.HOME }
+                    Screen.SORDINA -> SordinaScreen(
+                        groups = groups,
+                        until = remember(now, prefsVersion) { tr(R.string.until_time, app.moments.nextSummary().format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))) },
+                        overrides = remember(prefsVersion) { prefs.categoryOverrides },
+                        braked = remember(prefsVersion) { prefs.braked },
+                        brakedStay = remember(prefsVersion) { prefs.brakedStay },
+                        order = remember(prefsVersion) { when (prefs.sordinaOrder) { 1 -> null; 2 -> Categories.custom(prefs.categoryOrder); else -> Categories.AUTO } },
+                        icon = ::notifIcon,
+                        onOpen = { h -> SordinaListener.open(this@MainActivity, h.key) },
+                        onRead = { k -> SordinaListener.readGroup(this@MainActivity, k) },
+                        onReadAll = { SordinaListener.readAll(this@MainActivity); screen = Screen.HOME },
+                        onLetPass = ::letPass,
+                        onMove = { k, cat -> prefs.categoryOverrides = prefs.categoryOverrides + (k to cat.name); changed() },
+                        onBack = { screen = Screen.HOME },
+                    )
+
                     Screen.ONBOARDING -> Onboarding(
                         app = app,
                         perms = perms,

@@ -2,6 +2,10 @@
 
 package app.sordina.ui.apps
 
+import app.sordina.R
+import app.sordina.tr
+import app.sordina.trn
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -103,7 +107,7 @@ fun AllAppsScreen(
         Box(Modifier.weight(1f).fillMaxWidth()) {
             LazyColumn(Modifier.fillMaxSize().padding(start = 28.dp, end = 40.dp), state = listState) {
                 item(key = "count") {
-                    Text("${visible.size + work.size} app", Modifier.padding(top = 20.dp, bottom = 4.dp), style = TextStyle(fontSize = 13.sp, color = c.soft))
+                    Text(trn(R.plurals.n_apps, visible.size + work.size), Modifier.padding(top = 20.dp, bottom = 4.dp), style = TextStyle(fontSize = 13.sp, color = c.soft))
                 }
                 items(rows, key = { r -> if (r is Row_.Item) r.app.key else "h_" + (r as Row_.Header).letter }) { r ->
                     when (r) {
@@ -112,13 +116,13 @@ fun AllAppsScreen(
                     }
                 }
                 if (work.isNotEmpty() && filter.isBlank()) {
-                    item { Text("Lavoro", Modifier.padding(top = 26.dp, bottom = 2.dp), style = TextStyle(fontSize = 26.sp, color = c.accent)) }
+                    item { Text(tr(R.string.apps_lavoro), Modifier.padding(top = 26.dp, bottom = 2.dp), style = TextStyle(fontSize = 26.sp, color = c.accent)) }
                     items(work, key = { "w_" + it.key }) { AppRow(it, icon, false, onLaunch, onInfo, onUninstall, onToggleHidden, isBraked, onToggleBrake) }
                 }
                 if (hiddenApps.isNotEmpty() && filter.isBlank()) {
                     item {
                         Text(
-                            if (showHidden) "Nascondi le app nascoste" else "Nascoste · ${hiddenApps.size}",
+                            if (showHidden) tr(R.string.apps_hide_hidden) else trn(R.plurals.n_hidden, hiddenApps.size),
                             Modifier.padding(top = 26.dp, bottom = 8.dp).combinedClickable { showHidden = !showHidden },
                             style = TextStyle(fontSize = 15.sp, color = c.soft),
                         )
@@ -128,7 +132,7 @@ fun AllAppsScreen(
                     }
                 }
                 if (visible.isEmpty() && filter.isNotBlank()) item {
-                    Text("Nessuna app con «$filter»", Modifier.padding(top = 24.dp), style = TextStyle(fontSize = 17.sp, color = c.soft))
+                    Text(tr(R.string.apps_none_with, filter), Modifier.padding(top = 24.dp), style = TextStyle(fontSize = 17.sp, color = c.soft))
                 }
                 item { Spacer(Modifier.height(24.dp)) }
             }
@@ -150,7 +154,7 @@ fun AllAppsScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(Modifier.weight(1f)) {
-                if (filter.isEmpty()) Text("Filtra", style = TextStyle(fontSize = 16.sp, color = c.soft))
+                if (filter.isEmpty()) Text(tr(R.string.apps_filter), style = TextStyle(fontSize = 16.sp, color = c.soft))
                 BasicTextField(
                     value = filter,
                     onValueChange = { filter = it; scope.launch { listState.scrollToItem(0) } },
@@ -160,7 +164,7 @@ fun AllAppsScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
-            if (filter.isNotEmpty()) Text("Cancella", Modifier.combinedClickable { filter = "" }.padding(start = 12.dp), style = TextStyle(fontSize = 14.sp, color = c.soft))
+            if (filter.isNotEmpty()) Text(tr(R.string.clear), Modifier.combinedClickable { filter = "" }.padding(start = 12.dp), style = TextStyle(fontSize = 14.sp, color = c.soft))
         }
     }
 }
@@ -190,14 +194,14 @@ private fun AppRow(
         )
         }
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-            DropdownMenuItem(text = { Text("Informazioni app") }, onClick = { menu = false; onInfo(app) })
-            DropdownMenuItem(text = { Text("Disinstalla") }, onClick = { menu = false; onUninstall(app) })
+            DropdownMenuItem(text = { Text(tr(R.string.app_info)) }, onClick = { menu = false; onInfo(app) })
+            DropdownMenuItem(text = { Text(tr(R.string.uninstall)) }, onClick = { menu = false; onUninstall(app) })
             DropdownMenuItem(
-                text = { Text(if (isBraked(app)) "Non frenare più" else "Frena (attrito)") },
+                text = { Text(if (isBraked(app)) tr(R.string.unbrake) else tr(R.string.brake)) },
                 onClick = { menu = false; onToggleBrake(app) },
             )
             DropdownMenuItem(
-                text = { Text(if (isHidden) "Mostra nell'elenco" else "Nascondi dall'elenco") },
+                text = { Text(if (isHidden) tr(R.string.show_in_list) else tr(R.string.hide_from_list)) },
                 onClick = { menu = false; onToggleHidden(app) },
             )
         }

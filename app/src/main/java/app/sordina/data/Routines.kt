@@ -1,5 +1,9 @@
 package app.sordina.data
 
+import app.sordina.tr
+
+import app.sordina.R
+
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
@@ -48,10 +52,10 @@ class Routines(private val context: Context) {
     /** Nome breve del momento, per la scheda. */
     @Synchronized
     fun label(ctx: String): String = when {
-        ctx == "car" -> "In auto"
-        ctx == "headset" -> "Cuffie"
-        ctx == "charge" -> "In carica"
-        ctx.startsWith("wifi:") -> if (ctx == homeWifi()) "A casa" else "Wi-Fi " + ctx.removePrefix("wifi:")
+        ctx == "car" -> tr(R.string.ctx_car)
+        ctx == "headset" -> tr(R.string.ctx_headset)
+        ctx == "charge" -> tr(R.string.ctx_charge)
+        ctx.startsWith("wifi:") -> if (ctx == homeWifi()) tr(R.string.ctx_home) else "Wi-Fi " + ctx.removePrefix("wifi:")
         else -> ctx
     }
 
@@ -95,13 +99,13 @@ class Routines(private val context: Context) {
                 val name = label(ctx)
                 out += if (item.startsWith("app:")) {
                     val pkg = item.removePrefix("app:")
-                    Card("habit:$ctx:$item", CardKind.HABIT, "$name · di solito", labels[pkg] ?: pkg,
-                        actions = listOf(CardAction("Apri", CardOp.OpenPackage(pkg))), time = start)
+                    Card("habit:$ctx:$item", CardKind.HABIT, tr(R.string.habit_usual, name), labels[pkg] ?: pkg,
+                        actions = listOf(CardAction(tr(R.string.open), CardOp.OpenPackage(pkg)), CardAction(tr(R.string.not_now), CardOp.Dismiss)), time = start)
                 } else {
                     val q = item.removePrefix("cmd:")
                     val l = cmds.lastOrNull { it.second == q }?.first ?: q
-                    Card("habit:$ctx:$item", CardKind.HABIT, "$name · di solito", l,
-                        actions = listOf(CardAction("Fallo", CardOp.Query(q))), time = start)
+                    Card("habit:$ctx:$item", CardKind.HABIT, tr(R.string.habit_usual, name), l,
+                        actions = listOf(CardAction(tr(R.string.do_it), CardOp.Query(q)), CardAction(tr(R.string.not_now), CardOp.Dismiss)), time = start)
                 }
             }
         }

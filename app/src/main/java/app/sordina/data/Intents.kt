@@ -1,5 +1,8 @@
 package app.sordina.data
 
+import app.sordina.R
+import app.sordina.tr
+
 import android.content.Context
 import android.provider.Settings
 import android.view.KeyEvent
@@ -83,17 +86,17 @@ class Intents(
         // Per nome: app, persone, casa, impostazioni
         if (nq.isNotEmpty()) {
             Search.apps(q, apps, usage, 5).forEach { a ->
-                out += Candidate("app:${a.key}", a.label, if (a.isWork) "Lavoro" else null, Kind.APP, Search.score(nq, a.normalized), false, Act.OpenApp(a), a)
+                out += Candidate("app:${a.key}", a.label, if (a.isWork) tr(R.string.work_profile) else null, Kind.APP, Search.score(nq, a.normalized), false, Act.OpenApp(a), a)
             }
             people.search(nq, 2).forEach { c ->
                 val s = Search.score(nq, c.normalized)
-                out += Candidate("call:${c.id}", "Chiama ${c.name}", c.number, Kind.PERSON, s - 6, true, Act.Call(c))
+                out += Candidate("call:${c.id}", tr(R.string.call_x, c.name), c.number, Kind.PERSON, s - 6, true, Act.Call(c))
                 val via = viaFor(c, null)
-                out += Candidate("msg:${c.id}", "Scrivi a ${c.name}", via.label, Kind.PERSON, s - 9, true, Act.Message(c, "", via))
+                out += Candidate("msg:${c.id}", tr(R.string.write_to_x, c.name), via.label, Kind.PERSON, s - 9, true, Act.Message(c, "", via))
             }
             SETTINGS.forEach { (words, title, action) ->
                 val s = words.maxOf { Search.score(nq, it) }
-                if (s >= 75) out += Candidate("set:$action", title, "Impostazioni", Kind.SETTING, s - 8, false, if (action == "sordina") Act.SordinaSettings else Act.Setting(action))
+                if (s >= 75) out += Candidate("set:$action", title, tr(R.string.settings_kind), Kind.SETTING, s - 8, false, if (action == "sordina") Act.SordinaSettings else Act.Setting(action))
             }
         }
 
@@ -105,7 +108,7 @@ class Intents(
             .sortedWith(compareByDescending<Candidate> { it.score }
                 .thenByDescending { it.app?.let { a -> usage[a.packageName] } ?: 0.0 })
             .take(5)
-        val web = Candidate("web", "Cerca «$q» sul web", null, Kind.WEB, 0, false, Act.Web(q))
+        val web = Candidate("web", tr(R.string.search_web_x, q), null, Kind.WEB, 0, false, Act.Web(q))
         val top = ranked.firstOrNull()
         val second = ranked.getOrNull(1)
         val confident = top != null && top.score >= 85 && (second == null || top.score - second.score >= 10 || top.id == learned)
@@ -131,10 +134,10 @@ class Intents(
 
         // Torcia
         if ("torcia" in nw || nq == "luce telefono") {
-            out += Candidate("torch", "Torcia", "accendi o spegni", Kind.ACTION, 97, false, Act.Torch); return
+            out += Candidate("torch", tr(R.string.torch), tr(R.string.torch_hint), Kind.ACTION, 97, false, Act.Torch); return
         }
         // Musica in riproduzione
-        MEDIA[nq]?.let { (title, key) -> out += Candidate("media:$key", title, "musica in riproduzione", Kind.ACTION, 96, false, Act.Media(key)); return }
+        MEDIA[nq]?.let { (title, key) -> out += Candidate("media:$key", title, tr(R.string.music_playing), Kind.ACTION, 96, false, Act.Media(key)); return }
 
         // Timer
         if ("timer" in nw || nq.startsWith("conto alla rovescia")) {
@@ -142,9 +145,9 @@ class Intents(
             if (d != null) {
                 val label = d.second.split(' ').filter { it !in setOf("timer", "metti", "un", "imposta", "per", "avvia", "conto", "alla", "rovescia", "di", "da") }.joinToString(" ")
                 val t = fmtDuration(d.first)
-                out += Candidate("timer", "Timer $t" + if (label.isNotBlank()) " · $label" else "", "parte subito", Kind.ACTION, 96, false, Act.Timer(d.first, label))
+                out += Candidate("timer", tr(R.string.timer) + " $t" + if (label.isNotBlank()) " · $label" else "", tr(R.string.starts_now), Kind.ACTION, 96, false, Act.Timer(d.first, label))
             } else {
-                out += Candidate("timer?", "Timer", "di' anche quanto: «timer 10 minuti»", Kind.ACTION, 50, false, Act.Timer(0, ""))
+                out += Candidate("timer?", tr(R.string.timer), tr(R.string.timer_say_how_long), Kind.ACTION, 50, false, Act.Timer(0, ""))
             }
             return
         }
@@ -153,7 +156,7 @@ class Intents(
             val r = DateParser.parse(nq.removePrefix(first), eveningBias = false)
             val w = r.whenAt
             if (w != null && !w.allDay) {
-                out += Candidate("alarm", "Sveglia alle %d:%02d".format(w.start.hour, w.start.minute), "impostata senza aprire l'orologio", Kind.ACTION, 96, false, Act.Alarm(w.start.hour, w.start.minute, ""))
+                out += Candidate("alarm", tr(R.string.alarm_at, java.time.LocalTime.of(w.start.hour, w.start.minute).format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))), tr(R.string.alarm_hint), Kind.ACTION, 96, false, Act.Alarm(w.start.hour, w.start.minute, ""))
                 return
             }
         }
@@ -161,7 +164,7 @@ class Intents(
         if (first in setOf("chiama", "telefona", "chiamare", "telefonare")) {
             val rest = skip(nw.drop(1), setOf("a", "ad"))
             personIn(rest)?.let { (c, s, _) ->
-                out += Candidate("call:${c.id}", "Chiama ${c.name}", c.number, Kind.PERSON, if (s >= 80) 95 else 80, true, Act.Call(c))
+                out += Candidate("call:${c.id}", tr(R.string.call_x, c.name), c.number, Kind.PERSON, if (s >= 80) 95 else 80, true, Act.Call(c))
             }
             return
         }
@@ -187,10 +190,10 @@ class Intents(
             while (textWords.isNotEmpty() && Search.normalize(textWords.first()) in setOf("che", "dicendo", "dicendogli", "dicendole", ":")) textWords.removeAt(0)
             val text = textWords.joinToString(" ").replaceFirstChar { it.uppercase() }
             val v = viaFor(c, via)
-            out += Candidate("msg:${c.id}:${v.name}", "Scrivi a ${c.name}", (if (text.isNotBlank()) "«$text» · " else "") + v.label, Kind.PERSON, if (s >= 80) 95 else 80, true, Act.Message(c, text, v))
+            out += Candidate("msg:${c.id}:${v.name}", tr(R.string.write_to_x, c.name), (if (text.isNotBlank()) "«$text» · " else "") + v.label, Kind.PERSON, if (s >= 80) 95 else 80, true, Act.Message(c, text, v))
             // Le altre destinazioni, un tocco più in basso
             Via.entries.filter { it != v && installed(it) }.take(2).forEach { o ->
-                out += Candidate("msg:${c.id}:${o.name}", "Scrivi a ${c.name}", "su ${o.label}", Kind.PERSON, 70, true, Act.Message(c, text, o))
+                out += Candidate("msg:${c.id}:${o.name}", tr(R.string.write_to_x, c.name), tr(R.string.on_x, o.label), Kind.PERSON, 70, true, Act.Message(c, text, o))
             }
             return
         }
@@ -212,7 +215,7 @@ class Intents(
             }
             if (first != "metti" && first != "aggiungi" && title.isNotBlank()) {
                 val t = java.time.LocalDate.now().plusDays(1).atTime(9, 0)
-                out += Candidate("event", title, "domani alle 9:00 (non hai detto quando)", Kind.ACTION, 70, false, Act.Event(title, When(t, false, false)))
+                out += Candidate("event", title, tr(R.string.event_no_when), Kind.ACTION, 70, false, Act.Event(title, When(t, false, false)))
             }
         }
         // Navigazione
@@ -220,7 +223,7 @@ class Intents(
         nav.firstOrNull { nq.startsWith("$it ") }?.let { p ->
             val n = p.split(' ').size
             val place = ow.drop(n).joinToString(" ")
-            if (place.isNotBlank()) out += Candidate("nav", "Verso $place", "navigazione", Kind.ACTION, 90, false, Act.Navigate(place))
+            if (place.isNotBlank()) out += Candidate("nav", tr(R.string.toward_x, place), tr(R.string.navigation), Kind.ACTION, 90, false, Act.Navigate(place))
             return
         }
         // Casa
@@ -232,7 +235,7 @@ class Intents(
             val target = restN.replace(Regex("(?:al|a|su) \\d{1,3} ?(%|percento|per cento|gradi)?"), "").trim()
             if (ha.configured && target.isNotBlank()) {
                 // Casa: la frase va ad Assist, che conosce stanze, alias ed entità esposte
-                out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, "Casa", Kind.HOME, if (first == "apri") 80 else 90, false, Act.Assist(ow.joinToString(" ")))
+                out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, tr(R.string.home_kind), Kind.HOME, if (first == "apri") 80 else 90, false, Act.Assist(ow.joinToString(" ")))
             }
             if (first == "apri") {
                 Search.apps(restN, apps, emptyMap(), 2).forEach { a ->
@@ -241,7 +244,7 @@ class Intents(
             }
             if (first == "accendi" || first == "spegni" || first == "attiva" || first == "disattiva") {
                 SETTINGS.filter { (w, _, _) -> w.any { Search.score(target, it) >= 80 } }.forEach { (_, title, action) ->
-                    out += Candidate("set:$action", title, "Impostazioni", Kind.SETTING, 84, false, Act.Setting(action))
+                    out += Candidate("set:$action", title, tr(R.string.settings_kind), Kind.SETTING, 84, false, Act.Setting(action))
                 }
             }
             return
@@ -249,23 +252,24 @@ class Intents(
         // Musica
         if (first in setOf("metti", "ascolta", "riproduci", "suona") && restN.isNotBlank()) {
             if (restN == "musica" || restN == "la musica") {
-                out += Candidate("media:${KeyEvent.KEYCODE_MEDIA_PLAY}", "Riprendi la musica", null, Kind.ACTION, 92, false, Act.Media(KeyEvent.KEYCODE_MEDIA_PLAY))
+                out += Candidate("media:${KeyEvent.KEYCODE_MEDIA_PLAY}", tr(R.string.resume_music), null, Kind.ACTION, 92, false, Act.Media(KeyEvent.KEYCODE_MEDIA_PLAY))
             } else {
                 val what = ow.drop(1).joinToString(" ")
-                out += Candidate("music", "Metti $what", "nell'app di musica", Kind.ACTION, 82, false, Act.Music(what))
+                out += Candidate("music", tr(R.string.play_x, what), tr(R.string.in_music_app), Kind.ACTION, 82, false, Act.Music(what))
             }
         }
     }
 
     private fun haCandidate(e: HaEntity, op: HaOp, level: Int?, score: Int): Candidate {
-        val verb = when (op) {
-            HaOp.ON -> if (e.domain == "cover") "Apri" else if (e.domain in setOf("script", "scene")) "Esegui" else "Accendi"
-            HaOp.OFF -> if (e.domain == "cover") "Chiudi" else "Spegni"
-            HaOp.TOGGLE -> if (e.domain == "cover") (if (e.isOn) "Chiudi" else "Apri") else if (e.domain in setOf("script", "scene")) "Esegui" else if (e.isOn) "Spegni" else "Accendi"
-            HaOp.LEVEL -> "Imposta"
+        val run = e.domain in setOf("script", "scene")
+        val res = when (op) {
+            HaOp.ON -> if (e.domain == "cover") R.string.ha_open else if (run) R.string.ha_run else R.string.ha_on
+            HaOp.OFF -> if (e.domain == "cover") R.string.ha_close else R.string.ha_off
+            HaOp.TOGGLE -> if (e.domain == "cover") (if (e.isOn) R.string.ha_close else R.string.ha_open) else if (run) R.string.ha_run else if (e.isOn) R.string.ha_off else R.string.ha_on
+            HaOp.LEVEL -> R.string.ha_set
         }
-        val title = "$verb ${e.name}" + if (op == HaOp.LEVEL && level != null) " a $level" + (if (e.domain == "climate") "°" else "%") else ""
-        return Candidate("ha:${e.id}:$op", title, "Casa · ${e.state}", Kind.HOME, score, false, Act.Ha(e, op, level))
+        val title = if (op == HaOp.LEVEL && level != null) tr(res, e.name, "$level" + (if (e.domain == "climate") "°" else "%")) else tr(if (op == HaOp.LEVEL) R.string.ha_on else res, e.name)
+        return Candidate("ha:${e.id}:$op", title, tr(R.string.home_state_x, e.state), Kind.HOME, score, false, Act.Ha(e, op, level))
     }
 
     /** La persona più lunga che corrisponde all'inizio delle parole. (contatto, punteggio, parole usate) */
@@ -309,7 +313,7 @@ class Intents(
 
     private fun calc(q: String): Candidate? {
         val s = q.trim().lowercase().replace(',', '.')
-        units(s)?.let { return Candidate("calc", it, "conversione", Kind.CALC, 99, false, Act.Calc(it)) }
+        units(s)?.let { return Candidate("calc", it, tr(R.string.conversion), Kind.CALC, 99, false, Act.Calc(it)) }
         if (!Regex("^[\\d\\s+\\-*/x×:().^%]+$").matches(s) || !Regex("\\d\\s*[+\\-*/x×:^%]\\s*[\\d(]").containsMatchIn(s)) return null
         val v = runCatching { Expr(s.replace('x', '*').replace('×', '*').replace(':', '/')).parse() }.getOrNull() ?: return null
         if (v.isNaN() || v.isInfinite()) return null

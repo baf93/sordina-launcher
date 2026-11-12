@@ -2,6 +2,9 @@
 
 package app.sordina.ui.intent
 
+import app.sordina.R
+import app.sordina.tr
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -33,6 +36,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Calculate
+import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.automirrored.rounded.KeyboardReturn
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -67,6 +77,7 @@ import app.sordina.data.Kind
 import app.sordina.data.Understanding
 import app.sordina.ui.clickableNoRipple
 import app.sordina.ui.LocalFeel
+import app.sordina.ui.surface
 import app.sordina.ui.theme.OnBackdrop
 import app.sordina.ui.theme.S
 
@@ -143,16 +154,16 @@ fun IntentScreen(
             // Tutte le app: un'icona sola, in alto a destra, lontana dal pollice
             // Il titolo della sezione e l'icona sulla stessa riga
             Row(Modifier.fillMaxWidth().padding(start = 28.dp, top = 6.dp, end = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (query.isBlank() && proposals.isNotEmpty()) Text("Di solito adesso", style = TextStyle(fontSize = 22.sp, color = S.c.ink))
+                if (query.isBlank()) Text(tr(R.string.home_search), style = TextStyle(fontSize = 28.sp, lineHeight = 32.sp, color = S.c.ink))
                 Spacer(Modifier.weight(1f))
                 Box(
-                    Modifier.size(44.dp).clip(CircleShape).background(S.c.ink.copy(alpha = 0.09f))
+                    Modifier.size(44.dp).clip(CircleShape).background(surface())
                         .clickableNoRipple { feelTop.tick(); onAllApps() },
                     contentAlignment = Alignment.Center,
-                ) { Icon(Icons.Rounded.Apps, "Tutte le app", Modifier.size(22.dp), tint = S.c.ink) }
+                ) { Icon(Icons.Rounded.Apps, tr(R.string.all_apps), Modifier.size(22.dp), tint = S.c.ink) }
             }
             Column(
-                Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 28.dp),
+                Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 14.dp),
             ) {
                 Spacer(Modifier.height(8.dp))
                 if (query.isNotBlank()) {
@@ -160,20 +171,25 @@ fun IntentScreen(
                     val first = result.candidates.firstOrNull()
                     if (ready != null) ReadyBlock(ready) { onRun(ready, 0) }
                     else if (first != null) EnterBlock(first, query, icon(first)) { onRun(first, 0) }
-                    // Il resto, diviso per tipo: si capisce cosa è cosa
+                    // Il resto, diviso per tipo, ogni tipo nel suo riquadro: si capisce cosa è cosa
                     val rest = result.candidates.withIndex().filter { it.index > 0 }
                     KIND_ORDER.forEach { kind ->
                         val group = rest.filter { it.value.kind == kind }
                         if (group.isNotEmpty()) {
                             Section(kindTitle(kind))
-                            group.forEach { (i, cand) -> CandidateLine(cand, query, icon(cand)) { onRun(cand, i) } }
+                            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(surface())) {
+                                group.forEachIndexed { j, (i, cand) ->
+                                    if (j > 0) Box(Modifier.fillMaxWidth().padding(start = 60.dp).height(1.dp).background(c.line))
+                                    CandidateLine(cand, query, icon(cand)) { onRun(cand, i) }
+                                }
+                            }
                         }
                     }
                 } else {
                     if (needsUsagePermission) {
-                        Section("Impara le tue abitudini")
+                        Section(tr(R.string.learn_habits))
                         Text(
-                            "Consenti l'accesso all'utilizzo: le proposte nasceranno da cosa apri a ogni ora. Resta tutto sul telefono.",
+                            tr(R.string.usage_explain),
                             Modifier.clickableNoRipple(onGrantUsage).padding(vertical = 6.dp),
                             style = TextStyle(fontSize = 15.sp, color = S.c.ink),
                         )
@@ -197,12 +213,12 @@ fun IntentScreen(
         // La barra
         Row(
             Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(56.dp).clip(RoundedCornerShape(28.dp))
-                .background(if (glass) c.card.copy(alpha = 0.78f) else c.card).padding(start = 22.dp, end = 7.dp),
+                .background(surface()).padding(start = 22.dp, end = 7.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(Modifier.weight(1f)) {
                 if (query.isEmpty()) Text(
-                    if (voice.listening) voice.partial.ifEmpty { "Ti ascolto… lascia per finire" } else "Cosa devi fare?",
+                    if (voice.listening) voice.partial.ifEmpty { tr(R.string.home_listening) } else tr(R.string.search_hint),
                     style = TextStyle(fontSize = 17.sp, color = if (voice.listening) c.ink else c.soft),
                 )
                 BasicTextField(
@@ -217,7 +233,7 @@ fun IntentScreen(
                 )
             }
             if (query.isNotEmpty()) Box(Modifier.size(42.dp).clip(CircleShape).clickableNoRipple { onQuery("") }, contentAlignment = Alignment.Center) {
-                Icon(Icons.Rounded.Close, "Cancella", Modifier.size(20.dp), tint = c.soft)
+                Icon(Icons.Rounded.Close, tr(R.string.clear), Modifier.size(20.dp), tint = c.soft)
             }
             if (voice.available) Mic(voice.listening, onVoiceDown, onVoiceUp)
         }
@@ -247,7 +263,7 @@ private fun Mic(listening: Boolean, onDown: () -> Unit, onUp: () -> Unit) {
                 }
             },
         contentAlignment = Alignment.Center,
-    ) { Icon(Icons.Rounded.Mic, "Parla", Modifier.size(22.dp), tint = if (listening) c.bg else c.ink) }
+    ) { Icon(Icons.Rounded.Mic, tr(R.string.speak), Modifier.size(22.dp), tint = if (listening) c.bg else c.ink) }
 }
 
 /** La parte già scritta resta in evidenza, il resto è più tenue. */
@@ -266,31 +282,31 @@ private fun highlight(text: String, query: String, strong: androidx.compose.ui.g
 @Composable
 private fun ReadyBlock(cand: Candidate, onGo: () -> Unit) {
     val c = S.c
-    Section("Pronto, manca il tuo tocco")
+    Section(tr(R.string.ready_touch))
     Text(cand.title, style = TextStyle(fontSize = 24.sp, color = c.ink))
     cand.subtitle?.let { Text(it, maxLines = 3, style = TextStyle(fontSize = 15.sp, color = c.soft)) }
     Box(
         Modifier.padding(top = 12.dp).height(46.dp).clip(RoundedCornerShape(23.dp)).background(c.accent)
             .clickableNoRipple(onGo).padding(horizontal = 24.dp),
         contentAlignment = Alignment.Center,
-    ) { Text(if (cand.title.startsWith("Chiama")) "Chiama" else "Apri la chat", style = TextStyle(fontSize = 15.sp, color = androidx.compose.ui.graphics.Color.White)) }
+    ) { Text(if (cand.title.startsWith("Chiama")) tr(R.string.call) else tr(R.string.open_chat), style = TextStyle(fontSize = 15.sp, color = androidx.compose.ui.graphics.Color.White)) }
 }
 
 private val KIND_ORDER = listOf(Kind.APP, Kind.PERSON, Kind.HOME, Kind.ACTION, Kind.SETTING, Kind.CALC, Kind.WEB)
 
 private fun kindTitle(k: Kind) = when (k) {
-    Kind.APP -> "App"
-    Kind.PERSON -> "Persone"
-    Kind.HOME -> "Casa"
-    Kind.ACTION -> "Azioni"
-    Kind.SETTING -> "Impostazioni"
-    Kind.CALC -> "Calcolo"
-    Kind.WEB -> "Sul web"
+    Kind.APP -> tr(R.string.kind_apps)
+    Kind.PERSON -> tr(R.string.kind_people)
+    Kind.HOME -> tr(R.string.kind_home)
+    Kind.ACTION -> tr(R.string.kind_actions)
+    Kind.SETTING -> tr(R.string.kind_settings)
+    Kind.CALC -> tr(R.string.kind_calc)
+    Kind.WEB -> tr(R.string.kind_web)
 }
 
 /** Cosa fa Invio, detto in chiaro. */
 private fun enterVerb(cand: Candidate): String = when (cand.kind) {
-    Kind.APP -> "Apri ${cand.title}"
+    Kind.APP -> tr(R.string.open_x, cand.title)
     Kind.WEB -> cand.title
     else -> cand.title
 }
@@ -301,46 +317,92 @@ private fun AppIcon(icon: androidx.compose.ui.graphics.ImageBitmap?, size: andro
     androidx.compose.foundation.Image(icon, null, Modifier.padding(end = 14.dp).size(size))
 }
 
-/** Il primo risultato, in un riquadro: è quello che parte con Invio. */
+/** Il primo risultato, in evidenza: è quello che parte con Invio (il tasto tondo lo dice). */
 @Composable
 private fun EnterBlock(cand: Candidate, query: String, icon: androidx.compose.ui.graphics.ImageBitmap?, onClick: () -> Unit) {
     val c = S.c
-    Section("Con Invio")
+    Spacer(Modifier.height(6.dp))
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(c.card.copy(alpha = 0.7f))
-            .combinedClickable(onClick = onClick).padding(horizontal = 18.dp, vertical = 14.dp),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(surface()).background(c.accent.copy(alpha = 0.16f))
+            .combinedClickable(onClick = onClick).padding(start = 14.dp, end = 12.dp, top = 14.dp, bottom = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppIcon(icon, 30.dp)
+        Leading(cand, icon, 44.dp)
+        Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(
-                highlight(enterVerb(cand), query, c.ink, c.ink.copy(alpha = 0.6f)),
-                maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 21.sp),
+                bold(enterVerb(cand), query), color = c.ink,
+                maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 19.sp),
             )
-            val sub = cand.subtitle ?: kindTitle(cand.kind).let { if (cand.kind == Kind.APP) "App" else it }
-            Text(sub, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 14.sp, color = c.soft))
+            val sub = cand.subtitle ?: if (cand.kind == Kind.APP) tr(R.string.open_app) else kindTitle(cand.kind)
+            Text(sub, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 13.sp, color = c.soft))
         }
         Box(
-            Modifier.padding(start = 12.dp).clip(RoundedCornerShape(10.dp)).background(c.accent.copy(alpha = 0.18f))
-                .padding(horizontal = 10.dp, vertical = 5.dp),
-        ) { Text("Invio ↵", style = TextStyle(fontSize = 12.sp, color = c.accent)) }
+            Modifier.padding(start = 10.dp).size(38.dp).clip(CircleShape).background(c.accent),
+            contentAlignment = Alignment.Center,
+        ) { Icon(Icons.AutoMirrored.Rounded.KeyboardReturn, tr(R.string.enter), Modifier.size(20.dp), tint = c.bg) }
     }
 }
 
+/** Una riga in un riquadro di sezione. */
 @Composable
 private fun CandidateLine(cand: Candidate, query: String, icon: androidx.compose.ui.graphics.ImageBitmap?, onClick: () -> Unit) {
     val c = S.c
-    val web = cand.kind == Kind.WEB
-    Row(Modifier.fillMaxWidth().combinedClickable(onClick = onClick).padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        AppIcon(icon)
+    Row(
+        Modifier.fillMaxWidth().combinedClickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Leading(cand, icon, 34.dp)
+        Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
-                if (web) AnnotatedString(cand.title) else highlight(cand.title, query, c.ink, c.ink.copy(alpha = 0.6f)),
-                maxLines = 1, overflow = TextOverflow.Ellipsis,
-                style = TextStyle(fontSize = if (web) 16.sp else 20.sp, color = c.soft),
+                if (cand.kind == Kind.WEB) AnnotatedString(cand.title) else bold(cand.title, query), color = c.ink,
+                maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 16.sp),
             )
-            cand.subtitle?.let { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 14.sp, color = c.soft)) }
+            cand.subtitle?.let { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 13.sp, color = c.soft)) }
         }
+    }
+}
+
+/** Le lettere scritte in grassetto. */
+private fun bold(text: String, query: String): AnnotatedString {
+    val q = query.trim()
+    val i = if (q.isEmpty()) -1 else text.indexOf(q, ignoreCase = true)
+    return buildAnnotatedString {
+        if (i < 0) { append(text); return@buildAnnotatedString }
+        append(text.substring(0, i))
+        withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(text.substring(i, i + q.length)) }
+        append(text.substring(i + q.length))
+    }
+}
+
+/** A sinistra: l'icona dell'app se attive, altrimenti un segno sobrio per tipo (persona: l'iniziale). */
+@Composable
+private fun Leading(cand: Candidate, icon: androidx.compose.ui.graphics.ImageBitmap?, size: androidx.compose.ui.unit.Dp) {
+    val c = S.c
+    if (icon != null) {
+        androidx.compose.foundation.Image(icon, null, Modifier.size(size).clip(RoundedCornerShape(size * 0.28f)))
+        return
+    }
+    val person = cand.kind == Kind.PERSON
+    Box(
+        Modifier.size(size).clip(if (person) CircleShape else RoundedCornerShape(size * 0.28f))
+            .background(if (person) c.accent.copy(alpha = 0.16f) else c.line),
+        contentAlignment = Alignment.Center,
+    ) {
+        val glyph = when (cand.kind) {
+            Kind.WEB -> Icons.Rounded.Search
+            Kind.SETTING -> Icons.Rounded.Settings
+            Kind.HOME -> Icons.Rounded.Home
+            Kind.CALC -> Icons.Rounded.Calculate
+            Kind.ACTION -> Icons.Rounded.Bolt
+            else -> null
+        }
+        if (glyph != null) Icon(glyph, null, Modifier.size(size * 0.5f), tint = c.soft)
+        else Text(
+            cand.title.removePrefix("Apri ").trim().take(1).uppercase(),
+            style = TextStyle(fontSize = (size.value * 0.42f).sp, color = if (person) c.accent else c.soft),
+        )
     }
 }
 
@@ -354,7 +416,7 @@ private fun ProposalLine(app: AppEntry, actions: ProposalActions, icon: androidx
     val shape = RoundedCornerShape(18.dp)
     Box(modifier) {
         Row(
-            Modifier.fillMaxWidth().height(64.dp).clip(shape).background(c.ink.copy(alpha = 0.09f))
+            Modifier.fillMaxWidth().height(64.dp).clip(shape).background(surface())
                 .border(0.5.dp, c.ink.copy(alpha = 0.08f), shape)
                 .combinedClickable(onClick = { feel.tick(); onClick() }, onLongClick = { feel.tick(); why = null; menu = true })
                 .padding(horizontal = 16.dp),
@@ -366,11 +428,11 @@ private fun ProposalLine(app: AppEntry, actions: ProposalActions, icon: androidx
         }
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
             why?.let { w -> DropdownMenuItem(text = { Text(w) }, onClick = { menu = false }) }
-            if (why == null) DropdownMenuItem(text = { Text("Perché è qui?") }, onClick = { why = actions.why(app) })
-            DropdownMenuItem(text = { Text(if (pinned) "Non tenere più qui" else "Tieni qui") }, onClick = { menu = false; actions.togglePin(app) })
-            DropdownMenuItem(text = { Text("Frena") }, onClick = { menu = false; actions.brake(app) })
-            DropdownMenuItem(text = { Text("Non propormela più") }, onClick = { menu = false; actions.exclude(app) })
-            DropdownMenuItem(text = { Text("Informazioni app") }, onClick = { menu = false; actions.info(app) })
+            if (why == null) DropdownMenuItem(text = { Text(tr(R.string.why_here)) }, onClick = { why = actions.why(app) })
+            DropdownMenuItem(text = { Text(if (pinned) tr(R.string.unpin) else tr(R.string.pin)) }, onClick = { menu = false; actions.togglePin(app) })
+            DropdownMenuItem(text = { Text(tr(R.string.brake)) }, onClick = { menu = false; actions.brake(app) })
+            DropdownMenuItem(text = { Text(tr(R.string.dont_suggest)) }, onClick = { menu = false; actions.exclude(app) })
+            DropdownMenuItem(text = { Text(tr(R.string.app_info)) }, onClick = { menu = false; actions.info(app) })
         }
     }
 }
@@ -388,7 +450,7 @@ private fun NoticeBar(n: Notice) {
     ) {
         Text(n.text, Modifier.weight(1f), maxLines = 3, style = TextStyle(fontSize = 14.sp, color = c.bg))
         n.undo?.let { u ->
-            Text("Annulla", Modifier.clickableNoRipple { visible = false; u() }.padding(start = 12.dp), style = TextStyle(fontSize = 14.sp, color = c.accent))
+            Text(tr(R.string.cancel), Modifier.clickableNoRipple { visible = false; u() }.padding(start = 12.dp), style = TextStyle(fontSize = 14.sp, color = c.accent))
         }
     }
 }

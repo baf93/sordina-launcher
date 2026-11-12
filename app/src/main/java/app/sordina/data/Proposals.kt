@@ -84,7 +84,10 @@ class Proposals(private val context: Context) {
 
         val contextual = HashMap<String, Double>()
         val overall = HashMap<String, Double>()
-        for (o in readOpens(nowMs)) {
+        val opens = readOpens(nowMs)
+        // Appena usata e chiusa (ultimi 2 minuti): non la riproporre subito
+        val justUsed = opens.filter { nowMs - it.time < 2 * 60_000 }.map { it.pkg }.toSet()
+        for (o in opens) {
             val t = LocalDateTime.ofInstant(Instant.ofEpochMilli(o.time), zone)
             val h = t.hour + t.minute / 60.0
             val dh = abs(h - nowHour).let { min(it, 24 - it) }
@@ -105,14 +108,14 @@ class Proposals(private val context: Context) {
             .filter { it.value >= MIN_SCORE }
             .sortedByDescending { it.value }
             .mapNotNull { byPackage[it.key] }
-            .filter { it.key !in excluded && it.packageName !in braked && pinned.none { p -> p.key == it.key } }
+            .filter { it.key !in excluded && it.packageName !in braked && it.packageName !in justUsed && pinned.none { p -> p.key == it.key } }
 
         val result = (pinned + learned).distinctBy { it.key }.take(COUNT)
         val filled = if (result.size < COUNT) {
             // Poca storia: completa con le più usate in assoluto
             val extra = overall.entries.sortedByDescending { it.value }
                 .mapNotNull { byPackage[it.key] }
-                .filter { e -> result.none { it.key == e.key } && e.key !in excluded && e.packageName !in braked }
+                .filter { e -> result.none { it.key == e.key } && e.key !in excluded && e.packageName !in braked && e.packageName !in justUsed }
             (result + extra).take(COUNT)
         } else result
         return Result(filled, overall, false, slot)

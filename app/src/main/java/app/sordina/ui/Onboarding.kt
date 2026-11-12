@@ -1,5 +1,9 @@
 package app.sordina.ui
 
+import app.sordina.tr
+
+import app.sordina.R
+
 import android.Manifest
 import android.os.Build
 import androidx.compose.animation.AnimatedContent
@@ -59,37 +63,37 @@ fun Onboarding(
     fun next() { if (step < last) step++ else onDone() }
     Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 24.dp, vertical = 24.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Cap("${step + 1} di ${last + 1}")
+            Cap(tr(R.string.step_of, step + 1, last + 1))
             Spacer(Modifier.weight(1f))
-            if (step in 1 until last) Serif("Salta", Modifier.clickableNoRipple { next() }.padding(8.dp), size = 14.sp, color = S.c.soft)
+            if (step in 1 until last) Serif(tr(R.string.skip), Modifier.clickableNoRipple { next() }.padding(8.dp), size = 14.sp, color = S.c.soft)
         }
         Spacer(Modifier.height(24.dp))
         AnimatedContent(step, transitionSpec = { fadeIn(tween(250)) togetherWith fadeOut(tween(150)) }, label = "step", modifier = Modifier.weight(1f)) { s ->
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                 when (s) {
-                    0 -> Page("Sordina come Home", "Il telefono, più calmo.") {
-                        Done(perms.home, "Sordina è la Home")
-                        if (!perms.home) Primary("Imposta", Modifier.fillMaxWidth()) { ops.openHomeSettings() }
-                        else Primary("Avanti", Modifier.fillMaxWidth()) { next() }
+                    0 -> Page(tr(R.string.onb_home), tr(R.string.onb_home_sub)) {
+                        Done(perms.home, tr(R.string.onb_home_done))
+                        if (!perms.home) Primary(tr(R.string.set), Modifier.fillMaxWidth()) { ops.openHomeSettings() }
+                        else Primary(tr(R.string.next), Modifier.fillMaxWidth()) { next() }
                     }
-                    1 -> Page("Notifiche", "Il non urgente aspetta il riepilogo.") {
-                        Done(perms.listener, "Accesso alle notifiche")
-                        Done(perms.usage, "Utilizzo app")
-                        if (Build.VERSION.SDK_INT >= 33) Done(perms.post, "Avvisi di Sordina")
+                    1 -> Page(tr(R.string.perm_notifications), tr(R.string.onb_notif_sub)) {
+                        Done(perms.listener, tr(R.string.onb_notif_access))
+                        Done(perms.usage, tr(R.string.perm_usage))
+                        if (Build.VERSION.SDK_INT >= 33) Done(perms.post, tr(R.string.onb_alerts))
                         when {
-                            !perms.listener -> Primary("Consenti notifiche", Modifier.fillMaxWidth()) { ops.openListenerSettings() }
-                            !perms.usage -> Primary("Consenti utilizzo", Modifier.fillMaxWidth()) { ops.openUsageSettings() }
-                            Build.VERSION.SDK_INT >= 33 && !perms.post -> Primary("Consenti avvisi", Modifier.fillMaxWidth()) { ops.request(Manifest.permission.POST_NOTIFICATIONS) }
-                            else -> Primary("Avanti", Modifier.fillMaxWidth()) { next() }
+                            !perms.listener -> Primary(tr(R.string.onb_allow_notif), Modifier.fillMaxWidth()) { ops.openListenerSettings() }
+                            !perms.usage -> Primary(tr(R.string.onb_allow_usage), Modifier.fillMaxWidth()) { ops.openUsageSettings() }
+                            Build.VERSION.SDK_INT >= 33 && !perms.post -> Primary(tr(R.string.onb_allow_alerts), Modifier.fillMaxWidth()) { ops.request(Manifest.permission.POST_NOTIFICATIONS) }
+                            else -> Primary(tr(R.string.next), Modifier.fillMaxWidth()) { next() }
                         }
                     }
-                    2 -> Page("Persone importanti", "Passano sempre.") {
+                    2 -> Page(tr(R.string.s_important), tr(R.string.onb_important_sub)) {
                         ImportantPicker(app, perms, ops)
                         Spacer(Modifier.height(12.dp))
-                        Primary("Avanti", Modifier.fillMaxWidth()) { next() }
+                        Primary(tr(R.string.next), Modifier.fillMaxWidth()) { next() }
                     }
-                    else -> Page("Fatto", "Su: fai. Giù: notifiche.\nTieni premuto: impostazioni.") {
-                        Primary("Vai a Casa", Modifier.fillMaxWidth()) { onDone() }
+                    else -> Page(tr(R.string.done), tr(R.string.onb_done_sub)) {
+                        Primary(tr(R.string.onb_go_home), Modifier.fillMaxWidth()) { onDone() }
                     }
                 }
             }
@@ -121,7 +125,7 @@ fun Done(ok: Boolean, label: String) {
 fun ImportantPicker(app: SordinaApp, perms: PermState, ops: Ops) {
     val c = S.c
     if (!perms.contacts) {
-        Secondary("Consenti l'accesso ai contatti", Modifier.fillMaxWidth()) {
+        Secondary(tr(R.string.onb_allow_contacts), Modifier.fillMaxWidth()) {
             ops.request(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)
         }
         return
@@ -134,20 +138,20 @@ fun ImportantPicker(app: SordinaApp, perms: PermState, ops: Ops) {
         val names = app.prefs.importantNames
         val chosen = names.sorted()
         if (chosen.isNotEmpty()) {
-            Cap("Importanti")
+            Cap(tr(R.string.onb_important))
             Spacer(Modifier.height(4.dp))
             chosen.forEach { n ->
                 val display = all.firstOrNull { it.normalized == n }?.name ?: n.replaceFirstChar { it.uppercase() }
-                Line(display, "togli") { app.people.removeImportantName(n); tick++ }
+                Line(display, tr(R.string.remove_l)) { app.people.removeImportantName(n); tick++ }
             }
             Spacer(Modifier.height(10.dp))
         }
-        Field(q, { q = it }, "Cerca un contatto…")
+        Field(q, { q = it }, tr(R.string.search_contact))
         val list = if (q.isBlank()) all.filter { it.starred && it.normalized !in names }.take(8)
         else app.people.search(q, 6).filter { it.normalized !in names }
-        if (q.isBlank() && list.isNotEmpty()) Hint("Dai tuoi preferiti:")
-        list.forEach { ct -> Line(ct.name, "aggiungi", ct.number) { app.people.setImportant(ct, true); q = ""; tick++ } }
-        if (q.isBlank() && list.isEmpty() && chosen.isEmpty()) Serif("Cerca le persone che devono passare sempre.", size = 14.sp, color = c.soft, italic = true)
+        if (q.isBlank() && list.isNotEmpty()) Hint(tr(R.string.from_favorites))
+        list.forEach { ct -> Line(ct.name, tr(R.string.add_l), ct.number) { app.people.setImportant(ct, true); q = ""; tick++ } }
+        if (q.isBlank() && list.isEmpty() && chosen.isEmpty()) Serif(tr(R.string.onb_search_people), size = 14.sp, color = c.soft, italic = true)
     }
 }
 
@@ -156,9 +160,9 @@ fun CalendarPicker(app: SordinaApp, ops: Ops) {
     var cals by remember { mutableStateOf(emptyList<app.sordina.data.Cal>()) }
     var sel by remember { mutableStateOf(app.prefs.calendarId) }
     LaunchedEffect(Unit) { cals = withContext(Dispatchers.IO) { app.calendars.list() } }
-    if (cals.isEmpty()) { Hint("Nessun calendario in cui scrivere."); return }
+    if (cals.isEmpty()) { Hint(tr(R.string.cal_none_writable)); return }
     val current = cals.firstOrNull { it.id == sel } ?: cals.first()
-    Hint("Gli impegni vanno in:")
+    Hint(tr(R.string.cal_events_go))
     FlowPills(cals.map { it.name + if (cals.count { o -> o.name == it.name } > 1) " (${it.account})" else "" }, { cals[it].id == current.id }) {
         sel = cals[it].id; app.prefs.calendarId = sel; ops.changed()
     }
@@ -174,8 +178,8 @@ fun HaForm(app: SordinaApp, ops: Ops) {
     var testing by remember { mutableStateOf(false) }
     var alarms by remember { mutableStateOf(prefs.appLevels[HomeAssistant.COMPANION_PKG] == Level.SEMPRE) }
     Field(url, { url = it }, "http://homeassistant.local:8123", keyboard = KeyboardType.Uri)
-    Field(token, { token = it }, if (prefs.haTokenEnc.isNotBlank()) "Token salvato (scrivi per cambiarlo)" else "Token di accesso a lunga durata", password = true)
-    Hint("Comandi tramite Assist: solo le entità esposte. Token cifrato sul telefono.")
+    Field(token, { token = it }, if (prefs.haTokenEnc.isNotBlank()) tr(R.string.ha_token_saved) else tr(R.string.ha_token), password = true)
+    Hint(tr(R.string.ha_hint))
     if (testing) {
         LaunchedEffect(Unit) {
             prefs.haUrl = url
@@ -185,9 +189,9 @@ fun HaForm(app: SordinaApp, ops: Ops) {
             ops.changed()
         }
     }
-    Secondary(if (testing) "Provo…" else "Salva e prova", Modifier.fillMaxWidth()) { if (!testing) testing = true }
+    Secondary(if (testing) tr(R.string.trying) else tr(R.string.save_test), Modifier.fillMaxWidth()) { if (!testing) testing = true }
     result?.let { Hint(it) }
-    Toggle("Allarmi di casa: sempre", alarms) { v ->
+    Toggle(tr(R.string.ha_alarms), alarms) { v ->
         alarms = v
         prefs.setAppLevel(HomeAssistant.COMPANION_PKG, if (v) Level.SEMPRE else null)
     }

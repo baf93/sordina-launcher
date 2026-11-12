@@ -1,5 +1,8 @@
 package app.sordina.service
 
+import app.sordina.tr
+import app.sordina.R
+
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
@@ -63,7 +66,7 @@ class TickReceiver : BroadcastReceiver() {
     }
 }
 
-/** Azioni della scheda: "Letto tutto". */
+/** Azioni della scheda: tr(R.string.read_all). */
 class ActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == ACTION_READ_ALL) SordinaListener.readAll(context)

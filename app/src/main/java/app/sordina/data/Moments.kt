@@ -1,5 +1,8 @@
 package app.sordina.data
 
+import app.sordina.R
+import app.sordina.tr
+
 import android.app.UiModeManager
 import android.content.Context
 import android.content.res.Configuration
@@ -8,10 +11,13 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 /** I momenti della 0.1: Notte (a orario) e In auto (modalità auto di Android / Android Auto). */
-enum class Moment(val label: String, val phrase: String) {
-    NONE("Nessun momento", ""),
-    NIGHT("Notte", "Notte · solo l'importante"),
-    CAR("In auto", "In auto · solo chiamate"),
+enum class Moment(private val labelRes: Int, private val phraseRes: Int?) {
+    NONE(R.string.moment_none, null),
+    NIGHT(R.string.moment_night, R.string.moment_night_phrase),
+    CAR(R.string.moment_car, R.string.moment_car_phrase),
+    ;
+    val label: String get() = tr(labelRes)
+    val phrase: String get() = phraseRes?.let { tr(it) } ?: ""
 }
 
 class Moments(private val context: Context, private val prefs: Prefs) {

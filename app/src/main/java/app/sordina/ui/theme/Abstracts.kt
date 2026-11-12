@@ -1,5 +1,7 @@
 package app.sordina.ui.theme
 
+import app.sordina.R
+
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -13,33 +15,33 @@ import kotlin.random.Random
  * Tre tipi: Tinte (forme sfocate su un colore), Dune (onde a strati, opache) e Forme (geometrie piatte, stile Bauhaus). Tutti con un filo di grana.
  */
 object Abstracts {
-    enum class Kind(val label: String) { SOFT("Tinte"), DUNE("Dune"), SHAPES("Forme") }
+    enum class Kind(private val res: Int) { SOFT(R.string.wk_soft), DUNE(R.string.wk_dune), SHAPES(R.string.wk_shapes); val label: String get() = app.sordina.tr(res) }
 
     /** colors: per Dune dal cielo al primo piano; per Forme [fondo, tre colori, punto]. */
-    class Preset(val kind: Kind, val name: String, val colors: List<Int>)
+    class Preset(val kind: Kind, private val nameRes: Int, val colors: List<Int>) { val name: String get() = app.sordina.tr(nameRes) }
 
     private fun c(v: Long) = v.toInt()
 
     val all = listOf(
         // Tinte: [fondo, tre forme sfocate]
-        Preset(Kind.SOFT, "Sabbia", listOf(c(0xFFE6DCCF), c(0xFFD9A88A), c(0xFFB9C4B0), c(0xFFF3E9DC))),
-        Preset(Kind.SOFT, "Salvia", listOf(c(0xFF2E3A32), c(0xFF6E8A72), c(0xFFA7B59A), c(0xFF1C2420))),
-        Preset(Kind.SOFT, "Notte", listOf(c(0xFF14161C), c(0xFF2D3A5A), c(0xFF5A4A72), c(0xFF1E2C3C))),
-        Preset(Kind.SOFT, "Argilla", listOf(c(0xFF3A2620), c(0xFFC4623A), c(0xFF8A4A3A), c(0xFFE0A47A))),
-        Preset(Kind.SOFT, "Nebbia", listOf(c(0xFFDCE1E6), c(0xFFA9B8C9), c(0xFFC9C2D6), c(0xFFEEF0F2))),
-        Preset(Kind.SOFT, "Oceano", listOf(c(0xFF0F2A33), c(0xFF2F7A7A), c(0xFF1D4E5F), c(0xFF7FB3A8))),
-        Preset(Kind.DUNE, "Deserto", listOf(c(0xFFF1E4D3), c(0xFFE3B58F), c(0xFFC97B52), c(0xFF8C4A33), c(0xFF4A2A20))),
-        Preset(Kind.DUNE, "Notte", listOf(c(0xFF0B1324), c(0xFF1C2C4C), c(0xFF2C4A7A), c(0xFF4B72B0), c(0xFF9DB7E0))),
-        Preset(Kind.DUNE, "Salvia", listOf(c(0xFFE7EBDF), c(0xFFB9C7A8), c(0xFF8AA17A), c(0xFF587256), c(0xFF2C3D2E))),
-        Preset(Kind.DUNE, "Tramonto", listOf(c(0xFFFFD9B0), c(0xFFF59E72), c(0xFFD9606A), c(0xFF8E3D6E), c(0xFF3A1E47))),
-        Preset(Kind.DUNE, "Rosa", listOf(c(0xFFF6E3E4), c(0xFFE8B9C0), c(0xFFC98C9C), c(0xFF8F5B73), c(0xFF4B2F42))),
-        Preset(Kind.DUNE, "Ardesia", listOf(c(0xFF1A1C1F), c(0xFF2B2F35), c(0xFF40464F), c(0xFF5E6672), c(0xFF8C95A1))),
-        Preset(Kind.SHAPES, "Bauhaus", listOf(c(0xFFE9E4DA), c(0xFFE2582F), c(0xFF24456B), c(0xFFF2B33D), c(0xFF1F1F1F))),
-        Preset(Kind.SHAPES, "Notte", listOf(c(0xFF161616), c(0xFF3F6B5C), c(0xFFC9A16A), c(0xFFB6533A), c(0xFFE8E1D4))),
-        Preset(Kind.SHAPES, "Pastello", listOf(c(0xFFF4EDE4), c(0xFFF2A7A0), c(0xFFA8C5DA), c(0xFFF6D186), c(0xFF3B3B3B))),
-        Preset(Kind.SHAPES, "Oliva", listOf(c(0xFF2F3324), c(0xFFA3A35B), c(0xFFE0C9A6), c(0xFF6E7A4E), c(0xFFF0E6D2))),
-        Preset(Kind.SHAPES, "Mare", listOf(c(0xFFE8EEF0), c(0xFF1F4E79), c(0xFF7FB3D5), c(0xFFF4A259), c(0xFF0F2A44))),
-        Preset(Kind.SHAPES, "Cotto", listOf(c(0xFF3B241C), c(0xFFD97A4E), c(0xFFF2C9A0), c(0xFF8C3B2B), c(0xFFF7EBDD))),
+        Preset(Kind.SOFT, R.string.wp_sand, listOf(c(0xFFE6DCCF), c(0xFFD9A88A), c(0xFFB9C4B0), c(0xFFF3E9DC))),
+        Preset(Kind.SOFT, R.string.wp_sage, listOf(c(0xFF2E3A32), c(0xFF6E8A72), c(0xFFA7B59A), c(0xFF1C2420))),
+        Preset(Kind.SOFT, R.string.wp_night, listOf(c(0xFF14161C), c(0xFF2D3A5A), c(0xFF5A4A72), c(0xFF1E2C3C))),
+        Preset(Kind.SOFT, R.string.wp_clay, listOf(c(0xFF3A2620), c(0xFFC4623A), c(0xFF8A4A3A), c(0xFFE0A47A))),
+        Preset(Kind.SOFT, R.string.wp_fog, listOf(c(0xFFDCE1E6), c(0xFFA9B8C9), c(0xFFC9C2D6), c(0xFFEEF0F2))),
+        Preset(Kind.SOFT, R.string.wp_ocean, listOf(c(0xFF0F2A33), c(0xFF2F7A7A), c(0xFF1D4E5F), c(0xFF7FB3A8))),
+        Preset(Kind.DUNE, R.string.wp_desert, listOf(c(0xFFF1E4D3), c(0xFFE3B58F), c(0xFFC97B52), c(0xFF8C4A33), c(0xFF4A2A20))),
+        Preset(Kind.DUNE, R.string.wp_night, listOf(c(0xFF0B1324), c(0xFF1C2C4C), c(0xFF2C4A7A), c(0xFF4B72B0), c(0xFF9DB7E0))),
+        Preset(Kind.DUNE, R.string.wp_sage, listOf(c(0xFFE7EBDF), c(0xFFB9C7A8), c(0xFF8AA17A), c(0xFF587256), c(0xFF2C3D2E))),
+        Preset(Kind.DUNE, R.string.wp_sunset, listOf(c(0xFFFFD9B0), c(0xFFF59E72), c(0xFFD9606A), c(0xFF8E3D6E), c(0xFF3A1E47))),
+        Preset(Kind.DUNE, R.string.wp_rose, listOf(c(0xFFF6E3E4), c(0xFFE8B9C0), c(0xFFC98C9C), c(0xFF8F5B73), c(0xFF4B2F42))),
+        Preset(Kind.DUNE, R.string.wp_slate, listOf(c(0xFF1A1C1F), c(0xFF2B2F35), c(0xFF40464F), c(0xFF5E6672), c(0xFF8C95A1))),
+        Preset(Kind.SHAPES, R.string.wp_bauhaus, listOf(c(0xFFE9E4DA), c(0xFFE2582F), c(0xFF24456B), c(0xFFF2B33D), c(0xFF1F1F1F))),
+        Preset(Kind.SHAPES, R.string.wp_night, listOf(c(0xFF161616), c(0xFF3F6B5C), c(0xFFC9A16A), c(0xFFB6533A), c(0xFFE8E1D4))),
+        Preset(Kind.SHAPES, R.string.wp_pastel, listOf(c(0xFFF4EDE4), c(0xFFF2A7A0), c(0xFFA8C5DA), c(0xFFF6D186), c(0xFF3B3B3B))),
+        Preset(Kind.SHAPES, R.string.wp_olive, listOf(c(0xFF2F3324), c(0xFFA3A35B), c(0xFFE0C9A6), c(0xFF6E7A4E), c(0xFFF0E6D2))),
+        Preset(Kind.SHAPES, R.string.wp_sea, listOf(c(0xFFE8EEF0), c(0xFF1F4E79), c(0xFF7FB3D5), c(0xFFF4A259), c(0xFF0F2A44))),
+        Preset(Kind.SHAPES, R.string.wp_terracotta, listOf(c(0xFF3B241C), c(0xFFD97A4E), c(0xFFF2C9A0), c(0xFF8C3B2B), c(0xFFF7EBDD))),
     )
 
     fun render(index: Int, w: Int, h: Int, grain: Boolean = true): Bitmap {

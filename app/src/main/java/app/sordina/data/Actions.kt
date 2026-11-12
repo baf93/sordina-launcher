@@ -1,5 +1,9 @@
 package app.sordina.data
 
+import app.sordina.tr
+
+import app.sordina.R
+
 import android.Manifest
 import android.app.SearchManager
 import android.content.ClipData
@@ -50,7 +54,7 @@ class Actions(
         is Act.Setting -> start(Intent(act.action)).let { Outcome(null, it) }
         Act.SordinaSettings -> Outcome(null)
         is Act.Web -> web(act.query)
-        is Act.Calc -> { copy(act.result); Outcome("Copiato: ${act.result}") }
+        is Act.Calc -> { copy(act.result); Outcome(tr(R.string.copied_x, act.result)) }
     }
 
     private fun start(i: Intent): Boolean =
@@ -86,18 +90,18 @@ class Actions(
             }
             Via.SMS -> start(Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + Uri.encode(m.contact.number))).putExtra("sms_body", m.text))
         }
-        val note = if ((m.via == Via.TELEGRAM || m.via == Via.SIGNAL) && m.text.isNotBlank()) "Testo copiato: incollalo nella chat" else null
+        val note = if ((m.via == Via.TELEGRAM || m.via == Via.SIGNAL) && m.text.isNotBlank()) tr(R.string.text_copied_paste) else null
         return Outcome(note, ok)
     }
 
     private fun timer(t: Act.Timer): Outcome {
-        if (t.seconds <= 0) return Outcome("Di' anche quanto: «timer 10 minuti»", false)
+        if (t.seconds <= 0) return Outcome(tr(R.string.timer_say_how_long), false)
         val i = Intent(AlarmClock.ACTION_SET_TIMER)
             .putExtra(AlarmClock.EXTRA_LENGTH, t.seconds)
             .putExtra(AlarmClock.EXTRA_SKIP_UI, true)
         if (t.label.isNotBlank()) i.putExtra(AlarmClock.EXTRA_MESSAGE, t.label.replaceFirstChar { it.uppercase() })
         val ok = start(i)
-        return Outcome(if (ok) "Timer di ${Intents.fmtDuration(t.seconds)} avviato" else "Nessuna app orologio risponde", ok)
+        return Outcome(if (ok) tr(R.string.timer_started, Intents.fmtDuration(t.seconds)) else tr(R.string.no_clock_app), ok)
     }
 
     private fun alarm(a: Act.Alarm): Outcome {
@@ -107,7 +111,7 @@ class Actions(
             .putExtra(AlarmClock.EXTRA_SKIP_UI, true)
         if (a.label.isNotBlank()) i.putExtra(AlarmClock.EXTRA_MESSAGE, a.label)
         val ok = start(i)
-        return Outcome(if (ok) "Sveglia alle %d:%02d".format(a.hour, a.minute) else "Nessuna app orologio risponde", ok)
+        return Outcome(if (ok) tr(R.string.alarm_at, java.time.LocalTime.of(a.hour, a.minute).format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))) else tr(R.string.no_clock_app), ok)
     }
 
     private suspend fun event(e: Act.Event): Outcome {
@@ -124,21 +128,21 @@ class Actions(
             return Outcome(null, ok)
         }
         val id = withContext(Dispatchers.IO) { cals.insert(cal, e.title, e.whenAt) }
-            ?: return Outcome("Non sono riuscito a scrivere nel calendario", false)
+            ?: return Outcome(tr(R.string.calendar_write_failed), false)
         return Outcome("«${e.title}» ${DateParser.describe(e.whenAt)} · ${cal.name}", true) {
             withContext(Dispatchers.IO) { cals.delete(id) }
         }
     }
 
     private fun torch(): Outcome {
-        val cm = context.getSystemService(CameraManager::class.java) ?: return Outcome("Torcia non disponibile", false)
+        val cm = context.getSystemService(CameraManager::class.java) ?: return Outcome(tr(R.string.torch_unavailable), false)
         val id = runCatching {
             cm.cameraIdList.firstOrNull { cm.getCameraCharacteristics(it).get(CameraCharacteristics.FLASH_INFO_AVAILABLE) == true }
-        }.getOrNull() ?: return Outcome("Torcia non disponibile", false)
+        }.getOrNull() ?: return Outcome(tr(R.string.torch_unavailable), false)
         ensureTorchCallback(cm)
         val on = !torchOn
         val ok = runCatching { cm.setTorchMode(id, on) }.isSuccess
-        return Outcome(if (!ok) "Torcia occupata" else if (on) "Torcia accesa" else "Torcia spenta", ok)
+        return Outcome(if (!ok) tr(R.string.torch_busy) else if (on) tr(R.string.torch_on) else tr(R.string.torch_off), ok)
     }
 
     private fun media(key: Int): Outcome {
@@ -167,7 +171,7 @@ class Actions(
 
     private suspend fun assist(text: String): Outcome = withContext(Dispatchers.IO) {
         val r = ha.assist(text)
-        Outcome(r ?: "Casa non risponde", r != null)
+        Outcome(r ?: tr(R.string.home_no_answer), r != null)
     }
 
     private suspend fun home(a: Act.Ha): Outcome = withContext(Dispatchers.IO) {
@@ -179,7 +183,7 @@ class Actions(
             HaOp.LEVEL -> a.value?.let { ha.setLevel(e, it) } ?: ha.turn(e, true)
         }
         ha.entities(force = true)
-        Outcome(if (ok) "Fatto: ${e.name}" else "Home Assistant non risponde", ok)
+        Outcome(if (ok) tr(R.string.done_x, e.name) else tr(R.string.ha_no_answer), ok)
     }
 
     private fun web(q: String): Outcome {

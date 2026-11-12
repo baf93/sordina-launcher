@@ -28,6 +28,8 @@ data class Held(
     val releaseAt: Long = 0,
     /** postTime della notifica originale, per riconoscerla quando Android la ripubblica */
     val postTime: Long = 0,
+    /** Titolo della notifica (per le app: l'oggetto), separato dal testo */
+    val title: String? = null,
 ) {
     /** Raggruppa per persona; se non c'è una persona, per app. */
     val groupKey: String
@@ -139,10 +141,22 @@ class NotifStore(context: Context) {
     }
 
     /** Raggruppato per persona, il gruppo con il messaggio più recente per primo. */
-    fun groups(): List<List<Held>> =
-        _held.value.values.groupBy { it.groupKey }.values
+    fun groups(): List<List<Held>> {
+        // Solo quello che è ancora trattenuto: ciò che è passato (subito o al riepilogo) sta nella tendina, non qui
+        val now = System.currentTimeMillis()
+        val waiting = _held.value.values.filter { it.releaseAt > now }.sortedBy { it.time }
+        // Lo stesso pagamento da due app (banca e portafoglio, entro mezz'ora): se ne tiene uno
+        val seen = HashMap<Long, Held>()
+        val unique = waiting.filter { h ->
+            val cents = if (h.isMessage) null else CardDetector.paymentCents((h.title ?: "") + " " + h.text)
+            if (cents == null) return@filter true
+            val first = seen[cents]
+            if (first != null && first.pkg != h.pkg && h.time - first.time < 30 * 60_000) false else { seen[cents] = h; true }
+        }
+        return unique.groupBy { it.groupKey }.values
             .map { g -> g.sortedByDescending { it.time } }
             .sortedByDescending { it.first().time }
+    }
 
     // App di messaggi abituale per persona
     @Synchronized
@@ -175,7 +189,7 @@ class NotifStore(context: Context) {
                     put("person", h.person ?: JSONObject.NULL); put("conv", h.conversation ?: JSONObject.NULL)
                     put("text", h.text); put("time", h.time); put("level", h.level.name)
                     put("count", h.count); put("msg", h.isMessage)
-                    put("release", h.releaseAt); put("post", h.postTime)
+                    put("release", h.releaseAt); put("post", h.postTime); put("title", h.title ?: JSONObject.NULL)
                 })
             }
             runCatching { file.writeText(arr.toString()) }
@@ -196,6 +210,7 @@ class NotifStore(context: Context) {
                 level = runCatching { Level.valueOf(o.getString("level")) }.getOrDefault(Level.RIEPILOGO),
                 count = o.optInt("count", 1), isMessage = o.optBoolean("msg"),
                 releaseAt = o.optLong("release"), postTime = o.optLong("post"),
+                title = o.optString("title").takeIf { !o.isNull("title") && it.isNotEmpty() },
             )
             m[h.key] = h
         }

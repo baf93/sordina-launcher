@@ -1,5 +1,8 @@
 package app.sordina.service
 
+import app.sordina.tr
+import app.sordina.trn
+
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -27,17 +30,17 @@ class StatusNotification(private val context: Context) {
     private val pending = Runnable { postNow() }
 
     fun createChannels() {
-        val status = NotificationChannel(CH_STATUS, "Scheda di Sordina", NotificationManager.IMPORTANCE_DEFAULT).apply {
+        val status = NotificationChannel(CH_STATUS, tr(R.string.ch_status), NotificationManager.IMPORTANCE_DEFAULT).apply {
             // Importanza normale ma muta: molti telefoni nascondono dal blocco le notifiche "silenziose"
             setSound(null, null)
             enableVibration(false)
             enableLights(false)
-            description = "Lo stato e cosa ti aspetta, anche sulla schermata di blocco"
+            description = tr(R.string.ch_status_desc)
             setShowBadge(false)
             lockscreenVisibility = Notification.VISIBILITY_PRIVATE
         }
-        val always = NotificationChannel(CH_ALWAYS, "Passa sempre", NotificationManager.IMPORTANCE_HIGH).apply {
-            description = "Le notifiche delle app che passano sempre, anche con Non disturbare"
+        val always = NotificationChannel(CH_ALWAYS, tr(R.string.ch_always), NotificationManager.IMPORTANCE_HIGH).apply {
+            description = tr(R.string.ch_always_desc)
             setBypassDnd(true)
             lockscreenVisibility = Notification.VISIBILITY_PRIVATE
         }
@@ -66,14 +69,14 @@ class StatusNotification(private val context: Context) {
         val names = groups.map { it.first().groupTitle }
 
         fun namesLine(): String = when {
-            names.isEmpty() -> "Niente in attesa"
+            names.isEmpty() -> tr(R.string.nothing_waiting_n)
             names.size <= 3 -> joinNames(names)
-            else -> names.take(2).joinToString(", ") + " e altri ${names.size - 2}"
+            else -> tr(R.string.and_others, names.take(2).joinToString(", "), names.size - 2)
         }
         fun countLine(): String = when (total) {
-            0 -> "Niente in attesa"
-            1 -> "1 in attesa"
-            else -> "$total in attesa"
+            0 -> tr(R.string.nothing_waiting_n)
+            1 -> trn(R.plurals.n_waiting2, 1)
+            else -> trn(R.plurals.n_waiting2, total)
         }
 
         val privacy = prefs.lockPrivacy
@@ -84,14 +87,14 @@ class StatusNotification(private val context: Context) {
                 b.setContentText(namesLine())
                 if (groups.isNotEmpty()) b.setStyle(Notification.InboxStyle().also { s ->
                     groups.take(6).forEach { g -> s.addLine(g.first().groupTitle + countSuffix(g)) }
-                    if (groups.size > 6) s.setSummaryText("e altri ${groups.size - 6}")
+                    if (groups.size > 6) s.setSummaryText(tr(R.string.and_more, groups.size - 6))
                 })
             }
             LockPrivacy.MESSAGES -> {
                 b.setContentText(namesLine())
                 if (groups.isNotEmpty()) b.setStyle(Notification.InboxStyle().also { s ->
                     groups.take(6).forEach { g -> s.addLine(g.first().groupTitle + ": " + g.first().text.take(80)) }
-                    if (groups.size > 6) s.setSummaryText("e altri ${groups.size - 6}")
+                    if (groups.size > 6) s.setSummaryText(tr(R.string.and_more, groups.size - 6))
                 })
             }
         }
@@ -102,7 +105,7 @@ class StatusNotification(private val context: Context) {
 
         // Azioni: Letto tutto e le due persone più recenti
         if (groups.isNotEmpty()) {
-            b.addAction(Notification.Action.Builder(null, "Letto tutto", ActionReceiver.readAll(context)).build())
+            b.addAction(Notification.Action.Builder(null, tr(R.string.read_all), ActionReceiver.readAll(context)).build())
             groups.take(2).forEach { g ->
                 val h = g.first()
                 val pi = app.store.intentFor(h.key)
@@ -145,8 +148,8 @@ class StatusNotification(private val context: Context) {
         )
         val n = Notification.Builder(context, CH_STATUS)
             .setSmallIcon(R.drawable.ic_stat)
-            .setContentTitle("Sordina non è più la Home")
-            .setContentText("Tocca per rimetterla")
+            .setContentTitle(tr(R.string.home_lost))
+            .setContentText(tr(R.string.home_lost_tap))
             .setAutoCancel(true)
             .setContentIntent(i)
             .build()
@@ -169,7 +172,7 @@ class StatusNotification(private val context: Context) {
         fun joinNames(n: List<String>) = when (n.size) {
             0 -> ""
             1 -> n[0]
-            else -> n.dropLast(1).joinToString(", ") + " e " + n.last()
+            else -> tr(R.string.and_join, n.dropLast(1).joinToString(", "), n.last())
         }
 
         private fun countSuffix(g: List<Held>): String {
@@ -185,11 +188,11 @@ class StatusNotification(private val context: Context) {
             val last = app.moments.lastSummaryToday(now)
             if (last != null && waiting > 0) {
                 val since = Duration.between(now.toLocalDate().atTime(last, 0), now).toMinutes()
-                if (since in 0..59) return "Riepilogo delle $last · " + if (waiting == 1) "1 cosa" else "$waiting cose"
+                if (since in 0..59) return tr(R.string.summary_of, "$last", trn(R.plurals.n_things, waiting))
             }
             val next = app.moments.nextSummary(now)
-            val day = if (next.toLocalDate() == now.toLocalDate()) "" else if (next.toLocalDate() == now.toLocalDate().plusDays(1)) " di domani" else ""
-            return "Niente di urgente fino alle ${next.hour}$day"
+            val t = next.format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
+            return if (next.toLocalDate() == now.toLocalDate().plusDays(1)) tr(R.string.nothing_urgent_until_tomorrow, t) else tr(R.string.nothing_urgent_until, t)
         }
     }
 }

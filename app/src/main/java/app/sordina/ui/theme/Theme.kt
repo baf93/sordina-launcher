@@ -1,5 +1,7 @@
 package app.sordina.ui.theme
 
+import app.sordina.R
+
 import android.app.ActivityManager
 import android.content.Context
 import androidx.compose.foundation.background
@@ -18,9 +20,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 
 /** Un solo tema per ora; l'enum resta per i temi futuri e per le impostazioni salvate. */
-enum class ThemeFamily(val label: String) { CARTA("Sobrio") }
+enum class ThemeFamily(private val res: Int) { CARTA(R.string.theme_family_sober); val label: String get() = app.sordina.tr(res) }
 
-enum class ThemeMode(val label: String) { AUTO("Automatico"), LIGHT("Chiaro"), DARK("Scuro") }
+enum class ThemeMode(private val res: Int) { AUTO(R.string.theme_auto), LIGHT(R.string.theme_light), DARK(R.string.theme_dark); val label: String get() = app.sordina.tr(res) }
 
 @Immutable
 data class SordinaColors(

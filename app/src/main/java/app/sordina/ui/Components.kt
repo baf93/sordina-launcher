@@ -14,6 +14,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.rounded.UnfoldMore
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -136,7 +140,7 @@ fun Header(title: String, onBack: (() -> Unit)? = null) {
     ) {
         if (onBack != null) {
             androidx.compose.material3.Icon(
-                androidx.compose.material.icons.Icons.AutoMirrored.Rounded.ArrowBack, "Indietro",
+                androidx.compose.material.icons.Icons.AutoMirrored.Rounded.ArrowBack, app.sordina.tr(app.sordina.R.string.back),
                 Modifier.clickableNoRipple(onBack).padding(end = 14.dp, top = 6.dp, bottom = 6.dp).size(24.dp), tint = c.ink,
             )
         }
@@ -337,3 +341,103 @@ fun Field(
 fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier = this.then(
     Modifier.pointerInput(onClick) { detectTapGestures(onTap = { onClick() }) },
 )
+
+/** Le card sono semitrasparenti sopra uno sfondo, se lo hai scelto. Una sola regola per tutta l'app. */
+val LocalGlass = androidx.compose.runtime.staticCompositionLocalOf { false }
+const val GLASS_ALPHA = 0.7f
+
+/** Il colore di ogni card, barra e blocco sopra lo sfondo: pieno, oppure vetro se attivo. */
+@Composable
+fun surface(): androidx.compose.ui.graphics.Color =
+    if (LocalGlass.current) S.c.card.copy(alpha = GLASS_ALPHA) else S.c.card
+
+/** Un'opzione di una scelta: nome e, se serve, due parole che la spiegano. */
+data class Option(val label: String, val hint: String? = null)
+
+/**
+ * Una riga con un valore: toccandola si apre un foglio con tutte le opzioni.
+ * Niente cambia finché non scegli. Con [multi] si possono scegliere più opzioni.
+ */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun Pick(
+    label: String,
+    value: String,
+    options: List<Option>,
+    isOn: (Int) -> Boolean,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    hint: String? = null,
+    title: String = label,
+    multi: Boolean = false,
+    onSelect: (Int) -> Unit,
+) {
+    val c = S.c
+    var open by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    Line(label, value, hint, icon, trailing = {
+        androidx.compose.material3.Icon(
+            androidx.compose.material.icons.Icons.Rounded.UnfoldMore, null, Modifier.size(18.dp), tint = c.soft,
+        )
+    }) { open = true }
+    if (open) Sheet(title, onDismiss = { open = false }) {
+        options.forEachIndexed { i, o ->
+            val on = isOn(i)
+            androidx.compose.foundation.layout.Row(
+                Modifier.fillMaxWidth().clickable { onSelect(i); if (!multi) open = false }.padding(horizontal = 24.dp, vertical = 13.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            ) {
+                androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
+                    Text(o.label, style = TextStyle(fontSize = 17.sp, color = if (on) c.accent else c.ink))
+                    o.hint?.let { Text(it, style = TextStyle(fontSize = 13.sp, color = c.soft)) }
+                }
+                if (on) androidx.compose.material3.Icon(
+                    androidx.compose.material.icons.Icons.Rounded.Check, null, Modifier.size(22.dp), tint = c.accent,
+                )
+            }
+        }
+        if (multi) Primary(app.sordina.tr(app.sordina.R.string.done), Modifier.padding(horizontal = 20.dp, vertical = 10.dp).fillMaxWidth()) { open = false }
+    }
+}
+
+/** Il foglio dal basso, uguale ovunque. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun Sheet(title: String, hint: String? = null, onDismiss: () -> Unit, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
+    val c = S.c
+    androidx.compose.material3.ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = c.card,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            androidx.compose.foundation.layout.Box(
+                Modifier.padding(top = 12.dp, bottom = 14.dp).size(width = 36.dp, height = 4.dp).clip(RoundedCornerShape(2.dp)).background(c.dot),
+            )
+        },
+    ) {
+        androidx.compose.foundation.layout.Column(
+            Modifier.navigationBarsPadding().padding(bottom = 12.dp)
+                .verticalScroll(androidx.compose.foundation.rememberScrollState()),
+        ) {
+            Text(title, Modifier.padding(horizontal = 24.dp), style = TextStyle(fontSize = 21.sp, color = c.ink))
+            if (hint != null) Text(hint, Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp), style = TextStyle(fontSize = 14.sp, color = c.soft))
+            androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
+            content()
+        }
+    }
+}
+
+/** Conferma per le cose che non si possono annullare. */
+@Composable
+fun Confirm(title: String, text: String, action: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    val c = S.c
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = c.card,
+        title = { Text(title, style = TextStyle(fontSize = 20.sp, color = c.ink)) },
+        text = { Text(text, style = TextStyle(fontSize = 15.sp, color = c.soft)) },
+        confirmButton = {
+            androidx.compose.material3.TextButton(onClick = { onDismiss(); onConfirm() }) { Text(action, color = c.accent) }
+        },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text(app.sordina.tr(app.sordina.R.string.cancel), color = c.ink) } },
+    )
+}

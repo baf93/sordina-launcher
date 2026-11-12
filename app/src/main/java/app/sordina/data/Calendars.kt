@@ -1,5 +1,9 @@
 package app.sordina.data
 
+import app.sordina.tr
+
+import app.sordina.R
+
 import android.Manifest
 import android.content.ContentUris
 import android.content.ContentValues
@@ -114,7 +118,7 @@ fun Calendars.upcoming(context: Context, now: Long = System.currentTimeMillis())
                 val loc = c.getString(4)?.trim()?.takeIf { it.isNotBlank() }
                 val desc = c.getString(5).orEmpty()
                 val url = link.find(loc.orEmpty())?.value ?: link.find(desc)?.value
-                out += Upcoming(c.getLong(0), c.getString(1).orEmpty().ifBlank { "Evento" }, begin, end,
+                out += Upcoming(c.getLong(0), c.getString(1).orEmpty().ifBlank { tr(R.string.event) }, begin, end,
                     loc?.takeIf { url == null || !it.startsWith("http") }, url, false)
             }
         }
@@ -138,7 +142,7 @@ fun Calendars.next(context: Context, now: Long = System.currentTimeMillis()): Up
         )?.use { c ->
             while (c.moveToNext()) {
                 if (c.getLong(3) <= now) continue
-                return@runCatching Upcoming(c.getLong(0), c.getString(1).orEmpty().ifBlank { "Evento" }, c.getLong(2), c.getLong(3),
+                return@runCatching Upcoming(c.getLong(0), c.getString(1).orEmpty().ifBlank { tr(R.string.event) }, c.getLong(2), c.getLong(3),
                     c.getString(4)?.takeIf { it.isNotBlank() }, null, false)
             }
             null
@@ -164,7 +168,7 @@ fun Calendars.agenda(context: Context, now: Long = System.currentTimeMillis()): 
         )?.use { c ->
             while (c.moveToNext() && out.size < 3) {
                 if (c.getLong(3) <= now) continue
-                out += Upcoming(c.getLong(0), c.getString(1).orEmpty().ifBlank { "Evento" }, c.getLong(2), c.getLong(3),
+                out += Upcoming(c.getLong(0), c.getString(1).orEmpty().ifBlank { tr(R.string.event) }, c.getLong(2), c.getLong(3),
                     c.getString(4)?.takeIf { it.isNotBlank() }, null, false)
             }
         }

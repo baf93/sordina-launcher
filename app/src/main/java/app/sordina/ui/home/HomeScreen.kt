@@ -2,6 +2,10 @@
 
 package app.sordina.ui.home
 
+import app.sordina.R
+import app.sordina.tr
+import app.sordina.trn
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -86,6 +90,7 @@ import app.sordina.data.CardAction
 import app.sordina.data.Held
 import app.sordina.ui.clickableNoRipple
 import app.sordina.ui.LocalFeel
+import app.sordina.ui.surface
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
@@ -139,7 +144,6 @@ fun HomeScreen(
     onAction: (Card, CardAction) -> Unit,
     onCard: (Card) -> Unit,
     onAgenda: (String) -> Unit,
-    sheetOpen: Boolean,
     onSheet: (Boolean) -> Unit,
     onOpenHeld: (Held) -> Unit,
     onReadAll: () -> Unit,
@@ -191,14 +195,13 @@ fun HomeScreen(
         else SordinaRow(state) { onSheet(true) }
         Spacer(Modifier.height(20.dp))
     }
-    if (sheetOpen) SordinaSheet(groups, state.until, onOpenHeld, onReadGroup, onReadAll) { onSheet(false) }
 }
 
 @Composable
 private fun AgendaLine(r: AgendaRow, onClick: () -> Unit) {
     val c = S.c
     Row(Modifier.fillMaxWidth().clickableNoRipple(onClick).padding(vertical = 5.dp), verticalAlignment = Alignment.Top) {
-        Text(r.label, Modifier.width(64.dp), maxLines = 1, style = TextStyle(fontSize = 17.sp, color = c.soft))
+        Text(r.label, Modifier.width(64.dp), maxLines = 1, style = TextStyle(fontSize = 17.sp, color = if (r.accent) c.accent else c.soft))
         Text(r.text, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 17.sp, color = if (r.accent) c.accent else c.ink))
     }
 }
@@ -210,12 +213,12 @@ private fun SearchBar(state: HomeState, onSearch: () -> Unit, onMicDown: () -> U
     val feel = LocalFeel.current
     Row(
         Modifier.padding(horizontal = 20.dp).fillMaxWidth().height(56.dp).clip(RoundedCornerShape(28.dp))
-            .background(if (state.glass) c.card.copy(alpha = 0.62f) else c.card).clickable(onClick = onSearch).padding(start = 18.dp, end = 7.dp),
+            .background(surface()).clickable(onClick = onSearch).padding(start = 18.dp, end = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Rounded.Search, null, Modifier.size(22.dp), tint = c.soft)
+        Icon(Icons.Rounded.Search, null, Modifier.size(22.dp), tint = c.accent)
         Spacer(Modifier.width(12.dp))
-        val text = if (state.listening) state.partial.ifBlank { "Ti ascolto… lascia per finire" } else "Cosa devi fare?"
+        val text = if (state.listening) state.partial.ifBlank { tr(R.string.home_listening) } else tr(R.string.home_search)
         Text(text, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
             style = TextStyle(fontSize = 16.sp, color = if (state.listening) c.ink else c.soft))
         Box(
@@ -223,175 +226,36 @@ private fun SearchBar(state: HomeState, onSearch: () -> Unit, onMicDown: () -> U
                 .pointerInput(Unit) { awaitEachGesture { awaitFirstDown(); feel.tick(); onMicDown(); waitForUpOrCancellation(); onMicUp() } },
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Rounded.Mic, "Parla", Modifier.size(22.dp), tint = if (state.listening) c.bg else c.ink)
+            Icon(Icons.Rounded.Mic, tr(R.string.speak), Modifier.size(22.dp), tint = if (state.listening) c.bg else c.accent)
         }
     }
 }
 
 private fun weatherIcon(w: String): ImageVector = when {
-    "sereno" in w && "poco" !in w -> Icons.Rounded.WbSunny
-    "pioggia" in w -> Icons.Rounded.Umbrella
-    "neve" in w -> Icons.Rounded.AcUnit
-    "temporale" in w -> Icons.Rounded.Thunderstorm
+    w.endsWith(tr(R.string.wx_clear)) -> Icons.Rounded.WbSunny
+    tr(R.string.wx_rain) in w -> Icons.Rounded.Umbrella
+    tr(R.string.wx_snow) in w -> Icons.Rounded.AcUnit
+    tr(R.string.wx_storm) in w -> Icons.Rounded.Thunderstorm
     else -> Icons.Rounded.Cloud
 }
 
-/** In fondo: quante notifiche sono in sordina e quando tornano. */
+/** In fondo: quante notifiche sono in sordina e fino a quando. */
 @Composable
 private fun SordinaRow(state: HomeState, pill: Boolean = false, onClick: () -> Unit) {
     val c = S.c
     val on = state.waiting > 0
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Row(
-        (if (pill) Modifier.clip(RoundedCornerShape(18.dp)).background(c.bg.copy(alpha = 0.82f)).padding(horizontal = 14.dp) else Modifier)
+        (if (pill) Modifier.clip(RoundedCornerShape(18.dp)).background(surface()).padding(horizontal = 14.dp) else Modifier)
             .heightIn(min = 36.dp).clickableNoRipple(onClick),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Rounded.NotificationsOff, null, Modifier.size(16.dp), tint = if (on) c.accent else c.soft)
+        Icon(Icons.Rounded.NotificationsOff, null, Modifier.size(16.dp), tint = c.soft)
         Spacer(Modifier.width(6.dp))
-        Text(if (on) "${state.waiting} in sordina" else "Niente in sordina", style = TextStyle(fontSize = 14.sp, color = if (on) c.accent else c.soft))
-        val tail = listOfNotNull(state.moment, if (on) state.until?.let { "tornano $it" } else null)
+        Text(if (on) trn(R.plurals.n_waiting, state.waiting) else tr(R.string.nothing_waiting), style = TextStyle(fontSize = 14.sp, color = c.soft))
+        val tail = listOfNotNull(state.moment, if (on) state.until else null)
         if (tail.isNotEmpty()) Text(" · " + tail.joinToString(" · "), style = TextStyle(fontSize = 14.sp, color = c.soft))
     } }
-}
-
-/** Le notifiche in sordina: numero grande, filtri Tutte / Persone / App, righe in un riquadro arrotondato. */
-@Composable
-private fun SordinaSheet(
-    groups: List<List<Held>>,
-    until: String?,
-    onOpen: (Held) -> Unit,
-    onRead: (String) -> Unit,
-    onReadAll: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val c = S.c
-    val feel = LocalFeel.current
-    val people = groups.filter { it.first().groupKey.startsWith("p:") }
-    val apps = groups.filter { !it.first().groupKey.startsWith("p:") }
-    val total = groups.sumOf { g -> g.sumOf { it.count } }
-    var filter by remember { mutableIntStateOf(0) } // 0 tutte, 1 persone, 2 app
-    val shown = when (filter) { 1 -> people; 2 -> apps; else -> people + apps }
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = c.bg,
-        shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
-        dragHandle = { Box(Modifier.padding(top = 12.dp, bottom = 16.dp).size(width = 36.dp, height = 4.dp).clip(CircleShape).background(c.dot)) },
-    ) {
-        Column(Modifier.navigationBarsPadding()) {
-            Row(Modifier.padding(horizontal = 24.dp), verticalAlignment = Alignment.Bottom) {
-                if (total > 0) {
-                    Text("$total", style = TextStyle(fontSize = 46.sp, lineHeight = 46.sp, color = c.accent))
-                    Spacer(Modifier.width(10.dp))
-                    Text("in sordina", Modifier.padding(bottom = 6.dp), style = TextStyle(fontSize = 21.sp, color = c.ink))
-                } else Text("Niente in sordina", style = TextStyle(fontSize = 26.sp, color = c.ink))
-            }
-            val calm = if (total == 0) "Quello che arriva aspetta qui, in silenzio."
-            else listOfNotNull(until?.let { "Tornano $it" }, "niente di urgente").joinToString(" · ")
-            Text(calm, Modifier.padding(start = 24.dp, end = 24.dp, top = 6.dp), style = TextStyle(fontSize = 14.sp, color = c.soft))
-            if (groups.isNotEmpty()) {
-                Row(Modifier.padding(start = 24.dp, end = 24.dp, top = 18.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Chip("Tutte", filter == 0) { feel.tick(); filter = 0 }
-                    if (people.isNotEmpty()) Chip("Persone ${people.size}", filter == 1) { feel.tick(); filter = 1 }
-                    if (apps.isNotEmpty()) Chip("App ${apps.size}", filter == 2) { feel.tick(); filter = 2 }
-                }
-                LazyColumn(
-                    Modifier.heightIn(max = 480.dp).padding(horizontal = 14.dp).clip(RoundedCornerShape(20.dp)),
-                ) {
-                    itemsIndexed(shown, key = { _, g -> g.first().groupKey }) { i, g ->
-                        Box(Modifier.animateItem()) { HeldRow(g, last = i == shown.lastIndex, onRead) { onOpen(g.first()) } }
-                    }
-                }
-                Box(
-                    Modifier.padding(horizontal = 14.dp, vertical = 16.dp).fillMaxWidth().height(50.dp).clip(RoundedCornerShape(25.dp)).background(c.ink)
-                        .clickable { feel.confirm(); onReadAll(); onDismiss() },
-                    contentAlignment = Alignment.Center,
-                ) { Text("Tutto letto", style = TextStyle(fontSize = 16.sp, color = c.bg)) }
-            } else Spacer(Modifier.height(32.dp))
-        }
-    }
-}
-
-@Composable
-private fun Chip(text: String, on: Boolean, onClick: () -> Unit) {
-    val c = S.c
-    val bg by androidx.compose.animation.animateColorAsState(if (on) c.ink else c.card, label = "chip")
-    val fg by androidx.compose.animation.animateColorAsState(if (on) c.bg else c.ink, label = "chipText")
-    Box(Modifier.clip(RoundedCornerShape(16.dp)).background(bg).clickableNoRipple(onClick).padding(horizontal = 14.dp, vertical = 7.dp)) {
-        Text(text, style = TextStyle(fontSize = 13.sp, color = fg))
-    }
-}
-
-/**
- * Una riga: chi (o quale app), cosa, quando.
- * Scorrendola di lato diventa "letta" solo se la lasci oltre il 40%: prima torna al suo posto.
- */
-@Composable
-private fun HeldRow(g: List<Held>, last: Boolean, onRead: (String) -> Unit, onClick: () -> Unit) {
-    val c = S.c
-    val feel = LocalFeel.current
-    val scope = rememberCoroutineScope()
-    val h = g.first()
-    val total = g.sumOf { it.count }
-    val isPerson = h.groupKey.startsWith("p:")
-    val offset = remember { Animatable(0f) }
-    var width by remember { mutableIntStateOf(1) }
-    val passed = kotlin.math.abs(offset.value) > width * 0.4f
-    LaunchedEffect(passed) { if (passed) feel.threshold() }
-    Box(
-        Modifier.fillMaxWidth().onSizeChanged { width = it.width.coerceAtLeast(1) }
-            .pointerInput(h.groupKey) {
-                detectHorizontalDragGestures(
-                    onDragEnd = {
-                        scope.launch {
-                            val v = offset.value
-                            if (kotlin.math.abs(v) > width * 0.4f) {
-                                offset.animateTo(if (v > 0) width.toFloat() else -width.toFloat(), feel.spec(tween(160)))
-                                feel.confirm()
-                                onRead(h.groupKey)
-                            } else offset.animateTo(0f, feel.spec(spring(dampingRatio = 0.7f, stiffness = 500f)))
-                        }
-                    },
-                    onDragCancel = { scope.launch { offset.animateTo(0f, feel.spec(spring())) } },
-                ) { ch, dx -> ch.consume(); scope.launch { offset.snapTo(offset.value + dx) } }
-            },
-    ) {
-        // Sotto: "Letta" che si accende quando la soglia è superata
-        val fg by androidx.compose.animation.animateColorAsState(if (passed) c.accent else c.soft, label = "read")
-        Row(
-            Modifier.matchParentSize().background(if (passed) c.accent.copy(alpha = 0.22f) else c.line).padding(horizontal = 20.dp),
-            horizontalArrangement = if (offset.value >= 0) Arrangement.Start else Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(Icons.Rounded.Check, null, Modifier.size(18.dp), tint = fg)
-            Spacer(Modifier.width(6.dp))
-            Text(if (passed) "Letta" else "Scorri ancora", style = TextStyle(fontSize = 14.sp, color = fg))
-        }
-        Column(
-            Modifier.fillMaxWidth().graphicsLayer { translationX = offset.value }.background(c.card)
-                .clickable { feel.tick(); onClick() }.padding(horizontal = 18.dp),
-        ) {
-            Row(Modifier.padding(top = 13.dp), verticalAlignment = Alignment.Bottom) {
-                Text(h.groupTitle, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 17.sp, color = c.ink))
-                Text(time(h.time), Modifier.padding(start = 12.dp), style = TextStyle(fontSize = 12.sp, color = c.soft))
-            }
-            val line = when {
-                isPerson -> (if (h.conversation != null && h.person != null) "${h.person}: " else "") + h.text
-                total > 1 -> "$total notifiche · " + h.text
-                else -> h.text
-            }
-            Text(line, Modifier.padding(top = 2.dp, bottom = 13.dp), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                style = TextStyle(fontSize = 14.sp, color = c.soft))
-            if (!last) Box(Modifier.fillMaxWidth().height(0.5.dp).background(c.line))
-        }
-    }
-}
-
-private fun time(ms: Long): String {
-    val t = Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault())
-    return if (t.toLocalDate() == LocalDate.now()) t.format(DateTimeFormatter.ofPattern("H:mm"))
-    else t.format(DateTimeFormatter.ofPattern("d/M"))
 }
 
 /**
@@ -408,7 +272,7 @@ private fun Stack(cards: List<Card>, glass: Boolean, onAction: (Card, CardAction
     LaunchedEffect(pager) { snapshotFlow { pager.settledPage }.drop(1).collect { feel.tick() } }
     Box(
         Modifier.padding(horizontal = 20.dp).fillMaxWidth().height(160.dp).clip(RoundedCornerShape(24.dp))
-            .background(if (glass) c.card.copy(alpha = 0.62f) else c.card),
+            .background(surface()),
     ) {
         VerticalPager(
             state = pager,
@@ -437,51 +301,3 @@ private fun Stack(cards: List<Card>, glass: Boolean, onAction: (Card, CardAction
     }
 }
 
-@Composable
-private fun CardView(card: Card, onAction: (Card, CardAction) -> Unit, onCard: (Card) -> Unit) {
-    val c = S.c
-    val feel = LocalFeel.current
-    Column(
-        Modifier.fillMaxSize().clickable { feel.tick(); onCard(card) }.padding(horizontal = 20.dp, vertical = 16.dp),
-    ) {
-        Text(card.label, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 13.sp, color = c.soft))
-        Spacer(Modifier.height(4.dp))
-        Text(card.title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 22.sp, color = c.ink))
-        card.subtitle?.let {
-            Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 14.sp, color = c.soft))
-        }
-        Spacer(Modifier.weight(1f))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            card.actions.forEachIndexed { i, a ->
-                if (a.icon != null) RoundIcon(a.icon, primary = a.icon == "pause" || a.icon == "play") { feel.tick(); onAction(card, a) }
-                else ActionButton(a.label, primary = i == 0) { feel.confirm(); onAction(card, a) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ActionButton(label: String, primary: Boolean, onClick: () -> Unit) {
-    val c = S.c
-    val shape = RoundedCornerShape(20.dp)
-    val m = Modifier.height(40.dp).clip(shape)
-    Box(
-        (if (primary) m.background(c.ink) else m.border(1.dp, c.dot, shape)).clickable(onClick = onClick).padding(horizontal = 18.dp),
-        contentAlignment = Alignment.Center,
-    ) { Text(label, maxLines = 1, style = TextStyle(fontSize = 15.sp, color = if (primary) c.bg else c.ink)) }
-}
-
-@Composable
-private fun RoundIcon(icon: String, primary: Boolean, onClick: () -> Unit) {
-    val c = S.c
-    val v = when (icon) {
-        "prev" -> Icons.Rounded.SkipPrevious
-        "next" -> Icons.Rounded.SkipNext
-        "pause" -> Icons.Rounded.Pause
-        else -> Icons.Rounded.PlayArrow
-    }
-    Box(
-        Modifier.size(44.dp).clip(CircleShape).background(if (primary) c.ink else c.bg).clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) { Icon(v, null, Modifier.size(24.dp), tint = if (primary) c.bg else c.ink) }
-}
