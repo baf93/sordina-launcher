@@ -299,6 +299,16 @@
     <string name="why_pinned">You pinned it.</string>
     <string name="why_time">You often open it around now.</string>
     <string name="why_used">One of your most used apps.</string>
+    <string name="why_recent">You used it recently.</string>
+    <string name="why_wrote">%s wrote to you.</string>
+    <string name="why_out">You usually use it when you\'re out.</string>
+    <string name="why_place">You usually use it on %s.</string>
+    <string name="why_car">You usually use it in the car.</string>
+    <string name="why_headset">You usually use it with headphones.</string>
+    <string name="why_charging">You usually use it while charging.</string>
+    <string name="why_after">You usually open it after %s.</string>
+    <string name="why_unlock">You usually open it right after unlocking.</string>
+    <string name="why_day">You usually use it on this day.</string>
     <string name="in_min">In %1$d min</string>
     <string name="at_time">At %1$s</string>
     <string name="tomorrow_cap">Tomorrow</string>
@@ -341,6 +351,7 @@
     <string name="trip">Trip</string>
     <string name="add_calendar">Add to calendar</string>
     <string name="delivery_x">Delivery · %1$s</string>
+    <string name="pickup_x">Pickup · %s</string>
     <string name="parcel">Parcel</string>
     <string name="habit_usual">%1$s · usually</string>
     <string name="do_it">Do it</string>
@@ -512,4 +523,29 @@
         <item quantity="one">%d hour</item>
         <item quantity="other">%d hours</item>
     </plurals>
+    <!-- Home scenes: evening, night, car -->
+    <string name="scene_tomorrow">Tomorrow</string>
+    <string name="scene_alarm">Alarm</string>
+    <string name="scene_alarm_at">Alarm at %s</string>
+    <string name="scene_no_alarm">No alarm set</string>
+    <string name="scene_night_starts">Night starts at %s</string>
+    <string name="scene_night_until">Until %s only what matters gets through</string>
+    <string name="scene_recap">Today %1$s on screen · %2$d unlocks</string>
+    <string name="scene_recap_time">Today %s on screen</string>
+    <string name="car_line">Driving · only calls get through</string>
+    <string name="car_line_open">Driving</string>
+    <string name="car_to">To %s</string>
+    <string name="car_navigate">Navigate</string>
+    <string name="car_music">Music</string>
+    <string name="car_hold">Hold and speak</string>
+    <string name="s_scenes">Home adapts</string>
+    <string name="s_scene_evening">Evening</string>
+    <string name="s_scene_evening_hint">From %s: tomorrow, alarm, how today went</string>
+    <string name="s_scene_evening_len">Evening length</string>
+    <string name="s_scene_evening_off">Needs night to be on</string>
+    <string name="s_scene_night">Night</string>
+    <string name="s_scene_night_hint">Dark and quiet: time, alarm, tomorrow</string>
+    <string name="s_scene_car">Driving</string>
+    <string name="s_scene_car_hint">Big and voice-first: where you\'re going, people, music</string>
+    <string name="ob_scenes">Home changes with you</string>
 </resources>

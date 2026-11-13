@@ -442,7 +442,7 @@ private fun Distracting(app: SordinaApp, apps: List<AppEntry>, usage: Map<String
 @Composable
 private fun Dial(app: SordinaApp, ops: Ops) {
     Screen(tr(R.string.ob_l5), tr(R.string.ob5_title), tr(R.string.ob5_sub)) {
-        SummaryHours(app, ops)
+        SummaryHours(app, ops, scenes = true)
     }
 }
 
@@ -459,7 +459,7 @@ private sealed interface Grab {
  * Trascina un punto: lo sposta di un quarto d'ora alla volta. Trascina le due estremità grigie: cambia la notte.
  */
 @Composable
-internal fun SummaryHours(app: SordinaApp, ops: Ops, modifier: Modifier = Modifier) {
+internal fun SummaryHours(app: SordinaApp, ops: Ops, modifier: Modifier = Modifier, scenes: Boolean = false) {
     val c = S.c
     val prefs = app.prefs
     val feel = LocalFeel.current
@@ -606,6 +606,8 @@ internal fun SummaryHours(app: SordinaApp, ops: Ops, modifier: Modifier = Modifi
                 prefs.nightEnabled = v; nightOn = v; ops.changed(); saved++
             }
         }
+        // Nella prima configurazione: quali Case cambiano da sole (tutte accese; si tocca per spegnere)
+        if (scenes) ScenePills(app, ops)
     }
 }
 
@@ -1024,5 +1026,36 @@ private fun AllSet(perms: PermState, label: String, onGo: () -> Unit, onLater: (
             Modifier.fillMaxWidth().clickableNoRipple(onLater).padding(top = 16.dp, bottom = 4.dp),
             contentAlignment = Alignment.Center,
         ) { Serif(tr(R.string.later), size = 14.sp, color = c.soft) }
+    }
+}
+
+/** Sera · Notte · Auto: tre pillole da accendere o spegnere, sotto il quadrante. */
+@Composable
+private fun ScenePills(app: SordinaApp, ops: Ops) {
+    val c = S.c
+    val prefs = app.prefs
+    val feel = LocalFeel.current
+    var evening by remember { mutableStateOf(prefs.homeEvening) }
+    var night by remember { mutableStateOf(prefs.homeNight) }
+    var car by remember { mutableStateOf(prefs.homeCar) }
+    androidx.compose.material3.Text(tr(R.string.ob_scenes), Modifier.padding(top = 14.dp, bottom = 8.dp, start = 4.dp),
+        style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = c.soft))
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+        @Composable
+        fun pill(label: String, on: Boolean, flip: () -> Unit) {
+            androidx.compose.foundation.layout.Box(
+                Modifier.weight(1f).height(40.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(20.dp))
+                    .background(if (on) c.accent else c.card)
+                    .border(1.dp, if (on) c.accent else c.line, androidx.compose.foundation.shape.RoundedCornerShape(20.dp))
+                    .clickableNoRipple { feel.tick(); flip(); ops.changed() },
+                contentAlignment = Alignment.Center,
+            ) {
+                androidx.compose.material3.Text(label, maxLines = 1,
+                    style = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = if (on) c.bg else c.ink))
+            }
+        }
+        pill(tr(R.string.s_scene_evening), evening) { evening = !evening; prefs.homeEvening = evening }
+        pill(tr(R.string.s_scene_night), night) { night = !night; prefs.homeNight = night }
+        pill(tr(R.string.s_scene_car), car) { car = !car; prefs.homeCar = car }
     }
 }

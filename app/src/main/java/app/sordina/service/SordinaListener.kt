@@ -61,6 +61,10 @@ class SordinaListener : NotificationListenerService() {
         if (reason == REASON_CLICK || reason == REASON_APP_CANCEL) runCatching {
             val info = Classifier.read(sbn)
             if (info.isMessage && !info.isGroupSummary) Talking.mark(info.pkg, info.conversation ?: info.person)
+            // Toccata da te, in una chat a due: il cervello impara a chi rispondi e quando
+            if (reason == REASON_CLICK && info.isMessage && !info.isGroupSummary && info.conversation == null) {
+                info.person?.let { app.brain.onMessageOpened(info.pkg, it) }
+            }
         }
         app.signals.remove(sbn.key)
         if (app.store.get(sbn.key) != null) {
@@ -93,10 +97,8 @@ class SordinaListener : NotificationListenerService() {
         val returning = existing == null && justAfterSummary(now) && sbn.postTime < lastSummaryMillis(now)
 
         // Notifiche già silenziose (importanza bassa o minima): sono tecniche, non disturbano, restano dove sono
-        val importance = runCatching {
-            val r = Ranking()
-            if (currentRanking.getRanking(key, r)) r.importance else NotificationManager.IMPORTANCE_DEFAULT
-        }.getOrDefault(NotificationManager.IMPORTANCE_DEFAULT)
+        val ranking = runCatching { Ranking().takeIf { currentRanking.getRanking(key, it) } }.getOrNull()
+        val importance = ranking?.importance ?: NotificationManager.IMPORTANCE_DEFAULT
         if (importance in 1..NotificationManager.IMPORTANCE_LOW && existing == null) return
 
         val verdict = Classifier.classify(info, packageName, app.prefs, app.people, app.moments.current())
@@ -121,7 +123,9 @@ class SordinaListener : NotificationListenerService() {
         val held = heldOf(sbn, info, label, level, release)
         if (release > 0) snoozeNotification(key, release - now)
         store.put(held, sbn.notification.contentIntent)
-        if (level == Level.SEMPRE && app.silence.isActive()) app.status.alert(held, sbn.notification.contentIntent)
+        // Il doppione serve solo se Non disturbare sta davvero zittendo l'originale (che resta comunque in tendina)
+        val muted = ranking?.matchesInterruptionFilter() == false
+        if (level == Level.SEMPRE && app.silence.isActive() && muted) app.status.alert(held, sbn.notification.contentIntent)
         store.log(Decision(now, sbn.packageName, label, level, verdict.reason))
         app.status.update()
     }
@@ -242,6 +246,8 @@ class SordinaListener : NotificationListenerService() {
         }
         // Quello che è già nella tendina passa dalle stesse regole
         for (sbn in active.values) if (store.get(sbn.key) != null) card(sbn)
+        // Anche quelle in sordina: dopo un aggiornamento o un riavvio le schede tornano, non solo alla prossima notifica
+        for (sbn in snoozed.values) if (store.get(sbn.key) != null) card(sbn)
         for (sbn in active.values) if (store.get(sbn.key) == null) runCatching { handle(sbn) }
     }
 

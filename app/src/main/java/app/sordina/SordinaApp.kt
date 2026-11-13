@@ -29,7 +29,8 @@ class SordinaApp : Application() {
     val ha by lazy { HomeAssistant(this, prefs) }
     val habits by lazy { Habits(this) }
     val calendars by lazy { Calendars(this, prefs) }
-    val intents by lazy { Intents(this, prefs, people, store, ha) }
+    val brain by lazy { app.sordina.data.brain.Brain(this, prefs, people, store) }
+    val intents by lazy { Intents(this, prefs, people, store, ha, brain) }
     val signals by lazy { Signals(this) }
     val routines by lazy { Routines(this) }
     val weather by lazy { app.sordina.data.Weather(this) }

@@ -175,3 +175,31 @@ fun Calendars.agenda(context: Context, now: Long = System.currentTimeMillis()): 
     }
     return out.ifEmpty { listOfNotNull(next(context, now)) }
 }
+
+/** Gli appuntamenti di domani (al massimo [limit]), per la sera e la notte. */
+fun Calendars.tomorrow(context: Context, limit: Int = 3): List<Upcoming> {
+    if (context.checkSelfPermission(Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) return emptyList()
+    val zone = ZoneId.systemDefault()
+    val from = java.time.LocalDate.now().plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+    val to = java.time.LocalDate.now().plusDays(2).atStartOfDay(zone).toInstant().toEpochMilli()
+    val out = ArrayList<Upcoming>()
+    runCatching {
+        val b = CalendarContract.Instances.CONTENT_URI.buildUpon()
+        ContentUris.appendId(b, from)
+        ContentUris.appendId(b, to)
+        context.contentResolver.query(
+            b.build(),
+            arrayOf(CalendarContract.Instances.EVENT_ID, CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN,
+                CalendarContract.Instances.END, CalendarContract.Instances.EVENT_LOCATION),
+            "${CalendarContract.Instances.VISIBLE}=1 AND ${CalendarContract.Instances.ALL_DAY}=0", null,
+            "${CalendarContract.Instances.BEGIN} ASC",
+        )?.use { c ->
+            while (c.moveToNext() && out.size < limit) {
+                if (c.getLong(2) < from) continue
+                out += Upcoming(c.getLong(0), c.getString(1).orEmpty().ifBlank { tr(R.string.event) }, c.getLong(2), c.getLong(3),
+                    c.getString(4)?.takeIf { it.isNotBlank() }, null, false)
+            }
+        }
+    }
+    return out
+}

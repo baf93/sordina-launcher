@@ -7,6 +7,7 @@ import app.sordina.R
 import android.media.session.MediaController
 import android.media.session.PlaybackState
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.time.LocalDateTime
 import kotlinx.coroutines.flow.StateFlow
 
 /** Cosa fa un pulsante di una scheda. */
@@ -179,6 +180,9 @@ object CardDetector {
     private val MISSED = Regex("(chiamata persa|chiamate perse|missed call)", RegexOption.IGNORE_CASE)
     private val PAY_WORDS = Regex("(pagament|pagato|addebit|autorizzat|transazion|acquisto|payment|paid|purchase|charged)", RegexOption.IGNORE_CASE)
     private val AMOUNT = Regex("(?:€|EUR)\\s?(\\d{1,3}(?:\\.\\d{3})*,\\d{2}|\\d+[.,]\\d{2})(?!\\d)|(?<![\\d.,])(\\d{1,3}(?:\\.\\d{3})*,\\d{2}|\\d+[.,]\\d{2})\\s?(?:€|EUR)")
+    private val NOT_PAID = Regex("(alla consegna|al ritiro|on delivery|da pagare|in scadenza|to pay)", RegexOption.IGNORE_CASE)
+    private const val PAY_NEAR = 60
+    private val PICKUP = Regex("(ritiro|consegna|pick-?up|delivery)", RegexOption.IGNORE_CASE)
     // A che punto è il pacco: dal più avanti al meno
     private val STEPS = listOf(
         4 to Regex("(consegnat|delivered|ritirat)", RegexOption.IGNORE_CASE),
@@ -186,6 +190,15 @@ object CardDetector {
         2 to Regex("(in transito|in viaggio|in transit|on its way|in arrivo)", RegexOption.IGNORE_CASE),
         1 to Regex("(spedit|shipped|preso in carico|affidato)", RegexOption.IGNORE_CASE),
     )
+
+    /** Quando ritirare o ricevere: si cerca l'ora solo vicino a "ritiro" o "consegna", non in tutta la mail. */
+    fun pickupWhen(text: String, now: LocalDateTime = LocalDateTime.now()): When? {
+        val m = PICKUP.find(text) ?: return null
+        val window = text.substring(m.range.first, minOf(text.length, m.range.first + 260))
+            // Codici postali, numeri d'ordine e civici confondono le ore: restano solo le parole e gli orari
+            .replace(Regex("\\b\\d{5,}\\b"), " ").replace(Regex("[\\n\\r]+"), " ")
+        return DateParser.parse(window, now, eveningBias = false).whenAt?.takeIf { !it.allDay }
+    }
 
     fun otpCode(text: String): String? {
         // Il punto o la virgola contano solo dentro un numero (12.50, 1.234): "è 482913." resta un codice
@@ -196,8 +209,11 @@ object CardDetector {
 
     /** Un pagamento: l'importo in centesimi, o null. */
     fun paymentCents(text: String): Long? {
-        if (!PAY_WORDS.containsMatchIn(text)) return null
-        val m = AMOUNT.find(text) ?: return null
+        // La parola del pagamento e l'importo devono stare vicini: in una mail d'ordine "pagamento" e il prezzo
+        // del primo prodotto sono lontani e non dicono che hai pagato. "Pagamento alla consegna" non è ancora pagato.
+        val words = PAY_WORDS.findAll(text).filterNot { w -> NOT_PAID.containsMatchIn(text.substring(w.range.first, minOf(text.length, w.range.last + 40))) }.toList()
+        if (words.isEmpty()) return null
+        val m = AMOUNT.findAll(text).firstOrNull { a -> words.any { w -> a.range.first - w.range.last in 1..PAY_NEAR || w.range.first - a.range.last in 1..PAY_NEAR } } ?: return null
         val raw = m.groupValues[1].ifEmpty { m.groupValues[2] }
         val digits = raw.replace(".", "").replace(",", "")
         // "12.50" (punto decimale) e "12,50" danno lo stesso numero: le ultime due cifre sono sempre i centesimi
@@ -275,8 +291,18 @@ object CardDetector {
         }
         if (PARCEL.containsMatchIn(all) && !ongoing) {
             val step = STEPS.firstOrNull { it.second.containsMatchIn(all) }?.first
-            return Card(key, CardKind.PARCEL, tr(R.string.delivery_x, appLabel), title.ifBlank { tr(R.string.parcel) }, text.take(70).ifBlank { null },
-                actions = listOf(CardAction(tr(R.string.open), CardOp.OpenNotif(key))), expiresAt = now + 12 * 3600_000, step = step)
+            // Un ritiro o una consegna con l'ora (la spesa da ritirare alle 16): la scheda dice quando e la si mette in calendario
+            val w = pickupWhen(all, java.time.Instant.ofEpochMilli(now).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime())
+            val name = title.ifBlank { tr(R.string.parcel) }
+            val actions = buildList {
+                if (w != null) add(CardAction(tr(R.string.add_calendar), CardOp.AddEvent(name, w)))
+                add(CardAction(tr(R.string.open), CardOp.OpenNotif(key)))
+            }
+            val until = w?.let { it.start.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() + 3_600_000 }
+            // "Luogo e ora di ritiro": la vai a prendere tu
+            val pickup = PICKUP.find(all)?.value?.lowercase()?.let { it.startsWith("ritiro") || it.startsWith("pick") } == true
+            return Card(key, CardKind.PARCEL, tr(if (pickup) R.string.pickup_x else R.string.delivery_x, appLabel), name, w?.let { DateParser.describe(it) } ?: text.take(70).ifBlank { null },
+                actions = actions, expiresAt = until ?: (now + 12 * 3600_000), step = if (w != null) null else step)
         }
         return null
     }

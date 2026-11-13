@@ -57,6 +57,8 @@ import app.sordina.ui.theme.ThemeMode
 private enum class Sub { MAIN, HOURS, PEOPLE, LEVELS, BRAKED, ORDER, PINNED, EXCLUDED, HA, PERMS, LOOK }
 
 private fun hm(min: Int) = Moments.fmt(min)
+/** "1 h", "1 h 30" */
+private fun span(min: Int) = if (min % 60 == 0) "${min / 60} h" else "${min / 60} h ${min % 60}"
 
 /**
  * Impostazioni. Tre regole: un interruttore accende o spegne; una riga con › apre una lista;
@@ -234,6 +236,24 @@ fun SettingsScreen(
                 if (prefs.sordinaOrder == 2) Line(tr(R.string.s_your_order), icon = Icons.Rounded.Reorder) { sub = Sub.ORDER }
             }
 
+            // ── Casa cambia: sera, notte, auto
+            Section(tr(R.string.s_scenes))
+            Group {
+                val evening = app.moments.eveningStart()
+                Toggle(tr(R.string.s_scene_evening), prefs.homeEvening,
+                    if (prefs.nightEnabled) tr(R.string.s_scene_evening_hint, hm(evening)) else tr(R.string.s_scene_evening_off),
+                    Icons.Rounded.WbTwilight) { v -> change { prefs.homeEvening = v } }
+                if (prefs.homeEvening && prefs.nightEnabled) {
+                    val lengths = listOf(60, 90, 120, 180)
+                    Pick(tr(R.string.s_scene_evening_len), span(prefs.eveningMinutes), lengths.map { Option(span(it)) },
+                        { lengths[it] == prefs.eveningMinutes }, icon = Icons.Rounded.Schedule, title = tr(R.string.s_scene_evening_len)) { change { prefs.eveningMinutes = lengths[it] } }
+                }
+                Toggle(tr(R.string.s_scene_night), prefs.homeNight,
+                    if (prefs.nightEnabled) tr(R.string.s_scene_night_hint) else tr(R.string.s_scene_evening_off),
+                    Icons.Rounded.Bedtime) { v -> change { prefs.homeNight = v } }
+                Toggle(tr(R.string.s_scene_car), prefs.homeCar, tr(R.string.s_scene_car_hint), Icons.Rounded.DirectionsCar) { v -> change { prefs.homeCar = v } }
+            }
+
             // ── Freno
             Section(tr(R.string.s_brake))
             Group {
@@ -291,7 +311,7 @@ fun SettingsScreen(
                 Line(tr(R.string.s_first_hit), if (t == 0) "–" else "${prefs.intentFirst * 100 / t}%", icon = Icons.Rounded.TrackChanges)
                 if (prefs.aliases.isNotEmpty() || t > 0) Line(tr(R.string.s_forget), icon = Icons.Rounded.Restore, trailing = {}) { ask = true }
                 if (ask) Confirm(tr(R.string.s_forget_title), tr(R.string.s_forget_text), tr(R.string.forget),
-                    onConfirm = { change { prefs.aliases = emptyMap(); prefs.intentFirst = 0; prefs.intentTotal = 0 } },
+                    onConfirm = { change { prefs.aliases = emptyMap(); prefs.intentFirst = 0; prefs.intentTotal = 0; app.brain.forgetTyping() } },
                     onDismiss = { ask = false })
             }
 

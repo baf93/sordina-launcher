@@ -113,6 +113,8 @@ object DateParser {
             date = now.toLocalDate()
             dayHint = when (m.groupValues[1]) { "stamattina", "stamani" -> 9; "stasera" -> 20; "stanotte" -> 23; "oggi pomeriggio" -> 15; else -> null }
         }
+        // "venerdì 13 novembre": conta la data, il giorno della settimana è solo un nome (di venerdì, non è il prossimo)
+        cut(Regex(" (lunedi|martedi|mercoledi|giovedi|venerdi|sabato|domenica) (?=(il )?\\d{1,2}[ /])"))
         cut(Regex(" (lunedi|martedi|mercoledi|giovedi|venerdi|sabato|domenica)( prossimo| prossima)? "))?.let { m ->
             val dow = WEEKDAYS[m.groupValues[1]]!!
             var d = now.toLocalDate().with(TemporalAdjusters.next(dow))

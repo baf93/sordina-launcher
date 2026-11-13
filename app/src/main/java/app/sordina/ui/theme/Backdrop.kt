@@ -107,7 +107,8 @@ object Backdrops {
 fun OnBackdrop(dark: Boolean?, content: @Composable () -> Unit) {
     if (dark == null) { content(); return }
     val s = LocalSordina.current
-    val cols = if (dark) s.colors.copy(ink = Color(0xFF141414), soft = Color(0xFF3C3C3C))
-    else s.colors.copy(ink = Color.White, soft = Color(0xFFE6E6E6))
+    // Anche i riquadri seguono lo sfondo: testo bianco su riquadri scuri, testo scuro su riquadri chiari
+    val cols = if (dark) s.colors.copy(ink = Color(0xFF141414), soft = Color(0xFF3C3C3C), card = Color(0xFFF6F4EF), line = Color(0x1F000000))
+    else s.colors.copy(ink = Color.White, soft = Color(0xFFE6E6E6), card = Color(0xFF26262A), line = Color(0x26FFFFFF))
     CompositionLocalProvider(LocalSordina provides s.copy(colors = cols), content = content)
 }

@@ -169,6 +169,20 @@ class Prefs(context: Context) {
     var carEnabled: Boolean
         get() = sp.getBoolean("carEnabled", true)
         set(v) = put { putBoolean("carEnabled", v) }
+    /** Casa cambia aspetto: in auto, la sera prima della notte, di notte. Ognuna si spegne da sola. */
+    var homeCar: Boolean
+        get() = sp.getBoolean("homeCar", true)
+        set(v) = put { putBoolean("homeCar", v) }
+    var homeEvening: Boolean
+        get() = sp.getBoolean("homeEvening", true)
+        set(v) = put { putBoolean("homeEvening", v) }
+    var homeNight: Boolean
+        get() = sp.getBoolean("homeNight", true)
+        set(v) = put { putBoolean("homeNight", v) }
+    /** Quanto prima della notte comincia la sera, in minuti */
+    var eveningMinutes: Int
+        get() = sp.getInt("eveningMinutes", 90)
+        set(v) = put { putInt("eveningMinutes", v) }
     var momentOverride: String?
         get() = sp.getString("momentOverride", null)
         set(v) = put { putString("momentOverride", v) }

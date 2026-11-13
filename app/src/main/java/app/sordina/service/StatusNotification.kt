@@ -125,9 +125,13 @@ class StatusNotification(private val context: Context) {
         .setColor(0xFFB4523A.toInt())
         .setContentIntent(openWaiting(context))
 
-    /** Ri-avviso con suono per il livello Sempre, quando c'è Non disturbare. */
+    /**
+     * Ri-avviso con suono per il livello Sempre, quando Non disturbare zittisce l'originale.
+     * Serve solo a suonare: dopo pochi secondi sparisce e in tendina resta la notifica dell'app.
+     */
     fun alert(h: Held, intent: PendingIntent?) {
         val n = Notification.Builder(context, CH_ALWAYS)
+            .setTimeoutAfter(ALERT_MILLIS)
             .setSmallIcon(R.drawable.ic_stat)
             .setContentTitle(h.person ?: h.appLabel)
             .setContentText(h.text)
@@ -161,6 +165,8 @@ class StatusNotification(private val context: Context) {
         const val CH_ALWAYS = "sempre"
         const val ID_STATUS = 1
         const val ID_HOME = 2
+        /** Quanto resta il ri-avviso: il tempo del suono e del banner, poi resta solo l'originale */
+        private const val ALERT_MILLIS = 8_000L
 
         fun openWaiting(context: Context): PendingIntent = PendingIntent.getActivity(
             context, 1,

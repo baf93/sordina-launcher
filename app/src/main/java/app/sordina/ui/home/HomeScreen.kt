@@ -89,6 +89,7 @@ import androidx.compose.ui.unit.sp
 import app.sordina.data.Card
 import app.sordina.data.CardAction
 import app.sordina.data.Held
+import app.sordina.data.Scene
 import app.sordina.ui.clickableNoRipple
 import app.sordina.ui.LocalFeel
 import app.sordina.ui.surface
@@ -130,6 +131,21 @@ data class HomeState(
     val bottomDark: Boolean? = null,
     val translucent: Boolean = false,
     val glass: Boolean = false,
+    // Le altre Case: sera, notte, auto
+    val scene: Scene = Scene.DAY,
+    /** Sera e notte: la prossima sveglia ("7:00") se c'è */
+    val alarm: String? = null,
+    /** Sera e notte: gli appuntamenti di domani e che tempo farà */
+    val tomorrow: List<AgendaRow> = emptyList(),
+    val tomorrowWeather: String? = null,
+    /** "La notte comincia alle 23:00", "Fino alle 7:00 solo l'importante" */
+    val sceneLine: String? = null,
+    /** Sera: com'è andata oggi */
+    val recap: String? = null,
+    /** Auto: chi chiami di solito adesso */
+    val people: List<String> = emptyList(),
+    /** Auto: il prossimo appuntamento con un luogo (titolo, luogo) */
+    val destination: Pair<String, String>? = null,
 )
 
 /** Casa: ora, data, meteo, evento; la pila; la barra; in fondo cosa è in sordina. */
@@ -150,22 +166,53 @@ fun HomeScreen(
     onOpenHeld: (Held) -> Unit,
     onReadAll: () -> Unit,
     onReadGroup: (String) -> Unit = {},
+    onScene: (String) -> Unit = {},
+) {
+    val gestures = Modifier.homeGestures(onSwipeUp, onSwipeDown, onLongPress)
+    when (state.scene) {
+        Scene.CAR -> { CarHome(state, gestures, onSearch, onMicDown, onMicUp, onAction, onCard, onScene) { onSheet(true) }; return }
+        Scene.NIGHT -> { NightHome(state, gestures, onSearch, onMicDown, onMicUp, onAction, onCard, onScene) { onSheet(true) }; return }
+        else -> Unit
+    }
+    // La sera Casa resta quella di sempre, con l'accento più caldo e uno sguardo a domani
+    if (state.scene == Scene.EVENING) Evening { DayHome(state, gestures, onSearch, onMicDown, onMicUp, onAction, onCard, onAgenda, onScene, onSheet) }
+    else DayHome(state, gestures, onSearch, onMicDown, onMicUp, onAction, onCard, onAgenda, onScene, onSheet)
+}
+
+/** Su: le app. Giù: la tendina. Tieni premuto: le impostazioni. Uguale in tutte le Case. */
+@Composable
+internal fun Modifier.homeGestures(onSwipeUp: () -> Unit, onSwipeDown: () -> Unit, onLongPress: () -> Unit): Modifier {
+    val threshold = with(LocalDensity.current) { 64.dp.toPx() }
+    return this
+        .pointerInput(Unit) {
+            var total = 0f
+            detectVerticalDragGestures(
+                onDragStart = { total = 0f },
+                onDragEnd = { if (total < -threshold) onSwipeUp() else if (total > threshold) onSwipeDown() },
+                onVerticalDrag = { _, dy -> total += dy },
+            )
+        }
+        .pointerInput(Unit) { detectTapGestures(onLongPress = { onLongPress() }) }
+}
+
+@Composable
+private fun DayHome(
+    state: HomeState,
+    gestures: Modifier,
+    onSearch: () -> Unit,
+    onMicDown: () -> Unit,
+    onMicUp: () -> Unit,
+    onAction: (Card, CardAction) -> Unit,
+    onCard: (Card) -> Unit,
+    onAgenda: (String) -> Unit,
+    onScene: (String) -> Unit,
+    onSheet: (Boolean) -> Unit,
 ) {
     val now = rememberNow()
-    val threshold = with(LocalDensity.current) { 64.dp.toPx() }
-    val c = S.c
     Column(
         Modifier
             .fillMaxSize()
-            .pointerInput(Unit) {
-                var total = 0f
-                detectVerticalDragGestures(
-                    onDragStart = { total = 0f },
-                    onDragEnd = { if (total < -threshold) onSwipeUp() else if (total > threshold) onSwipeDown() },
-                    onVerticalDrag = { _, dy -> total += dy },
-                )
-            }
-            .pointerInput(Unit) { detectTapGestures(onLongPress = { onLongPress() }) }
+            .then(gestures)
             .systemBarsPadding()
             .padding(top = 28.dp, bottom = 12.dp),
     ) {
@@ -187,6 +234,7 @@ fun HomeScreen(
                 if (r.day != null && r.day != state.agenda.getOrNull(i - 1)?.day) Text(r.day, Modifier.padding(top = if (i == 0) 0.dp else 10.dp, bottom = 2.dp), style = TextStyle(fontSize = 13.sp, color = c.soft))
                 AgendaLine(r) { onAgenda(r.key) }
             }
+            if (state.scene == Scene.EVENING) EveningBlock(state, onScene)
         } }
         Spacer(Modifier.weight(1f))
         if (state.cards.isNotEmpty()) {
@@ -203,7 +251,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun AgendaLine(r: AgendaRow, onClick: () -> Unit) {
+internal fun AgendaLine(r: AgendaRow, onClick: () -> Unit) {
     val c = S.c
     Row(Modifier.fillMaxWidth().clickableNoRipple(onClick).padding(vertical = 5.dp), verticalAlignment = Alignment.Top) {
         // Colonna dell'ora: almeno 64, mai attaccata al testo (anche con "11:30 PM")
@@ -214,7 +262,7 @@ private fun AgendaLine(r: AgendaRow, onClick: () -> Unit) {
 
 /** Barra comoda per il pollice: tocco per scrivere, microfono per parlare. */
 @Composable
-private fun SearchBar(state: HomeState, onSearch: () -> Unit, onMicDown: () -> Unit, onMicUp: () -> Unit) {
+internal fun SearchBar(state: HomeState, onSearch: () -> Unit, onMicDown: () -> Unit, onMicUp: () -> Unit) {
     val c = S.c
     val feel = LocalFeel.current
     Row(
@@ -235,7 +283,7 @@ private fun SearchBar(state: HomeState, onSearch: () -> Unit, onMicDown: () -> U
     }
 }
 
-private fun weatherIcon(w: String): ImageVector = when {
+internal fun weatherIcon(w: String): ImageVector = when {
     w.endsWith(tr(R.string.wx_clear)) -> Icons.Rounded.WbSunny
     tr(R.string.wx_rain) in w -> Icons.Rounded.Umbrella
     tr(R.string.wx_snow) in w -> Icons.Rounded.AcUnit
@@ -245,7 +293,7 @@ private fun weatherIcon(w: String): ImageVector = when {
 
 /** In fondo: quante notifiche sono in sordina e fino a quando. */
 @Composable
-private fun SordinaRow(state: HomeState, pill: Boolean = false, onClick: () -> Unit) {
+internal fun SordinaRow(state: HomeState, pill: Boolean = false, onClick: () -> Unit) {
     val c = S.c
     val on = state.waiting > 0
     // Con caratteri molto grandi la riga si accorcia in coda invece di toccare i bordi
@@ -268,7 +316,7 @@ private fun SordinaRow(state: HomeState, pill: Boolean = false, onClick: () -> U
  * Con più di una scheda, i puntini a destra dicono dove sei.
  */
 @Composable
-private fun Stack(cards: List<Card>, glass: Boolean, onAction: (Card, CardAction) -> Unit, onCard: (Card) -> Unit) {
+internal fun Stack(cards: List<Card>, glass: Boolean, onAction: (Card, CardAction) -> Unit, onCard: (Card) -> Unit) {
     val c = S.c
     val feel = LocalFeel.current
     val pager = rememberPagerState { cards.size }

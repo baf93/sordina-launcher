@@ -56,6 +56,7 @@ import app.sordina.data.Act
 import app.sordina.data.Actions
 import app.sordina.data.AppEntry
 import app.sordina.data.Candidate
+import app.sordina.data.Kind
 import app.sordina.data.Card
 import app.sordina.data.Bar
 import app.sordina.data.Birthday
@@ -68,6 +69,8 @@ import app.sordina.data.upcoming
 import app.sordina.data.agenda
 import app.sordina.data.Level
 import app.sordina.data.Moment
+import app.sordina.data.Scene
+import app.sordina.data.tomorrow
 import app.sordina.data.Proposals
 import app.sordina.data.Understanding
 import app.sordina.service.Scheduler
@@ -111,7 +114,7 @@ class MainActivity : ComponentActivity(), Ops {
 
     private var screen by mutableStateOf(Screen.HOME)
     private var apps by mutableStateOf<List<AppEntry>>(emptyList())
-    private var proposals by mutableStateOf(Proposals.Result(emptyList(), emptyMap(), false, -1))
+    private var proposals by mutableStateOf(Proposals.Result(emptyList(), emptyMap(), emptyMap(), emptyMap(), false, -1))
     private var family by mutableStateOf(ThemeFamily.CARTA)
     private var mode by mutableStateOf(ThemeMode.AUTO)
     private var hidden by mutableStateOf<Set<String>>(emptySet())
@@ -133,6 +136,11 @@ class MainActivity : ComponentActivity(), Ops {
     private var rainAt by mutableStateOf<Pair<Long, Int>?>(null)
     private var birthdays by mutableStateOf<List<Birthday>>(emptyList())
     private var moment by mutableStateOf(Moment.NONE)
+    private var scene by mutableStateOf(Scene.DAY)
+    private var tomorrowEvents by mutableStateOf<List<Upcoming>>(emptyList())
+    private var tomorrowWeather by mutableStateOf<String?>(null)
+    private var recap by mutableStateOf<String?>(null)
+    private var carPeople by mutableStateOf<List<String>>(emptyList())
     private var recognizer: SpeechRecognizer? = null
 
     private val permLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -169,7 +177,7 @@ class MainActivity : ComponentActivity(), Ops {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        proposalsEngine = Proposals(this)
+        proposalsEngine = Proposals(this, app.brain, app.intents)
         actions = Actions(this, catalog, app.people, app.ha, prefs)
         family = prefs.family
         mode = prefs.mode
@@ -231,7 +239,9 @@ class MainActivity : ComponentActivity(), Ops {
         SordinaListener.rebind(this)
         SordinaListener.sync()
         moment = app.moments.current()
-        refreshProposals(force = false)
+        scene = app.moments.scene()
+        // Tornando da un'app la situazione è cambiata (l'app di prima, il luogo): si ricalcola, mai mentre guardi
+        refreshProposals(force = true)
         refreshExtras()
     }
 
@@ -290,6 +300,67 @@ class MainActivity : ComponentActivity(), Ops {
                 if (checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) birthdaysDay = today
             }
             if (current.isNotEmpty()) habitCards = app.routines.suggestions(current)
+            sceneExtras(app.moments.scene())
+        }
+    }
+
+    /** Quello che serve solo alle altre Case: domani per sera e notte, la giornata per la sera, le persone in auto. */
+    private fun sceneExtras(s: Scene) {
+        if (s == Scene.EVENING || s == Scene.NIGHT) {
+            tomorrowEvents = app.calendars.tomorrow(this)
+            tomorrowWeather = app.weather.tomorrow()
+        }
+        recap = if (s == Scene.EVENING) runCatching {
+            val d = app.habits.today()
+            val min = d.minutes.filterKeys { it != packageName }.values.sum()
+            if (min <= 0) null else {
+                val t = if (min >= 60) "${min / 60} h ${min % 60} min" else "$min min"
+                d.unlocks?.let { tr(R.string.scene_recap, t, it) } ?: tr(R.string.scene_recap_time, t)
+            }
+        }.getOrNull() else null
+        if (s == Scene.CAR) carPeople = runCatching {
+            // Chi chiami di solito in questa situazione; se il cervello non sa ancora, le persone importanti
+            val learned = app.brain.likelyPeople("call:", 4).mapNotNull { app.brain.contact(it.removePrefix("call:"))?.name }
+            (learned + app.people.importantList()).distinct().take(4)
+        }.getOrDefault(emptyList())
+    }
+
+    private fun hm(min: Int): String = java.time.LocalTime.of(min / 60 % 24, min % 60)
+        .format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
+
+    /** La prossima sveglia, se suona entro un giorno. */
+    private fun nextAlarm(): String? {
+        val t = runCatching { getSystemService(android.app.AlarmManager::class.java)?.nextAlarmClock?.triggerTime }.getOrNull() ?: return null
+        if (t - System.currentTimeMillis() > 24 * 3_600_000L) return null
+        return java.time.Instant.ofEpochMilli(t).atZone(java.time.ZoneId.systemDefault())
+            .format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
+    }
+
+    private fun sceneLine(s: Scene): String? = when (s) {
+        Scene.EVENING -> tr(R.string.scene_night_starts, hm(prefs.nightStart))
+        Scene.NIGHT -> tr(R.string.scene_night_until, hm(prefs.nightEnd))
+        Scene.CAR -> tr(if (moment == Moment.CAR) R.string.car_line else R.string.car_line_open)
+        Scene.DAY -> null
+    }
+
+    private fun onScene(key: String) {
+        when {
+            key == "alarm" -> start(Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            key.startsWith("nav:") -> key.removePrefix("nav:").let { place ->
+                start(Intent(Intent.ACTION_VIEW, Uri.parse("google.navigation:q=" + Uri.encode(place))))
+                    || start(Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=" + Uri.encode(place))))
+            }
+            key == "nav" -> {
+                val i = listOf("com.google.android.apps.maps", "com.waze").firstNotNullOfOrNull { packageManager.getLaunchIntentForPackage(it) }
+                if (i == null || !start(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))) start(Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0")))
+            }
+            key == "music" -> if (app.signals.controller != null) openMusic()
+                else start(Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_MUSIC).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            key.startsWith("call:") -> {
+                val q = "chiama " + key.removePrefix("call:")
+                cardAction(Card("scene:call", CardKind.CALL, "", ""), CardAction("", CardOp.Query(q)))
+            }
+            else -> onAgenda(key)
         }
     }
 
@@ -318,6 +389,8 @@ class MainActivity : ComponentActivity(), Ops {
     // Azioni
 
     private fun launch(a: AppEntry) {
+        // Senza accesso all'utilizzo il cervello non vede le app aperte: le ricorda da qui
+        if (!perms.usage) app.brain.chosen("", Candidate("app:${a.key}", a.label, null, Kind.APP, 0, false, Act.OpenApp(a), a), false)
         if (a.packageName in prefs.braked) {
             brakeTarget = a
             screen = Screen.BRAKE
@@ -327,7 +400,10 @@ class MainActivity : ComponentActivity(), Ops {
     private fun understand(q: String): Understanding = app.intents.understand(q, apps.filter { it.key !in hidden || q.length > 2 }, proposals.usage)
 
     private fun run(c: Candidate, index: Int) {
-        app.intents.chosen(query, c, index)
+        // index < 0: toccata tra le proposte, non dalla ricerca (non conta per "giusta al primo colpo")
+        if (index >= 0) app.intents.chosen(query, c, index)
+        // Le app aperte le ricorda launch() (o la cronologia d'uso): qui solo le lettere scritte e le altre azioni
+        app.brain.chosen(query, c, perms.usage || c.act is Act.OpenApp)
         when (val act = c.act) {
             is Act.OpenApp -> launch(act.app)
             Act.SordinaSettings -> { query = ""; screen = Screen.SETTINGS }
@@ -675,6 +751,7 @@ class MainActivity : ComponentActivity(), Ops {
     override fun changed() {
         prefsVersion++
         moment = app.moments.current()
+        scene = app.moments.scene()
         Scheduler.refresh(this)
         refreshProposals(force = true)
         refreshExtras()
@@ -685,6 +762,7 @@ class MainActivity : ComponentActivity(), Ops {
     } catch (_: ActivityNotFoundException) { false } catch (_: SecurityException) { false }
 
     private fun wipe() {
+        app.brain.wipe()
         app.silence.disable()
         SordinaListener.readAll(this)
         app.store.wipe()
@@ -709,7 +787,8 @@ class MainActivity : ComponentActivity(), Ops {
     @Composable
     private fun SystemBars() {
         val view = LocalView.current
-        val dark = S.c.dark
+        // Le Case di notte e in auto hanno il loro fondo: la barra segue quello
+        val dark = S.c.dark || (screen == Screen.HOME && scene == Scene.NIGHT) || (screen == Screen.HOME && scene == Scene.CAR && S.c.dark)
         SideEffect {
             val c = WindowCompat.getInsetsController(window, view)
             c.isAppearanceLightStatusBars = !dark
@@ -763,12 +842,11 @@ class MainActivity : ComponentActivity(), Ops {
                 prefs.braked = prefs.braked + a.packageName
                 changed()
             },
-            why = { a ->
-                when {
-                    a.key in prefs.pinned -> tr(R.string.why_pinned)
-                    (proposals.usage[a.packageName] ?: 0.0) > 0.3 -> tr(R.string.why_time)
-                    else -> tr(R.string.why_used)
-                }
+            why = { a -> proposals.why["app:${a.key}"] ?: if (a.key in prefs.pinned) tr(R.string.why_pinned) else tr(R.string.why_used) },
+            whyOf = { c -> proposals.why[c.id] ?: tr(R.string.why_used) },
+            hide = { c ->
+                proposals.brainItem[c.id]?.let { prefs.excluded = prefs.excluded + "brain:$it" }
+                refreshProposals(force = true)
             },
         )
         LaunchedEffect(screen) {
@@ -776,7 +854,11 @@ class MainActivity : ComponentActivity(), Ops {
             if (screen == Screen.HOME) refreshExtras()
         }
         val feelNow = LocalFeel.current
-        val bare = (screen == Screen.HOME || screen == Screen.INTENT) && backdrop.active
+        // Di notte e in auto Casa ha un fondo pieno: la foto non serve
+        val bare = (screen == Screen.HOME && scene != Scene.NIGHT && scene != Scene.CAR || screen == Screen.INTENT) && backdrop.active
+        // Il momento e la Casa si ricontrollano ogni minuto: la sera e la notte arrivano anche a schermo acceso
+        LaunchedEffect(now) { moment = app.moments.current(); scene = app.moments.scene() }
+        LaunchedEffect(scene) { if (scene != Scene.DAY) lifecycleScope.launch(Dispatchers.IO) { sceneExtras(scene) } }
         Box(if (bare) Modifier.fillMaxSize() else Modifier.fillMaxSize().paper()) {
             if (bare) backdrop.image?.let { img ->
                 androidx.compose.foundation.Image(img, null, Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
@@ -797,12 +879,23 @@ class MainActivity : ComponentActivity(), Ops {
                     Screen.HOME -> {
                         val waiting = groups.sumOf { g -> g.sumOf { it.count } }
                         val ms = now.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
-                        val cards = remember(signalCards, music, events, habitCards, doneHabits, now, rainAt, birthdays) {
+                        val cards = remember(signalCards, music, events, habitCards, doneHabits, now, rainAt, birthdays, scene) {
                             (signalCards.values + listOfNotNull(music, rainCard(ms)) + events.map { eventCard(it, ms) } +
                                 (habitCards + birthdayCards()).filter { it.key !in doneHabits })
                                 .filter { it.expiresAt > ms }
+                                // Ogni Casa tiene solo le schede che le servono: in auto e di notte quasi nulla
+                                .filter { k -> when (scene) {
+                                    Scene.CAR -> k.kind in setOf(CardKind.CALL, CardKind.MUSIC, CardKind.TIMER, CardKind.RIDE)
+                                    Scene.NIGHT -> k.kind in setOf(CardKind.CALL, CardKind.MUSIC, CardKind.TIMER, CardKind.OTP, CardKind.ASK)
+                                    Scene.EVENING -> k.kind != CardKind.HABIT
+                                    Scene.DAY -> true
+                                } }
                                 .sortedWith(compareBy<Card> { it.kind.priority }.thenByDescending { it.time })
                                 .take(6)
+                        }
+                        // Solo nella versione di prova: le schede in Casa finiscono nel log, per controllarle senza scorrere la pila
+                        if ((applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) LaunchedEffect(cards) {
+                            cards.forEach { k -> android.util.Log.d("SordinaCards", "${k.kind} | ${k.label} | ${k.title} | ${k.subtitle} | ${k.actions.joinToString { it.label }}") }
                         }
                         val until = remember(now, prefsVersion) { tr(R.string.until_time, app.moments.nextSummary().format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))) }
                         HomeScreen(
@@ -811,7 +904,7 @@ class MainActivity : ComponentActivity(), Ops {
                                 until = until,
                                 moment = if (moment == Moment.NONE) null else moment.label,
                                 cards = cards,
-                                agenda = remember(agendaEvents, moment, now) { agendaRows(waiting) },
+                                agenda = remember(agendaEvents, moment, now, scene) { agendaRows(waiting).let { if (scene == Scene.EVENING) it.take(2) else it } },
                                 weather = weatherNow,
                                 listening = voice.listening,
                                 partial = voice.partial,
@@ -819,8 +912,20 @@ class MainActivity : ComponentActivity(), Ops {
                                 bottomDark = backdrop.bottomDark,
                                 translucent = backdrop.active,
                                 glass = backdrop.active && glassPref,
+                                scene = scene,
+                                alarm = remember(now, scene) { if (scene == Scene.EVENING || scene == Scene.NIGHT) nextAlarm() else null },
+                                tomorrow = remember(tomorrowEvents) { tomorrowEvents.map { e -> AgendaRow(hm(java.time.Instant.ofEpochMilli(e.begin).atZone(java.time.ZoneId.systemDefault()).let { it.hour * 60 + it.minute }), e.title, "event:${e.id}") } },
+                                tomorrowWeather = tomorrowWeather,
+                                sceneLine = remember(scene, moment, prefsVersion) { sceneLine(scene) },
+                                recap = recap,
+                                people = carPeople,
+                                destination = remember(events, now) {
+                                    val ms0 = System.currentTimeMillis()
+                                    events.firstOrNull { it.location != null && it.begin - ms0 < 3 * 3_600_000L && it.end > ms0 }?.let { it.title to it.location!! }
+                                },
                             ),
                             groups = groups,
+                            onScene = ::onScene,
                             onSwipeUp = { screen = Screen.INTENT },
                             onSwipeDown = { expandNotifications() },
                             onLongPress = { screen = Screen.SETTINGS },
@@ -844,7 +949,7 @@ class MainActivity : ComponentActivity(), Ops {
                         query = query,
                         onQuery = { query = it },
                         understand = ::understand,
-                        proposals = proposals.apps,
+                        proposals = proposals.items,
                         needsUsagePermission = proposals.needsPermission,
                         actions = actionsP,
                         keyboardOnOpen = remember(prefsVersion) { prefs.keyboardOnOpen },

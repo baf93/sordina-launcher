@@ -59,6 +59,40 @@ class Weather(private val context: Context) {
         return text
     }
 
+    @Volatile private var tomorrowText: String? = null
+    @Volatile private var tomorrowDay: java.time.LocalDate? = null
+    @Volatile private var tomorrowFailedAt = 0L
+
+    /** Domani: "18° / 9° pioggia". Una chiamata al giorno; fuori dal thread principale. */
+    fun tomorrow(): String? {
+        if (!hasPermission()) return null
+        val today = java.time.LocalDate.now()
+        if (tomorrowDay == today) return tomorrowText
+        if (System.currentTimeMillis() - tomorrowFailedAt < 600_000) return null
+        tomorrowFailedAt = System.currentTimeMillis()
+        val lm = context.getSystemService(LocationManager::class.java) ?: return null
+        val loc = runCatching {
+            listOf(LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER, LocationManager.GPS_PROVIDER)
+                .mapNotNull { p -> runCatching { lm.getLastKnownLocation(p) }.getOrNull() }
+                .maxByOrNull { it.time }
+        }.getOrNull() ?: return null
+        val lat = String.format(Locale.US, "%.1f", loc.latitude)
+        val lon = String.format(Locale.US, "%.1f", loc.longitude)
+        val text = runCatching {
+            val c = URL("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=2&timezone=auto")
+                .openConnection() as HttpURLConnection
+            c.connectTimeout = 4000; c.readTimeout = 5000
+            val body = c.inputStream.bufferedReader().use { it.readText() }
+            c.disconnect()
+            val d = JSONObject(body).getJSONObject("daily")
+            val hi = Math.round(d.getJSONArray("temperature_2m_max").getDouble(1))
+            val lo = Math.round(d.getJSONArray("temperature_2m_min").getDouble(1))
+            "$hi° / $lo° ${describe(d.getJSONArray("weather_code").getInt(1))}".trim()
+        }.getOrNull() ?: return null
+        tomorrowText = text; tomorrowDay = today; tomorrowFailedAt = 0
+        return text
+    }
+
     private fun rainSoon(root: JSONObject, code: Int): Pair<Long, Int>? {
         if (code in 51..67 || code in 80..82 || code in 95..99) return null
         val h = root.getJSONObject("hourly")

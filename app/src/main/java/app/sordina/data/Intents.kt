@@ -71,6 +71,7 @@ class Intents(
     private val people: People,
     private val store: NotifStore,
     private val ha: HomeAssistant,
+    private val brain: app.sordina.data.brain.Brain,
 ) {
     fun understand(query: String, apps: List<AppEntry>, usage: Map<String, Double>): Understanding {
         val q = query.trim()
@@ -100,9 +101,26 @@ class Intents(
             }
         }
 
-        // Correzioni imparate
+        // Il verbo a metà ("chi", "scr"): le persone che è più probabile tu chiami o scriva adesso
+        if (nq.length >= 2 && ' ' !in nq) {
+            val call = CALL_VERBS.any { it.startsWith(nq) }
+            val msg = MSG_VERBS.any { it.startsWith(nq) }
+            // Senza storia: le persone importanti e i preferiti
+            fun fallback(prefix: String) = people.all().filter { it.starred || people.isImportant(it.name) }.take(3).map { c ->
+                if (prefix == "call:") "call:${c.normalized}" else "msg:${c.normalized}:${viaFor(c, null).name}"
+            }
+            fun offer(prefix: String) = brain.likelyPeople(prefix, 3).ifEmpty { fallback(prefix) }
+                .forEachIndexed { i, item -> realize(item, apps, usage)?.let { out += it.copy(score = 72 - i * 3) } }
+            if (call) offer("call:")
+            if (msg) offer("msg:")
+        }
+
+        // Quello che di solito scegli con queste lettere, e quanto è probabile adesso
+        val reranked = brain.rerank(q, out) { realize(it, apps, usage) }
+
+        // Correzioni imparate (la frase intera scelta più in basso)
         val learned = prefs.aliases[nq]
-        val ranked = out
+        val ranked = reranked
             .map { if (it.id == learned) it.copy(score = (it.score + 30).coerceAtMost(100)) else it }
             .groupBy { it.id }.map { g -> g.value.maxBy { it.score } }
             .sortedWith(compareByDescending<Candidate> { it.score }
@@ -111,10 +129,47 @@ class Intents(
         val web = Candidate("web", tr(R.string.search_web_x, q), null, Kind.WEB, 0, false, Act.Web(q))
         val top = ranked.firstOrNull()
         val second = ranked.getOrNull(1)
-        val confident = top != null && top.score >= 85 && (second == null || top.score - second.score >= 10 || top.id == learned)
+        val confident = top != null && top.score >= 85 &&
+            (second == null || top.score - second.score >= 10 || top.id == learned || brain.learnedFor(q, top) >= 0.7)
         // Sicurezza bassa: "Cerca sul web" in cima
         val list = if (top == null || top.score < 45) listOf(web) + ranked else ranked + web
         return Understanding(list, confident)
+    }
+
+    /**
+     * Una cosa del cervello ("app:…", "call:…", "msg:…", "set:…", "cmd:…") trasformata in un'azione da proporre.
+     * null se non esiste più (app disinstallata, contatto sparito) o non si può rifare.
+     */
+    fun realize(item: String, apps: List<AppEntry>, usage: Map<String, Double>): Candidate? {
+        val kind = item.substringBefore(':')
+        val rest = item.substringAfter(':')
+        return when (kind) {
+            "app" -> (apps.firstOrNull { it.packageName == rest && !it.isWork } ?: apps.firstOrNull { it.packageName == rest })?.let { a ->
+                Candidate("app:${a.key}", a.label, if (a.isWork) tr(R.string.work_profile) else null, Kind.APP, 60, false, Act.OpenApp(a), a)
+            }
+            "call" -> brain.contact(rest)?.let { c -> Candidate("call:${c.id}", tr(R.string.call_x, c.name), c.number, Kind.PERSON, 60, true, Act.Call(c)) }
+            "msg" -> {
+                val via = runCatching { Via.valueOf(rest.substringAfterLast(':')) }.getOrNull()?.takeIf { installed(it) } ?: return null
+                brain.contact(rest.substringBeforeLast(':'))?.let { c ->
+                    Candidate("msg:${c.id}:${via.name}", tr(R.string.write_to_x, c.name), via.label, Kind.PERSON, 60, true, Act.Message(c, "", via))
+                }
+            }
+            "set" -> if (rest == "sordina") Candidate("set:sordina", tr(R.string.s_settings), null, Kind.SETTING, 60, false, Act.SordinaSettings)
+                else SETTINGS.firstOrNull { it.third == rest }?.let { (_, title, action) -> Candidate("set:$action", title, tr(R.string.settings_kind), Kind.SETTING, 60, false, Act.Setting(action)) }
+            // Un comando che ripeti: si ricapisce la frase (con le app e la casa di adesso)
+            "cmd" -> understandRaw(rest, apps, usage).firstOrNull()?.takeIf { !it.toOthers && it.kind != Kind.WEB && it.kind != Kind.APP && it.kind != Kind.CALC }
+                ?.copy(score = 60)
+            else -> null
+        }
+    }
+
+    /** Solo il testo, senza il cervello: per ricapire un comando ricordato. */
+    private fun understandRaw(q: String, apps: List<AppEntry>, usage: Map<String, Double>): List<Candidate> {
+        val ow = q.split(Regex("\\s+"))
+        val nw = ow.map { Search.normalize(it) }
+        val out = ArrayList<Candidate>()
+        structured(ow, nw, nw.filter { it.isNotEmpty() }.joinToString(" "), apps, out)
+        return out.sortedByDescending { it.score }
     }
 
     /** Registra cosa è stato scelto: misura e correzioni. */
@@ -372,6 +427,9 @@ class Intents(
                 if (h > 0) "$h h" else null, if (m > 0) "$m min" else null, if (s > 0) "$s s" else null,
             ).joinToString(" ").ifEmpty { "0 s" }
         }
+
+        private val CALL_VERBS = listOf("chiama", "telefona", "call")
+        private val MSG_VERBS = listOf("scrivi", "messaggio", "manda", "write", "text")
 
         private val MEDIA = mapOf(
             "pausa" to ("Pausa" to KeyEvent.KEYCODE_MEDIA_PAUSE),

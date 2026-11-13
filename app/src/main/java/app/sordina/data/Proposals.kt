@@ -1,36 +1,32 @@
 package app.sordina.data
 
 import android.app.AppOpsManager
-import android.app.usage.UsageEvents
-import android.app.usage.UsageStatsManager
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.os.Process
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
-import kotlin.math.abs
-import kotlin.math.exp
-import kotlin.math.min
-import kotlin.math.pow
+import app.sordina.data.brain.Brain
 
 /**
- * Le sei proposte: ciò che di solito apri a quest'ora, in questo tipo di giorno.
- * Tutto calcolato sul telefono dalla cronologia di utilizzo di Android.
- * Il luogo (Wi-Fi, auto, Home Assistant) arriverà in una versione successiva.
+ * Le proposte: le cose che è più probabile ti servano adesso (app, persone, comandi, casa).
+ * Le decide il cervello ([Brain]); qui si aggiungono le fissate e si toglie quello che hai escluso.
  */
-class Proposals(private val context: Context) {
+class Proposals(private val context: Context, private val brain: Brain, private val intents: Intents) {
 
     data class Result(
-        val apps: List<AppEntry>,
-        /** Punteggio d'uso complessivo per pacchetto, usato anche per ordinare la ricerca */
+        /** Prima le fissate, poi quelle di adesso */
+        val items: List<Candidate>,
+        /** Perché c'è (per id della proposta) */
+        val why: Map<String, String>,
+        /** La cosa del cervello dietro ogni proposta (per id), per poterla escludere */
+        val brainItem: Map<String, String>,
+        /** Punteggio d'uso per pacchetto, usato anche per ordinare la ricerca */
         val usage: Map<String, Double>,
         val needsPermission: Boolean,
         /** Fascia di mezz'ora: le proposte non cambiano finché non cambia la fascia */
         val slot: Long,
-    )
+    ) {
+        val apps: List<AppEntry> get() = items.mapNotNull { it.app }
+    }
 
     fun hasPermission(): Boolean {
         val ops = context.getSystemService(AppOpsManager::class.java)
@@ -43,96 +39,48 @@ class Proposals(private val context: Context) {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
-    private class Open(val pkg: String, val time: Long)
-
-    private fun homePackages(): Set<String> {
-        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
-        return context.packageManager.queryIntentActivities(intent, 0)
-            .map { it.activityInfo.packageName }.toSet()
-    }
-
-    private fun readOpens(now: Long): List<Open> {
-        val usm = context.getSystemService(UsageStatsManager::class.java)
-        val events = usm.queryEvents(now - DAYS * DAY_MS, now) ?: return emptyList()
-        val skip = homePackages() + context.packageName
-        val last = HashMap<String, Long>()
-        val opens = ArrayList<Open>()
-        val e = UsageEvents.Event()
-        while (events.hasNextEvent()) {
-            events.getNextEvent(e)
-            @Suppress("DEPRECATION")
-            if (e.eventType != UsageEvents.Event.MOVE_TO_FOREGROUND) continue
-            val pkg = e.packageName ?: continue
-            if (pkg in skip) continue
-            // Un'apertura sola se rientri nella stessa app entro un minuto
-            val prev = last[pkg]
-            last[pkg] = e.timeStamp
-            if (prev != null && e.timeStamp - prev < 60_000) continue
-            opens += Open(pkg, e.timeStamp)
-        }
-        return opens
-    }
-
     fun compute(apps: List<AppEntry>, prefs: Prefs, nowMs: Long = System.currentTimeMillis()): Result {
         val slot = slotOf(nowMs)
-        if (!hasPermission()) return Result(fallback(apps, prefs), emptyMap(), true, slot)
+        val permission = hasPermission()
+        if (permission) runCatching { brain.ingest(apps.mapTo(HashSet()) { it.packageName }) }
+        val usage = brain.usage()
 
-        val zone = ZoneId.systemDefault()
-        val now = LocalDateTime.ofInstant(Instant.ofEpochMilli(nowMs), zone)
-        val nowHour = now.hour + now.minute / 60.0
-        val nowWeekend = now.dayOfWeek.isWeekend()
-
-        val contextual = HashMap<String, Double>()
-        val overall = HashMap<String, Double>()
-        val opens = readOpens(nowMs)
-        for (o in opens) {
-            val t = LocalDateTime.ofInstant(Instant.ofEpochMilli(o.time), zone)
-            val h = t.hour + t.minute / 60.0
-            val dh = abs(h - nowHour).let { min(it, 24 - it) }
-            val ageDays = (nowMs - o.time) / DAY_MS.toDouble()
-            val recency = 0.5.pow(ageDays / HALF_LIFE_DAYS)
-            val sameDayType = t.dayOfWeek.isWeekend() == nowWeekend
-            val timeWeight = exp(-(dh * dh) / (2 * SIGMA_H * SIGMA_H))
-            val dayWeight = if (sameDayType) 1.0 else 0.35
-            contextual.merge(o.pkg, timeWeight * dayWeight * recency, Double::plus)
-            overall.merge(o.pkg, recency, Double::plus)
-        }
-
-        val byPackage = apps.filter { !it.isWork }.groupBy { it.packageName }.mapValues { it.value.first() }
-        val pinned = prefs.pinned.mapNotNull { k -> apps.firstOrNull { it.key == k } }
+        fun appCandidate(a: AppEntry) = Candidate("app:${a.key}", a.label, null, Kind.APP, 60, false, Act.OpenApp(a), a)
+        val fixed = prefs.pinned.mapNotNull { k -> apps.firstOrNull { it.key == k } }.distinctBy { it.key }.take(Prefs.MAX_PINNED)
+        val fixedPkgs = fixed.mapTo(HashSet()) { it.packageName }
         val excluded = prefs.excluded
         val braked = prefs.braked
-        val learned = contextual.entries
-            .filter { it.value >= MIN_SCORE }
-            .sortedByDescending { it.value }
-            .mapNotNull { byPackage[it.key] }
-            .filter { it.key !in excluded && it.packageName !in braked && pinned.none { p -> p.key == it.key } }
 
-        // Le fissate (al massimo 4) sopra, e sotto sempre 6 consigliate: le fissate non rubano posto alle altre
-        val fixed = pinned.distinctBy { it.key }.take(Prefs.MAX_PINNED)
-        val result = learned.distinctBy { it.key }.take(COUNT)
-        val filled = if (result.size < COUNT) {
-            // Poca storia: completa con le più usate in assoluto
-            val extra = overall.entries.sortedByDescending { it.value }
-                .mapNotNull { byPackage[it.key] }
-                .filter { e -> result.none { it.key == e.key } && e.key !in excluded && e.packageName !in braked }
-            (result + extra.filter { e -> fixed.none { it.key == e.key } }).take(COUNT)
-        } else result
-        return Result(fixed + filled, overall, false, slot)
+        val skip = { item: String ->
+            val pkg = item.removePrefix("app:")
+            when {
+                item.startsWith("app:") -> pkg in braked || pkg in fixedPkgs || apps.none { it.packageName == pkg && it.key !in excluded }
+                else -> "brain:$item" in excluded
+            }
+        }
+        val suggestions = brain.suggest(COUNT, skip) { item ->
+            intents.realize(item, apps.filter { it.key !in excluded }, usage)
+        }
+        val why = HashMap<String, String>()
+        val brainItem = HashMap<String, String>()
+        suggestions.forEach { why[it.candidate.id] = it.why; brainItem[it.candidate.id] = it.item }
+        var now = suggestions.map { it.candidate }
+
+        // Poca storia: completa con le app più usate
+        if (now.size < COUNT) {
+            val have = now.mapNotNullTo(HashSet()) { it.app?.packageName } + fixedPkgs
+            val extra = usage.entries.sortedByDescending { it.value }.map { it.key }
+                .filter { it !in have && it !in braked }
+                .mapNotNull { pkg -> apps.firstOrNull { it.packageName == pkg && !it.isWork && it.key !in excluded } }
+                .map(::appCandidate)
+            now = (now + extra).take(COUNT)
+        }
+        fixed.forEach { why["app:${it.key}"] = app.sordina.tr(app.sordina.R.string.why_pinned) }
+        return Result(fixed.map(::appCandidate) + now, why, brainItem, usage, !permission, slot)
     }
-
-    private fun fallback(apps: List<AppEntry>, prefs: Prefs): List<AppEntry> =
-        prefs.pinned.mapNotNull { k -> apps.firstOrNull { it.key == k } }
-
-    private fun DayOfWeek.isWeekend() = this == DayOfWeek.SATURDAY || this == DayOfWeek.SUNDAY
 
     companion object {
         const val COUNT = 6
-        private const val DAYS = 28L
-        private const val DAY_MS = 86_400_000L
-        private const val HALF_LIFE_DAYS = 14.0
-        private const val SIGMA_H = 1.0
-        private const val MIN_SCORE = 0.3
 
         fun slotOf(ms: Long): Long = ms / (30 * 60_000L)
     }

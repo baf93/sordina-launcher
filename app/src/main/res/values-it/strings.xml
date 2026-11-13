@@ -298,6 +298,16 @@
     <string name="why_pinned">La tieni qui tu.</string>
     <string name="why_time">La apri spesso a quest\'ora.</string>
     <string name="why_used">È tra le app che usi di più.</string>
+    <string name="why_recent">L\'hai usata da poco.</string>
+    <string name="why_wrote">%s ti ha scritto.</string>
+    <string name="why_out">Di solito la usi quando sei fuori.</string>
+    <string name="why_place">Di solito la usi quando sei su %s.</string>
+    <string name="why_car">Di solito la usi in auto.</string>
+    <string name="why_headset">Di solito la usi con le cuffie.</string>
+    <string name="why_charging">Di solito la usi mentre è in carica.</string>
+    <string name="why_after">Di solito la apri dopo %s.</string>
+    <string name="why_unlock">Di solito la apri appena sblocchi.</string>
+    <string name="why_day">Di solito la usi in questo giorno.</string>
     <string name="in_min">Tra %1$d min</string>
     <string name="at_time">Alle %1$s</string>
     <string name="tomorrow_cap">Domani</string>
@@ -338,8 +348,9 @@
     <string name="call_back">Richiama</string>
     <string name="timer">Timer</string>
     <string name="trip">Viaggio</string>
-    <string name="add_calendar">Aggiungi al calendario</string>
+    <string name="add_calendar">In calendario</string>
     <string name="delivery_x">Consegna · %1$s</string>
+    <string name="pickup_x">Ritiro · %s</string>
     <string name="parcel">Pacco</string>
     <string name="habit_usual">%1$s · di solito</string>
     <string name="do_it">Fallo</string>
@@ -511,4 +522,29 @@
         <item quantity="one">%d ora</item>
         <item quantity="other">%d ore</item>
     </plurals>
+    <!-- Le Case: sera, notte, auto -->
+    <string name="scene_tomorrow">Domani</string>
+    <string name="scene_alarm">Sveglia</string>
+    <string name="scene_alarm_at">Sveglia alle %s</string>
+    <string name="scene_no_alarm">Nessuna sveglia</string>
+    <string name="scene_night_starts">La notte comincia alle %s</string>
+    <string name="scene_night_until">Fino alle %s passa solo l\'importante</string>
+    <string name="scene_recap">Oggi %1$s sullo schermo · %2$d sblocchi</string>
+    <string name="scene_recap_time">Oggi %s sullo schermo</string>
+    <string name="car_line">In auto · passano solo le chiamate</string>
+    <string name="car_line_open">In auto</string>
+    <string name="car_to">Verso %s</string>
+    <string name="car_navigate">Naviga</string>
+    <string name="car_music">Musica</string>
+    <string name="car_hold">Tieni premuto e parla</string>
+    <string name="s_scenes">Casa cambia</string>
+    <string name="s_scene_evening">Sera</string>
+    <string name="s_scene_evening_hint">Da %s: domani, sveglia, com\'è andata oggi</string>
+    <string name="s_scene_evening_len">Quanto dura la sera</string>
+    <string name="s_scene_evening_off">Serve la notte attiva</string>
+    <string name="s_scene_night">Notte</string>
+    <string name="s_scene_night_hint">Scura e quieta: l\'ora, la sveglia, domani</string>
+    <string name="s_scene_car">In auto</string>
+    <string name="s_scene_car_hint">Grande e a voce: dove vai, persone, musica</string>
+    <string name="ob_scenes">Casa cambia con te</string>
 </resources>

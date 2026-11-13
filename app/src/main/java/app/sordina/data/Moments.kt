@@ -20,12 +20,41 @@ enum class Moment(private val labelRes: Int, private val phraseRes: Int?) {
     val phrase: String get() = phraseRes?.let { tr(it) } ?: ""
 }
 
+/**
+ * Come si presenta Casa adesso. È separata dal [Moment], che decide solo cosa passa:
+ * si può avere la Casa da auto senza filtrare le chiamate, o la notte senza cambiare Casa.
+ */
+enum class Scene { DAY, EVENING, NIGHT, CAR }
+
 class Moments(private val context: Context, private val prefs: Prefs) {
 
-    fun isCar(): Boolean {
-        if (!prefs.carEnabled) return false
+    fun isCar(): Boolean = prefs.carEnabled && driving()
+
+    /** In auto davvero (modalità auto di Android o Android Auto), a prescindere dal filtro. */
+    private fun driving(): Boolean {
         val ui = context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
         return ui.currentModeType == Configuration.UI_MODE_TYPE_CAR || androidAuto(context)
+    }
+
+    /** La sera: l'ultima ora e mezza (o quanto scelto) prima della notte. */
+    fun isEvening(t: LocalDateTime = LocalDateTime.now()): Boolean {
+        if (!prefs.nightEnabled) return false
+        val start = Math.floorMod(prefs.nightStart - prefs.eveningMinutes, 24 * 60)
+        return inWindow(t.hour * 60 + t.minute, start, prefs.nightStart)
+    }
+
+    /** L'ora (minuti dalla mezzanotte) in cui comincia la sera. */
+    fun eveningStart(): Int = Math.floorMod(prefs.nightStart - prefs.eveningMinutes, 24 * 60)
+
+    /** Che Casa mostrare. La scelta a mano del momento vale anche qui. */
+    fun scene(): Scene {
+        val m = current()
+        return when {
+            prefs.homeCar && (m == Moment.CAR || (prefs.momentOverride == null && driving())) -> Scene.CAR
+            prefs.homeNight && m == Moment.NIGHT -> Scene.NIGHT
+            prefs.homeEvening && m == Moment.NONE && isEvening() -> Scene.EVENING
+            else -> Scene.DAY
+        }
     }
 
     fun isNight(t: LocalDateTime = LocalDateTime.now()): Boolean =

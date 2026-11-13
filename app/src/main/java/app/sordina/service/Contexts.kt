@@ -44,6 +44,9 @@ class Contexts(private val service: SordinaListener) {
     private var lastSsid: String? = null
 
     fun start() {
+        // Com'è adesso, per il cervello: i cambi arriveranno dai ricevitori
+        runCatching { app.brain.onState("chg", service.getSystemService(android.os.BatteryManager::class.java).isCharging) }
+        runCatching { app.brain.onState("car", app.moments.isCar() || androidAuto(service)) }
         runCatching { startReceiver() }
         runCatching { startWifi() }
         runCatching { startAudio() }
@@ -64,9 +67,13 @@ class Contexts(private val service: SordinaListener) {
         val r = object : BroadcastReceiver() {
             override fun onReceive(c: Context, i: Intent) {
                 when (i.action) {
-                    UiModeManager.ACTION_ENTER_CAR_MODE -> { app.routines.onContext("car"); Scheduler.refresh(c) }
-                    UiModeManager.ACTION_EXIT_CAR_MODE -> Scheduler.refresh(c)
-                    Intent.ACTION_POWER_CONNECTED -> if (LocalTime.now().hour >= 20) app.routines.onContext("charge")
+                    UiModeManager.ACTION_ENTER_CAR_MODE -> { app.routines.onContext("car"); app.brain.onState("car", true); Scheduler.refresh(c) }
+                    UiModeManager.ACTION_EXIT_CAR_MODE -> { app.brain.onState("car", false); Scheduler.refresh(c) }
+                    Intent.ACTION_POWER_CONNECTED -> {
+                        app.brain.onState("chg", true)
+                        if (LocalTime.now().hour >= 20) app.routines.onContext("charge")
+                    }
+                    Intent.ACTION_POWER_DISCONNECTED -> app.brain.onState("chg", false)
                 }
             }
         }
@@ -74,13 +81,16 @@ class Contexts(private val service: SordinaListener) {
             addAction(UiModeManager.ACTION_ENTER_CAR_MODE)
             addAction(UiModeManager.ACTION_EXIT_CAR_MODE)
             addAction(Intent.ACTION_POWER_CONNECTED)
+            addAction(Intent.ACTION_POWER_DISCONNECTED)
         }
         if (Build.VERSION.SDK_INT >= 33) service.registerReceiver(r, f, Context.RECEIVER_NOT_EXPORTED) else service.registerReceiver(r, f)
         receiver = r
         // Android Auto: lo annuncia un'altra app, serve un ricevitore esportato
         val car = object : BroadcastReceiver() {
             override fun onReceive(c: Context, i: Intent) {
-                if (androidAuto(c, force = true)) app.routines.onContext("car")
+                val on = androidAuto(c, force = true)
+                app.brain.onState("car", on)
+                if (on) app.routines.onContext("car")
                 Scheduler.refresh(c)
             }
         }
@@ -96,10 +106,10 @@ class Contexts(private val service: SordinaListener) {
         val req = NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build()
         val cb = if (Build.VERSION.SDK_INT >= 31) object : ConnectivityManager.NetworkCallback(FLAG_INCLUDE_LOCATION_INFO) {
             override fun onCapabilitiesChanged(n: Network, caps: NetworkCapabilities) = onWifi(caps)
-            override fun onLost(n: Network) { lastSsid = null }
+            override fun onLost(n: Network) { lastSsid = null; app.brain.onWifi("") }
         } else object : ConnectivityManager.NetworkCallback() {
             override fun onCapabilitiesChanged(n: Network, caps: NetworkCapabilities) = onWifi(caps)
-            override fun onLost(n: Network) { lastSsid = null }
+            override fun onLost(n: Network) { lastSsid = null; app.brain.onWifi("") }
         }
         cm.registerNetworkCallback(req, cb)
         net = cb
@@ -110,6 +120,7 @@ class Contexts(private val service: SordinaListener) {
         val ssid = info.ssid?.trim('"')?.takeIf { it.isNotBlank() && it != "<unknown ssid>" } ?: return
         if (ssid == lastSsid) return
         lastSsid = ssid
+        app.brain.onWifi(ssid)
         app.routines.onContext("wifi:$ssid")
     }
 
@@ -120,12 +131,15 @@ class Contexts(private val service: SordinaListener) {
             AudioDeviceInfo.TYPE_BLUETOOTH_A2DP, AudioDeviceInfo.TYPE_USB_HEADSET,
         ) + if (Build.VERSION.SDK_INT >= 31) setOf(AudioDeviceInfo.TYPE_BLE_HEADSET) else emptySet()
         var first = true
+        fun anyHeadset() = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS).any { it.type in heads }
         val cb = object : AudioDeviceCallback() {
             override fun onAudioDevicesAdded(added: Array<out AudioDeviceInfo>) {
+                app.brain.onState("hs", anyHeadset())
                 // La prima chiamata elenca quelli già collegati: non è un momento nuovo
                 if (first) { first = false; return }
                 if (added.any { it.isSink && it.type in heads }) app.routines.onContext("headset")
             }
+            override fun onAudioDevicesRemoved(removed: Array<out AudioDeviceInfo>) { app.brain.onState("hs", anyHeadset()) }
         }
         am.registerAudioDeviceCallback(cb, main)
         audio = cb

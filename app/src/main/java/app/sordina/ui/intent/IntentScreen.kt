@@ -48,6 +48,9 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Calculate
 import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Call
+import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.automirrored.rounded.Chat
 import androidx.compose.material.icons.automirrored.rounded.KeyboardReturn
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.Icon
@@ -97,6 +100,9 @@ data class ProposalActions(
     val info: (AppEntry) -> Unit,
     val why: (AppEntry) -> String,
     val brake: (AppEntry) -> Unit = {},
+    /** Per le proposte che non sono app (persone, comandi, casa) */
+    val whyOf: (Candidate) -> String = { "" },
+    val hide: (Candidate) -> Unit = {},
 )
 
 /** Un avviso breve in basso, con Annulla per le azioni verso te stesso. */
@@ -116,7 +122,7 @@ fun IntentScreen(
     query: String,
     onQuery: (String) -> Unit,
     understand: (String) -> Understanding,
-    proposals: List<AppEntry>,
+    proposals: List<Candidate>,
     needsUsagePermission: Boolean,
     actions: ProposalActions,
     keyboardOnOpen: Boolean,
@@ -205,13 +211,17 @@ fun IntentScreen(
                     if (proposals.isNotEmpty()) {
                         Spacer(Modifier.height(10.dp))
                         // A blocchetti, due per riga: comodi col pollice. Le fissate in cima, sotto il loro titoletto; poi quelle di adesso
-                        val (fixed, now) = proposals.partition { actions.isPinned(it) }
+                        val (fixed, now) = proposals.partition { p -> p.app?.let { actions.isPinned(it) } == true }
                         listOf(tr(R.string.pinned_heading) to fixed, tr(R.string.now_heading) to now).forEach { (head, list) ->
                             if (list.isEmpty()) return@forEach
                             if (fixed.isNotEmpty()) Text(head, Modifier.padding(start = 12.dp, top = if (list === fixed) 0.dp else 8.dp, bottom = 6.dp), style = TextStyle(fontSize = 13.sp, color = c.soft))
                             list.chunked(2).forEach { row ->
                             Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                row.forEach { app -> ProposalLine(app, actions, appIcon(app), Modifier.weight(1f)) { onLaunch(app) } }
+                                row.forEach { p ->
+                                    val a = p.app
+                                    if (a != null) ProposalLine(a, actions, appIcon(a), Modifier.weight(1f)) { onLaunch(a) }
+                                    else ActionProposal(p, actions, Modifier.weight(1f)) { onRun(p, -1) }
+                                }
                                 if (row.size == 1) Spacer(Modifier.weight(1f))
                             }
                             }
@@ -446,6 +456,39 @@ private fun ProposalLine(app: AppEntry, actions: ProposalActions, icon: androidx
             SheetRow(tr(R.string.brake), Icons.Rounded.PanTool) { menu = false; actions.brake(app) }
             SheetRow(tr(R.string.dont_suggest), Icons.Rounded.VisibilityOff) { menu = false; actions.exclude(app) }
             SheetRow(tr(R.string.app_info), Icons.Rounded.Info) { menu = false; actions.info(app) }
+        }
+    }
+}
+
+/** Una proposta che non è un'app: una persona, un comando che ripeti, la casa. Stesso blocchetto, con il suo simbolo. */
+@Composable
+private fun ActionProposal(cand: Candidate, actions: ProposalActions, modifier: Modifier, onClick: () -> Unit) {
+    val feel = LocalFeel.current
+    val c = S.c
+    var menu by remember { mutableStateOf(false) }
+    var why by remember { mutableStateOf<String?>(null) }
+    val shape = RoundedCornerShape(18.dp)
+    val glyph = when (val a = cand.act) {
+        is Act.Call -> Icons.Rounded.Call
+        is Act.Message -> Icons.AutoMirrored.Rounded.Chat
+        is Act.Ha, is Act.Assist -> Icons.Rounded.Home
+        is Act.Setting, Act.SordinaSettings -> Icons.Rounded.Settings
+        else -> if (a is Act.Timer) Icons.Rounded.Timer else Icons.Rounded.Bolt
+    }
+    Box(modifier) {
+        Row(
+            Modifier.fillMaxWidth().height(64.dp).clip(shape).background(surface())
+                .border(0.5.dp, c.ink.copy(alpha = 0.08f), shape)
+                .combinedClickable(onClick = { feel.tick(); onClick() }, onLongClick = { feel.tick(); why = null; menu = true })
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(glyph, null, Modifier.padding(end = 12.dp).size(20.dp), tint = c.accent)
+            Text(cand.title, Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 15.sp, lineHeight = 18.sp, color = c.ink))
+        }
+        if (menu) Sheet(cand.title, hint = why, onDismiss = { menu = false }) {
+            if (why == null) SheetRow(tr(R.string.why_here), Icons.Rounded.HelpOutline) { why = actions.whyOf(cand) }
+            SheetRow(tr(R.string.dont_suggest), Icons.Rounded.VisibilityOff) { menu = false; actions.hide(cand) }
         }
     }
 }
