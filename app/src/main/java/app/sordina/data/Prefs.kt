@@ -179,6 +179,17 @@ class Prefs(context: Context) {
     var homeNight: Boolean
         get() = sp.getBoolean("homeNight", true)
         set(v) = put { putBoolean("homeNight", v) }
+    /** In auto: le app dei due pulsanti grandi (pacchetto); null = la prima che c'è */
+    var carNavApp: String?
+        get() = sp.getString("carNavApp", null)
+        set(v) = put { putString("carNavApp", v) }
+    var carMusicApp: String?
+        get() = sp.getString("carMusicApp", null)
+        set(v) = put { putString("carMusicApp", v) }
+    /** In auto: persone da non mostrare (nomi normalizzati), tolte con una pressione lunga */
+    var carHidden: Set<String>
+        get() = sp.getStringSet("carHidden", emptySet())!!.toSet()
+        set(v) = put { putStringSet("carHidden", v) }
     /** Quanto prima della notte comincia la sera, in minuti */
     var eveningMinutes: Int
         get() = sp.getInt("eveningMinutes", 90)

@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.sordina.SordinaApp
 import app.sordina.data.AppEntry
+import app.sordina.data.CarApps
 import app.sordina.data.Level
 import app.sordina.data.LockPrivacy
 import app.sordina.data.Moments
@@ -252,6 +253,20 @@ fun SettingsScreen(
                     if (prefs.nightEnabled) tr(R.string.s_scene_night_hint) else tr(R.string.s_scene_evening_off),
                     Icons.Rounded.Bedtime) { v -> change { prefs.homeNight = v } }
                 Toggle(tr(R.string.s_scene_car), prefs.homeCar, tr(R.string.s_scene_car_hint), Icons.Rounded.DirectionsCar) { v -> change { prefs.homeCar = v } }
+                if (prefs.homeCar) {
+                    // I due pulsanti grandi in auto: scegli tu le app
+                    val navs = remember(apps) { CarApps.navigation(ctx, apps) }
+                    val music = remember(apps) { CarApps.music(ctx, apps) }
+                    fun name(list: List<AppEntry>, pkg: String?) = list.firstOrNull { it.packageName == pkg }?.label ?: tr(R.string.s_car_auto)
+                    Pick(tr(R.string.s_car_nav_app), name(navs, prefs.carNavApp), listOf(Option(tr(R.string.s_car_auto))) + navs.map { Option(it.label) },
+                        { i -> if (i == 0) prefs.carNavApp == null else navs[i - 1].packageName == prefs.carNavApp }, icon = Icons.Rounded.Navigation) { i ->
+                        change { prefs.carNavApp = if (i == 0) null else navs[i - 1].packageName }
+                    }
+                    Pick(tr(R.string.s_car_music_app), name(music, prefs.carMusicApp), listOf(Option(tr(R.string.s_car_auto))) + music.map { Option(it.label) },
+                        { i -> if (i == 0) prefs.carMusicApp == null else music[i - 1].packageName == prefs.carMusicApp }, icon = Icons.Rounded.MusicNote) { i ->
+                        change { prefs.carMusicApp = if (i == 0) null else music[i - 1].packageName }
+                    }
+                }
             }
 
             // ── Freno

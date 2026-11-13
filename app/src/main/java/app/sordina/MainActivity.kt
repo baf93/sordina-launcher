@@ -70,6 +70,9 @@ import app.sordina.data.agenda
 import app.sordina.data.Level
 import app.sordina.data.Moment
 import app.sordina.data.Scene
+import app.sordina.data.CardDetector
+import app.sordina.data.Search
+import app.sordina.data.CarApps
 import app.sordina.data.tomorrow
 import app.sordina.data.Proposals
 import app.sordina.data.Understanding
@@ -140,7 +143,7 @@ class MainActivity : ComponentActivity(), Ops {
     private var tomorrowEvents by mutableStateOf<List<Upcoming>>(emptyList())
     private var tomorrowWeather by mutableStateOf<String?>(null)
     private var recap by mutableStateOf<String?>(null)
-    private var carPeople by mutableStateOf<List<String>>(emptyList())
+    private var carPeople by mutableStateOf<List<Pair<String, String>>>(emptyList())
     private var recognizer: SpeechRecognizer? = null
 
     private val permLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -320,9 +323,29 @@ class MainActivity : ComponentActivity(), Ops {
         }.getOrNull() else null
         if (s == Scene.CAR) carPeople = runCatching {
             // Chi chiami di solito in questa situazione; se il cervello non sa ancora, le persone importanti
-            val learned = app.brain.likelyPeople("call:", 4).mapNotNull { app.brain.contact(it.removePrefix("call:"))?.name }
-            (learned + app.people.importantList()).distinct().take(4)
+            val all = app.people.all()
+            val learned = app.brain.likelyPeople("call:", 4).mapNotNull { app.brain.contact(it.removePrefix("call:")) }
+            // Tra gli importanti ci sono anche parole ("allarme"): valgono solo i contatti veri, con un numero
+            val important = app.people.importantList().mapNotNull { n -> all.firstOrNull { it.normalized == n } ?: all.firstOrNull { it.normalized.startsWith("$n ") } }
+            val hidden = prefs.carHidden
+            // Solo le persone importanti (quelle che passano sempre): prima chi chiami di solito in auto, poi le altre
+            val importantIds = important.map { it.id }.toSet()
+            val chosen = (learned.filter { it.id in importantIds } + important.sortedBy { it.normalized }).filter { it.number.isNotBlank() && it.normalized !in hidden }.distinctBy { it.id }.take(16)
+            // Due con lo stesso nome: "Francesco R." e "Francesco B."
+            val first = chosen.groupingBy { it.name.substringBefore(' ') }.eachCount()
+            chosen.map { k ->
+                val f = k.name.substringBefore(' ')
+                val rest = k.name.substringAfter(' ', "").trim()
+                (if ((first[f] ?: 0) > 1 && rest.isNotEmpty()) "$f ${rest.first()}." else f) to k.name
+            }
         }.getOrDefault(emptyList())
+    }
+
+    /** Fra le app candidate, quella che usi di più (per i pulsanti in auto quando non ne hai scelta una). */
+    private fun favourite(list: List<AppEntry>): String? {
+        if (list.isEmpty()) return null
+        val use = runCatching { app.brain.usage() }.getOrDefault(emptyMap())
+        return list.maxByOrNull { use[it.packageName] ?: 0.0 }?.packageName
     }
 
     private fun hm(min: Int): String = java.time.LocalTime.of(min / 60 % 24, min % 60)
@@ -350,12 +373,27 @@ class MainActivity : ComponentActivity(), Ops {
                 start(Intent(Intent.ACTION_VIEW, Uri.parse("google.navigation:q=" + Uri.encode(place))))
                     || start(Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=" + Uri.encode(place))))
             }
+            key == "mic" -> voiceTap()
+            key == "ha" -> CardDetector.HA_PKGS.firstNotNullOfOrNull { packageManager.getLaunchIntentForPackage(it) }?.let { start(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             key == "nav" -> {
-                val i = listOf("com.google.android.apps.maps", "com.waze").firstNotNullOfOrNull { packageManager.getLaunchIntentForPackage(it) }
+                // L'app scelta da te; se non l'hai scelta, Maps o Waze
+                val i = listOfNotNull(prefs.carNavApp ?: favourite(CarApps.navigation(this, apps)), "com.google.android.apps.maps", "com.waze").firstNotNullOfOrNull { packageManager.getLaunchIntentForPackage(it) }
                 if (i == null || !start(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))) start(Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0")))
             }
-            key == "music" -> if (app.signals.controller != null) openMusic()
+            key == "music" -> {
+                // Se suona già la tua app (o non ne hai scelta una) si apre il lettore; altrimenti la tua app
+                val mine = prefs.carMusicApp ?: favourite(CarApps.music(this, apps))
+                val playing = app.signals.controller
+                if (playing != null && (prefs.carMusicApp == null || playing.packageName == mine)) openMusic()
+                else if (mine != null && packageManager.getLaunchIntentForPackage(mine)?.let { start(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } == true) Unit
                 else start(Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_MUSIC).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+            key.startsWith("hide:") -> {
+                // Pressione lunga su una persona in auto: non la si mostra più lì (resta importante)
+                prefs.carHidden = prefs.carHidden + Search.normalize(key.removePrefix("hide:"))
+                lifecycleScope.launch(Dispatchers.IO) { sceneExtras(Scene.CAR) }
+                say(tr(R.string.car_hidden))
+            }
             key.startsWith("call:") -> {
                 val q = "chiama " + key.removePrefix("call:")
                 cardAction(Card("scene:call", CardKind.CALL, "", ""), CardAction("", CardOp.Query(q)))
@@ -598,7 +636,12 @@ class MainActivity : ComponentActivity(), Ops {
 
     // Voce: solo il riconoscitore sul telefono, mai il cloud
 
-    private fun voiceDown() {
+    /** In auto: un tocco apre l'ascolto, si chiude da solo quando smetti di parlare (o con un altro tocco). */
+    private fun voiceTap() {
+        if (voice.listening) runCatching { recognizer?.stopListening() } else voiceDown(handsFree = true)
+    }
+
+    private fun voiceDown(handsFree: Boolean = false) {
         if (Build.VERSION.SDK_INT < 31) return
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             request(Manifest.permission.RECORD_AUDIO); return
@@ -645,8 +688,9 @@ class MainActivity : ComponentActivity(), Ops {
             .putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             .putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag())
             // Si ascolta finché tieni premuto: le pause non chiudono l'ascolto
-            .putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 60_000L)
-            .putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 60_000L)
+            // A mani libere invece si chiude dopo un attimo di silenzio
+            .putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, if (handsFree) 1_500L else 60_000L)
+            .putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, if (handsFree) 1_200L else 60_000L)
         if (Build.VERSION.SDK_INT >= 33) {
             // Nomi insoliti di persone, app e dispositivi di casa capiti meglio
             val bias = ArrayList<String>()
@@ -919,10 +963,9 @@ class MainActivity : ComponentActivity(), Ops {
                                 sceneLine = remember(scene, moment, prefsVersion) { sceneLine(scene) },
                                 recap = recap,
                                 people = carPeople,
-                                destination = remember(events, now) {
-                                    val ms0 = System.currentTimeMillis()
-                                    events.firstOrNull { it.location != null && it.begin - ms0 < 3 * 3_600_000L && it.end > ms0 }?.let { it.title to it.location!! }
-                                },
+                                navLabel = remember(apps, prefsVersion) { apps.firstOrNull { it.packageName == prefs.carNavApp }?.label },
+                                musicLabel = remember(apps, prefsVersion) { apps.firstOrNull { it.packageName == prefs.carMusicApp }?.label },
+                                homeApp = remember(apps, prefsVersion) { app.ha.configured || apps.any { it.packageName in CardDetector.HA_PKGS } },
                             ),
                             groups = groups,
                             onScene = ::onScene,

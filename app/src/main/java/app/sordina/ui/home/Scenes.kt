@@ -4,9 +4,6 @@ import app.sordina.R
 import app.sordina.tr
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Alarm
+import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Navigation
@@ -36,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
@@ -160,17 +159,19 @@ internal fun NightHome(
 
 // ── Auto ──────────────────────────────────────────────────────────────────────
 
+
 /**
  * Casa in auto: tutto grande e a portata di pollice, per guardare un attimo e basta.
- * Dove vai, la musica, chi chiami di solito, e al centro il microfono.
+ * In alto l'ora; in basso chi chiami di solito, le tue app (navigazione, musica, casa) e un microfono largo:
+ * un tocco e parli, si chiude da solo quando smetti. La navigazione in corso arriva come scheda.
  */
 @Composable
 internal fun CarHome(
     state: HomeState,
     gestures: Modifier,
-    onSearch: () -> Unit,
-    onMicDown: () -> Unit,
-    onMicUp: () -> Unit,
+    @Suppress("UNUSED_PARAMETER") onSearch: () -> Unit,
+    @Suppress("UNUSED_PARAMETER") onMicDown: () -> Unit,
+    @Suppress("UNUSED_PARAMETER") onMicUp: () -> Unit,
     onAction: (Card, CardAction) -> Unit,
     onCard: (Card) -> Unit,
     onScene: (String) -> Unit,
@@ -179,28 +180,14 @@ internal fun CarHome(
     val c = S.c
     val now = rememberNow()
     val feel = LocalFeel.current
-    // Su schermi bassi, con la musica in corso, le persone lasciano il posto
+    // Su schermi bassi, con una scheda aperta (musica, navigazione), le persone lasciano il posto
     val roomy = LocalConfiguration.current.screenHeightDp >= 700 || state.cards.isEmpty()
     CompositionLocalProvider(LocalGlass provides false) {
     Column(Modifier.fillMaxSize().background(c.bg).then(gestures).systemBarsPadding().padding(top = 20.dp, bottom = 12.dp)) {
         Column(Modifier.padding(horizontal = 24.dp)) {
             Text(now.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)), style = TextStyle(fontSize = 56.sp, fontWeight = FontWeight.Light, color = c.ink))
-            val line = if (state.listening) state.partial.ifBlank { tr(R.string.home_listening) } else state.sceneLine
-            line?.let { Text(it, maxLines = 2, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = if (state.listening) 20.sp else 16.sp, color = if (state.listening) c.ink else c.soft)) }
-        }
-        state.destination?.let { (title, place) ->
-            Row(
-                Modifier.padding(start = 16.dp, end = 16.dp, top = 18.dp).fillMaxWidth().height(76.dp).clip(RoundedCornerShape(24.dp))
-                    .background(surface()).clickableNoRipple { feel.tick(); onScene("nav:$place") }.padding(horizontal = 20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Icons.Rounded.Navigation, null, Modifier.size(28.dp), tint = c.accent)
-                Spacer(Modifier.width(14.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(tr(R.string.car_to, title), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 18.sp, color = c.ink))
-                    Text(place, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 14.sp, color = c.soft))
-                }
-            }
+            val line = if (state.listening) state.partial.ifBlank { "…" } else state.sceneLine
+            line?.let { Text(it, maxLines = 3, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = if (state.listening) 22.sp else 16.sp, color = if (state.listening) c.ink else c.soft)) }
         }
         Spacer(Modifier.weight(1f))
         if (state.cards.isNotEmpty()) {
@@ -208,34 +195,45 @@ internal fun CarHome(
             Spacer(Modifier.height(12.dp))
         }
         if (roomy && state.people.isNotEmpty()) {
-            Row(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                state.people.take(4).forEach { name ->
+            // Una fila che scorre: le prime quattro si vedono intere, le altre si intravedono a destra
+            androidx.compose.foundation.lazy.LazyRow(
+                Modifier.fillMaxWidth(),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                items(state.people.size, key = { state.people[it].second }) { i ->
+                    val (label, name) = state.people[i]
                     Column(
-                        Modifier.weight(1f).height(92.dp).clip(RoundedCornerShape(22.dp)).background(surface())
-                            .clickableNoRipple { feel.tick(); onScene("call:$name") }.padding(horizontal = 6.dp),
+                        Modifier.width(104.dp).height(88.dp).clip(RoundedCornerShape(22.dp)).background(surface())
+                            .pointerInput(name) { detectTapGestures(onTap = { feel.tick(); onScene("call:$name") }, onLongPress = { feel.tick(); onScene("hide:$name") }) }.padding(horizontal = 6.dp),
                         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
                     ) {
                         Box(Modifier.size(40.dp).clip(CircleShape).background(c.line), contentAlignment = Alignment.Center) {
                             Text(name.trim().take(1).uppercase(), style = TextStyle(fontSize = 18.sp, color = c.ink))
                         }
                         Spacer(Modifier.height(6.dp))
-                        Text(name.substringBefore(' '), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 14.sp, color = c.ink))
+                        Text(label, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 14.sp, color = c.ink))
                     }
                 }
             }
             Spacer(Modifier.height(10.dp))
         }
-        // In basso: navigazione, microfono grande al centro, musica
-        Row(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            CarTile(Icons.Rounded.Navigation, tr(R.string.car_navigate)) { feel.tick(); onScene("nav") }
-            Box(
-                Modifier.size(84.dp).clip(CircleShape).background(c.accent)
-                    .pointerInput(Unit) { awaitEachGesture { awaitFirstDown(); feel.tick(); onMicDown(); waitForUpOrCancellation(); onMicUp() } },
-                contentAlignment = Alignment.Center,
-            ) { Icon(Icons.Rounded.Mic, tr(R.string.speak), Modifier.size(34.dp), tint = c.bg) }
-            CarTile(Icons.Rounded.MusicNote, tr(R.string.car_music)) { feel.tick(); onScene("music") }
+        Row(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            CarTile(Icons.Rounded.Navigation, state.navLabel ?: tr(R.string.car_navigate)) { feel.tick(); onScene("nav") }
+            CarTile(Icons.Rounded.MusicNote, state.musicLabel ?: tr(R.string.car_music)) { feel.tick(); onScene("music") }
+            if (state.homeApp) CarTile(Icons.Rounded.Home, tr(R.string.car_home_app)) { feel.tick(); onScene("ha") }
         }
-        Text(tr(R.string.car_hold), Modifier.fillMaxWidth().padding(top = 8.dp), textAlign = TextAlign.Center, style = TextStyle(fontSize = 13.sp, color = c.soft))
+        Spacer(Modifier.height(10.dp))
+        // Il microfono: largo quanto lo schermo, si colpisce senza guardare
+        Row(
+            Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(72.dp).clip(RoundedCornerShape(36.dp))
+                .background(if (state.listening) c.ink else c.accent).clickableNoRipple { feel.tick(); onScene("mic") },
+            horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Rounded.Mic, null, Modifier.size(30.dp), tint = c.bg)
+            Spacer(Modifier.width(10.dp))
+            Text(tr(if (state.listening) R.string.car_listening else R.string.car_hold), maxLines = 1, style = TextStyle(fontSize = 18.sp, color = c.bg))
+        }
         Spacer(Modifier.height(14.dp))
         SordinaRow(state) { onSheet() }
         Spacer(Modifier.height(8.dp))
@@ -246,12 +244,11 @@ internal fun CarHome(
 @Composable
 private fun RowScope.CarTile(icon: ImageVector, label: String, onClick: () -> Unit) {
     val c = S.c
-    Column(
-        Modifier.weight(1f).height(84.dp).clip(RoundedCornerShape(24.dp)).background(surface()).clickableNoRipple(onClick),
-        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+    // Solo il simbolo, grande: il nome resta per chi usa il lettore dello schermo
+    Box(
+        Modifier.weight(1f).height(76.dp).clip(RoundedCornerShape(24.dp)).background(surface()).clickableNoRipple(onClick),
+        contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, null, Modifier.size(28.dp), tint = c.accent)
-        Spacer(Modifier.height(4.dp))
-        Text(label, maxLines = 1, style = TextStyle(fontSize = 14.sp, color = c.ink))
+        Icon(icon, label, Modifier.size(34.dp), tint = c.accent)
     }
 }

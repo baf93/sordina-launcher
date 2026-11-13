@@ -142,10 +142,13 @@ data class HomeState(
     val sceneLine: String? = null,
     /** Sera: com'è andata oggi */
     val recap: String? = null,
-    /** Auto: chi chiami di solito adesso */
-    val people: List<String> = emptyList(),
-    /** Auto: il prossimo appuntamento con un luogo (titolo, luogo) */
-    val destination: Pair<String, String>? = null,
+    /** Auto: chi chiami di solito adesso (nome breve, nome completo) */
+    val people: List<Pair<String, String>> = emptyList(),
+    /** Auto: i nomi delle app scelte per navigare e per la musica (null = "Naviga", "Musica") */
+    val navLabel: String? = null,
+    val musicLabel: String? = null,
+    /** Auto: c'è Home Assistant, un pulsante per aprirlo */
+    val homeApp: Boolean = false,
 )
 
 /** Casa: ora, data, meteo, evento; la pila; la barra; in fondo cosa è in sordina. */
@@ -170,7 +173,8 @@ fun HomeScreen(
 ) {
     val gestures = Modifier.homeGestures(onSwipeUp, onSwipeDown, onLongPress)
     when (state.scene) {
-        Scene.CAR -> { CarHome(state, gestures, onSearch, onMicDown, onMicUp, onAction, onCard, onScene) { onSheet(true) }; return }
+        // In auto niente pressione lunga: si toccano pulsanti grandi, le impostazioni non devono aprirsi per sbaglio
+        Scene.CAR -> { CarHome(state, Modifier.homeGestures(onSwipeUp, onSwipeDown, {}), onSearch, onMicDown, onMicUp, onAction, onCard, onScene) { onSheet(true) }; return }
         Scene.NIGHT -> { NightHome(state, gestures, onSearch, onMicDown, onMicUp, onAction, onCard, onScene) { onSheet(true) }; return }
         else -> Unit
     }

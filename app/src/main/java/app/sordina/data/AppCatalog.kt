@@ -88,3 +88,23 @@ class AppCatalog(private val context: Context) {
 
     fun unregister(cb: LauncherApps.Callback) = launcherApps.unregisterCallback(cb)
 }
+
+/** In auto: le app che sanno portarti in un posto e quelle che suonano (musica, podcast, audiolibri). */
+object CarApps {
+    fun navigation(context: android.content.Context, apps: List<AppEntry>): List<AppEntry> {
+        val pm = context.packageManager
+        val pkgs = runCatching {
+            pm.queryIntentActivities(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("geo:0,0?q=Roma")), 0)
+                .map { it.activityInfo.packageName }.toSet()
+        }.getOrDefault(emptySet())
+        return apps.filter { !it.isWork && it.packageName in pkgs }.distinctBy { it.packageName }.sortedBy { it.normalized }
+    }
+
+    fun music(context: android.content.Context, apps: List<AppEntry>): List<AppEntry> {
+        val pm = context.packageManager
+        val pkgs = runCatching {
+            pm.queryIntentServices(android.content.Intent("android.media.browse.MediaBrowserService"), 0).map { it.serviceInfo.packageName }.toSet()
+        }.getOrDefault(emptySet())
+        return apps.filter { !it.isWork && it.packageName in pkgs }.distinctBy { it.packageName }.sortedBy { it.normalized }
+    }
+}

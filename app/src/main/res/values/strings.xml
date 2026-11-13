@@ -537,7 +537,7 @@
     <string name="car_to">To %s</string>
     <string name="car_navigate">Navigate</string>
     <string name="car_music">Music</string>
-    <string name="car_hold">Hold and speak</string>
+    <string name="car_hold">Tap and speak</string>
     <string name="s_scenes">Home adapts</string>
     <string name="s_scene_evening">Evening</string>
     <string name="s_scene_evening_hint">From %s: tomorrow, alarm, how today went</string>
@@ -548,4 +548,10 @@
     <string name="s_scene_car">Driving</string>
     <string name="s_scene_car_hint">Big and voice-first: where you\'re going, people, music</string>
     <string name="ob_scenes">Home changes with you</string>
+    <string name="s_car_nav_app">Navigation app</string>
+    <string name="s_car_music_app">Music app</string>
+    <string name="s_car_auto">Automatic</string>
+    <string name="car_listening">Listening · tap to finish</string>
+    <string name="car_hidden">Hidden while driving</string>
+    <string name="car_home_app">Home Assistant</string>
 </resources>
