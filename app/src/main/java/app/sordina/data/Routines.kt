@@ -49,6 +49,11 @@ class Routines(private val context: Context) {
         commands.removeAll { it.third < limit }
     }
 
+    /** I momenti cominciati negli ultimi 20 minuti: momento → quando. */
+    @Synchronized
+    fun active(now: Long = System.currentTimeMillis()): Map<String, Long> =
+        episodes.filter { now - it.second in 0..20 * 60_000 }.groupBy { it.first }.mapValues { e -> e.value.maxOf { it.second } }
+
     /** Nome breve del momento, per la scheda. */
     @Synchronized
     fun label(ctx: String): String = when {

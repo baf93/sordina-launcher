@@ -80,16 +80,11 @@
     <string name="cat_phone">Telefone</string>
     <string name="cat_apps">Outros apps</string>
     <string name="braked_section">Freados</string>
-    <string name="brake_p1">O feed vai ser o mesmo daqui a uma hora.</string>
     <string name="brake_p2">O que você ia fazer?</string>
     <string name="brake_p3">Estes segundos são seus.</string>
-    <string name="brake_p4">Você não perdeu nada.</string>
-    <string name="brake_p5">Respire. Depois decida.</string>
     <string name="brake_p6">Há algo melhor para fazer?</string>
     <string name="brake_p7">Ficar entediado também é bom.</string>
-    <string name="brake_p8">Olhe pela janela.</string>
     <string name="brake_p9">Precisa mesmo agora?</string>
-    <string name="brake_p10">Sua atenção vale a pena.</string>
     <string name="brake_not_today">Ainda não aberto hoje</string>
     <string name="brake_today">Hoje: %1$s · %2$s</string>
     <string name="inhale">inspire</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">Deixa pra lá</string>
     <string name="open_in">Abrir em %1$d s</string>
     <string name="open_anyway">Abrir mesmo assim</string>
-    <string name="well_done">Muito bem.</string>
     <string name="time_back">Cerca de %1$s de volta para você.</string>
     <string name="stat_today">hoje</string>
     <string name="stat_in_7_days">em 7 dias</string>

@@ -32,6 +32,9 @@ class SordinaApp : Application() {
     val brain by lazy { app.sordina.data.brain.Brain(this, prefs, people, store) }
     val intents by lazy { Intents(this, prefs, people, store, ha, brain) }
     val signals by lazy { Signals(this) }
+    val cardSense by lazy { app.sordina.data.CardSense(this) }
+    val plans by lazy { app.sordina.data.Plans(this) }
+    val replies by lazy { app.sordina.data.Replies(java.io.File(filesDir, "replies.json")) }
     val routines by lazy { Routines(this) }
     val weather by lazy { app.sordina.data.Weather(this) }
 

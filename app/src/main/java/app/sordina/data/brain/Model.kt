@@ -11,8 +11,16 @@ data class Feature(val group: String, val value: String, val weight: Double = 1.
     val key get() = "$group:$value"
 }
 
+/** Quanto contano i segnali del momento. I valori di partenza sono quelli misurati su una memoria vera. */
+data class Tune(
+    val recent: Double = Model.RECENT_GAIN,
+    val notify: Double = Model.NOTIFY_GAIN,
+    val ignore: Double = Model.IGNORE_GAIN,
+)
+
 /** Un gesto ricordato: cosa hai fatto, quando, in che situazione. */
-data class Gesture(val time: Long, val item: String, val features: List<Feature>)
+/** [weight]: quanto conta. Una cosa cercata perché Sordina non la proponeva conta di più (era da proporre). */
+data class Gesture(val time: Long, val item: String, val features: List<Feature>, val weight: Double = 1.0)
 
 /** Perché una cosa è proposta: il gruppo che pesa di più e il suo valore (es. "pl" e il nome del Wi-Fi). */
 data class Reason(val group: String, val value: String)
@@ -26,6 +34,9 @@ data class Reason(val group: String, val value: String)
  * Nessuna dipendenza da Android: si prova con i test.
  */
 class Model(private val halfLifeDays: Double = 21.0, now: Long = System.currentTimeMillis()) {
+    /** I pesi dei segnali di adesso: si regolano da soli sulla tua storia (vedi [Tuner]). */
+    @Volatile var tune = Tune()
+
     /** Tempo di riferimento: i pesi crescono col tempo invece di far sbiadire i vecchi, che è lo stesso ma senza ricalcoli. */
     private val base = now - 150L * DAY
 
@@ -50,7 +61,14 @@ class Model(private val halfLifeDays: Double = 21.0, now: Long = System.currentT
 
     @Synchronized
     fun add(g: Gesture) {
-        val wt = w(g.time)
+        val wt = w(g.time) * g.weight
+        uses.getOrPut(g.item) { ArrayList() }.let { u ->
+            // In ordine di tempo (quasi sempre arriva in coda); al massimo gli ultimi 300
+            var i = u.size
+            while (i > 0 && u[i - 1] > g.time) i--
+            u.add(i, g.time)
+            if (u.size > 300) u.removeAt(0)
+        }
         itemMass.merge(g.item, wt, Double::plus)
         total += wt
         val per = itemFeature.getOrPut(g.item) { HashMap() }
@@ -80,6 +98,7 @@ class Model(private val halfLifeDays: Double = 21.0, now: Long = System.currentT
     @Synchronized
     fun forget(item: String) {
         val m = itemMass.remove(item) ?: return
+        uses.remove(item); notifiedAt.remove(item); seen.remove(item)
         total -= m
         itemFeature.remove(item)?.forEach { (k, v) -> featureMass.merge(k, -v, Double::plus) }
         lastTime.remove(item)
@@ -144,6 +163,91 @@ class Model(private val halfLifeDays: Double = 21.0, now: Long = System.currentT
         return m.entries.filter { it.value / sum >= min }.sortedByDescending { it.value }.map { it.key }
     }
 
+    /**
+     * Quanto conta l'averla usata da poco: un'app di dieci minuti fa è probabile che la riapri,
+     * una di ieri non dice niente in più delle abitudini. In logaritmo, da sommare a [score].
+     */
+    @Synchronized
+    fun recency(item: String, now: Long): Double {
+        val t = lastTime[item] ?: return 0.0
+        val dt = (now - t).coerceAtLeast(0L) / 60_000.0
+        return tune.recent * exp(-dt / RECENT_MINUTES)
+    }
+
+    /** La previsione completa per adesso: abitudini e situazione, più quello che hai usato da poco. */
+    fun predict(item: String, situation: List<Feature>, now: Long): Double =
+        score(item, situation) + recency(item, now) + notifiedBoost(item, now) + ignoredPenalty(item, now)
+
+    // Notifiche: un'app che ti ha appena scritto è probabile che la apri
+
+    private val notifiedAt = HashMap<String, Long>()
+
+    @Synchronized
+    fun notified(item: String, t: Long) { notifiedAt[item] = t }
+
+    /** Ti ha mandato una notifica da poco e non l'hai ancora aperta. */
+    @Synchronized
+    fun notifiedBoost(item: String, now: Long): Double {
+        val t = notifiedAt[item] ?: return 0.0
+        if ((lastTime[item] ?: 0L) >= t || now < t) return 0.0
+        return tune.notify * exp(-(now - t) / 60_000.0 / NOTIFY_MINUTES)
+    }
+
+    // Proposte viste e lasciate lì
+
+    /** Quando hai usato ogni cosa (per sapere se una proposta vista è stata presa). */
+    private val uses = HashMap<String, ArrayList<Long>>()
+    /** Le occhiate non ancora decise (si decide dopo 10 minuti: l'hai presa o no). */
+    private val pending = ArrayDeque<Pair<Long, List<String>>>()
+    private var lastShown: Pair<Long, List<String>>? = null
+    /** Per ogni cosa: [viste, lasciate lì]. Si contano una volta sola, poi basta guardarle. */
+    private val seen = HashMap<String, DoubleArray>()
+
+    /** Le proposte che hai visto in Casa a [t]. */
+    @Synchronized
+    fun shown(t: Long, items: List<String>) {
+        val last = lastShown
+        // Lo stesso schermo rivisto entro 10 minuti è la stessa occhiata
+        if (last != null && last.second == items && t - last.first < 10 * 60_000) return
+        lastShown = t to items
+        pending.addLast(t to items)
+        if (pending.size > 500) pending.removeFirst()
+    }
+
+    /** Decide le occhiate di più di 10 minuti fa: per ogni proposta, l'hai usata subito dopo o no. */
+    private fun resolve(now: Long) {
+        while (pending.isNotEmpty() && pending.first().first <= now - 10 * 60_000) {
+            val (t, items) = pending.removeFirst()
+            for (item in items) {
+                val c = seen.getOrPut(item) { DoubleArray(2) }
+                // Conta di più il presente: oltre 40 occhiate, le vecchie valgono la metà
+                if (c[0] > 40) { c[0] *= 0.5; c[1] *= 0.5 }
+                c[0] += 1.0
+                if (!usedBetween(item, t, t + 10 * 60_000)) c[1] += 1.0
+            }
+        }
+    }
+
+    /** Usata fra [from] e [to]? Ricerca binaria sugli usi (in ordine di tempo). */
+    private fun usedBetween(item: String, from: Long, to: Long): Boolean {
+        val u = uses[item] ?: return false
+        var lo = 0; var hi = u.size
+        while (lo < hi) { val mid = (lo + hi) ushr 1; if (u[mid] < from) lo = mid + 1 else hi = mid }
+        return lo < u.size && u[lo] <= to
+    }
+
+    /**
+     * Una proposta che vedi spesso e non prendi mai sta occupando il posto di qualcos'altro: scende.
+     * Solo dopo almeno 5 occhiate; con una frazione, così le app che usi spesso non ne soffrono.
+     */
+    @Synchronized
+    fun ignoredPenalty(item: String, now: Long): Double {
+        resolve(now)
+        val c = seen[item] ?: return 0.0
+        if (c[0] < 5) return 0.0
+        return -tune.ignore * c[1] / (c[0] + 2.0)
+    }
+
     /** Volte (sbiadite) che hai fatto questa cosa: per decidere quando fidarsi. */
     fun times(item: String, now: Long = System.currentTimeMillis()): Double = (itemMass[item] ?: 0.0) / w(now)
 
@@ -155,11 +259,17 @@ class Model(private val halfLifeDays: Double = 21.0, now: Long = System.currentT
         private const val PRIOR = 0.5
         private const val SMOOTH = 3.0
         private const val MAX_LIFT = 2.5
+        /** Misurati rigiocando una memoria vera: +5 punti sulla prima proposta giusta. */
+        const val RECENT_GAIN = 3.0
+        const val RECENT_MINUTES = 15.0
+        const val NOTIFY_GAIN = 1.5
+        const val NOTIFY_MINUTES = 40.0
+        const val IGNORE_GAIN = 1.5
 
         /** Quanto conta ogni tipo di situazione. L'ora e il luogo dicono molto; il giorno della settimana meno. */
         val GROUP_WEIGHT = mapOf(
             "h" to 1.0, "dw" to 0.35, "we" to 0.6, "pl" to 1.0, "car" to 1.2, "hs" to 0.8,
-            "chg" to 0.4, "prev" to 0.7, "fresh" to 0.5,
+            "chg" to 0.4, "prev" to 0.7, "fresh" to 0.5, "bt" to 1.0,
         )
     }
 }

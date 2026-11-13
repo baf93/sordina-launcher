@@ -19,7 +19,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Cake
+import androidx.compose.material.icons.rounded.HealthAndSafety
 import androidx.compose.material.icons.rounded.CalendarToday
+import androidx.compose.material.icons.rounded.EventAvailable
 import androidx.compose.material.icons.rounded.ConfirmationNumber
 import androidx.compose.material.icons.rounded.CreditCard
 import androidx.compose.material.icons.rounded.Home
@@ -67,11 +69,13 @@ import kotlinx.coroutines.delay
 
 /** Il simbolo piccolo in alto a sinistra: dice che tipo di cosa è, senza parole. */
 private fun glyph(kind: CardKind): ImageVector = when (kind) {
+    CardKind.HEALTH -> Icons.Rounded.HealthAndSafety
     CardKind.OTP -> Icons.Rounded.Key
     CardKind.ASK -> Icons.Rounded.Home
     CardKind.CALL -> Icons.Rounded.PhoneMissed
     CardKind.RIDE -> Icons.Rounded.NearMe
     CardKind.EVENT -> Icons.Rounded.CalendarToday
+    CardKind.PLAN -> Icons.Rounded.EventAvailable
     CardKind.TIMER -> Icons.Rounded.Timer
     CardKind.REMINDER -> Icons.Rounded.TaskAlt
     CardKind.PAYMENT -> Icons.Rounded.CreditCard

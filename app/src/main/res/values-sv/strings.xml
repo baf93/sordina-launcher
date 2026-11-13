@@ -80,16 +80,11 @@
     <string name="cat_phone">Telefon</string>
     <string name="cat_apps">Andra appar</string>
     <string name="braked_section">Bromsade</string>
-    <string name="brake_p1">Flödet är detsamma om en timme.</string>
     <string name="brake_p2">Vad skulle du göra?</string>
     <string name="brake_p3">De här sekunderna är dina.</string>
-    <string name="brake_p4">Du har inte missat något.</string>
-    <string name="brake_p5">Andas. Bestäm sedan.</string>
     <string name="brake_p6">Finns det något bättre att göra?</string>
     <string name="brake_p7">Att ha tråkigt är också okej.</string>
-    <string name="brake_p8">Titta ut genom fönstret.</string>
     <string name="brake_p9">Behöver du den verkligen nu?</string>
-    <string name="brake_p10">Din uppmärksamhet är värd det.</string>
     <string name="brake_not_today">Inte öppnad i dag</string>
     <string name="brake_today">I dag: %1$s · %2$s</string>
     <string name="inhale">andas in</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">Låt bli</string>
     <string name="open_in">Öppna om %1$d s</string>
     <string name="open_anyway">Öppna ändå</string>
-    <string name="well_done">Bra jobbat.</string>
     <string name="time_back">Ungefär %1$s tillbaka till dig.</string>
     <string name="stat_today">i dag</string>
     <string name="stat_in_7_days">på 7 dagar</string>

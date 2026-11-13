@@ -42,6 +42,8 @@ class Proposals(private val context: Context, private val brain: Brain, private 
     fun compute(apps: List<AppEntry>, prefs: Prefs, nowMs: Long = System.currentTimeMillis()): Result {
         val slot = slotOf(nowMs)
         val permission = hasPermission()
+        // Dove sei senza Wi-Fi: la posizione che il telefono ha già (niente GPS)
+        runCatching { brain.samplePlace() }
         if (permission) runCatching { brain.ingest(apps.mapTo(HashSet()) { it.packageName }) }
         val usage = brain.usage()
 
@@ -58,7 +60,7 @@ class Proposals(private val context: Context, private val brain: Brain, private 
                 else -> "brain:$item" in excluded
             }
         }
-        val suggestions = brain.suggest(COUNT, skip) { item ->
+        val suggestions = brain.suggest(COUNT, skip, runCatching { boosts(apps, nowMs) }.getOrDefault(emptyMap())) { item ->
             intents.realize(item, apps.filter { it.key !in excluded }, usage)
         }
         val why = HashMap<String, String>()
@@ -79,7 +81,51 @@ class Proposals(private val context: Context, private val brain: Brain, private 
         return Result(fixed.map(::appCandidate) + now, why, brainItem, usage, !permission, slot)
     }
 
+    /**
+     * Quello che sta per succedere spinge in alto le cose giuste, anche se non è la tua abitudine:
+     * una riunione Teams tra 10 minuti porta su Teams, un impegno con un indirizzo porta su Maps.
+     */
+    private var cachedEvents: Pair<Long, List<Upcoming>>? = null
+
+    private fun boosts(apps: List<AppEntry>, now: Long): Map<String, Pair<Double, String>> {
+        val out = HashMap<String, Pair<Double, String>>()
+        fun has(pkg: String) = apps.any { it.packageName == pkg }
+        fun put(pkg: String, gain: Double, why: String) {
+            if (has(pkg) && (out["app:$pkg"]?.first ?: 0.0) < gain) out["app:$pkg"] = gain to why
+        }
+        val sa = app.sordina.SordinaApp.of(context)
+        // Il calendario si rilegge al massimo una volta al minuto (Casa lo legge già per le sue schede)
+        val upcoming = cachedEvents?.takeIf { now - it.first < 60_000 }?.second
+            ?: sa.calendars.upcoming(context, now).also { cachedEvents = now to it }
+        for (e in upcoming) {
+            val min = (e.begin - now) / 60_000
+            if (min !in -10..60) continue
+            val soon = min in -10..15
+            MEETING_APPS.entries.firstOrNull { (host, _) -> e.link?.contains(host) == true }?.let { (_, pkgs) ->
+                pkgs.forEach { put(it, if (soon) 4.0 else 1.5, app.sordina.tr(app.sordina.R.string.why_meeting, e.title)) }
+            }
+            if (e.location != null && e.link == null && min in 0..60) put(MAPS, if (min <= 30) 3.0 else 1.5, app.sordina.tr(app.sordina.R.string.why_event_place, e.title))
+        }
+        // Riunioni avvisate dalle app (Outlook, Teams): l'app che avvisa, e Teams se è una riunione Teams
+        for (k in sa.signals.cards.value.values) {
+            val start = k.startsAt ?: continue
+            val min = (start - now) / 60_000
+            if (min !in -10..15) continue
+            val pkg = (k.sources.firstOrNull() ?: k.key).split('|').getOrNull(1) ?: continue
+            val why = app.sordina.tr(app.sordina.R.string.why_meeting, k.title)
+            put(pkg, 3.0, why)
+            if ("teams" in "${k.title} ${k.subtitle}".lowercase()) MEETING_APPS["teams"]?.forEach { put(it, 4.0, why) }
+        }
+        return out
+    }
+
     companion object {
+        private const val MAPS = "com.google.android.apps.maps"
+        private val MEETING_APPS = mapOf(
+            "teams" to listOf("com.microsoft.teams"),
+            "zoom.us" to listOf("us.zoom.videomeetings"),
+            "meet.google" to listOf("com.google.android.apps.tachyon", "com.google.android.apps.meetings"),
+        )
         const val COUNT = 6
 
         fun slotOf(ms: Long): Long = ms / (30 * 60_000L)

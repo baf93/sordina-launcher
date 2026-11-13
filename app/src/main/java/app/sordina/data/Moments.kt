@@ -59,7 +59,7 @@ class Moments(private val context: Context, private val prefs: Prefs) {
 
     /** Sordina a tempo, accesa da te: fino a quando, o null. */
     fun focusUntil(now: Long = System.currentTimeMillis()): Long? =
-        prefs.quietUntil.takeIf { prefs.quietOwned && it > now && androidQuiet() }
+        prefs.quietUntil.takeIf { prefs.quietOwned && !prefs.quietCar && it > now && androidQuiet() }
 
     /** "Solo l'importante fino alle 15:45 · tocca per finire" o "Modalità attiva · solo l'importante". */
     fun phrase(m: Moment = current()): String =

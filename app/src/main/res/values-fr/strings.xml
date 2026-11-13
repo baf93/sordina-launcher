@@ -80,16 +80,11 @@
     <string name="cat_phone">Téléphone</string>
     <string name="cat_apps">Autres apps</string>
     <string name="braked_section">Freinées</string>
-    <string name="brake_p1">Le fil sera le même dans une heure.</string>
     <string name="brake_p2">Qu\'alliez-vous faire ?</string>
     <string name="brake_p3">Ces secondes sont à vous.</string>
-    <string name="brake_p4">Vous n\'avez rien manqué.</string>
-    <string name="brake_p5">Respirez. Puis décidez.</string>
     <string name="brake_p6">Y a-t-il mieux à faire ?</string>
     <string name="brake_p7">S\'ennuyer, c\'est bien aussi.</string>
-    <string name="brake_p8">Regardez par la fenêtre.</string>
     <string name="brake_p9">En avez-vous vraiment besoin ?</string>
-    <string name="brake_p10">Votre attention le vaut bien.</string>
     <string name="brake_not_today">Pas encore ouverte aujourd\'hui</string>
     <string name="brake_today">Aujourd\'hui : %1$s · %2$s</string>
     <string name="inhale">inspirez</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">Laisser tomber</string>
     <string name="open_in">Ouvrir dans %1$d s</string>
     <string name="open_anyway">Ouvrir quand même</string>
-    <string name="well_done">Bien joué.</string>
     <string name="time_back">Environ %1$s de retrouvées.</string>
     <string name="stat_today">aujourd\'hui</string>
     <string name="stat_in_7_days">en 7 jours</string>

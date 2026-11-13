@@ -80,16 +80,11 @@
     <string name="cat_phone">الهاتف</string>
     <string name="cat_apps">تطبيقات أخرى</string>
     <string name="braked_section">مفرملة</string>
-    <string name="brake_p1">الخلاصة ستبقى كما هي بعد ساعة.</string>
     <string name="brake_p2">ماذا كنت تنوي أن تفعل؟</string>
     <string name="brake_p3">هذه الثواني لك.</string>
-    <string name="brake_p4">لم يفتك شيء.</string>
-    <string name="brake_p5">تنفّس. ثم قرّر.</string>
     <string name="brake_p6">هل هناك ما هو أفضل لتفعله؟</string>
     <string name="brake_p7">لا بأس بالملل أيضًا.</string>
-    <string name="brake_p8">انظر من النافذة.</string>
     <string name="brake_p9">هل تحتاجه حقًا الآن؟</string>
-    <string name="brake_p10">انتباهك يستحق.</string>
     <string name="brake_not_today">لم يُفتح اليوم بعد</string>
     <string name="brake_today">اليوم: %1$s · %2$s</string>
     <string name="inhale">شهيق</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">اتركه</string>
     <string name="open_in">فتح خلال %1$d ث</string>
     <string name="open_anyway">افتح على أي حال</string>
-    <string name="well_done">أحسنت.</string>
     <string name="time_back">نحو %1$s عادت إليك.</string>
     <string name="stat_today">اليوم</string>
     <string name="stat_in_7_days">في 7 أيام</string>

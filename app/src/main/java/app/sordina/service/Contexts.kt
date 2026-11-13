@@ -45,7 +45,7 @@ class Contexts(private val service: SordinaListener) {
 
     fun start() {
         // Com'è adesso, per il cervello: i cambi arriveranno dai ricevitori
-        runCatching { app.brain.onState("chg", service.getSystemService(android.os.BatteryManager::class.java).isCharging) }
+        runCatching { service.getSystemService(android.os.BatteryManager::class.java).isCharging.let { app.brain.onState("chg", it); app.brain.tuneIfDue(it) } }
         runCatching { app.brain.onState("car", app.moments.isCar() || androidAuto(service)) }
         runCatching { startReceiver() }
         runCatching { startWifi() }
@@ -71,6 +71,7 @@ class Contexts(private val service: SordinaListener) {
                     UiModeManager.ACTION_EXIT_CAR_MODE -> { app.brain.onState("car", false); Scheduler.refresh(c) }
                     Intent.ACTION_POWER_CONNECTED -> {
                         app.brain.onState("chg", true)
+                        app.brain.tuneIfDue(true)
                         if (LocalTime.now().hour >= 20) app.routines.onContext("charge")
                     }
                     Intent.ACTION_POWER_DISCONNECTED -> app.brain.onState("chg", false)
@@ -132,14 +133,18 @@ class Contexts(private val service: SordinaListener) {
         ) + if (Build.VERSION.SDK_INT >= 31) setOf(AudioDeviceInfo.TYPE_BLE_HEADSET) else emptySet()
         var first = true
         fun anyHeadset() = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS).any { it.type in heads }
+        // Quale dispositivo Bluetooth: l'auto, le cuffie della palestra, la cassa di casa (solo il nome, resta sul telefono)
+        val bt = setOf(AudioDeviceInfo.TYPE_BLUETOOTH_A2DP, AudioDeviceInfo.TYPE_BLUETOOTH_SCO) + if (Build.VERSION.SDK_INT >= 31) setOf(AudioDeviceInfo.TYPE_BLE_HEADSET, AudioDeviceInfo.TYPE_BLE_SPEAKER) else emptySet()
+        fun device() = runCatching { app.brain.onDevice(am.getDevices(AudioManager.GET_DEVICES_OUTPUTS).firstOrNull { it.type in bt }?.productName?.toString()?.trim().orEmpty()) }
         val cb = object : AudioDeviceCallback() {
             override fun onAudioDevicesAdded(added: Array<out AudioDeviceInfo>) {
                 app.brain.onState("hs", anyHeadset())
+                device()
                 // La prima chiamata elenca quelli già collegati: non è un momento nuovo
                 if (first) { first = false; return }
                 if (added.any { it.isSink && it.type in heads }) app.routines.onContext("headset")
             }
-            override fun onAudioDevicesRemoved(removed: Array<out AudioDeviceInfo>) { app.brain.onState("hs", anyHeadset()) }
+            override fun onAudioDevicesRemoved(removed: Array<out AudioDeviceInfo>) { app.brain.onState("hs", anyHeadset()); device() }
         }
         am.registerAudioDeviceCallback(cb, main)
         audio = cb

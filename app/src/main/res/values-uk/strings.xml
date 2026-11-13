@@ -80,16 +80,11 @@
     <string name="cat_phone">Телефон</string>
     <string name="cat_apps">Інші застосунки</string>
     <string name="braked_section">З гальмом</string>
-    <string name="brake_p1">За годину стрічка буде та сама.</string>
     <string name="brake_p2">Що ви збиралися зробити?</string>
     <string name="brake_p3">Ці секунди — ваші.</string>
-    <string name="brake_p4">Ви нічого не пропустили.</string>
-    <string name="brake_p5">Вдихніть. Потім вирішуйте.</string>
     <string name="brake_p6">Є справа краща?</string>
     <string name="brake_p7">Нудьгувати — теж нормально.</string>
-    <string name="brake_p8">Погляньте у вікно.</string>
     <string name="brake_p9">Це справді потрібно зараз?</string>
-    <string name="brake_p10">Ваша увага того варта.</string>
     <string name="brake_not_today">Сьогодні ще не відкривали</string>
     <string name="brake_today">Сьогодні: %1$s · %2$s</string>
     <string name="inhale">вдих</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">Не треба</string>
     <string name="open_in">Відкрити через %1$d с</string>
     <string name="open_anyway">Усе одно відкрити</string>
-    <string name="well_done">Молодець.</string>
     <string name="time_back">Близько %1$s повернулося до вас.</string>
     <string name="stat_today">сьогодні</string>
     <string name="stat_in_7_days">за 7 днів</string>

@@ -80,16 +80,11 @@
     <string name="cat_phone">Telefon</string>
     <string name="cat_apps">Alte aplicații</string>
     <string name="braked_section">Frânate</string>
-    <string name="brake_p1">Feedul va fi la fel peste o oră.</string>
     <string name="brake_p2">Ce voiai să faci?</string>
     <string name="brake_p3">Secundele astea sunt ale tale.</string>
-    <string name="brake_p4">Nu ai pierdut nimic.</string>
-    <string name="brake_p5">Respiră. Apoi decide.</string>
     <string name="brake_p6">E ceva mai bun de făcut?</string>
     <string name="brake_p7">E în regulă să te plictisești.</string>
-    <string name="brake_p8">Uită-te pe fereastră.</string>
     <string name="brake_p9">Chiar ai nevoie de ea acum?</string>
-    <string name="brake_p10">Atenția ta merită.</string>
     <string name="brake_not_today">Nedeschisă încă azi</string>
     <string name="brake_today">Azi: %1$s · %2$s</string>
     <string name="inhale">inspiră</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">Las-o baltă</string>
     <string name="open_in">Deschide în %1$d s</string>
     <string name="open_anyway">Deschide oricum</string>
-    <string name="well_done">Bravo.</string>
     <string name="time_back">Cam %1$s se întorc la tine.</string>
     <string name="stat_today">azi</string>
     <string name="stat_in_7_days">în 7 zile</string>

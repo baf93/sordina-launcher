@@ -225,6 +225,11 @@ fun SettingsScreen(
                 Line(tr(R.string.s_modes), if (app.moments.androidQuiet()) tr(R.string.moment_quiet) else "", tr(R.string.s_modes_hint), Icons.Rounded.DoNotDisturbOn) {
                     runCatching { ctx.startActivity(android.content.Intent("android.settings.ZEN_MODE_SETTINGS").addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
                 }
+                // In auto con Android Auto: Non disturbare, così sullo schermo dell'auto arriva solo l'importante
+                Toggle(tr(R.string.s_car_quiet), prefs.carQuiet && perms.policy, if (perms.policy) tr(R.string.s_car_quiet_hint) else tr(R.string.s_car_quiet_access), Icons.Rounded.DirectionsCar) { v ->
+                    if (v && !perms.policy) runCatching { ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                    change { prefs.carQuiet = v }
+                }
                 Toggle(tr(R.string.s_urgent), prefs.urgentEnabled, tr(R.string.s_urgent_hint), Icons.Rounded.PriorityHigh) { v -> change { prefs.urgentEnabled = v } }
                 val rules = Rules.all(prefs).size
                 Line(tr(R.string.rules), if (rules == 0) tr(R.string.none_f) else "$rules", tr(R.string.rules_hint), Icons.AutoMirrored.Rounded.Rule) { sub = Sub.RULES }

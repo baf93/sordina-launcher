@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 /** Cosa fa un pulsante di una scheda. */
 sealed interface CardOp {
     data class Copy(val text: String) : CardOp
+    /** Sistema Sordina (accesso alle notifiche, motore fermo, batteria) */
+    data object Fix : CardOp
     data class OpenNotif(val key: String) : CardOp
     data class Dial(val number: String) : CardOp
     data class Navigate(val place: String) : CardOp
@@ -40,7 +42,7 @@ sealed interface CardOp {
 data class CardAction(val label: String, val op: CardOp, val icon: String? = null)
 
 enum class CardKind(val priority: Int) {
-    OTP(0), ASK(1), CALL(2), RIDE(3), EVENT(4), TIMER(5), REMINDER(6), PAYMENT(7), MUSIC(8),
+    HEALTH(-1), OTP(0), ASK(1), CALL(2), RIDE(3), EVENT(4), PLAN(4), TIMER(5), REMINDER(6), PAYMENT(7), MUSIC(8),
     TICKET(9), PARCEL(10), RAIN(11), BIRTHDAY(12), HABIT(13)
 }
 

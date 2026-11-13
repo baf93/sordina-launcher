@@ -80,16 +80,11 @@
     <string name="cat_phone">Telefoon</string>
     <string name="cat_apps">Andere apps</string>
     <string name="braked_section">Afgeremd</string>
-    <string name="brake_p1">De feed is over een uur nog hetzelfde.</string>
     <string name="brake_p2">Wat wilde je net doen?</string>
     <string name="brake_p3">Deze seconden zijn van jou.</string>
-    <string name="brake_p4">Je hebt niets gemist.</string>
-    <string name="brake_p5">Adem. Beslis dan.</string>
     <string name="brake_p6">Is er iets beters te doen?</string>
     <string name="brake_p7">Je vervelen mag ook.</string>
-    <string name="brake_p8">Kijk uit het raam.</string>
     <string name="brake_p9">Heb je het nu echt nodig?</string>
-    <string name="brake_p10">Je aandacht is het waard.</string>
     <string name="brake_not_today">Vandaag nog niet geopend</string>
     <string name="brake_today">Vandaag: %1$s · %2$s</string>
     <string name="inhale">adem in</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">Laat maar</string>
     <string name="open_in">Openen over %1$d s</string>
     <string name="open_anyway">Toch openen</string>
-    <string name="well_done">Goed gedaan.</string>
     <string name="time_back">Ongeveer %1$s terug voor jou.</string>
     <string name="stat_today">vandaag</string>
     <string name="stat_in_7_days">in 7 dagen</string>

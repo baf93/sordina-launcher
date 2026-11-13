@@ -78,18 +78,24 @@ class Brain(
                 if (t < keep) { stale++; return@forEachLine }
                 when (p[0]) {
                     "G" -> if (p.size >= 9) m.add(Gesture(t, p[2], situationOf(t, p).features(true)))
+                    // Cercata perché non c'era tra le proposte: un gesto in più, nella stessa situazione
+                    "M" -> if (p.size >= 9) { m.add(Gesture(t, p[2], situationOf(t, p).features(true), MISS_WEIGHT)); misses += t }
+                    "P" -> hits += t
+                    "N" -> if (p.size >= 3) m.notified(p[2], t)
+                    "I" -> if (p.size >= 3) m.shown(t, p[2].split(',').filter { it.isNotEmpty() })
                     "C" -> if (p.size >= 4) m.addChoice(t, p[2], p[3])
                     "T" -> if (p.size >= 4) timeline += Triple(t, p[2], p[3])
                 }
             }
         }
+        m.tune = savedTune()
         model = m
         lastIngestAt = sp.getLong("ingest", 0L)
         if (stale > 200) compact(keep)
     }
 
     private fun situationOf(t: Long, p: List<String>) = Situation(
-        t, p[3].unknown(), p[4].bool(), p[5].bool(), p[6].bool(), p[7].unknown(), p[8].bool(),
+        t, p[3].unknown(), p[4].bool(), p[5].bool(), p[6].bool(), p[7].unknown(), p[8].bool(), device = p.getOrNull(9)?.unknown(),
     )
 
     private fun String.unknown() = if (this == "?") null else this
@@ -106,11 +112,18 @@ class Brain(
         }
     }
 
+    /** Quando hai preso una proposta o una scheda (P) e quando hai dovuto cercare (M): il numero da far scendere. */
+    private val hits = ArrayList<Long>()
+    private val misses = ArrayList<Long>()
+    /** Le proposte in Casa adesso (cose del cervello). */
+    @Volatile private var showing: Set<String> = emptySet()
+    private val notifiedLog = HashMap<String, Long>()
+
     @Synchronized
     private fun remember(item: String, s: Situation) {
         ensure()
         model.add(Gesture(s.time, item, s.features(true)))
-        append(listOf("G", s.time, item.enc(), s.wifi.enc(), s.car.enc(), s.headset.enc(), s.charging.enc(), s.previous.enc(), s.fresh.enc()).joinToString("\t"))
+        append(listOf("G", s.time, item.enc(), s.wifi.enc(), s.car.enc(), s.headset.enc(), s.charging.enc(), s.previous.enc(), s.fresh.enc(), s.device.enc()).joinToString("\t"))
     }
 
     // Situazione
@@ -122,6 +135,58 @@ class Brain(
         wifi = v
         mark("pl", v)
     }
+
+    // Regolarsi da soli
+
+    private val tuning = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    private fun savedTune() = Tune(
+        sp.getFloat("t_r", Model.RECENT_GAIN.toFloat()).toDouble(),
+        sp.getFloat("t_n", Model.NOTIFY_GAIN.toFloat()).toDouble(),
+        sp.getFloat("t_i", Model.IGNORE_GAIN.toFloat()).toDouble(),
+    )
+
+    /**
+     * In carica: una volta al giorno il cervello rigioca gli ultimi 60 giorni e regola i pesi dei segnali
+     * su come usi tu il telefono. Su un filo a priorità minima, mai a batteria.
+     */
+    fun tuneIfDue(charging: Boolean) {
+        if (!charging || System.currentTimeMillis() - sp.getLong("tuned", 0L) < 20 * 3_600_000L) return
+        if (!tuning.compareAndSet(false, true)) return
+        Thread {
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_LOWEST)
+            runCatching {
+                val from = System.currentTimeMillis() - 60 * Model.DAY
+                val events = ArrayList<Tuner.Event>()
+                if (file.exists()) file.forEachLine { line ->
+                    val p = line.split('\t')
+                    val t = p.getOrNull(1)?.toLongOrNull() ?: return@forEachLine
+                    if (t < from) return@forEachLine
+                    when (p[0]) {
+                        "G", "M" -> if (p.size >= 9) events += Tuner.Event(p[0][0], t, p[2], situationOf(t, p))
+                        "N", "I" -> if (p.size >= 3) events += Tuner.Event(p[0][0], t, p[2], null)
+                    }
+                }
+                events.sortBy { it.time }
+                Tuner.tune(events, savedTune(), MISS_WEIGHT)?.let { r ->
+                    sp.edit().putFloat("t_r", r.tune.recent.toFloat()).putFloat("t_n", r.tune.notify.toFloat())
+                        .putFloat("t_i", r.tune.ignore.toFloat()).apply()
+                    synchronized(this) { model.tune = r.tune }
+                }
+            }
+            sp.edit().putLong("tuned", System.currentTimeMillis()).apply()
+            tuning.set(false)
+        }.start()
+    }
+
+    /** Contexts: il dispositivo Bluetooth audio collegato ("" = nessuno). */
+    fun onDevice(name: String) = mark("bt", name)
+
+    /**
+     * Contexts/Casa: dove sei quando non c'è Wi-Fi, da una posizione che il telefono aveva già (nessuna richiesta in più).
+     * Una cella di qualche centinaio di metri: abbastanza per distinguere palestra, ufficio, supermercato.
+     */
+    fun onPlace(cell: String) { if (wifi.isNullOrEmpty()) mark("pl", cell) }
 
     /** Contexts: auto, cuffie, carica. */
     fun onState(group: String, on: Boolean) = mark(group, if (on) "1" else "0")
@@ -138,6 +203,26 @@ class Brain(
     /** Com'era la situazione a [t], dai cambi registrati. */
     private fun stateAt(t: Long, group: String): String? = timeline.lastOrNull { it.second == group && it.first <= t }?.third
 
+    /** Il luogo a [t]: il Wi-Fi, o la cella della posizione se è recente (una cella vecchia non dice dove sei adesso). */
+    private fun placeAt(t: Long): String? {
+        val e = timeline.lastOrNull { it.second == "pl" && it.first <= t } ?: return null
+        return if (e.third.startsWith("@") && t - e.first > 45 * 60_000) "" else e.third
+    }
+
+    /**
+     * Dove sei, senza Wi-Fi: l'ultima posizione che il telefono conosce già (Maps, meteo…), letta e mai chiesta.
+     * Nessun GPS acceso da Sordina, nessuna batteria in più. Solo se è recente e abbastanza precisa.
+     */
+    fun samplePlace() {
+        if (!wifi.isNullOrEmpty()) return
+        if (context.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) return
+        val loc = runCatching {
+            context.getSystemService(android.location.LocationManager::class.java).getLastKnownLocation(android.location.LocationManager.PASSIVE_PROVIDER)
+        }.getOrNull() ?: return
+        if (System.currentTimeMillis() - loc.time > 20 * 60_000 || (loc.hasAccuracy() && loc.accuracy > 400f)) return
+        onPlace(cellOf(loc.latitude, loc.longitude))
+    }
+
     /** Adesso. */
     fun now(): Situation {
         val t = System.currentTimeMillis()
@@ -148,12 +233,13 @@ class Brain(
         val charging = runCatching { context.getSystemService(BatteryManager::class.java).isCharging }.getOrNull()
         return Situation(
             time = t,
-            wifi = wifi ?: stateAt(t, "pl"),
+            wifi = wifi?.takeIf { it.isNotEmpty() } ?: placeAt(t) ?: wifi,
             car = stateAt(t, "car")?.let { it == "1" } ?: false,
             headset = headset,
             charging = charging,
             previous = if (prevApp.isNotEmpty() && t - lastAppAt < 10 * 60_000) "app:$prevApp" else "",
             fresh = lastUnlock > 0 && t - lastUnlock < 2 * 60_000,
+            device = stateAt(t, "bt"),
         )
     }
 
@@ -187,8 +273,8 @@ class Brain(
                         // L'app di prima: anche passando dalla Home in mezzo (Maps → Casa → Spotify)
                         val prev = if (prevApp.isNotEmpty() && prevApp != pkg && ts - lastAppAt < 10 * 60_000) "app:$prevApp" else ""
                         val s = Situation(
-                            ts, stateAt(ts, "pl"), stateAt(ts, "car")?.let { it == "1" }, stateAt(ts, "hs")?.let { it == "1" },
-                            stateAt(ts, "chg")?.let { it == "1" }, prev, lastUnlock > 0 && ts - lastUnlock < 2 * 60_000,
+                            ts, placeAt(ts), stateAt(ts, "car")?.let { it == "1" }, stateAt(ts, "hs")?.let { it == "1" },
+                            stateAt(ts, "chg")?.let { it == "1" }, prev, lastUnlock > 0 && ts - lastUnlock < 2 * 60_000, device = stateAt(ts, "bt"),
                         )
                         remember("app:$pkg", s)
                     }
@@ -230,6 +316,65 @@ class Brain(
         }
         // Le app le ricorda la cronologia d'uso (con la situazione giusta); senza accesso, si ricordano qui
         if (c.act !is Act.OpenApp || !usageAccess) remember(item, now())
+        if (nq.isEmpty()) {
+            // Presa da una proposta o da una scheda: Sordina aveva visto giusto
+            synchronized(this) { ensure(); hits += now }
+            append("P\t$now\t${item.enc()}")
+        } else if (item !in showing) missed(item)
+    }
+
+    /**
+     * Hai dovuto cercarla (nella barra o nell'elenco delle app): andava proposta. Se ricapita nella stessa
+     * situazione, la prossima volta c'è. Una ricerca isolata (una cosa fuori dal solito) resta un caso.
+     */
+    fun missed(item: String) {
+        if (item in showing) return
+        val now = System.currentTimeMillis()
+        run {
+            val s = now()
+            synchronized(this) { ensure(); model.add(Gesture(now, item, s.features(true), MISS_WEIGHT)); misses += now }
+            append(listOf("M", now, item.enc(), s.wifi.enc(), s.car.enc(), s.headset.enc(), s.charging.enc(), s.previous.enc(), s.fresh.enc(), s.device.enc()).joinToString("\t"))
+        }
+    }
+
+    /** Hai aperto qualcosa da una scheda (non dalla ricerca): conta come colpo giusto. */
+    fun hit(item: String) {
+        val now = System.currentTimeMillis()
+        synchronized(this) { ensure(); hits += now }
+        append("P\t$now\t${item.enc()}")
+    }
+
+    /** Le proposte che stai guardando in Casa. */
+    fun shown(items: List<String>) {
+        showing = items.toSet()
+        val now = System.currentTimeMillis()
+        synchronized(this) { ensure(); model.shown(now, items) }
+        append("I\t$now\t${items.joinToString(",") { it.enc().replace(',', ' ') }}")
+    }
+
+    /** Un'app ti ha mandato una notifica che vedi (non quelle fisse): è probabile che la apri. */
+    fun onNotified(pkg: String) {
+        val now = System.currentTimeMillis()
+        val item = "app:$pkg"
+        synchronized(this) {
+            ensure()
+            model.notified(item, now)
+            // Nella memoria al massimo una ogni 5 minuti per app
+            if (now - (notifiedLog[item] ?: 0L) < 5 * 60_000) return
+            notifiedLog[item] = now
+        }
+        append("N\t$now\t${item.enc()}")
+    }
+
+    /**
+     * Quante volte, negli ultimi [days] giorni, hai dovuto cercare invece di trovare la cosa già lì:
+     * (cercate, trovate). Il numero che Sordina deve far scendere.
+     */
+    @Synchronized
+    fun missStats(days: Int = 7): Pair<Int, Int> {
+        ensure()
+        val from = System.currentTimeMillis() - days * Model.DAY
+        return misses.count { it >= from } to hits.count { it >= from }
     }
 
     /** Hai toccato la notifica di un messaggio: con quella persona stai parlando, su quell'app. */
@@ -289,35 +434,63 @@ class Brain(
      * Le proposte per adesso, la più probabile per prima. [realize] trasforma una cosa in un'azione
      * (null se non esiste più: app disinstallata, contatto sparito).
      */
-    fun suggest(count: Int, skip: (String) -> Boolean, realize: (String) -> Candidate?): List<Suggestion> {
+    fun suggest(
+        count: Int, skip: (String) -> Boolean,
+        /** Quello che succede adesso fuori dalle abitudini (una riunione tra poco): cosa → (spinta, perché) */
+        boosts: Map<String, Pair<Double, String>> = emptyMap(),
+        realize: (String) -> Candidate?,
+    ): List<Suggestion> {
         ensure()
         val m = model
         val s = now()
         val f = s.features(learning = false)
         val waiting = pending()
-        val pool = (m.items + waiting.keys.filter { it.startsWith("msg:") }).distinct()
+        val pool = (m.items + waiting.keys.filter { it.startsWith("msg:") } + boosts.keys).distinct()
         return pool.asSequence()
             .filterNot(skip)
             .map { item ->
-                var score = m.score(item, f)
+                var score = m.predict(item, f, s.time)
                 // Chi ti ha scritto: rispondere è probabile, anche se non è la tua ora solita
                 if (item in waiting) score = (if (score.isInfinite()) -6.0 else score) + if (item.startsWith("msg:")) 2.0 else 0.4
+                boosts[item]?.let { score = (if (score.isInfinite()) -6.0 else score) + it.first }
                 item to score
             }
             .filter { it.second.isFinite() }
             .sortedByDescending { it.second }
-            .mapNotNull { (item, score) -> realize(item)?.let { Suggestion(it, item, score, why(m, item, f, waiting, s)) } }
+            .mapNotNull { (item, score) -> realize(item)?.let { Suggestion(it, item, score, boosts[item]?.second ?: why(m, item, f, waiting, s)) } }
             .distinctBy { it.candidate.id }
             .take(count)
             .toList()
     }
 
+    /**
+     * La cosa che il cervello è sicuro ti serva adesso (probabilità almeno [minP] fra tutte),
+     * se non l'hai già fatta da [since]. Per la scheda "di solito": compare solo quando è quasi certo.
+     */
+    fun best(minP: Double, since: Long, skip: (String) -> Boolean, realize: (String) -> Candidate?): Suggestion? {
+        ensure()
+        val m = model
+        val s = now()
+        val f = s.features(learning = false)
+        val scored = m.items.filterNot(skip).map { it to m.predict(it, f, s.time) }.filter { it.second.isFinite() }
+        if (scored.size < 2) return null
+        val (item, top) = scored.maxBy { it.second }
+        val p = 1.0 / scored.sumOf { kotlin.math.exp(it.second - top) }
+        if (p < minP || m.times(item) < 3 || (m.lastUsed(item) ?: 0L) >= since) return null
+        val c = realize(item) ?: return null
+        return Suggestion(c, item, p, why(m, item, f, pending(), s))
+    }
+
     private fun why(m: Model, item: String, f: List<Feature>, waiting: Map<String, String>, s: Situation): String {
         if (item.startsWith("msg:")) waiting[item]?.let { return tr(R.string.why_wrote, it) }
+        if (m.notifiedBoost(item, s.time) >= 0.8) return tr(R.string.why_notified)
+        // Usata pochi minuti fa: è questo che la porta su, non l'abitudine
+        if (m.recency(item, s.time) >= 1.5 && (m.reason(item, f) == null || m.times(item) < 3)) return tr(R.string.why_recent)
         val r = m.reason(item, f) ?: return if (m.times(item) >= 5) tr(R.string.why_used) else tr(R.string.why_recent)
         return when (r.group) {
             "h" -> tr(R.string.why_time)
-            "pl" -> if (r.value == "-") tr(R.string.why_out) else tr(R.string.why_place, r.value)
+            "pl" -> when { r.value == "-" -> tr(R.string.why_out); r.value.startsWith("@") -> tr(R.string.why_spot); else -> tr(R.string.why_place, r.value) }
+            "bt" -> if (r.value == "-") tr(R.string.why_time) else tr(R.string.why_device, r.value)
             "car" -> if (r.value == "1") tr(R.string.why_car) else tr(R.string.why_time)
             "hs" -> if (r.value == "1") tr(R.string.why_headset) else tr(R.string.why_time)
             "chg" -> if (r.value == "1") tr(R.string.why_charging) else tr(R.string.why_time)
@@ -376,7 +549,7 @@ class Brain(
         ensure()
         val m = model
         val f = now().features(learning = false)
-        return m.items.filter { it.startsWith(prefix) }.sortedByDescending { m.score(it, f) }.take(limit)
+        return m.items.filter { it.startsWith(prefix) }.sortedByDescending { m.predict(it, f, System.currentTimeMillis()) }.take(limit)
     }
 
     /** Il contatto con questo nome (normalizzato), se c'è in rubrica. */
@@ -384,6 +557,9 @@ class Brain(
 
     companion object {
         private const val KEEP_DAYS = 120L
+        /** Una cella di circa 280 × 200 metri (alle nostre latitudini): abbastanza per un posto, mai un indirizzo. */
+        fun cellOf(lat: Double, lon: Double) = "@" + kotlin.math.round(lat * 400).toLong() + "_" + kotlin.math.round(lon * 400).toLong()
+        const val MISS_WEIGHT = 1.0
         private const val KEYGUARD_HIDDEN = 18
         /** MOVE_TO_FOREGROUND / ACTIVITY_RESUMED */
         private const val FOREGROUND = 1

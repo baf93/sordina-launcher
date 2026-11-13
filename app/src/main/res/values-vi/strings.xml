@@ -80,16 +80,11 @@
     <string name="cat_phone">Điện thoại</string>
     <string name="cat_apps">Ứng dụng khác</string>
     <string name="braked_section">Đã phanh</string>
-    <string name="brake_p1">Bảng tin một giờ nữa vẫn vậy.</string>
     <string name="brake_p2">Bạn định làm gì?</string>
     <string name="brake_p3">Những giây này là của bạn.</string>
-    <string name="brake_p4">Bạn không bỏ lỡ gì cả.</string>
-    <string name="brake_p5">Hít thở. Rồi quyết định.</string>
     <string name="brake_p6">Có việc gì tốt hơn không?</string>
     <string name="brake_p7">Buồn chán một chút cũng ổn.</string>
-    <string name="brake_p8">Nhìn ra cửa sổ đi.</string>
     <string name="brake_p9">Bây giờ có thật cần không?</string>
-    <string name="brake_p10">Sự chú ý của bạn đáng giá.</string>
     <string name="brake_not_today">Hôm nay chưa mở</string>
     <string name="brake_today">Hôm nay: %1$s · %2$s</string>
     <string name="inhale">hít vào</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">Thôi</string>
     <string name="open_in">Mở sau %1$d giây</string>
     <string name="open_anyway">Vẫn mở</string>
-    <string name="well_done">Tốt lắm.</string>
     <string name="time_back">Khoảng %1$s trở lại với bạn.</string>
     <string name="stat_today">hôm nay</string>
     <string name="stat_in_7_days">trong 7 ngày</string>

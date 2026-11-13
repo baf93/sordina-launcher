@@ -80,16 +80,11 @@
     <string name="cat_phone">전화</string>
     <string name="cat_apps">기타 앱</string>
     <string name="braked_section">브레이크 중</string>
-    <string name="brake_p1">피드는 한 시간 뒤에도 똑같아요.</string>
     <string name="brake_p2">무엇을 하려던 참이었나요?</string>
     <string name="brake_p3">이 몇 초는 당신의 것이에요.</string>
-    <string name="brake_p4">놓친 건 없어요.</string>
-    <string name="brake_p5">숨 쉬고, 그다음 결정하세요.</string>
     <string name="brake_p6">더 좋은 할 일이 있나요?</string>
     <string name="brake_p7">심심한 것도 괜찮아요.</string>
-    <string name="brake_p8">창밖을 봐요.</string>
     <string name="brake_p9">정말 지금 필요한가요?</string>
-    <string name="brake_p10">당신의 집중은 소중해요.</string>
     <string name="brake_not_today">오늘 아직 안 열었어요</string>
     <string name="brake_today">오늘: %1$s · %2$s</string>
     <string name="inhale">들이쉬고</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">그만두기</string>
     <string name="open_in">%1$d초 후 열기</string>
     <string name="open_anyway">그래도 열기</string>
-    <string name="well_done">잘했어요.</string>
     <string name="time_back">약 %1$s을 되찾았어요.</string>
     <string name="stat_today">오늘</string>
     <string name="stat_in_7_days">7일간</string>

@@ -71,6 +71,8 @@ class SordinaListener : NotificationListenerService() {
         if (reason == REASON_CLICK || reason == REASON_APP_CANCEL) runCatching {
             val info = Classifier.read(sbn)
             if (info.isMessage && !info.isGroupSummary) Talking.mark(info.pkg, info.conversation ?: info.person)
+            // In auto: mentre scrivi a qualcuno, Non disturbare lascia passare i messaggi
+            if (info.isMessage && SordinaApp.of(this).prefs.quietCar) Scheduler.refresh(this)
             // Toccata da te, in una chat a due: il cervello impara a chi rispondi e quando
             if (reason == REASON_CLICK && info.isMessage && !info.isGroupSummary && info.conversation == null) {
                 info.person?.let { app.brain.onMessageOpened(info.pkg, it) }
@@ -103,6 +105,10 @@ class SordinaListener : NotificationListenerService() {
         // Una notifica fissa o silenziosa (la "connessione attiva" di un'app) messa in sordina con una regola per tipo:
         // sparisce dalla tendina ma non entra nell'elenco, non c'è niente da leggere. Quando Android la rimette, si riposticipa.
         val technical = info.ongoing || importance in 1..NotificationManager.IMPORTANCE_LOW
+        // Un'app che ti ha appena scritto (una notifica vera, nuova): è probabile che la apri, il cervello la porta su
+        if (!technical && !info.system && !info.isGroupSummary && existing == null && sbn.packageName != packageName) {
+            runCatching { app.brain.onNotified(sbn.packageName) }
+        }
         if (technical) {
             if (level == Level.RIEPILOGO && verdict.reason == "regola del tipo") runCatching { snoozeNotification(key, HOLD_MILLIS) }
             if (existing == null) return
@@ -207,6 +213,14 @@ class SordinaListener : NotificationListenerService() {
                 val signals = SordinaApp.of(this).signals
                 // Aggiornata e non serve più una scheda (la corsa è finita, il codice è stato sostituito): via quella di prima
                 if (c == null) signals.remove(sbn.key) else signals.put(c)
+                // Un messaggio con un piano ("domani alle 20 da me", un indirizzo, un codice di spedizione): una scheda per quel momento
+                // Le tue risposte nella conversazione: Sordina impara cosa rispondi di solito
+                if (info.isMessage && !info.isGroupSummary) Classifier.replyPairs(sbn).forEach { (t, a, b) -> SordinaApp.of(this).replies.learn(a, b, t) }
+                val mail = info.category == android.app.Notification.CATEGORY_EMAIL
+                if (c == null && (info.isMessage || mail) && !info.ongoing && !info.isGroupSummary && !info.system) {
+                    SordinaApp.of(this).plans.scan(sbn.key, label(sbn.packageName), if (mail) null else info.conversation ?: info.person,
+                        if (mail) "${info.title}\n${info.text}" else info.text, sbn.postTime, mail)
+                }
             }
         }
     }

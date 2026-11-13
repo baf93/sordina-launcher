@@ -80,16 +80,11 @@
     <string name="cat_phone">Puhelin</string>
     <string name="cat_apps">Muut sovellukset</string>
     <string name="braked_section">Jarrutetut</string>
-    <string name="brake_p1">Syöte on sama tunnin päästä.</string>
     <string name="brake_p2">Mitä olit tekemässä?</string>
     <string name="brake_p3">Nämä sekunnit ovat sinun.</string>
-    <string name="brake_p4">Et ole menettänyt mitään.</string>
-    <string name="brake_p5">Hengitä. Päätä sitten.</string>
     <string name="brake_p6">Onko jotain parempaa tekemistä?</string>
     <string name="brake_p7">Tylsistyminenkin on ok.</string>
-    <string name="brake_p8">Katso ulos ikkunasta.</string>
     <string name="brake_p9">Tarvitsetko sitä nyt oikeasti?</string>
-    <string name="brake_p10">Huomiosi on sen arvoinen.</string>
     <string name="brake_not_today">Ei vielä avattu tänään</string>
     <string name="brake_today">Tänään: %1$s · %2$s</string>
     <string name="inhale">sisään</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">Anna olla</string>
     <string name="open_in">Avaa %1$d s päästä</string>
     <string name="open_anyway">Avaa silti</string>
-    <string name="well_done">Hienoa.</string>
     <string name="time_back">Noin %1$s takaisin sinulle.</string>
     <string name="stat_today">tänään</string>
     <string name="stat_in_7_days">7 päivässä</string>

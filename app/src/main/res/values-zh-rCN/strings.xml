@@ -80,16 +80,11 @@
     <string name="cat_phone">电话</string>
     <string name="cat_apps">其他应用</string>
     <string name="braked_section">已减速</string>
-    <string name="brake_p1">一小时后信息流还是一样。</string>
     <string name="brake_p2">你刚才想做什么？</string>
     <string name="brake_p3">这几秒属于你。</string>
-    <string name="brake_p4">你什么都没错过。</string>
-    <string name="brake_p5">深呼吸，再决定。</string>
     <string name="brake_p6">有更好的事可做吗？</string>
     <string name="brake_p7">无聊一下也不错。</string>
-    <string name="brake_p8">看看窗外吧。</string>
     <string name="brake_p9">现在真的需要吗？</string>
-    <string name="brake_p10">你的注意力很珍贵。</string>
     <string name="brake_not_today">今天还没打开</string>
     <string name="brake_today">今天：%1$s · %2$s</string>
     <string name="inhale">吸气</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">算了</string>
     <string name="open_in">%1$d 秒后打开</string>
     <string name="open_anyway">仍然打开</string>
-    <string name="well_done">做得好。</string>
     <string name="time_back">大约 %1$s 回到了你手里。</string>
     <string name="stat_today">今天</string>
     <string name="stat_in_7_days">7 天内</string>

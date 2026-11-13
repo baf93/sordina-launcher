@@ -23,6 +23,10 @@ object Talking {
     fun active(pkg: String, who: String?, now: Long = System.currentTimeMillis()): Boolean =
         who != null && (until[key(pkg, who)] ?: 0L) > now
 
+    /** C'è una conversazione in corso (qualunque) e quando finisce l'ultima. */
+    @Synchronized
+    fun lastUntil(now: Long = System.currentTimeMillis()): Long? = until.values.filter { it > now }.maxOrNull()
+
     @Synchronized
     fun clear() = until.clear()
 }

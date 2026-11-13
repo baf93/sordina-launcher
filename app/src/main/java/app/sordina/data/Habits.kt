@@ -125,26 +125,42 @@ class Habits(private val context: Context) {
         sp.edit().putString("skips", list.joinToString("|") { "${it.day},${it.pkg},${it.minutes}" }).apply()
     }
 
-    data class Streak(val today: Int, val days: Int, val weekMinutes: Int, val week: List<Boolean>)
+    /** Aperta dal freno: toglie [minutes] dal totale (una voce negativa). La serie non si rompe: conta solo le vittorie. */
+    fun logOpen(pkg: String, minutes: Int) {
+        if (minutes > 0) logSkip(pkg, -minutes)
+    }
+
+    data class Streak(val today: Int, val days: Int, val weekMinutes: Int, val week: List<Boolean>, val totalMinutes: Int = 0) {
+        /** Il livello: sale con i minuti ripresi (15, 45, 90, 150… per i livelli 2, 3, 4, 5…). */
+        val level: Int get() = levelOf(totalMinutes)
+    }
+
 
     /** Rinunce di oggi, giorni di fila con almeno una rinuncia, minuti ripresi negli ultimi 7 giorni, la settimana (lunedì → domenica). */
     fun streak(): Streak {
         val all = skips()
         val today = LocalDate.now()
-        val days = all.map { it.day }.toSet()
+        val wins = all.filter { it.minutes > 0 }
+        val days = wins.map { it.day }.toSet()
         var d = if (today in days) today else today.minusDays(1)
         var run = 0
         while (d in days) { run++; d = d.minusDays(1) }
         val weekStart = today.minusDays((today.dayOfWeek.value - 1).toLong())
         return Streak(
-            today = all.count { it.day == today },
+            today = wins.count { it.day == today },
             days = run,
-            weekMinutes = all.filter { !it.day.isBefore(today.minusDays(6)) }.sumOf { it.minutes },
+            weekMinutes = all.filter { !it.day.isBefore(today.minusDays(6)) }.sumOf { it.minutes }.coerceAtLeast(0),
             week = (0..6).map { weekStart.plusDays(it.toLong()) in days },
+            totalMinutes = all.sumOf { it.minutes }.coerceAtLeast(0),
         )
     }
 
     companion object {
+        /** Minuti ripresi per arrivare al livello [l]. */
+        fun levelStart(l: Int): Int = 15 * (l - 1) * l / 2
+        fun levelOf(minutes: Int): Int { var l = 1; while (levelStart(l + 1) <= minutes) l++; return l }
+        /** Quanto costa aprire: metà del premio, senza mai farti scendere di livello. */
+        fun penalty(s: Streak, gain: Int): Int = minOf((gain + 1) / 2, s.totalMinutes - levelStart(s.level)).coerceAtLeast(0)
         private const val KEYGUARD_HIDDEN = 18
     }
 }

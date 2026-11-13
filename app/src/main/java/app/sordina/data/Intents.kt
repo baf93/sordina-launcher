@@ -2,6 +2,7 @@ package app.sordina.data
 
 import app.sordina.R
 import app.sordina.tr
+import app.sordina.SordinaApp
 
 import android.content.Context
 import android.provider.Settings
@@ -75,9 +76,27 @@ class Intents(
     private val ha: HomeAssistant,
     private val brain: app.sordina.data.brain.Brain,
 ) {
+    /** Quello che il telefono sa per capire le frasi libere: nomi, chi ti ha scritto, chi ti ha chiamato. */
+    private fun hints(apps: List<AppEntry>) = object : Phrase.Hints {
+        override fun isName(word: String) = word.length >= 3 && (
+            people.all().any { c -> c.normalized.split(' ').any { it == word } } || apps.any { a -> a.normalized.split(' ').any { it == word } })
+        override fun lastWriter(): String? =
+            store.held.value.values.filter { it.isMessage && it.conversation == null && !it.person.isNullOrBlank() }
+                .maxByOrNull { it.time }?.person
+                ?: runCatching { app.sordina.service.SordinaListener.tray() }.getOrDefault(emptyList())
+                    .firstOrNull { !it.person.isNullOrBlank() && Via.ofPackage(it.pkg) != null }?.person
+        override fun lastPerson(): String? = lastPerson?.takeIf { System.currentTimeMillis() - it.second < 15 * 60_000 }?.first?.name
+        override fun lastCaller(): String? = runCatching {
+            SordinaApp.of(context).signals.cards.value.values.filter { it.kind == CardKind.CALL }.maxByOrNull { it.time }?.title
+        }.getOrNull()
+    }
+
     fun understand(query: String, apps: List<AppEntry>, usage: Map<String, Double>): Understanding {
-        val q = query.trim()
-        if (q.isEmpty()) return Understanding(emptyList(), false)
+        val raw = query.trim()
+        if (raw.isEmpty()) return Understanding(emptyList(), false)
+        // Le frasi dette in mille modi diventano quella che il motore conosce ("puoi chiamare Elisa?" → "chiama Elisa")
+        val q = runCatching { Phrase.canonical(raw, hints(apps)) }.getOrDefault(raw).ifBlank { raw }
+        track(Search.normalize(raw))
         val ow = q.split(Regex("\\s+"))
         val nw = ow.map { Search.normalize(it) }
         val nq = nw.filter { it.isNotEmpty() }.joinToString(" ")
@@ -90,6 +109,12 @@ class Intents(
         if (nq.isNotEmpty()) {
             Search.apps(q, apps, usage, 5).forEach { a ->
                 out += Candidate("app:${a.key}", a.label, if (a.isWork) tr(R.string.work_profile) else null, Kind.APP, Search.score(nq, a.normalized), false, Act.OpenApp(a), a)
+            }
+            // Un soprannome imparato ("mamma"): la persona in cima
+            nickname(nq)?.let { c ->
+                out += Candidate("call:${c.id}", tr(R.string.call_x, c.name), c.number, Kind.PERSON, 88, true, Act.Call(c))
+                val via = viaFor(c, null)
+                out += Candidate("msg:${c.id}", tr(R.string.write_to_x, c.name), via.label, Kind.PERSON, 86, true, Act.Message(c, "", via))
             }
             people.search(nq, 2).forEach { c ->
                 val s = Search.score(nq, c.normalized)
@@ -118,21 +143,21 @@ class Intents(
         }
 
         // Quello che di solito scegli con queste lettere, e quanto è probabile adesso
-        val reranked = brain.rerank(q, out) { realize(it, apps, usage) }
+        val reranked = brain.rerank(raw, out) { realize(it, apps, usage) }
 
         // Correzioni imparate (la frase intera scelta più in basso)
-        val learned = prefs.aliases[nq]
+        val learned = prefs.aliases[Search.normalize(raw)] ?: prefs.aliases[nq]
         val ranked = reranked
             .map { if (it.id == learned) it.copy(score = (it.score + 30).coerceAtMost(100)) else it }
             .groupBy { it.id }.map { g -> g.value.maxBy { it.score } }
             .sortedWith(compareByDescending<Candidate> { it.score }
                 .thenByDescending { it.app?.let { a -> usage[a.packageName] } ?: 0.0 })
             .take(5)
-        val web = Candidate("web", tr(R.string.search_web_x, q), null, Kind.WEB, 0, false, Act.Web(q))
+        val web = Candidate("web", tr(R.string.search_web_x, raw), null, Kind.WEB, 0, false, Act.Web(raw))
         val top = ranked.firstOrNull()
         val second = ranked.getOrNull(1)
         val confident = top != null && top.score >= 85 &&
-            (second == null || top.score - second.score >= 10 || top.id == learned || brain.learnedFor(q, top) >= 0.7)
+            (second == null || top.score - second.score >= 10 || top.id == learned || brain.learnedFor(raw, top) >= 0.7)
         // Sicurezza bassa: "Cerca sul web" in cima
         val list = if (top == null || top.score < 45) listOf(web) + ranked else ranked + web
         return Understanding(list, confident)
@@ -174,10 +199,66 @@ class Intents(
         return out.sortedByDescending { it.score }
     }
 
+    // Il filo del discorso
+
+    /** L'ultima persona chiamata o scritta: "chiamala", "scrivile che arrivo" sono per lei (per 15 minuti). */
+    @Volatile private var lastPerson: Pair<Contact, Long>? = null
+
+    /** La frase più lunga scritta adesso, e quella di prima lasciata a metà (per imparare dalle riformulazioni). */
+    private var peak = ""
+    private var peakAt = 0L
+    private var attempt: Pair<String, Long>? = null
+
+    @Synchronized
+    private fun track(nq: String) {
+        if (nq.isEmpty() || peak.startsWith(nq)) return // stai cancellando
+        val now = System.currentTimeMillis()
+        if (nq.startsWith(peak)) { peak = nq; peakAt = now; return }
+        // Una frase nuova che non continua la precedente: quella di prima non ha portato a niente
+        if (peak.length >= 3) attempt = peak to peakAt
+        peak = nq; peakAt = now
+    }
+
+    /**
+     * Hai scritto "mamma", non è uscito niente, hai riscritto "maria" e l'hai scelta:
+     * d'ora in poi "mamma" è lei (anche a voce). Solo se la frase di prima non era già il suo nome.
+     */
+    private fun learnNickname(c: Contact, now: Long) {
+        val (text, at) = attempt ?: return
+        if (now - at > 2 * 60_000) return
+        val words = text.split(' ').filter { it.isNotEmpty() && it !in FILLER }
+        val nick = words.joinToString(" ")
+        if (nick.length < 3 || words.size > 2 || Search.score(nick, c.normalized) >= 75) return
+        // Un nome che è già di un altro contatto non diventa un soprannome
+        if (people.all().any { it.normalized != c.normalized && Search.score(nick, it.normalized) >= 75 }) return
+        prefs.nicknames = prefs.nicknames + (nick to c.normalized)
+    }
+
+    /** L'ultimo messaggio di questa persona che aspetta risposta (in Sordina o nella tendina). */
+    private fun lastFrom(c: Contact): String? {
+        val n = c.normalized
+        return store.held.value.values.filter { it.isMessage && it.conversation == null && it.person?.let(Search::normalize) == n }
+            .maxByOrNull { it.time }?.text
+            ?: runCatching { app.sordina.service.SordinaListener.tray() }.getOrDefault(emptyList())
+                .firstOrNull { it.person?.let(Search::normalize) == n }?.text
+    }
+
+    /** Il contatto di un soprannome imparato. */
+    private fun nickname(name: String): Contact? = prefs.nicknames[name]?.let { n -> people.all().firstOrNull { it.normalized == n } }
+
     /** Registra cosa è stato scelto: misura e correzioni. */
     fun chosen(query: String, c: Candidate, index: Int) {
         prefs.intentTotal = prefs.intentTotal + 1
         if (index == 0) prefs.intentFirst = prefs.intentFirst + 1
+        val now = System.currentTimeMillis()
+        val contact = when (val a = c.act) { is Act.Call -> a.contact; is Act.Message -> a.contact; else -> null }
+        if (contact != null) {
+            lastPerson = contact to now
+            // Hai scritto qualcosa di breve: è una risposta da ricordare
+            (c.act as? Act.Message)?.text?.takeIf { it.isNotBlank() }?.let { t -> lastFrom(contact)?.let { SordinaApp.of(context).replies.learn(it, t, now) } }
+            learnNickname(contact, now)
+        }
+        peak = ""; attempt = null
         val nq = Search.normalize(query)
         if (nq.isEmpty() || c.kind == Kind.WEB) return
         if (index > 0) prefs.aliases = prefs.aliases + (nq to c.id)
@@ -250,6 +331,12 @@ class Intents(
             val text = textWords.joinToString(" ").replaceFirstChar { it.uppercase() }
             val v = viaFor(c, via)
             out += Candidate("msg:${c.id}:${v.name}", tr(R.string.write_to_x, c.name), (if (text.isNotBlank()) "«$text» · " else "") + v.label, Kind.PERSON, if (s >= 80) 95 else 80, true, Act.Message(c, text, v))
+            // Senza testo: le risposte che dai di solito a un messaggio come il suo ("Arrivo!", "Ok a dopo"), un tocco più in basso
+            if (text.isBlank()) lastFrom(c)?.let { incoming ->
+                SordinaApp.of(context).replies.suggest(incoming).forEachIndexed { i, r ->
+                    out += Candidate("msg:${c.id}:${v.name}:r$i", tr(R.string.write_to_x, c.name), "«$r» · " + v.label, Kind.PERSON, 79 - i, true, Act.Message(c, r, v))
+                }
+            }
             // Le altre destinazioni, un tocco più in basso
             Via.entries.filter { it != v && installed(it) }.take(2).forEach { o ->
                 out += Candidate("msg:${c.id}:${o.name}", tr(R.string.write_to_x, c.name), tr(R.string.on_x, o.label), Kind.PERSON, 70, true, Act.Message(c, text, o))
@@ -357,6 +444,7 @@ class Intents(
         for (n in minOf(4, words.size) downTo 1) {
             val name = words.take(n).joinToString(" ")
             if (name.length < 2) continue
+            nickname(name)?.let { return Triple(it, 95, n) }
             val best = people.all().map { it to Search.score(name, it.normalized) }
                 .filter { it.second >= 75 }
                 .maxWithOrNull(compareBy<Pair<Contact, Int>> { it.second }
@@ -452,6 +540,9 @@ class Intents(
                 if (h > 0) "$h h" else null, if (m > 0) "$m min" else null, if (s > 0) "$s s" else null,
             ).joinToString(" ").ifEmpty { "0 s" }
         }
+
+        /** Le parole che non sono un nome, in "chiama la mamma", "scrivi a papà". */
+        private val FILLER = setOf("chiama", "telefona", "scrivi", "manda", "messaggio", "a", "ad", "al", "alla", "la", "il", "lo", "mia", "mio", "un", "una", "su", "whatsapp", "telegram", "sms", "signal")
 
         private val CALL_VERBS = listOf("chiama", "telefona", "call")
         private val MSG_VERBS = listOf("scrivi", "messaggio", "manda", "write", "text")

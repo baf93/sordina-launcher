@@ -80,16 +80,11 @@
     <string name="cat_phone">Telefon</string>
     <string name="cat_apps">Andre apps</string>
     <string name="braked_section">Bremsede</string>
-    <string name="brake_p1">Feedet er det samme om en time.</string>
     <string name="brake_p2">Hvad var du ved at gøre?</string>
     <string name="brake_p3">Disse sekunder er dine.</string>
-    <string name="brake_p4">Du har ikke misset noget.</string>
-    <string name="brake_p5">Træk vejret. Beslut så.</string>
     <string name="brake_p6">Er der noget bedre at lave?</string>
     <string name="brake_p7">Det er også fint at kede sig.</string>
-    <string name="brake_p8">Kig ud ad vinduet.</string>
     <string name="brake_p9">Har du virkelig brug for den nu?</string>
-    <string name="brake_p10">Din opmærksomhed er det værd.</string>
     <string name="brake_not_today">Ikke åbnet i dag</string>
     <string name="brake_today">I dag: %1$s · %2$s</string>
     <string name="inhale">ånd ind</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">Lad være</string>
     <string name="open_in">Åbn om %1$d s</string>
     <string name="open_anyway">Åbn alligevel</string>
-    <string name="well_done">Godt gået.</string>
     <string name="time_back">Cirka %1$s tilbage til dig.</string>
     <string name="stat_today">i dag</string>
     <string name="stat_in_7_days">på 7 dage</string>

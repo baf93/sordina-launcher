@@ -1,0 +1,220 @@
+package app.sordina.data
+
+import android.content.Context
+import app.sordina.R
+import app.sordina.tr
+import com.google.mlkit.nl.entityextraction.DateTimeEntity
+import com.google.mlkit.nl.entityextraction.Entity
+import com.google.mlkit.nl.entityextraction.EntityExtraction
+import com.google.mlkit.nl.entityextraction.EntityExtractionParams
+import com.google.mlkit.nl.entityextraction.EntityExtractor
+import com.google.mlkit.nl.entityextraction.EntityExtractorOptions
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.File
+import java.time.Instant
+import java.time.ZoneId
+import java.util.Locale
+import java.util.TimeZone
+import java.util.concurrent.Executors
+
+/**
+ * I piani nascosti nei messaggi e nelle mail: "ci vediamo domani alle 20 in via Roma 5", un volo, un codice di spedizione.
+ * Un modello piccolo di Google (ML Kit) legge il testo sul telefono, senza mandarlo da nessuna parte.
+ *
+ * Al momento giusto: la scheda compare quando arriva il messaggio (per metterlo in calendario) e torna
+ * il giorno stesso, un'ora e mezza prima, con Naviga per primo. I piani si ricordano (anche se leggi il messaggio
+ * o il telefono si riavvia) fino a quando sono passati.
+ *
+ * Leggero: il modello gira solo sui testi che possono contenere un piano (un numero, "domani", "via"…),
+ * e il file si riscrive solo quando cambia qualcosa.
+ */
+class Plans(context: Context) {
+    /** Un piano: cosa, quando, dove. [at] null per spedizioni senza data. */
+    data class Plan(
+        val key: String, val label: String, val who: String?, val snippet: String,
+        val at: Long?, val dayOnly: Boolean, val place: String?, val tracking: String?, val flight: String?, val posted: Long,
+    )
+
+    private val file = File(context.filesDir, "plans.json")
+    private val io = Executors.newSingleThreadExecutor()
+    private val _plans = MutableStateFlow<Map<String, Plan>>(emptyMap())
+    val plans: StateFlow<Map<String, Plan>> = _plans
+
+    private val extractor: EntityExtractor? = runCatching {
+        val lang = EntityExtractorOptions.fromLanguageTag(Locale.getDefault().toLanguageTag())
+            ?: EntityExtractorOptions.fromLanguageTag(Locale.getDefault().language) ?: EntityExtractorOptions.ENGLISH
+        EntityExtraction.getClient(EntityExtractorOptions.Builder(lang).build())
+    }.getOrNull()
+    @Volatile private var ready = false
+    @Volatile private var preparing = false
+    /** I testi già letti (impronta), per non far girare il modello due volte sullo stesso messaggio. */
+    private val scanned = LinkedHashSet<Int>()
+
+    init {
+        io.execute { runCatching { load() } }
+        prepare()
+    }
+
+    private fun prepare() {
+        if (preparing || ready) return
+        preparing = true
+        extractor?.downloadModelIfNeeded()?.addOnSuccessListener { ready = true }?.addOnCompleteListener { preparing = false }
+    }
+
+    /**
+     * Legge un messaggio ([mail] = una mail) e, se c'è un piano, lo ricorda.
+     * [who]: chi scrive (o il gruppo). Il testo va al modello solo se può contenere un piano.
+     */
+    fun scan(key: String, appLabel: String, who: String?, text: String, postTime: Long, mail: Boolean = false) {
+        if (text.length < 8) return
+        // Lo stesso testo già letto (la notifica viene ripubblicata): niente seconda lettura
+        val h = key.hashCode() * 31 + text.hashCode()
+        synchronized(scanned) { if (!scanned.add(h)) return; if (scanned.size > 300) scanned.remove(scanned.first()) }
+        val id = "$key#${text.hashCode()}"
+        val low = text.lowercase()
+        if (!MAYBE.containsMatchIn(low)) return
+        if (mail && !MAIL_WORTH.containsMatchIn(low)) return
+        val ex = extractor
+        if (ex == null || !ready) {
+            prepare()
+            if (!mail) fallback(id, appLabel, who, text, postTime)?.let(::keep)
+            return
+        }
+        val params = EntityExtractionParams.Builder(text.take(2000))
+            .setReferenceTime(postTime).setReferenceTimeZone(TimeZone.getDefault()).build()
+        ex.annotate(params).addOnSuccessListener { found ->
+            var at: Long? = null; var dayOnly = false; var place: String? = null; var tracking: String? = null; var flight: String? = null
+            for (a in found) for (e in a.entities) when (e.type) {
+                Entity.TYPE_DATE_TIME -> {
+                    val d = e.asDateTimeEntity() ?: continue
+                    val g = d.dateTimeGranularity
+                    if (g < DateTimeEntity.GRANULARITY_DAY) continue
+                    if (at == null) { at = d.timestampMillis; dayOnly = g == DateTimeEntity.GRANULARITY_DAY }
+                }
+                Entity.TYPE_ADDRESS -> if (place == null) place = a.annotatedText
+                Entity.TYPE_TRACKING_NUMBER -> if (tracking == null) tracking = a.annotatedText
+                Entity.TYPE_FLIGHT_NUMBER -> if (flight == null) flight = a.annotatedText
+            }
+            // Nelle mail le date sono ovunque (offerte, scadenze): conta solo un volo, una spedizione o un appuntamento con l'indirizzo
+            if (mail && flight == null && tracking == null && (place == null || at == null || dayOnly)) return@addOnSuccessListener
+            plan(id, appLabel, who, text, postTime, at, dayOnly, place, tracking, flight)?.let(::keep)
+        }.addOnFailureListener { if (!mail) fallback(id, appLabel, who, text, postTime)?.let(::keep) }
+    }
+
+    /** Senza il modello: le regole di Sordina per le date (in italiano), niente indirizzi. */
+    private fun fallback(key: String, appLabel: String, who: String?, text: String, postTime: Long): Plan? {
+        val w = DateParser.parse(text, Instant.ofEpochMilli(postTime).atZone(ZoneId.systemDefault()).toLocalDateTime()).whenAt ?: return null
+        if (w.allDay) return null
+        return plan(key, appLabel, who, text, postTime, w.start.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(), false, null, null, null)
+    }
+
+    private fun plan(
+        key: String, appLabel: String, who: String?, text: String, postTime: Long,
+        at: Long?, dayOnly: Boolean, place: String?, tracking: String?, flight: String?,
+    ): Plan? {
+        val now = System.currentTimeMillis()
+        val future = at != null && at > now && at - now < 30 * 86_400_000L
+        val usable = (future && (!dayOnly || place != null || flight != null)) || tracking != null || (flight != null && (at == null || future))
+        if (!usable) return null
+        return Plan(key, listOfNotNull(who, appLabel).distinct().joinToString(" · "), who, CardDetector.firstLine(text).take(80),
+            at?.takeIf { future }, dayOnly, place, tracking, flight, postTime)
+    }
+
+    @Synchronized
+    private fun keep(p: Plan) {
+        // Lo stesso piano da due messaggi (o letto due volte): resta quello con più dettagli
+        val same = _plans.value.values.firstOrNull { it.who == p.who && it.at != null && it.at == p.at }
+        if (same != null && (same.place != null || p.place == null)) return
+        _plans.value = prune(_plans.value - (same?.key ?: "") + (p.key to p))
+        save()
+    }
+
+    /** Tolto a mano o messo in calendario: il piano non serve più. */
+    @Synchronized
+    fun forget(cardKey: String) {
+        val k = cardKey.removePrefix("plan:")
+        if (k !in _plans.value) return
+        _plans.value = _plans.value - k
+        save()
+    }
+
+    private fun prune(m: Map<String, Plan>, now: Long = System.currentTimeMillis()): Map<String, Plan> =
+        m.filterValues { end(it) > now }.entries.sortedByDescending { it.value.posted }.take(50).associate { it.key to it.value }
+
+    /** Quando smette di servire: un'ora dopo l'inizio (il giorno intero per le date senza ora), tre giorni per le spedizioni. */
+    private fun end(p: Plan): Long = when {
+        p.at != null -> p.at + if (p.dayOnly) 86_400_000L else 3_600_000L
+        else -> p.posted + 3 * 86_400_000L
+    }
+
+    /**
+     * Le schede di adesso. Un piano si vede quando arriva (6 ore, per metterlo in calendario),
+     * poi sparisce e torna un'ora e mezza prima (Naviga per primo) fino a un'ora dopo.
+     * Le spedizioni restano finché non le togli (tre giorni al massimo).
+     */
+    fun cards(now: Long = System.currentTimeMillis()): List<Card> = _plans.value.values.mapNotNull { p ->
+        val fresh = now - p.posted < 6 * 3_600_000L
+        val soon = p.at != null && !p.dayOnly && p.at - now in -3_600_000L..90 * 60_000L
+        val today = p.at != null && p.dayOnly && Instant.ofEpochMilli(p.at).atZone(ZoneId.systemDefault()).toLocalDate() == java.time.LocalDate.now()
+        if (end(p) <= now || !(fresh || soon || today || p.at == null)) return@mapNotNull null
+        card(p, near = soon || today)
+    }
+
+    private fun card(p: Plan, near: Boolean): Card {
+        val zone = ZoneId.systemDefault()
+        if (p.at == null && p.tracking != null) {
+            return Card("plan:${p.key}", CardKind.PARCEL, tr(R.string.delivery_x, p.label), p.tracking, p.snippet,
+                listOf(CardAction(tr(R.string.copy), CardOp.Copy(p.tracking)), CardAction(tr(R.string.ok), CardOp.Dismiss)),
+                time = p.posted, expiresAt = end(p), look = CardLook.CODE)
+        }
+        val w = p.at?.let { When(Instant.ofEpochMilli(it).atZone(zone).toLocalDateTime().let { t -> if (p.dayOnly) t.toLocalDate().atStartOfDay() else t }, p.dayOnly, false) }
+        val name = p.flight?.let { tr(R.string.flight_x, it) } ?: p.who?.let { tr(R.string.plan_with, it) } ?: p.snippet
+        val actions = buildList {
+            p.place?.let { add(CardAction(tr(R.string.navigate), CardOp.Navigate(it))) }
+            if (w != null) add(CardAction(tr(R.string.add_calendar), CardOp.AddEvent(name, w)))
+        }.let { a -> if (near) a else a.sortedByDescending { it.op is CardOp.AddEvent } }
+        return Card("plan:${p.key}", if (p.flight != null) CardKind.TICKET else CardKind.PLAN, p.label,
+            if (p.flight != null) name else w?.let { DateParser.describe(it).replaceFirstChar { c -> c.uppercase() } } ?: name,
+            if (p.flight != null) w?.let { DateParser.describe(it) } else p.place ?: p.snippet,
+            actions.ifEmpty { listOf(CardAction(tr(R.string.ok), CardOp.Dismiss)) },
+            time = p.posted, expiresAt = end(p), startsAt = p.at?.takeIf { !p.dayOnly })
+    }
+
+    private fun save() {
+        val snap = _plans.value.values.toList()
+        io.execute {
+            runCatching {
+                val a = JSONArray()
+                snap.forEach { p ->
+                    a.put(JSONObject().put("k", p.key).put("l", p.label).put("w", p.who).put("s", p.snippet).put("at", p.at ?: 0L)
+                        .put("d", p.dayOnly).put("pl", p.place).put("tr", p.tracking).put("fl", p.flight).put("p", p.posted))
+                }
+                file.writeText(a.toString())
+            }
+        }
+    }
+
+    private fun load() {
+        if (!file.exists()) return
+        val a = JSONArray(file.readText())
+        val m = HashMap<String, Plan>()
+        for (i in 0 until a.length()) {
+            val o = a.getJSONObject(i)
+            fun s(n: String) = if (!o.has(n) || o.isNull(n)) null else o.optString(n).ifEmpty { null }
+            val p = Plan(o.getString("k"), o.optString("l"), s("w"), o.optString("s"), o.optLong("at").takeIf { it > 0 },
+                o.optBoolean("d"), s("pl"), s("tr"), s("fl"), o.optLong("p"))
+            m[p.key] = p
+        }
+        synchronized(this) { _plans.value = prune(m + _plans.value) }
+    }
+
+    companion object {
+        /** Può contenere un piano: un numero, un giorno, un indirizzo. Gli altri testi non arrivano al modello. */
+        private val MAYBE = Regex("\\d|oggi|domani|stasera|stamattina|stanotte|dopodomani|luned|marted|mercoled|gioved|venerd|sabato|domenica|mezzogiorno|\\bvia\\b|piazza|corso|viale|tomorrow|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday|street")
+        /** Una mail che può valere una scheda (le newsletter no). */
+        private val MAIL_WORTH = Regex("volo|flight|imbarco|boarding|prenotazion|booking|reservation|check-in|spedizion|tracking|consegna|delivery|appuntamento|appointment|biglietto|ticket")
+    }
+}

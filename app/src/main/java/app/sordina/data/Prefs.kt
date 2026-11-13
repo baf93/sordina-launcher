@@ -174,6 +174,18 @@ class Prefs(context: Context) {
         get() = sp.getLong("quietUntil", 0L)
         set(v) = put { putLong("quietUntil", v) }
     /** Non disturbare l'ha acceso Sordina (e quindi lo spegne lei, alla fine) */
+    /** In auto: Non disturbare con Android Auto (acceso e spento da Sordina) */
+    var carQuiet: Boolean
+        get() = sp.getBoolean("carQuiet", true)
+        set(v) = put { putBoolean("carQuiet", v) }
+    /** Il silenzio acceso da Sordina è quello dell'auto */
+    var quietCar: Boolean
+        get() = sp.getBoolean("quietCar", false)
+        set(v) = put { putBoolean("quietCar", v) }
+    /** L'hai spento tu durante questo viaggio: non si riaccende fino al prossimo */
+    var carDeclined: Boolean
+        get() = sp.getBoolean("carDeclined", false)
+        set(v) = put { putBoolean("carDeclined", v) }
     var quietOwned: Boolean
         get() = sp.getBoolean("quietOwned", false)
         set(v) = put { putBoolean("quietOwned", v) }
@@ -294,6 +306,14 @@ class Prefs(context: Context) {
             o.keys().asSequence().associateWith { o.getString(it) }
         }.getOrDefault(emptyMap())
         set(v) = put { putString("aliases", JSONObject(v.entries.toList().takeLast(300).associate { it.key to it.value }).toString()) }
+
+    /** Soprannomi imparati: parola che scrivi o dici ("mamma") → contatto (nome normalizzato). */
+    var nicknames: Map<String, String>
+        get() = runCatching {
+            val o = JSONObject(str("nicknames", "{}"))
+            o.keys().asSequence().associateWith { o.getString(it) }
+        }.getOrDefault(emptyMap())
+        set(v) = put { putString("nicknames", JSONObject(v.entries.toList().takeLast(100).associate { it.key to it.value }).toString()) }
 
     /** Quante volte la prima proposta era quella giusta (misura del motore). */
     var intentFirst: Int

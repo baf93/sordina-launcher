@@ -2,6 +2,7 @@ package app.sordina
 
 import app.sordina.data.Prefs
 import app.sordina.data.Held
+import app.sordina.data.Habits
 import app.sordina.data.RuleScope
 import app.sordina.data.RuleTarget
 import app.sordina.data.Rules
@@ -316,10 +317,32 @@ class MainActivity : ComponentActivity(), Ops {
                 // Senza permesso della rubrica non si fissa il giorno: appena lo concedi, i compleanni compaiono
                 if (checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) birthdaysDay = today
             }
-            if (current.isNotEmpty()) habitCards = app.routines.suggestions(current)
+            if (current.isNotEmpty()) habitCards = (app.routines.suggestions(current) + brainHabit(current)).distinctBy { it.key }
             sceneExtras(app.moments.scene())
         }
     }
+
+    /**
+     * "Di solito adesso": appena comincia un momento (sali in auto, arrivi a casa, cuffie, in carica la sera),
+     * se il cervello è quasi sicuro di cosa ti serve e non l'hai ancora fatto, te lo porge in una scheda.
+     */
+    private fun brainHabit(current: List<AppEntry>): List<Card> = runCatching {
+        val (ctx, start) = app.routines.active().maxByOrNull { it.value } ?: return emptyList()
+        val braked = prefs.braked
+        val best = app.brain.best(BRAIN_HABIT_P, start, { it.startsWith("app:") && it.removePrefix("app:") in braked || "brain:$it" in prefs.excluded }) {
+            app.intents.realize(it, current, proposals.usage)
+        } ?: return emptyList()
+        val c = best.candidate
+        val op = when (val a = c.act) {
+            is Act.OpenApp -> CardOp.OpenPackage(a.app.packageName)
+            is Act.Call -> CardOp.Query("chiama ${a.contact.name}")
+            is Act.Message -> CardOp.Query("scrivi a ${a.contact.name} su ${a.via.label}")
+            else -> best.item.takeIf { it.startsWith("cmd:") }?.let { CardOp.Query(it.removePrefix("cmd:")) } ?: return emptyList()
+        }
+        val verb = if (op is CardOp.OpenPackage) tr(R.string.open) else tr(R.string.do_it)
+        listOf(Card("habit:$ctx:${best.item}", CardKind.HABIT, tr(R.string.habit_usual, app.routines.label(ctx)), c.title, best.why,
+            actions = listOf(CardAction(verb, op), CardAction(tr(R.string.not_now), CardOp.Dismiss)), time = start))
+    }.getOrDefault(emptyList())
 
     /** Quello che serve solo alle altre Case: domani per sera e notte, la giornata per la sera, le persone in auto. */
     private fun sceneExtras(s: Scene) {
@@ -508,7 +531,7 @@ class MainActivity : ComponentActivity(), Ops {
             e.link?.let { add(CardAction(tr(R.string.join), CardOp.OpenUrl(it))) }
             e.location?.let { add(CardAction(tr(R.string.navigate), CardOp.Navigate(it))) }
             if (isEmpty()) add(CardAction(tr(R.string.open), CardOp.OpenEvent(e.id)))
-        }
+        }.let { a -> if (scene == Scene.CAR) a.sortedByDescending { it.op is CardOp.Navigate } else a }
         return Card("event:${e.id}:${e.begin}", CardKind.EVENT, label, e.title, e.location, actions, e.begin, e.end,
             bar = if (e.begin <= now) Bar(e.begin, e.end) else null)
     }
@@ -568,7 +591,6 @@ class MainActivity : ComponentActivity(), Ops {
         val hm = java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)
         val out = ArrayList<AgendaRow>()
         // Il motore è fermo o rischia di esserlo: lo si dice per primo, un tocco porta dove si sistema
-        health?.let { h -> out += AgendaRow(tr(R.string.health_label), healthText(h), "health", accent = true) }
         if (moment != Moment.NONE) out += AgendaRow(tr(R.string.now_l), app.moments.phrase(moment), "moment")
         val timed = ArrayList<Pair<Long, AgendaRow>>()
         for (e in agendaEvents) {
@@ -620,7 +642,12 @@ class MainActivity : ComponentActivity(), Ops {
     }
 
     private fun cardTap(card: Card) {
+        app.cardSense.used(card)
+        app.brain.hit("card:${card.kind}")
         when {
+            card.kind == CardKind.HEALTH -> onAgenda("health")
+            // Un piano letto nei messaggi: il tocco fa la prima cosa (Naviga vicino all'ora, In calendario prima)
+            card.key.startsWith("plan:") -> card.actions.firstOrNull()?.let { cardAction(card, it) }
             card.kind == CardKind.MUSIC -> openMusic()
             card.kind == CardKind.EVENT -> card.key.split(':').getOrNull(1)?.toLongOrNull()?.let { cardAction(card, CardAction("", CardOp.OpenEvent(it))) }
             card.kind == CardKind.HABIT -> card.actions.firstOrNull()?.let { cardAction(card, it) }
@@ -631,11 +658,24 @@ class MainActivity : ComponentActivity(), Ops {
             else -> SordinaListener.open(this, card.sources.firstOrNull() ?: card.key)
         }
         // Una cosa da vedere una volta (pacco, biglietto, chiamata persa…): aperta, ha fatto il suo lavoro
-        if (card.oneShot) app.signals.dismiss(card.key)
+        if (card.oneShot) dismissCard(card)
+    }
+
+    /** Una scheda tolta: per un giorno non torna; un piano dei messaggi non torna più. */
+    private fun dismissCard(card: Card) {
+        app.signals.dismiss(card.key)
+        if (card.key.startsWith("plan:")) app.plans.forget(card.key)
     }
 
     private fun cardAction(card: Card, a: CardAction) {
         val music = app.signals.controller?.transportControls
+        // Le schede imparano: "nascondi" e "non ora" le scartano, i pulsanti veri le usano ("Ok" e "Più tardi" non dicono niente)
+        when {
+            a.op == CardOp.Hide -> app.cardSense.dropped(card)
+            a.op == CardOp.Dismiss -> if (card.kind == CardKind.HABIT || card.kind == CardKind.BIRTHDAY) app.cardSense.dropped(card)
+            a.op is CardOp.Later -> {}
+            a.label.isNotEmpty() -> { app.cardSense.used(card); app.brain.hit("card:${card.kind}") }
+        }
         when (val op = a.op) {
             is CardOp.Copy -> {
                 val cm = getSystemService(android.content.ClipboardManager::class.java)
@@ -643,15 +683,16 @@ class MainActivity : ComponentActivity(), Ops {
                 clip.description.extras = android.os.PersistableBundle().apply { putBoolean("android.content.extra.IS_SENSITIVE", true) }
                 cm.setPrimaryClip(clip)
                 if (Build.VERSION.SDK_INT < 33) say(tr(R.string.copied))
-                app.signals.dismiss(card.key)
+                dismissCard(card)
             }
-            is CardOp.OpenNotif -> { SordinaListener.open(this, op.key); if (card.oneShot) app.signals.dismiss(card.key) }
+            is CardOp.OpenNotif -> { SordinaListener.open(this, op.key); if (card.oneShot) dismissCard(card) }
+            CardOp.Fix -> onAgenda("health")
             CardOp.Hide -> {
                 // La musica non si nasconde: sparisce da sola quando smette
                 if (card.kind != CardKind.MUSIC) {
                     if (prefs.haptics) window.decorView.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
                     if (card.kind == CardKind.HABIT || card.kind == CardKind.BIRTHDAY) doneHabits = doneHabits + card.key
-                    app.signals.dismiss(card.key)
+                    dismissCard(card)
                     say(tr(R.string.card_hidden))
                 }
             }
@@ -665,19 +706,19 @@ class MainActivity : ComponentActivity(), Ops {
                 lifecycleScope.launch {
                     val id = withContext(Dispatchers.IO) { app.calendars.default()?.let { app.calendars.insert(it, op.title, op.whenAt) } }
                     say(if (id != null) tr(R.string.added) else tr(R.string.failed))
-                    if (id != null) app.signals.dismiss(card.key)
+                    if (id != null) dismissCard(card)
                 }
             }
             is CardOp.OpenPackage -> {
                 doneHabits = doneHabits + card.key
-                app.signals.dismiss(card.key)
+                dismissCard(card)
                 apps.firstOrNull { it.packageName == op.pkg && !it.isWork }?.let(::launch)
                     ?: packageManager.getLaunchIntentForPackage(op.pkg)?.let { start(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             }
             is CardOp.Query -> {
                 if (card.kind == CardKind.HABIT || card.kind == CardKind.BIRTHDAY) doneHabits = doneHabits + card.key
                 // Richiamato o scritto: la chiamata persa e il compleanno sono fatti
-                if (card.kind == CardKind.CALL || card.kind == CardKind.BIRTHDAY) app.signals.dismiss(card.key)
+                if (card.kind == CardKind.CALL || card.kind == CardKind.BIRTHDAY) dismissCard(card)
                 query = op.query
                 val u = understand(op.query)
                 val top = u.top
@@ -686,15 +727,15 @@ class MainActivity : ComponentActivity(), Ops {
             CardOp.MusicPrev -> music?.skipToPrevious()
             CardOp.MusicNext -> music?.skipToNext()
             CardOp.MusicToggle -> if (app.signals.musicPlaying()) music?.pause() else music?.play()
-            is CardOp.Fire -> { if (SordinaListener.fire(this, op.key, op.index)) app.signals.dismiss(card.key) else SordinaListener.open(this, op.key) }
-            is CardOp.Done -> { SordinaListener.done(op.key); app.signals.dismiss(card.key) }
+            is CardOp.Fire -> { if (SordinaListener.fire(this, op.key, op.index)) dismissCard(card) else SordinaListener.open(this, op.key) }
+            is CardOp.Done -> { SordinaListener.done(op.key); dismissCard(card) }
             is CardOp.Later -> { SordinaListener.later(op.key); app.signals.remove(card.key) }
             CardOp.Weather -> openWeather()
             CardOp.Dismiss -> {
                 if (card.kind == CardKind.HABIT || card.kind == CardKind.BIRTHDAY) doneHabits = doneHabits + card.key
                 // "Ok" toglie la scheda e chiude anche la notifica (o le notifiche) da cui è nata
                 if (card.sources.isNotEmpty()) SordinaListener.readKeys(this, card.sources)
-                app.signals.dismiss(card.key)
+                dismissCard(card)
             }
         }
     }
@@ -728,12 +769,17 @@ class MainActivity : ComponentActivity(), Ops {
                 voice = voice.copy(partial = t)
             }
             override fun onResults(results: Bundle?) {
-                val t = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty()
+                val heard = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION).orEmpty().filter { it.isNotBlank() }
                 voice = voice.copy(listening = false, partial = "")
-                if (t.isBlank()) { notice = Notice(tr(R.string.not_understood)); return }
+                if (heard.isEmpty()) { notice = Notice(tr(R.string.not_understood)); return }
+                // Il riconoscitore propone più trascrizioni ("chiama Elisa" / "chiamala Lisa"): vince quella che Sordina capisce meglio,
+                // a parità la prima (la più probabile per lui)
+                val (t, u) = heard.take(4).mapIndexed { i, h -> Triple(h, understand(h), i) }
+                    .maxWith(compareBy<Triple<String, Understanding, Int>> { it.second.confident }
+                        .thenBy { (it.second.candidates.firstOrNull { c -> c.kind != Kind.WEB }?.score ?: 0) - it.third * 4 })
+                    .let { it.first to it.second }
                 query = t
                 // Azioni verso te stesso, con sicurezza alta: fatte subito
-                val u = understand(t)
                 val top = u.top
                 if (u.confident && top != null && !top.toOthers) run(top, 0) else screen = Screen.INTENT
             }
@@ -760,6 +806,9 @@ class MainActivity : ComponentActivity(), Ops {
             // Nomi insoliti di persone, app e dispositivi di casa capiti meglio
             val bias = ArrayList<String>()
             bias += app.people.all().filter { it.starred || app.people.isImportant(it.name) }.map { it.name }
+            // E le persone con cui parli davvero, anche se non sono tra i preferiti
+            bias += (app.brain.likelyPeople("call:", 8) + app.brain.likelyPeople("msg:", 8))
+                .mapNotNull { item -> app.brain.contact(item.substringAfter(':').substringBefore(':'))?.name }
             bias += proposals.apps.map { it.label }
             bias += app.ha.cached().filter { it.controllable }.map { it.name }
             i.putStringArrayListExtra(RecognizerIntent.EXTRA_BIASING_STRINGS, ArrayList(bias.distinct().take(100)))
@@ -823,10 +872,14 @@ class MainActivity : ComponentActivity(), Ops {
         if (!start(direct)) start(Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
     }
 
-    private fun healthText(h: Health): String = when (h) {
-        Health.NO_ACCESS -> tr(R.string.health_no_access)
-        Health.STOPPED -> tr(R.string.health_stopped)
-        Health.BATTERY -> tr(R.string.health_battery)
+    /** Sordina non funziona (o rischia): una scheda in cima, gentile, con un tasto solo che porta dove si sistema. */
+    private fun healthCard(h: Health): Card = when (h) {
+        Health.NO_ACCESS -> Card("health:access", CardKind.HEALTH, tr(R.string.health_card_label), tr(R.string.health_access_title), tr(R.string.health_access_sub),
+            listOf(CardAction(tr(R.string.health_access_fix), CardOp.Fix)))
+        Health.STOPPED -> Card("health:stopped", CardKind.HEALTH, tr(R.string.health_card_label), tr(R.string.health_stopped_title), tr(R.string.health_stopped_sub),
+            listOf(CardAction(tr(R.string.health_stopped_fix), CardOp.Fix)))
+        Health.BATTERY -> Card("health:battery", CardKind.HEALTH, tr(R.string.health_card_label), tr(R.string.health_battery_title), tr(R.string.health_battery_sub),
+            listOf(CardAction(tr(R.string.health_battery_fix), CardOp.Fix)))
     }
     override fun pickWallpaper() {
         runCatching { wallpaperLauncher.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
@@ -936,6 +989,7 @@ class MainActivity : ComponentActivity(), Ops {
         val now = rememberNow()
         val groups = remember(held) { app.store.groups() }
         val signalCards by app.signals.cards.collectAsState()
+        val planMap by app.plans.plans.collectAsState()
         val dismissedCards by app.signals.dismissedKeys.collectAsState()
         val music by app.signals.music.collectAsState()
 
@@ -975,6 +1029,10 @@ class MainActivity : ComponentActivity(), Ops {
                 refreshProposals(force = true)
             },
         )
+        // Le proposte che stai guardando: se poi cerchi altro, Sordina sa che non erano quelle giuste
+        LaunchedEffect(screen, proposals) {
+            if (screen == Screen.INTENT) app.brain.shown(proposals.items.mapNotNull { app.brain.itemOf(it, "") })
+        }
         LaunchedEffect(screen) {
             if (screen == Screen.INTENT) refreshProposals(force = false)
             if (screen == Screen.HOME) refreshExtras()
@@ -1005,24 +1063,33 @@ class MainActivity : ComponentActivity(), Ops {
                     Screen.HOME -> {
                         val waiting = groups.sumOf { g -> g.sumOf { it.count } }
                         val ms = now.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
-                        val cards = remember(signalCards, music, events, habitCards, doneHabits, now, rainAt, birthdays, scene, dismissedCards) {
+                        val cards = remember(health, signalCards, planMap, music, events, habitCards, doneHabits, now, rainAt, birthdays, scene, dismissedCards) {
                             val calendar = events.map { eventCard(it, ms) }
                             val calendarTitles = calendar.map { Search.normalize(it.title) }.toSet()
                             // Riunioni avvisate da un'app: l'etichetta "Tra 10 min" si aggiorna; se il calendario ce l'ha già, basta quella
-                            val fromNotifs = signalCards.values
+                            // I piani dei messaggi compaiono quando arrivano e tornano poco prima, con Naviga
+                            val fromNotifs = (signalCards.values + app.plans.cards(ms))
                                 .filterNot { it.startsAt != null && Search.normalize(it.title) in calendarTitles }
-                                .map { k -> k.startsAt?.let { s -> k.copy(label = startLabel(s, ms) + " · " + k.label) } ?: k }
-                            (fromNotifs + listOfNotNull(music, rainCard(ms)) + calendar +
+                                .map { k -> k.startsAt?.takeIf { s -> s - ms < 3 * 3_600_000L }?.let { s -> k.copy(label = startLabel(s, ms) + " · " + k.label) } ?: k } // "Tra 10 min" solo quando manca poco: domani resta "domani alle 20"
+                                // Lo stesso piano letto due volte (dal modello e dalle regole, o da due notifiche): una scheda, la più ricca
+                                .filter { it.key !in dismissedCards }
+                                .sortedByDescending { it.actions.size }.distinctBy { if (it.kind == CardKind.PLAN) "plan|${it.label}|${it.title}" else it.key }
+                            (listOfNotNull(health?.let(::healthCard)) + fromNotifs + listOfNotNull(music, rainCard(ms)) + calendar +
                                 (habitCards + birthdayCards()).filter { it.key !in doneHabits })
                                 .filter { it.expiresAt > ms && it.key !in dismissedCards }
                                 // Ogni Casa tiene solo le schede che le servono: in auto e di notte quasi nulla
-                                .filter { k -> when (scene) {
-                                    Scene.CAR -> k.kind in setOf(CardKind.CALL, CardKind.MUSIC, CardKind.TIMER, CardKind.RIDE)
+                                // Sordina che non funziona si dice sempre, in ogni Casa
+                                .filter { k -> k.kind == CardKind.HEALTH || when (scene) {
+                                    Scene.CAR -> k.kind in setOf(CardKind.CALL, CardKind.MUSIC, CardKind.TIMER, CardKind.RIDE) ||
+                                        // In auto: l'impegno con un indirizzo, per andarci
+                                        (k.kind in setOf(CardKind.EVENT, CardKind.PLAN) && k.actions.any { it.op is CardOp.Navigate })
                                     Scene.NIGHT -> k.kind in setOf(CardKind.CALL, CardKind.MUSIC, CardKind.TIMER, CardKind.OTP, CardKind.ASK)
                                     Scene.EVENING -> k.kind != CardKind.HABIT
                                     Scene.DAY -> true
                                 } }
-                                .sortedWith(compareBy<Card> { it.kind.priority }.thenByDescending { it.time })
+                                // Quelle che scarti sempre spariscono; l'ordine segue l'urgenza e quello che usi davvero
+                                .filterNot { app.cardSense.muted(it, ms) }
+                                .sortedWith(compareBy<Card> { app.cardSense.rank(it, ms) }.thenByDescending { it.time })
                                 .take(6)
                         }
                         // Solo nella versione di prova: le schede in Casa finiscono nel log, per controllarle senza scorrere la pila
@@ -1086,7 +1153,8 @@ class MainActivity : ComponentActivity(), Ops {
                         voice = voice,
                         notice = notice,
                         onRun = ::run,
-                        onLaunch = ::launch,
+                        // Una proposta presa: Sordina aveva visto giusto
+                        onLaunch = { a -> if (query.isBlank()) app.brain.hit("app:${a.packageName}"); launch(a) },
                         onAllApps = { screen = Screen.ALL_APPS },
                         onGrantUsage = ::openUsageSettings,
                         onVoiceDown = ::voiceDown,
@@ -1096,7 +1164,8 @@ class MainActivity : ComponentActivity(), Ops {
                         icon = if (remember(prefsVersion) { prefs.appIcons }) { a -> catalog.icon(a, (30 * resources.displayMetrics.density).toInt()) } else null,
                         apps = apps,
                         hidden = hidden,
-                        onLaunch = ::launch,
+                        // Cercata nell'elenco: andava proposta
+                        onLaunch = { a -> app.brain.missed("app:${a.packageName}"); launch(a) },
                         onInfo = { catalog.openInfo(it) },
                         onUninstall = { catalog.uninstall(it) },
                         onToggleHidden = { a ->
@@ -1133,12 +1202,14 @@ class MainActivity : ComponentActivity(), Ops {
                             today = remember(a.key) { app.habits.appToday(a.packageName) },
                             seconds = remember(a.key) { brakeWait(a.packageName) },
                             streak = remember(a.key) { app.habits.streak() },
+                            gain = remember(a.key) { app.habits.minutesPerVisit(a.packageName) },
                             onOpen = { habit ->
                                 app.habits.logBrake(a.packageName, habit)
                                 BrakeGuard.passed(a.packageName)
+                                app.habits.logOpen(a.packageName, Habits.penalty(app.habits.streak(), app.habits.minutesPerVisit(a.packageName)))
                                 catalog.launch(a)
                             },
-                            onSkip = { app.habits.minutesPerVisit(a.packageName).also { app.habits.logSkip(a.packageName, it) } },
+                            onSkip = { app.habits.logSkip(a.packageName, app.habits.minutesPerVisit(a.packageName)) },
                             onDone = { screen = Screen.HOME },
                         )
                     } ?: run { screen = Screen.HOME }
@@ -1184,5 +1255,7 @@ class MainActivity : ComponentActivity(), Ops {
 
     companion object {
         const val ACTION_WAITING = "app.sordina.WAITING"
+        /** La scheda "di solito" del cervello compare solo da questa probabilità (misurata sulla memoria vera). */
+        const val BRAIN_HABIT_P = 0.5
     }
 }

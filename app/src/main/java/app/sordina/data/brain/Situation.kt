@@ -20,6 +20,8 @@ data class Situation(
     /** Hai appena sbloccato il telefono (2 minuti) */
     val fresh: Boolean? = null,
     val zone: ZoneId = ZoneId.systemDefault(),
+    /** Il dispositivo Bluetooth audio collegato (auto, cuffie, cassa): "" = nessuno */
+    val device: String? = null,
 ) {
     private val local get() = Instant.ofEpochMilli(time).atZone(zone)
 
@@ -47,6 +49,7 @@ data class Situation(
         charging?.let { out += Feature("chg", if (it) "1" else "0") }
         previous?.let { out += Feature("prev", it.ifEmpty { "-" }) }
         fresh?.let { out += Feature("fresh", if (it) "1" else "0") }
+        device?.let { out += Feature("bt", it.ifEmpty { "-" }) }
         return out
     }
 }

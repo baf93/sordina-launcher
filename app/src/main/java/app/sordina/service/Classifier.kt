@@ -166,6 +166,37 @@ object Classifier {
         return Verdict(Level.RIEPILOGO, "predefinito")
     }
 
+    /**
+     * Le tue risposte dentro una conversazione (quando rispondi dalla notifica, l'app ci mette anche il tuo messaggio):
+     * (quando, cosa ti avevano scritto, cosa hai risposto). Servono a imparare le tue risposte veloci.
+     */
+    fun replyPairs(sbn: StatusBarNotification): List<Triple<Long, String, String>> = runCatching {
+        val e = sbn.notification.extras
+        @Suppress("DEPRECATION")
+        val msgs = e.getParcelableArray(Notification.EXTRA_MESSAGES)?.mapNotNull { it as? android.os.Bundle } ?: return emptyList()
+        if (msgs.size < 2) return emptyList()
+        val me = if (Build.VERSION.SDK_INT >= 28) {
+            @Suppress("DEPRECATION")
+            (e.get(Notification.EXTRA_MESSAGING_PERSON) as? android.app.Person)?.name?.toString()
+        } else null
+        fun mine(b: android.os.Bundle): Boolean {
+            @Suppress("DEPRECATION")
+            val p = if (Build.VERSION.SDK_INT >= 28) (b.get("sender_person") as? android.app.Person)?.name?.toString() else null
+            val s = p ?: b.getCharSequence("sender")?.toString()
+            return s == null || (me != null && s == me)
+        }
+        val out = ArrayList<Triple<Long, String, String>>()
+        for (i in 1 until msgs.size) {
+            val a = msgs[i - 1]; val b = msgs[i]
+            if (!mine(a) && mine(b)) {
+                val incoming = a.getCharSequence("text")?.toString() ?: continue
+                val reply = b.getCharSequence("text")?.toString() ?: continue
+                out += Triple(b.getLong("time"), incoming, reply)
+            }
+        }
+        out
+    }.getOrDefault(emptyList())
+
     /** Estrae le informazioni utili da una notifica. */
     fun read(sbn: StatusBarNotification): NotifInfo {
         val n = sbn.notification

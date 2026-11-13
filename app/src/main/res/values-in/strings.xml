@@ -80,16 +80,11 @@
     <string name="cat_phone">Telepon</string>
     <string name="cat_apps">Aplikasi lain</string>
     <string name="braked_section">Direm</string>
-    <string name="brake_p1">Feed-nya tetap sama satu jam lagi.</string>
     <string name="brake_p2">Tadi mau ngapain?</string>
     <string name="brake_p3">Detik-detik ini milikmu.</string>
-    <string name="brake_p4">Kamu tidak ketinggalan apa pun.</string>
-    <string name="brake_p5">Tarik napas. Lalu putuskan.</string>
     <string name="brake_p6">Ada hal yang lebih baik?</string>
     <string name="brake_p7">Bosan juga tidak apa-apa.</string>
-    <string name="brake_p8">Lihat ke luar jendela.</string>
     <string name="brake_p9">Benar-benar perlu sekarang?</string>
-    <string name="brake_p10">Perhatianmu berharga.</string>
     <string name="brake_not_today">Belum dibuka hari ini</string>
     <string name="brake_today">Hari ini: %1$s · %2$s</string>
     <string name="inhale">tarik napas</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">Biarkan saja</string>
     <string name="open_in">Buka dalam %1$d dtk</string>
     <string name="open_anyway">Tetap buka</string>
-    <string name="well_done">Bagus.</string>
     <string name="time_back">Sekitar %1$s kembali untukmu.</string>
     <string name="stat_today">hari ini</string>
     <string name="stat_in_7_days">dalam 7 hari</string>

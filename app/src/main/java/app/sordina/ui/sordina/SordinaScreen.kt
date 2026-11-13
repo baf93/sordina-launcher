@@ -220,7 +220,7 @@ private fun untilLabel(at: Long): String {
 
 /**
  * Un mittente o un'app, in un blocco arrotondato. Tocco: si aprono le anteprime.
- * Scorrendo di lato oltre il 40% una notifica è letta: il blocco intero se ne ha una sola, altrimenti ogni anteprima.
+ * Scorrendo di lato oltre il 40%: il blocco è letto tutto; un'anteprima (a blocco aperto) è letta da sola.
  */
 @Composable
 private fun Block(
@@ -237,7 +237,8 @@ private fun Block(
     val single = g.size == 1
     val arrow by animateFloatAsState(if (open) 180f else 0f, feel.spec(tween(220)), label = "arrow")
 
-    Swipeable(h.key, enabled = single, shape = shape, onSwiped = { onReadOne(h) }) {
+    // Il blocco intero si legge scorrendolo (le anteprime aperte, scorse una per una, si leggono da sole)
+    Swipeable(h.groupKey, enabled = true, shape = shape, onSwiped = { if (single) onReadOne(h) else onRead(h.groupKey) }) {
         Column(
             Modifier.fillMaxWidth().clip(shape).background(c.card)
                 .clickable(onClick = onToggle).padding(horizontal = 14.dp, vertical = 12.dp),

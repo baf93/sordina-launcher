@@ -80,16 +80,11 @@
     <string name="cat_phone">Telefon</string>
     <string name="cat_apps">Diğer uygulamalar</string>
     <string name="braked_section">Frenlenenler</string>
-    <string name="brake_p1">Akış bir saat sonra da aynı olacak.</string>
     <string name="brake_p2">Ne yapacaktın?</string>
     <string name="brake_p3">Bu saniyeler senin.</string>
-    <string name="brake_p4">Hiçbir şey kaçırmadın.</string>
-    <string name="brake_p5">Nefes al. Sonra karar ver.</string>
     <string name="brake_p6">Yapacak daha iyi bir şey var mı?</string>
     <string name="brake_p7">Sıkılmak da iyidir.</string>
-    <string name="brake_p8">Pencereden dışarı bak.</string>
     <string name="brake_p9">Şu an gerçekten gerekli mi?</string>
-    <string name="brake_p10">Dikkatin buna değer.</string>
     <string name="brake_not_today">Bugün henüz açılmadı</string>
     <string name="brake_today">Bugün: %1$s · %2$s</string>
     <string name="inhale">nefes al</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">Boş ver</string>
     <string name="open_in">%1$d sn sonra aç</string>
     <string name="open_anyway">Yine de aç</string>
-    <string name="well_done">Aferin.</string>
     <string name="time_back">Yaklaşık %1$s sana döndü.</string>
     <string name="stat_today">bugün</string>
     <string name="stat_in_7_days">7 günde</string>

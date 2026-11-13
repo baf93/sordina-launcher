@@ -33,7 +33,9 @@ object Scheduler {
         val now = LocalDateTime.now()
         // Fine della sordina a tempo, se c'è; comunque un giro ogni 6 ore (rinnovo delle posticipate, Casa)
         val focusEnd = app.moments.focusUntil()?.let { java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime() }
-        val next = listOfNotNull(focusEnd, now.plusHours(6)).min()
+        // In auto: quando finisce la conversazione in corso, Non disturbare torna ai soli preferiti
+        val talkEnd = if (app.prefs.quietCar) Talking.lastUntil()?.let { java.time.Instant.ofEpochMilli(it + 1_000).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime() } else null
+        val next = listOfNotNull(focusEnd, talkEnd, now.plusHours(6)).min()
         val am = context.getSystemService(AlarmManager::class.java)
         val pi = PendingIntent.getBroadcast(
             context, 0, Intent(context, TickReceiver::class.java).setAction(ACTION_TICK),

@@ -80,16 +80,11 @@
     <string name="cat_phone">โทรศัพท์</string>
     <string name="cat_apps">แอปอื่นๆ</string>
     <string name="braked_section">ถูกเบรก</string>
-    <string name="brake_p1">ฟีดจะยังเหมือนเดิมในอีกชั่วโมง</string>
     <string name="brake_p2">คุณกำลังจะทำอะไร?</string>
     <string name="brake_p3">วินาทีเหล่านี้เป็นของคุณ</string>
-    <string name="brake_p4">คุณไม่ได้พลาดอะไร</string>
-    <string name="brake_p5">หายใจ แล้วค่อยตัดสินใจ</string>
     <string name="brake_p6">มีอะไรที่ดีกว่านี้ให้ทำไหม?</string>
     <string name="brake_p7">เบื่อบ้างก็ไม่เป็นไร</string>
-    <string name="brake_p8">มองออกไปนอกหน้าต่าง</string>
     <string name="brake_p9">ต้องใช้ตอนนี้จริงๆ ไหม?</string>
-    <string name="brake_p10">ความสนใจของคุณมีค่า</string>
     <string name="brake_not_today">วันนี้ยังไม่ได้เปิด</string>
     <string name="brake_today">วันนี้: %1$s · %2$s</string>
     <string name="inhale">หายใจเข้า</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">ช่างมัน</string>
     <string name="open_in">เปิดใน %1$d วิ</string>
     <string name="open_anyway">เปิดเลย</string>
-    <string name="well_done">เยี่ยมมาก</string>
     <string name="time_back">ราว %1$s กลับมาเป็นของคุณ</string>
     <string name="stat_today">วันนี้</string>
     <string name="stat_in_7_days">ใน 7 วัน</string>

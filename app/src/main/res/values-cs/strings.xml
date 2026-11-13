@@ -80,16 +80,11 @@
     <string name="cat_phone">Telefon</string>
     <string name="cat_apps">Jiné aplikace</string>
     <string name="braked_section">Brzděné</string>
-    <string name="brake_p1">Feed bude za hodinu stejný.</string>
     <string name="brake_p2">Co jsi chtěl udělat?</string>
     <string name="brake_p3">Tyhle sekundy jsou tvoje.</string>
-    <string name="brake_p4">Nic jsi nezmeškal.</string>
-    <string name="brake_p5">Nadechni se. Pak rozhodni.</string>
     <string name="brake_p6">Je něco lepšího na práci?</string>
     <string name="brake_p7">Nudit se je taky v pořádku.</string>
-    <string name="brake_p8">Podívej se z okna.</string>
     <string name="brake_p9">Opravdu to teď potřebuješ?</string>
-    <string name="brake_p10">Tvoje pozornost za to stojí.</string>
     <string name="brake_not_today">Dnes ještě neotevřeno</string>
     <string name="brake_today">Dnes: %1$s · %2$s</string>
     <string name="inhale">nádech</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">Nech to být</string>
     <string name="open_in">Otevřít za %1$d s</string>
     <string name="open_anyway">Přesto otevřít</string>
-    <string name="well_done">Výborně.</string>
     <string name="time_back">Asi %1$s se ti vrací.</string>
     <string name="stat_today">dnes</string>
     <string name="stat_in_7_days">za 7 dní</string>

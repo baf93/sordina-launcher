@@ -80,16 +80,11 @@
     <string name="cat_phone">電話</string>
     <string name="cat_apps">その他のアプリ</string>
     <string name="braked_section">ブレーキ中</string>
-    <string name="brake_p1">フィードは1時間後も同じです。</string>
     <string name="brake_p2">何をしようとしていましたか？</string>
     <string name="brake_p3">この数秒はあなたのもの。</string>
-    <string name="brake_p4">何も見逃していません。</string>
-    <string name="brake_p5">深呼吸。それから決めよう。</string>
     <string name="brake_p6">もっといいことはある？</string>
     <string name="brake_p7">退屈もいいものです。</string>
-    <string name="brake_p8">窓の外を見てみよう。</string>
     <string name="brake_p9">本当に今必要？</string>
-    <string name="brake_p10">あなたの集中には価値がある。</string>
     <string name="brake_not_today">今日はまだ開いていません</string>
     <string name="brake_today">今日: %1$s · %2$s</string>
     <string name="inhale">吸って</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">やめておく</string>
     <string name="open_in">%1$d 秒後に開く</string>
     <string name="open_anyway">それでも開く</string>
-    <string name="well_done">よくできました。</string>
     <string name="time_back">約 %1$s があなたに戻りました。</string>
     <string name="stat_today">今日</string>
     <string name="stat_in_7_days">7日間</string>

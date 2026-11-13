@@ -80,16 +80,11 @@
     <string name="cat_phone">Telefon</string>
     <string name="cat_apps">Andre apper</string>
     <string name="braked_section">Bremset</string>
-    <string name="brake_p1">Feeden er den samme om en time.</string>
     <string name="brake_p2">Hva skulle du gjøre?</string>
     <string name="brake_p3">Disse sekundene er dine.</string>
-    <string name="brake_p4">Du har ikke gått glipp av noe.</string>
-    <string name="brake_p5">Pust. Bestem deg så.</string>
     <string name="brake_p6">Finnes det noe bedre å gjøre?</string>
     <string name="brake_p7">Det er lov å kjede seg.</string>
-    <string name="brake_p8">Se ut av vinduet.</string>
     <string name="brake_p9">Trenger du den virkelig nå?</string>
-    <string name="brake_p10">Oppmerksomheten din er verdt det.</string>
     <string name="brake_not_today">Ikke åpnet i dag</string>
     <string name="brake_today">I dag: %1$s · %2$s</string>
     <string name="inhale">pust inn</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">La være</string>
     <string name="open_in">Åpne om %1$d s</string>
     <string name="open_anyway">Åpne likevel</string>
-    <string name="well_done">Bra jobbet.</string>
     <string name="time_back">Omtrent %1$s tilbake til deg.</string>
     <string name="stat_today">i dag</string>
     <string name="stat_in_7_days">på 7 dager</string>

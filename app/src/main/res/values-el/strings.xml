@@ -80,16 +80,11 @@
     <string name="cat_phone">Τηλέφωνο</string>
     <string name="cat_apps">Άλλες εφαρμογές</string>
     <string name="braked_section">Με φρένο</string>
-    <string name="brake_p1">Η ροή θα είναι ίδια σε μία ώρα.</string>
     <string name="brake_p2">Τι πήγαινες να κάνεις;</string>
     <string name="brake_p3">Αυτά τα δευτερόλεπτα είναι δικά σου.</string>
-    <string name="brake_p4">Δεν έχασες τίποτα.</string>
-    <string name="brake_p5">Ανάσανε. Μετά αποφάσισε.</string>
     <string name="brake_p6">Υπάρχει κάτι καλύτερο να κάνεις;</string>
     <string name="brake_p7">Και η βαρεμάρα είναι εντάξει.</string>
-    <string name="brake_p8">Κοίτα έξω από το παράθυρο.</string>
     <string name="brake_p9">Τη χρειάζεσαι στ\' αλήθεια τώρα;</string>
-    <string name="brake_p10">Η προσοχή σου αξίζει.</string>
     <string name="brake_not_today">Δεν άνοιξε ακόμη σήμερα</string>
     <string name="brake_today">Σήμερα: %1$s · %2$s</string>
     <string name="inhale">εισπνοή</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">Άσ\' το</string>
     <string name="open_in">Άνοιγμα σε %1$d δ</string>
     <string name="open_anyway">Άνοιγμα παρ\' όλα αυτά</string>
-    <string name="well_done">Μπράβο.</string>
     <string name="time_back">Περίπου %1$s γυρίζουν σε σένα.</string>
     <string name="stat_today">σήμερα</string>
     <string name="stat_in_7_days">σε 7 ημέρες</string>

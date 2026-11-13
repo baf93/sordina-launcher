@@ -4,11 +4,13 @@ import android.app.NotificationManager
 import android.app.NotificationManager.Policy
 import android.content.Context
 import android.os.Build
+import app.sordina.SordinaApp
 import app.sordina.data.Prefs
 
 /**
- * Il silenzio è quello di Android. Sordina lo accende solo quando glielo chiedi ("sordina per 45 minuti")
- * e lo spegne alla fine; non lo tocca mai da sola e non cambia le tue modalità.
+ * Il silenzio è quello di Android. Sordina lo accende solo in due casi e lo spegne da sola alla fine:
+ * quando glielo chiedi ("sordina per 45 minuti") e in auto con Android Auto (se lo lasci acceso).
+ * Non tocca mai il silenzio acceso da te o da una tua modalità.
  */
 class Silence(private val context: Context, private val prefs: Prefs) {
     private val nm = context.getSystemService(NotificationManager::class.java)
@@ -23,17 +25,11 @@ class Silence(private val context: Context, private val prefs: Prefs) {
     fun start(until: Long): Boolean {
         if (!hasAccess()) return false
         return runCatching {
-            if (Build.VERSION.SDK_INT >= 35) {
-                // Solo la modalità di Sordina: chiamate e messaggi dei preferiti, chiamate ripetute, sveglie, musica
-                nm.notificationPolicy = Policy(
-                    Policy.PRIORITY_CATEGORY_CALLS or Policy.PRIORITY_CATEGORY_REPEAT_CALLERS or Policy.PRIORITY_CATEGORY_MESSAGES or
-                        Policy.PRIORITY_CATEGORY_ALARMS or Policy.PRIORITY_CATEGORY_MEDIA,
-                    Policy.PRIORITY_SENDERS_STARRED, Policy.PRIORITY_SENDERS_STARRED, 0,
-                )
-            }
+            policy(messagesFromAnyone = false)
             nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
             prefs.quietUntil = until
             prefs.quietOwned = true
+            prefs.quietCar = false
         }.isSuccess
     }
 
@@ -41,16 +37,56 @@ class Silence(private val context: Context, private val prefs: Prefs) {
     fun stop() {
         val owned = prefs.quietOwned
         prefs.quietOwned = false
+        prefs.quietCar = false
         prefs.quietUntil = 0L
         if (owned && hasAccess()) runCatching { nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL) }
     }
 
-    /** Ai cambi e allo scadere: finito il tempo, si spegne; spento a mano, Sordina se ne dimentica. */
+    /**
+     * Le regole del silenzio di Sordina (solo da Android 15: prima cambierebbero il tuo Non disturbare).
+     * Passano chiamate e messaggi dei preferiti (le tue persone importanti), chiamate ripetute,
+     * conversazioni prioritarie, sveglie e musica. [messagesFromAnyone]: in auto, mentre stai scrivendo a qualcuno.
+     */
+    private fun policy(messagesFromAnyone: Boolean) {
+        if (Build.VERSION.SDK_INT < 35) return
+        val categories = Policy.PRIORITY_CATEGORY_CALLS or Policy.PRIORITY_CATEGORY_REPEAT_CALLERS or Policy.PRIORITY_CATEGORY_MESSAGES or
+            Policy.PRIORITY_CATEGORY_CONVERSATIONS or Policy.PRIORITY_CATEGORY_ALARMS or Policy.PRIORITY_CATEGORY_MEDIA
+        val messages = if (messagesFromAnyone) Policy.PRIORITY_SENDERS_ANY else Policy.PRIORITY_SENDERS_STARRED
+        val wanted = Policy(categories, Policy.PRIORITY_SENDERS_STARRED, messages, 0, Policy.CONVERSATION_SENDERS_IMPORTANT)
+        val now = nm.notificationPolicy
+        if (now.priorityCategories != wanted.priorityCategories || now.priorityMessageSenders != wanted.priorityMessageSenders ||
+            now.priorityCallSenders != wanted.priorityCallSenders) nm.notificationPolicy = wanted
+    }
+
+    /** Ai cambi e allo scadere: finito il tempo, si spegne; spento a mano, Sordina se ne dimentica. In auto, si accende. */
     fun check(now: Long = System.currentTimeMillis()) {
         // Prima Sordina poteva gestire Non disturbare tutto il giorno: lo restituisce com'era
         if (prefs.silenceManaged) {
             prefs.silenceManaged = false
             if (hasAccess()) runCatching { nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL) }
+        }
+        val inCar = runCatching { SordinaApp.of(context).moments.isCar() }.getOrDefault(false)
+        if (!inCar) prefs.carDeclined = false
+        if (prefs.quietCar) {
+            when {
+                // Sceso dall'auto (o hai spento l'opzione): si spegne
+                !inCar || !prefs.carQuiet -> stop()
+                // Spento a mano durante il viaggio: resta spento fino al prossimo
+                !isActive() -> { prefs.carDeclined = true; prefs.quietOwned = false; prefs.quietCar = false }
+                // Mentre scrivi a qualcuno passano i messaggi di tutti; finita la conversazione, solo i preferiti
+                else -> runCatching { policy(messagesFromAnyone = Talking.lastUntil(now) != null) }
+            }
+            return
+        }
+        if (inCar && prefs.carQuiet && !prefs.carDeclined && !isActive() && hasAccess()) {
+            runCatching {
+                policy(messagesFromAnyone = Talking.lastUntil(now) != null)
+                nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
+                prefs.quietOwned = true
+                prefs.quietCar = true
+                prefs.quietUntil = Long.MAX_VALUE
+            }
+            return
         }
         if (!prefs.quietOwned) return
         if (prefs.quietUntil <= now || !isActive()) stop()

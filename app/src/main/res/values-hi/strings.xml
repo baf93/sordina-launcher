@@ -80,16 +80,11 @@
     <string name="cat_phone">फ़ोन</string>
     <string name="cat_apps">दूसरे ऐप</string>
     <string name="braked_section">ब्रेक वाले</string>
-    <string name="brake_p1">फ़ीड एक घंटे बाद भी वैसी ही रहेगी।</string>
     <string name="brake_p2">आप क्या करने वाले थे?</string>
     <string name="brake_p3">ये पल आपके हैं।</string>
-    <string name="brake_p4">आपसे कुछ नहीं छूटा।</string>
-    <string name="brake_p5">साँस लें। फिर तय करें।</string>
     <string name="brake_p6">क्या कुछ बेहतर करने को है?</string>
     <string name="brake_p7">बोर होना भी ठीक है।</string>
-    <string name="brake_p8">खिड़की से बाहर देखें।</string>
     <string name="brake_p9">क्या अभी सच में ज़रूरत है?</string>
-    <string name="brake_p10">आपका ध्यान क़ीमती है।</string>
     <string name="brake_not_today">आज अभी नहीं खोला</string>
     <string name="brake_today">आज: %1$s · %2$s</string>
     <string name="inhale">साँस लें</string>
@@ -97,7 +92,6 @@
     <string name="leave_it">रहने दें</string>
     <string name="open_in">%1$d से. में खोलें</string>
     <string name="open_anyway">फिर भी खोलें</string>
-    <string name="well_done">शाबाश।</string>
     <string name="time_back">लगभग %1$s आपको वापस मिले।</string>
     <string name="stat_today">आज</string>
     <string name="stat_in_7_days">7 दिन में</string>
