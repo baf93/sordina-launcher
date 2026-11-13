@@ -219,12 +219,6 @@
     <string name="s_tap_app">المس تطبيقًا لاختياره.</string>
     <string name="s_search_app">ابحث عن تطبيق…</string>
     <string name="lv_auto_hint">تقرر Sordina</string>
-    <string name="lv_always">دائمًا</string>
-    <string name="lv_always_hint">فورًا، مع صوت، حتى ليلًا</string>
-    <string name="lv_silent">فورًا، بصمت</string>
-    <string name="lv_silent_hint">فورًا، بلا صوت</string>
-    <string name="lv_summary_hint">في أوقات الملخص</string>
-    <string name="lv_summary">ملخص</string>
     <string name="s_braked_hint">وقفة قبل الفتح.</string>
     <string name="s_add_app">إضافة تطبيق…</string>
     <string name="s_braked_none">لا شيء. ابحث عن تطبيق بالأعلى.</string>

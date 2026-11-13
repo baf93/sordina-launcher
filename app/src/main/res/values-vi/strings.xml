@@ -219,12 +219,6 @@
     <string name="s_tap_app">Chạm vào ứng dụng để chọn.</string>
     <string name="s_search_app">Tìm ứng dụng…</string>
     <string name="lv_auto_hint">Sordina quyết định</string>
-    <string name="lv_always">Luôn luôn</string>
-    <string name="lv_always_hint">Ngay, có âm thanh, kể cả ban đêm</string>
-    <string name="lv_silent">Ngay, im lặng</string>
-    <string name="lv_silent_hint">Ngay, không âm thanh</string>
-    <string name="lv_summary_hint">Vào giờ tóm tắt</string>
-    <string name="lv_summary">Tóm tắt</string>
     <string name="s_braked_hint">Dừng một chút trước khi mở.</string>
     <string name="s_add_app">Thêm ứng dụng…</string>
     <string name="s_braked_none">Chưa có. Tìm ứng dụng ở trên.</string>

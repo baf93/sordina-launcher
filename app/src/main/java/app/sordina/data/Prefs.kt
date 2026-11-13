@@ -96,16 +96,6 @@ class Prefs(context: Context) {
         set(v) = put { putStringSet("excluded", v) }
 
     // Notifiche
-    /** Orari dei riepiloghi in minuti dalla mezzanotte (8:30 = 510). Prima erano ore intere in "summaryHours": si leggono da lì finché non si salva. */
-    var summaryTimes: List<Int>
-        get() {
-            val raw = sp.getString("summaryTimes", null)
-            val list = raw?.split(',')?.mapNotNull { it.trim().toIntOrNull() }
-                ?: str("summaryHours", "8,13,19").split(',').mapNotNull { it.trim().toIntOrNull()?.times(60) }
-            return list.filter { it in 0 until 24 * 60 }.distinct().sorted().ifEmpty { listOf(8 * 60, 13 * 60, 19 * 60) }
-        }
-        set(v) = put { putString("summaryTimes", v.map { ((it % 1440) + 1440) % 1440 }.distinct().sorted().joinToString(",")) }
-
     /** Livello scelto dall'utente per app (pacchetto → livello). */
     var appLevels: Map<String, Level>
         get() = str("appLevels", "").split('|').mapNotNull {
@@ -157,19 +147,7 @@ class Prefs(context: Context) {
         set(v) = put { putString("lockPrivacy", v.name) }
 
     // Momenti
-    var nightEnabled: Boolean
-        get() = sp.getBoolean("nightEnabled", true)
-        set(v) = put { putBoolean("nightEnabled", v) }
-    var nightStart: Int
-        get() = sp.getInt("nightStart", 23 * 60)
-        set(v) = put { putInt("nightStart", v) }
-    var nightEnd: Int
-        get() = sp.getInt("nightEnd", 7 * 60)
-        set(v) = put { putInt("nightEnd", v) }
-    var carEnabled: Boolean
-        get() = sp.getBoolean("carEnabled", true)
-        set(v) = put { putBoolean("carEnabled", v) }
-    /** Casa cambia aspetto: in auto, la sera prima della notte, di notte. Ognuna si spegne da sola. */
+    /** Casa cambia aspetto: in auto, la sera, di notte (quando Android è in una modalità). Ognuna si spegne da sola. */
     var homeCar: Boolean
         get() = sp.getBoolean("homeCar", true)
         set(v) = put { putBoolean("homeCar", v) }
@@ -190,18 +168,71 @@ class Prefs(context: Context) {
     var carHidden: Set<String>
         get() = sp.getStringSet("carHidden", emptySet())!!.toSet()
         set(v) = put { putStringSet("carHidden", v) }
-    /** Quanto prima della notte comincia la sera, in minuti */
-    var eveningMinutes: Int
-        get() = sp.getInt("eveningMinutes", 90)
-        set(v) = put { putInt("eveningMinutes", v) }
-    var momentOverride: String?
-        get() = sp.getString("momentOverride", null)
-        set(v) = put { putString("momentOverride", v) }
-    var momentOverrideBase: String?
-        get() = sp.getString("momentOverrideBase", null)
-        set(v) = put { putString("momentOverrideBase", v) }
+
+    /** Sordina a tempo: fino a quando (millisecondi), 0 = spenta */
+    var quietUntil: Long
+        get() = sp.getLong("quietUntil", 0L)
+        set(v) = put { putLong("quietUntil", v) }
+    /** Non disturbare l'ha acceso Sordina (e quindi lo spegne lei, alla fine) */
+    var quietOwned: Boolean
+        get() = sp.getBoolean("quietOwned", false)
+        set(v) = put { putBoolean("quietOwned", v) }
+
+    // Urgenze
+    /** Un messaggio urgente o insistente passa anche se non è di una persona importante. */
+    var urgentEnabled: Boolean
+        get() = sp.getBoolean("urgentEnabled", true)
+        set(v) = put { putBoolean("urgentEnabled", v) }
+    /** Parole che rendono urgente un messaggio, separate da virgole (vuoto = quelle di serie) */
+    var urgentWords: String
+        get() = str("urgentWords", "")
+        set(v) = put { putString("urgentWords", v.trim()) }
+
+    /** Regole per tipo di notifica (canale): "pacchetto|canale" → livello. Vincono su tutto il resto. */
+    var channelRules: Map<String, Level>
+        get() = levelMap("channelRules")
+        set(v) = putLevelMap("channelRules", v)
+    /** Regole per persona o gruppo (nome normalizzato) → livello. "In sordina" vince anche sulle persone importanti. */
+    var personRules: Map<String, Level>
+        get() = levelMap("personRules").ifEmpty {
+            // Prima c'era solo "sempre al riepilogo" per i gruppi
+            sp.getStringSet("holdAlways", emptySet())!!.associate { it.removePrefix("p:") to Level.RIEPILOGO }
+        }
+        set(v) = put { putString("personRules", JSONObject(v.mapValues { it.value.name }).toString()); remove("holdAlways") }
+
+    /** Il nome da mostrare per una regola (tipo di notifica o persona), per l'elenco in Impostazioni */
+    var ruleNames: Map<String, String>
+        get() = runCatching { JSONObject(str("ruleNames", "{}")).let { o -> o.keys().asSequence().associateWith { o.getString(it) } } }.getOrDefault(emptyMap())
+        set(v) = put { putString("ruleNames", JSONObject(v).toString()) }
+
+    private fun levelMap(k: String): Map<String, Level> = runCatching {
+        val o = JSONObject(str(k, "{}"))
+        o.keys().asSequence().mapNotNull { key -> runCatching { key to Level.valueOf(o.getString(key)) }.getOrNull() }.toMap()
+    }.getOrDefault(emptyMap())
+    private fun putLevelMap(k: String, v: Map<String, Level>) = put { putString(k, JSONObject(v.mapValues { it.value.name }).toString()) }
+
+    /** Già chiesto di togliere Sordina dall'ottimizzazione della batteria */
+    var batteryAsked: Boolean
+        get() = sp.getBoolean("batteryAsked", false)
+        set(v) = put { putBoolean("batteryAsked", v) }
 
     // Attrito
+    /** Il freno vale solo in questa fascia (minuti dalla mezzanotte); -1 = sempre */
+    var brakeFrom: Int
+        get() = sp.getInt("brakeFrom", -1)
+        set(v) = put { putInt("brakeFrom", v) }
+    var brakeTo: Int
+        get() = sp.getInt("brakeTo", -1)
+        set(v) = put { putInt("brakeTo", v) }
+    /** L'attesa cresce a ogni riapertura nella stessa ora */
+    /** Il freno torna anche se l'app frenata si riapre dalle recenti */
+    var brakeGuard: Boolean
+        get() = sp.getBoolean("brakeGuard", true)
+        set(v) = put { putBoolean("brakeGuard", v) }
+
+    var brakeGrow: Boolean
+        get() = sp.getBoolean("brakeGrow", true)
+        set(v) = put { putBoolean("brakeGrow", v) }
     /** Le app da frenare sono già state proposte al primo avvio (una volta sola) */
     var brakeSuggested: Boolean
         get() = sp.getBoolean("brakeSuggested", false)
@@ -221,10 +252,6 @@ class Prefs(context: Context) {
     var categoryOrder: List<String>
         get() = sp.getString("categoryOrder", "")!!.split(",").filter { it.isNotBlank() }
         set(v) = put { putString("categoryOrder", v.joinToString(",")) }
-    /** Le notifiche delle app frenate restano in Sordina: non tornano al riepilogo, solo se le leggi. */
-    var brakedStay: Boolean
-        get() = sp.getBoolean("brakedStay", true)
-        set(v) = put { putBoolean("brakedStay", v) }
     var brakeSeconds: Int
         get() = sp.getInt("brakeSeconds", 10)
         set(v) = put { putInt("brakeSeconds", v.coerceIn(3, 60)) }
@@ -302,8 +329,8 @@ class Prefs(context: Context) {
                 when (val v = o.get(k)) {
                     is org.json.JSONArray -> putStringSet(k, (0 until v.length()).map { v.getString(it) }.toSet())
                     is Boolean -> putBoolean(k, v)
-                    is Int -> if (k == "calendarId") putLong(k, v.toLong()) else putInt(k, v)
-                    is Long -> if (k == "calendarId") putLong(k, v) else putInt(k, v.toInt())
+                    is Int -> if (k == "calendarId" || k == "quietUntil") putLong(k, v.toLong()) else putInt(k, v)
+                    is Long -> if (k == "calendarId" || k == "quietUntil") putLong(k, v) else putInt(k, v.toInt())
                     else -> putString(k, v.toString())
                 }
             }

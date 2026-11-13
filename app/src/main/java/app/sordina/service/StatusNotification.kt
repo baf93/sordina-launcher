@@ -189,16 +189,9 @@ class StatusNotification(private val context: Context) {
         /** La frase di stato, uguale in Casa e sulla scheda. */
         fun headline(app: SordinaApp, now: LocalDateTime = LocalDateTime.now()): String {
             val moment = app.moments.current()
-            if (moment != Moment.NONE) return moment.phrase
+            if (moment != Moment.NONE) return app.moments.phrase(moment)
             val waiting = app.store.groups().sumOf { g -> g.sumOf { it.count } }
-            val last = app.moments.lastSummaryToday(now)
-            if (last != null && waiting > 0) {
-                val since = Duration.between(now.toLocalDate().atTime(last / 60, last % 60), now).toMinutes()
-                if (since in 0..59) return tr(R.string.summary_of, if (last % 60 == 0) "${last / 60}" else java.time.LocalTime.of(last / 60, last % 60).format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)), trn(R.plurals.n_things, waiting))
-            }
-            val next = app.moments.nextSummary(now)
-            val t = next.format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
-            return if (next.toLocalDate() == now.toLocalDate().plusDays(1)) tr(R.string.nothing_urgent_until_tomorrow, t) else tr(R.string.nothing_urgent_until, t)
+            return if (waiting > 0) trn(R.plurals.n_waiting, waiting) else tr(R.string.nothing_waiting)
         }
     }
 }

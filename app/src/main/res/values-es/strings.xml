@@ -219,12 +219,6 @@
     <string name="s_tap_app">Toca una app para elegir.</string>
     <string name="s_search_app">Busca una app…</string>
     <string name="lv_auto_hint">Decide Sordina</string>
-    <string name="lv_always">Siempre</string>
-    <string name="lv_always_hint">Enseguida, con sonido, también de noche</string>
-    <string name="lv_silent">Enseguida, en silencio</string>
-    <string name="lv_silent_hint">Enseguida, sin sonido</string>
-    <string name="lv_summary_hint">En las horas del resumen</string>
-    <string name="lv_summary">Resumen</string>
     <string name="s_braked_hint">Una pausa antes de abrir.</string>
     <string name="s_add_app">Añadir una app…</string>
     <string name="s_braked_none">Ninguna. Busca una app arriba.</string>

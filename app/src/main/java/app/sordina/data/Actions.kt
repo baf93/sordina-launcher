@@ -55,6 +55,26 @@ class Actions(
         Act.SordinaSettings -> Outcome(null)
         is Act.Web -> web(act.query)
         is Act.Calc -> { copy(act.result); Outcome(tr(R.string.copied_x, act.result)) }
+        is Act.Quiet -> quiet(act.until)
+    }
+
+    /** Sordina a tempo: da adesso fino a [until]; null la toglie e fa tornare subito ciò che aspettava lei. */
+    private fun quiet(until: Long?): Outcome {
+        val silence = app.sordina.SordinaApp.of(context).silence
+        if (until == null) {
+            silence.stop()
+            app.sordina.service.Scheduler.refresh(context)
+            return Outcome(tr(R.string.quiet_done))
+        }
+        // Serve il permesso di accendere Non disturbare: lo si chiede la prima volta
+        if (!silence.hasAccess()) {
+            start(Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+            return Outcome(tr(R.string.quiet_need_access), ok = false)
+        }
+        silence.start(until)
+        app.sordina.service.Scheduler.refresh(context)
+        val msg = tr(R.string.quiet_until, java.time.Instant.ofEpochMilli(until).atZone(java.time.ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)))
+        return Outcome(msg, undo = { silence.stop(); app.sordina.service.Scheduler.refresh(context) })
     }
 
     private fun start(i: Intent): Boolean =

@@ -219,12 +219,6 @@
     <string name="s_tap_app">Atinge o aplicație ca s-o alegi.</string>
     <string name="s_search_app">Caută o aplicație…</string>
     <string name="lv_auto_hint">Decide Sordina</string>
-    <string name="lv_always">Mereu</string>
-    <string name="lv_always_hint">Imediat, cu sunet, chiar și noaptea</string>
-    <string name="lv_silent">Imediat, silențios</string>
-    <string name="lv_silent_hint">Imediat, fără sunet</string>
-    <string name="lv_summary_hint">La orele rezumatului</string>
-    <string name="lv_summary">Rezumat</string>
     <string name="s_braked_hint">O pauză înainte de a deschide.</string>
     <string name="s_add_app">Adaugă o aplicație…</string>
     <string name="s_braked_none">Niciuna. Caută o aplicație mai sus.</string>

@@ -219,12 +219,6 @@
     <string name="s_tap_app">Ketuk aplikasi untuk memilih.</string>
     <string name="s_search_app">Cari aplikasi…</string>
     <string name="lv_auto_hint">Sordina yang memutuskan</string>
-    <string name="lv_always">Selalu</string>
-    <string name="lv_always_hint">Langsung, bersuara, bahkan malam</string>
-    <string name="lv_silent">Langsung, senyap</string>
-    <string name="lv_silent_hint">Langsung, tanpa suara</string>
-    <string name="lv_summary_hint">Pada jam ringkasan</string>
-    <string name="lv_summary">Ringkasan</string>
     <string name="s_braked_hint">Jeda sebelum membuka.</string>
     <string name="s_add_app">Tambah aplikasi…</string>
     <string name="s_braked_none">Tidak ada. Cari aplikasi di atas.</string>

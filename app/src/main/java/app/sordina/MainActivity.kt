@@ -2,6 +2,9 @@ package app.sordina
 
 import app.sordina.data.Prefs
 import app.sordina.data.Held
+import app.sordina.data.RuleScope
+import app.sordina.data.RuleTarget
+import app.sordina.data.Rules
 import app.sordina.R
 import app.sordina.data.Categories
 import androidx.core.graphics.drawable.toBitmap
@@ -69,6 +72,7 @@ import app.sordina.data.upcoming
 import app.sordina.data.agenda
 import app.sordina.data.Level
 import app.sordina.data.Moment
+import app.sordina.data.Moments
 import app.sordina.data.Scene
 import app.sordina.data.CardDetector
 import app.sordina.data.Search
@@ -78,6 +82,8 @@ import app.sordina.data.Proposals
 import app.sordina.data.Understanding
 import app.sordina.service.Scheduler
 import app.sordina.service.SordinaListener
+import app.sordina.service.BrakeGuard
+import app.sordina.service.Health
 import app.sordina.service.StatusNotification
 import app.sordina.ui.BrakeScreen
 import app.sordina.ui.Onboarding
@@ -140,6 +146,8 @@ class MainActivity : ComponentActivity(), Ops {
     private var birthdays by mutableStateOf<List<Birthday>>(emptyList())
     private var moment by mutableStateOf(Moment.NONE)
     private var scene by mutableStateOf(Scene.DAY)
+    /** Cosa impedisce al motore di lavorare (null = tutto bene) */
+    private var health by mutableStateOf<Health?>(null)
     private var tomorrowEvents by mutableStateOf<List<Upcoming>>(emptyList())
     private var tomorrowWeather by mutableStateOf<String?>(null)
     private var recap by mutableStateOf<String?>(null)
@@ -230,6 +238,11 @@ class MainActivity : ComponentActivity(), Ops {
             screen = Screen.ONBOARDING; return
         }
         if (screen == Screen.ONBOARDING) return
+        // Un'app frenata è tornata davanti senza passare dal freno
+        intent?.getStringExtra(BrakeGuard.EXTRA)?.let { pkg ->
+            intent.removeExtra(BrakeGuard.EXTRA)
+            (apps.firstOrNull { it.packageName == pkg } ?: catalog.load().firstOrNull { it.packageName == pkg })?.let { brakeTarget = it; screen = Screen.BRAKE; return }
+        }
         when {
             intent?.action == ACTION_WAITING -> { screen = Screen.SORDINA }
             intent?.hasCategory(Intent.CATEGORY_HOME) == true -> { screen = Screen.HOME; query = "" }
@@ -240,6 +253,7 @@ class MainActivity : ComponentActivity(), Ops {
         super.onResume()
         refreshPerms()
         SordinaListener.rebind(this)
+        BrakeGuard.atHome(this, prefs)
         SordinaListener.sync()
         moment = app.moments.current()
         scene = app.moments.scene()
@@ -360,9 +374,9 @@ class MainActivity : ComponentActivity(), Ops {
     }
 
     private fun sceneLine(s: Scene): String? = when (s) {
-        Scene.EVENING -> tr(R.string.scene_night_starts, hm(prefs.nightStart))
-        Scene.NIGHT -> tr(R.string.scene_night_until, hm(prefs.nightEnd))
-        Scene.CAR -> tr(if (moment == Moment.CAR) R.string.car_line else R.string.car_line_open)
+        Scene.EVENING -> null
+        Scene.NIGHT -> app.moments.phrase()
+        Scene.CAR -> tr(if (moment == Moment.QUIET) R.string.car_line else R.string.car_line_open)
         Scene.DAY -> null
     }
 
@@ -417,6 +431,13 @@ class MainActivity : ComponentActivity(), Ops {
             call = g(Manifest.permission.CALL_PHONE),
         )
         if (perms.contacts && !was.contacts) app.people.invalidate()
+        checkHealth()
+    }
+
+    private fun checkHealth() {
+        if (!prefs.onboarded) { health = null; return }
+        // La batteria la si chiede una volta: se dici di no, non si insiste in Casa (resta nelle Impostazioni)
+        health = SordinaListener.health(this)?.takeIf { it != Health.BATTERY || !prefs.batteryAsked }
     }
 
     private fun isDefaultHome(): Boolean {
@@ -429,10 +450,20 @@ class MainActivity : ComponentActivity(), Ops {
     private fun launch(a: AppEntry) {
         // Senza accesso all'utilizzo il cervello non vede le app aperte: le ricorda da qui
         if (!perms.usage) app.brain.chosen("", Candidate("app:${a.key}", a.label, null, Kind.APP, 0, false, Act.OpenApp(a), a), false)
-        if (a.packageName in prefs.braked) {
+        if (a.packageName in prefs.braked && brakeNow()) {
             brakeTarget = a
             screen = Screen.BRAKE
         } else catalog.launch(a)
+    }
+
+    /** Il freno vale adesso? Sempre, o solo nella fascia scelta (es. 22–8). */
+    private fun brakeNow(): Boolean = BrakeGuard.brakeNow(prefs)
+
+    /** L'attesa: quella scelta, più 5 secondi per ogni volta che l'hai aperta comunque nell'ultima ora (al massimo un minuto). */
+    private fun brakeWait(pkg: String): Int {
+        val base = prefs.brakeSeconds
+        if (!prefs.brakeGrow) return base
+        return (base + 5 * app.habits.opensLastHour(pkg)).coerceAtMost(60)
     }
 
     private fun understand(q: String): Understanding = app.intents.understand(q, apps.filter { it.key !in hidden || q.length > 2 }, proposals.usage)
@@ -460,14 +491,19 @@ class MainActivity : ComponentActivity(), Ops {
 
     // Schede di Casa
 
-    private fun eventCard(e: Upcoming, now: Long): Card {
-        val min = ((e.begin - now) / 60_000).toInt()
-        val label = when {
+    /** "Adesso", "Tra 12 min", "Alle 16:00" */
+    private fun startLabel(begin: Long, now: Long): String {
+        val min = ((begin - now) / 60_000).toInt()
+        return when {
             min <= 0 -> tr(R.string.now_cap)
             min < 60 -> tr(R.string.in_min, min)
-            else -> tr(R.string.at_time, java.time.Instant.ofEpochMilli(e.begin).atZone(java.time.ZoneId.systemDefault())
+            else -> tr(R.string.at_time, java.time.Instant.ofEpochMilli(begin).atZone(java.time.ZoneId.systemDefault())
                 .format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)))
         }
+    }
+
+    private fun eventCard(e: Upcoming, now: Long): Card {
+        val label = startLabel(e.begin, now)
         val actions = buildList {
             e.link?.let { add(CardAction(tr(R.string.join), CardOp.OpenUrl(it))) }
             e.location?.let { add(CardAction(tr(R.string.navigate), CardOp.Navigate(it))) }
@@ -531,7 +567,9 @@ class MainActivity : ComponentActivity(), Ops {
         val today = java.time.LocalDate.now()
         val hm = java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)
         val out = ArrayList<AgendaRow>()
-        if (moment != Moment.NONE) out += AgendaRow(tr(R.string.now_l), moment.phrase, "moment")
+        // Il motore è fermo o rischia di esserlo: lo si dice per primo, un tocco porta dove si sistema
+        health?.let { h -> out += AgendaRow(tr(R.string.health_label), healthText(h), "health", accent = true) }
+        if (moment != Moment.NONE) out += AgendaRow(tr(R.string.now_l), app.moments.phrase(moment), "moment")
         val timed = ArrayList<Pair<Long, AgendaRow>>()
         for (e in agendaEvents) {
             val key = if (e.link == "ha") "ha" else "event:${e.id}"
@@ -553,6 +591,18 @@ class MainActivity : ComponentActivity(), Ops {
 
     private fun onAgenda(key: String) {
         when {
+            key == "health" -> when (health) {
+                Health.NO_ACCESS -> openListenerSettings()
+                Health.STOPPED -> { SordinaListener.rebind(this); openListenerSettings() }
+                Health.BATTERY -> openBatterySettings()
+                null -> Unit
+            }
+            // Toccando "In sordina fino alle…" la si toglie
+            key == "moment" && app.moments.focusUntil() != null -> lifecycleScope.launch {
+                val out = actions.run(Act.Quiet(null))
+                changed()
+                out.message?.let { say(it) }
+            }
             key == "weather" -> openWeather()
             key == "sordina" -> screen = Screen.SORDINA
             key == "ha" -> packageManager.getLaunchIntentForPackage("io.homeassistant.companion.android")?.let { start(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
@@ -577,8 +627,11 @@ class MainActivity : ComponentActivity(), Ops {
             card.kind == CardKind.RAIN -> openWeather()
             card.kind == CardKind.BIRTHDAY -> card.actions.firstOrNull()?.let { cardAction(card, it) }
             card.kind == CardKind.PAYMENT -> card.actions.firstOrNull()?.let { cardAction(card, it) }
-            else -> SordinaListener.open(this, card.key)
+            // Riunione da una notifica: si apre quella (la chiave della scheda è la sua)
+            else -> SordinaListener.open(this, card.sources.firstOrNull() ?: card.key)
         }
+        // Una cosa da vedere una volta (pacco, biglietto, chiamata persa…): aperta, ha fatto il suo lavoro
+        if (card.oneShot) app.signals.dismiss(card.key)
     }
 
     private fun cardAction(card: Card, a: CardAction) {
@@ -592,7 +645,16 @@ class MainActivity : ComponentActivity(), Ops {
                 if (Build.VERSION.SDK_INT < 33) say(tr(R.string.copied))
                 app.signals.dismiss(card.key)
             }
-            is CardOp.OpenNotif -> SordinaListener.open(this, op.key)
+            is CardOp.OpenNotif -> { SordinaListener.open(this, op.key); if (card.oneShot) app.signals.dismiss(card.key) }
+            CardOp.Hide -> {
+                // La musica non si nasconde: sparisce da sola quando smette
+                if (card.kind != CardKind.MUSIC) {
+                    if (prefs.haptics) window.decorView.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                    if (card.kind == CardKind.HABIT || card.kind == CardKind.BIRTHDAY) doneHabits = doneHabits + card.key
+                    app.signals.dismiss(card.key)
+                    say(tr(R.string.card_hidden))
+                }
+            }
             is CardOp.Dial -> start(Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + Uri.encode(op.number))))
             is CardOp.Navigate -> start(Intent(Intent.ACTION_VIEW, Uri.parse("google.navigation:q=" + Uri.encode(op.place))))
                 || start(Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=" + Uri.encode(op.place))))
@@ -608,11 +670,14 @@ class MainActivity : ComponentActivity(), Ops {
             }
             is CardOp.OpenPackage -> {
                 doneHabits = doneHabits + card.key
+                app.signals.dismiss(card.key)
                 apps.firstOrNull { it.packageName == op.pkg && !it.isWork }?.let(::launch)
                     ?: packageManager.getLaunchIntentForPackage(op.pkg)?.let { start(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             }
             is CardOp.Query -> {
                 if (card.kind == CardKind.HABIT || card.kind == CardKind.BIRTHDAY) doneHabits = doneHabits + card.key
+                // Richiamato o scritto: la chiamata persa e il compleanno sono fatti
+                if (card.kind == CardKind.CALL || card.kind == CardKind.BIRTHDAY) app.signals.dismiss(card.key)
                 query = op.query
                 val u = understand(op.query)
                 val top = u.top
@@ -750,6 +815,19 @@ class MainActivity : ComponentActivity(), Ops {
     override fun exportSettings() { runCatching { exportLauncher.launch("sordina.json") } }
     override fun importSettings() { runCatching { importLauncher.launch(arrayOf("application/json", "text/plain", "*/*")) } }
     override fun openUrl(url: String) { start(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+
+    @SuppressLint("BatteryLife")
+    override fun openBatterySettings() {
+        prefs.batteryAsked = true
+        val direct = Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName"))
+        if (!start(direct)) start(Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+    }
+
+    private fun healthText(h: Health): String = when (h) {
+        Health.NO_ACCESS -> tr(R.string.health_no_access)
+        Health.STOPPED -> tr(R.string.health_stopped)
+        Health.BATTERY -> tr(R.string.health_battery)
+    }
     override fun pickWallpaper() {
         runCatching { wallpaperLauncher.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
     }
@@ -781,15 +859,18 @@ class MainActivity : ComponentActivity(), Ops {
     /** Lascia passare un contatto o un'app: per qualche ora, oppure sempre (importante / livello Subito). */
     private fun letPass(h: Held, hours: Int?) {
         val k = h.groupKey
-        when {
-            hours != null -> prefs.passUntil = prefs.passUntil + (k to System.currentTimeMillis() + hours * 3_600_000L)
-            k.startsWith("a:") -> prefs.setAppLevel(h.pkg, Level.SUBITO)
-            h.conversation == null -> prefs.importantNames = prefs.importantNames + k.removePrefix("p:")
-            else -> prefs.passUntil = prefs.passUntil + (k to Long.MAX_VALUE)
-        }
+        if (hours != null) prefs.passUntil = prefs.passUntil + (k to System.currentTimeMillis() + hours * 3_600_000L)
         SordinaListener.releaseGroup(this, k)
         changed()
         hint(if (hours == null) tr(R.string.passes_always_x, h.groupTitle) else tr(R.string.passes_for_x, h.groupTitle, trn(R.plurals.n_hours, hours)))
+    }
+
+    /** Una regola dalla pagina Sordina: vale subito, anche per quello che è già nella tendina o in sordina. */
+    private fun setRule(t: RuleTarget, s: RuleScope, level: Level?) {
+        Rules.set(prefs, t, s, level)
+        SordinaListener.reapply(this, t.pkg)
+        changed()
+        hint(if (level == null) tr(R.string.rule_removed) else tr(R.string.rule_set, t.name(s), level.label))
     }
 
     override fun changed() {
@@ -807,7 +888,7 @@ class MainActivity : ComponentActivity(), Ops {
 
     private fun wipe() {
         app.brain.wipe()
-        app.silence.disable()
+        app.silence.stop()
         SordinaListener.readAll(this)
         app.store.wipe()
         app.ha.setToken("")
@@ -855,6 +936,7 @@ class MainActivity : ComponentActivity(), Ops {
         val now = rememberNow()
         val groups = remember(held) { app.store.groups() }
         val signalCards by app.signals.cards.collectAsState()
+        val dismissedCards by app.signals.dismissedKeys.collectAsState()
         val music by app.signals.music.collectAsState()
 
         val actionsP = ProposalActions(
@@ -901,7 +983,7 @@ class MainActivity : ComponentActivity(), Ops {
         // Di notte e in auto Casa ha un fondo pieno: la foto non serve
         val bare = (screen == Screen.HOME && scene != Scene.NIGHT && scene != Scene.CAR || screen == Screen.INTENT) && backdrop.active
         // Il momento e la Casa si ricontrollano ogni minuto: la sera e la notte arrivano anche a schermo acceso
-        LaunchedEffect(now) { moment = app.moments.current(); scene = app.moments.scene() }
+        LaunchedEffect(now) { moment = app.moments.current(); scene = app.moments.scene(); checkHealth() }
         LaunchedEffect(scene) { if (scene != Scene.DAY) lifecycleScope.launch(Dispatchers.IO) { sceneExtras(scene) } }
         Box(if (bare) Modifier.fillMaxSize() else Modifier.fillMaxSize().paper()) {
             if (bare) backdrop.image?.let { img ->
@@ -923,10 +1005,16 @@ class MainActivity : ComponentActivity(), Ops {
                     Screen.HOME -> {
                         val waiting = groups.sumOf { g -> g.sumOf { it.count } }
                         val ms = now.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
-                        val cards = remember(signalCards, music, events, habitCards, doneHabits, now, rainAt, birthdays, scene) {
-                            (signalCards.values + listOfNotNull(music, rainCard(ms)) + events.map { eventCard(it, ms) } +
+                        val cards = remember(signalCards, music, events, habitCards, doneHabits, now, rainAt, birthdays, scene, dismissedCards) {
+                            val calendar = events.map { eventCard(it, ms) }
+                            val calendarTitles = calendar.map { Search.normalize(it.title) }.toSet()
+                            // Riunioni avvisate da un'app: l'etichetta "Tra 10 min" si aggiorna; se il calendario ce l'ha già, basta quella
+                            val fromNotifs = signalCards.values
+                                .filterNot { it.startsAt != null && Search.normalize(it.title) in calendarTitles }
+                                .map { k -> k.startsAt?.let { s -> k.copy(label = startLabel(s, ms) + " · " + k.label) } ?: k }
+                            (fromNotifs + listOfNotNull(music, rainCard(ms)) + calendar +
                                 (habitCards + birthdayCards()).filter { it.key !in doneHabits })
-                                .filter { it.expiresAt > ms }
+                                .filter { it.expiresAt > ms && it.key !in dismissedCards }
                                 // Ogni Casa tiene solo le schede che le servono: in auto e di notte quasi nulla
                                 .filter { k -> when (scene) {
                                     Scene.CAR -> k.kind in setOf(CardKind.CALL, CardKind.MUSIC, CardKind.TIMER, CardKind.RIDE)
@@ -941,14 +1029,13 @@ class MainActivity : ComponentActivity(), Ops {
                         if ((applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) LaunchedEffect(cards) {
                             cards.forEach { k -> android.util.Log.d("SordinaCards", "${k.kind} | ${k.label} | ${k.title} | ${k.subtitle} | ${k.actions.joinToString { it.label }}") }
                         }
-                        val until = remember(now, prefsVersion) { tr(R.string.until_time, app.moments.nextSummary().format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))) }
                         HomeScreen(
                             state = HomeState(
                                 waiting = waiting,
-                                until = until,
+                                until = null,
                                 moment = if (moment == Moment.NONE) null else moment.label,
                                 cards = cards,
-                                agenda = remember(agendaEvents, moment, now, scene) { agendaRows(waiting).let { if (scene == Scene.EVENING) it.take(2) else it } },
+                                agenda = remember(agendaEvents, moment, now, scene, health) { agendaRows(waiting).let { if (scene == Scene.EVENING) it.take(2) else it } },
                                 weather = weatherNow,
                                 listening = voice.listening,
                                 partial = voice.partial,
@@ -1044,31 +1131,35 @@ class MainActivity : ComponentActivity(), Ops {
                             app = a,
                             icon = remember(a.key) { catalog.icon(a, (26 * resources.displayMetrics.density).toInt()) },
                             today = remember(a.key) { app.habits.appToday(a.packageName) },
-                            seconds = prefs.brakeSeconds,
+                            seconds = remember(a.key) { brakeWait(a.packageName) },
                             streak = remember(a.key) { app.habits.streak() },
                             onOpen = { habit ->
                                 app.habits.logBrake(a.packageName, habit)
+                                BrakeGuard.passed(a.packageName)
                                 catalog.launch(a)
                             },
                             onSkip = { app.habits.minutesPerVisit(a.packageName).also { app.habits.logSkip(a.packageName, it) } },
                             onDone = { screen = Screen.HOME },
                         )
                     } ?: run { screen = Screen.HOME }
-                    Screen.SORDINA -> SordinaScreen(
+                    Screen.SORDINA -> {
+                        SordinaScreen(
                         groups = groups,
-                        until = remember(now, prefsVersion) { tr(R.string.until_time, app.moments.nextSummary().format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))) },
                         overrides = remember(prefsVersion) { prefs.categoryOverrides },
                         braked = remember(prefsVersion) { prefs.braked },
-                        brakedStay = remember(prefsVersion) { prefs.brakedStay },
                         order = remember(prefsVersion) { when (prefs.sordinaOrder) { 1 -> null; 2 -> Categories.custom(prefs.categoryOrder); else -> Categories.AUTO } },
                         icon = ::notifIcon,
                         onOpen = { h -> SordinaListener.open(this@MainActivity, h.key) },
                         onRead = { k -> SordinaListener.readGroup(this@MainActivity, k) },
+                        onReadOne = { h -> SordinaListener.readOne(this@MainActivity, h.key) },
                         onReadAll = { SordinaListener.readAll(this@MainActivity); screen = Screen.HOME },
                         onLetPass = ::letPass,
+                        ruleOf = { t, s -> Rules.get(prefs, t, s) },
+                        onRule = ::setRule,
                         onMove = { k, cat -> prefs.categoryOverrides = prefs.categoryOverrides + (k to cat.name); changed() },
                         onBack = { screen = Screen.HOME },
                     )
+                    }
 
                     Screen.ONBOARDING -> Onboarding(
                         app = app,

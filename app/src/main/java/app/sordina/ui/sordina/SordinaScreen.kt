@@ -5,6 +5,13 @@ package app.sordina.ui.sordina
 import app.sordina.R
 import app.sordina.tr
 import app.sordina.trn
+import app.sordina.data.Level
+import app.sordina.data.RuleScope
+import app.sordina.data.RuleTarget
+import app.sordina.ui.RuleSheet
+import app.sordina.ui.RuleLabel
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -109,17 +116,20 @@ private fun List<List<Held>>.recentFirst() = sortedByDescending { g -> g.maxOf {
 @Composable
 fun SordinaScreen(
     groups: List<List<Held>>,
-    until: String?,
     overrides: Map<String, String>,
     braked: Set<String>,
-    brakedStay: Boolean,
     /** Ordine delle categorie; null = niente categorie, per arrivo (la più recente in alto) */
     order: List<Category>?,
     icon: (String) -> ImageBitmap?,
     onOpen: (Held) -> Unit,
     onRead: (String) -> Unit,
+    /** Una notifica sola, letta scorrendo */
+    onReadOne: (Held) -> Unit,
     onReadAll: () -> Unit,
     onLetPass: (Held, Int?) -> Unit,
+    ruleOf: (RuleTarget, RuleScope) -> Level?,
+    /** Una regola per tipo, persona o gruppo, app; null la toglie */
+    onRule: (RuleTarget, RuleScope, Level?) -> Unit,
     onMove: (key: String, Category) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -142,8 +152,7 @@ fun SordinaScreen(
             item(key = "top") {
                 Header("Sordina", onBack, subtitle = when (total) {
                             0 -> tr(R.string.sordina_empty)
-                            1 -> listOfNotNull(trn(R.plurals.n_notifications, 1), until).joinToString(" · ")
-                            else -> listOfNotNull(trn(R.plurals.n_notifications, total), until).joinToString(" · ")
+                            else -> trn(R.plurals.n_notifications, total)
                         }, modifier = Modifier.statusBarsPadding().padding(horizontal = 16.dp))
             }
             sections.forEach { s ->
@@ -154,7 +163,7 @@ fun SordinaScreen(
                         Text(s.label, style = TextStyle(fontSize = 20.sp, color = c.ink))
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            if (s.braked) (if (brakedStay) tr(R.string.stay_here) else tr(R.string.at_summary)) else "${s.total}",
+                            if (s.braked) tr(R.string.stay_here) else "${s.total}",
                             style = TextStyle(fontSize = 14.sp, color = c.soft),
                         )
                     }
@@ -165,7 +174,7 @@ fun SordinaScreen(
                         Block(
                             g, open = key in expanded, dim = s.braked, icon = icon,
                             onToggle = { feel.tick(); expanded = if (key in expanded) expanded - key else expanded + key },
-                            onOpen = onOpen, onRead = onRead,
+                            onOpen = onOpen, onRead = onRead, onReadOne = onReadOne,
                             onPass = { passFor = g.first() }, onMove = { moveFor = g.first() },
                         )
                     }
@@ -182,12 +191,12 @@ fun SordinaScreen(
     }
 
     passFor?.let { h ->
-        Picker(tr(R.string.let_pass_title, h.groupTitle), tr(R.string.let_pass_hint), onDismiss = { passFor = null }) {
+        // Una regola per sempre (tipo, persona o gruppo, app) oppure "lascia passare" per qualche ora
+        RuleSheet(h.target(), ruleOf, onRule, onDismiss = { passFor = null }) {
             val now = System.currentTimeMillis()
-            PASS_OPTIONS.forEach { (label, hours) ->
-                val hint = if (hours == null) (if (h.groupKey.startsWith("p:") && h.conversation == null) tr(R.string.becomes_important) else tr(R.string.passes_always))
-                else untilLabel(now + hours * 3_600_000L)
-                PickerRow(label, hint, highlight = hours == null) { feel.confirm(); passFor = null; onLetPass(h, hours) }
+            RuleLabel(tr(R.string.let_pass))
+            PASS_OPTIONS.filter { it.second != null }.forEach { (label, hours) ->
+                PickerRow(label, untilLabel(now + hours!! * 3_600_000L), highlight = false) { feel.confirm(); passFor = null; onLetPass(h, hours) }
             }
         }
     }
@@ -211,59 +220,26 @@ private fun untilLabel(at: Long): String {
 
 /**
  * Un mittente o un'app, in un blocco arrotondato. Tocco: si aprono le anteprime.
- * Scorrendo di lato oltre il 40% è letta.
+ * Scorrendo di lato oltre il 40% una notifica è letta: il blocco intero se ne ha una sola, altrimenti ogni anteprima.
  */
 @Composable
 private fun Block(
     g: List<Held>, open: Boolean, dim: Boolean, icon: (String) -> ImageBitmap?,
-    onToggle: () -> Unit, onOpen: (Held) -> Unit, onRead: (String) -> Unit,
+    onToggle: () -> Unit, onOpen: (Held) -> Unit, onRead: (String) -> Unit, onReadOne: (Held) -> Unit,
     onPass: () -> Unit, onMove: () -> Unit,
 ) {
     val c = S.c
     val feel = LocalFeel.current
-    val scope = rememberCoroutineScope()
     val h = g.first()
     val total = g.sumOf { it.count }
     val shape = RoundedCornerShape(22.dp)
     val person = h.groupKey.startsWith("p:")
-    val offset = remember { Animatable(0f) }
-    var width by remember { mutableIntStateOf(1) }
-    val passed = kotlin.math.abs(offset.value) > width * 0.4f
-    LaunchedEffect(passed) { if (passed) feel.threshold() }
+    val single = g.size == 1
     val arrow by animateFloatAsState(if (open) 180f else 0f, feel.spec(tween(220)), label = "arrow")
 
-    Box(
-        Modifier.fillMaxWidth().clip(shape).onSizeChanged { width = it.width.coerceAtLeast(1) }
-            .pointerInput(h.groupKey) {
-                detectHorizontalDragGestures(
-                    onDragEnd = {
-                        scope.launch {
-                            val v = offset.value
-                            if (kotlin.math.abs(v) > width * 0.4f) {
-                                offset.animateTo(if (v > 0) width.toFloat() else -width.toFloat(), feel.spec(tween(160)))
-                                feel.confirm()
-                                onRead(h.groupKey)
-                            } else offset.animateTo(0f, feel.spec(spring(dampingRatio = 0.7f, stiffness = 500f)))
-                        }
-                    },
-                    onDragCancel = { scope.launch { offset.animateTo(0f, feel.spec(spring())) } },
-                ) { ch, dx -> ch.consume(); scope.launch { offset.snapTo(offset.value + dx) } }
-            },
-    ) {
-        if (offset.value != 0f) {
-            val fg by animateColorAsState(if (passed) c.accent else c.soft, label = "read")
-            Row(
-                Modifier.matchParentSize().background(if (passed) c.accent.copy(alpha = 0.2f) else c.line).padding(horizontal = 22.dp),
-                horizontalArrangement = if (offset.value >= 0) Arrangement.Start else Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Icons.Rounded.Check, null, Modifier.size(18.dp), tint = fg)
-                Spacer(Modifier.width(6.dp))
-                Text(if (passed) tr(R.string.read_done) else tr(R.string.swipe_more), style = TextStyle(fontSize = 14.sp, color = fg))
-            }
-        }
+    Swipeable(h.key, enabled = single, shape = shape, onSwiped = { onReadOne(h) }) {
         Column(
-            Modifier.fillMaxWidth().graphicsLayer { translationX = offset.value }.clip(shape).background(c.card)
+            Modifier.fillMaxWidth().clip(shape).background(c.card)
                 .clickable(onClick = onToggle).padding(horizontal = 14.dp, vertical = 12.dp),
         ) {
             Row(Modifier.alpha(if (dim) 0.6f else 1f), verticalAlignment = Alignment.CenterVertically) {
@@ -285,12 +261,15 @@ private fun Block(
                 exit = if (feel.animations) shrinkVertically(tween(200)) + fadeOut(tween(150)) else fadeOut(tween(0)),
             ) {
                 Column(Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                    // Perché aspetta: la regola che l'ha fermata, da correggere con i tasti qui sotto
+                    whyLabel(h.reason)?.let { Text(tr(R.string.why_waiting, it), Modifier.padding(bottom = 8.dp), style = TextStyle(fontSize = 13.sp, color = c.soft)) }
                     // Le anteprime, dalla più vecchia alla più recente, divise da una riga sottile;
                     // titolo bianco e marcato, testo grigio sotto. Tocco su una: si apre l'app lì
                     g.sortedBy { it.time }.forEach { m ->
                         val head = headline(m)
                         Box(Modifier.fillMaxWidth().height(1.dp).background(c.line))
-                        Column(Modifier.fillMaxWidth().clickable { feel.tick(); onOpen(m) }.padding(horizontal = 2.dp, vertical = 11.dp)) {
+                        Swipeable(m.key, enabled = !single, shape = RoundedCornerShape(12.dp), onSwiped = { onReadOne(m) }) {
+                        Column(Modifier.fillMaxWidth().background(c.card).clickable { feel.tick(); onOpen(m) }.padding(horizontal = 2.dp, vertical = 11.dp)) {
                             Row(verticalAlignment = Alignment.Top) {
                                 Text(
                                     head ?: (body(m) + if (m.count > 1) "  · ${m.count}" else ""),
@@ -305,6 +284,7 @@ private fun Block(
                                 Modifier.padding(top = 2.dp), maxLines = 5, overflow = TextOverflow.Ellipsis,
                                 style = TextStyle(fontSize = 14.sp, lineHeight = 19.sp, color = c.soft),
                             )
+                        }
                         }
                     }
                     // Tre tasti piccoli, uguali, solo icona
@@ -406,4 +386,77 @@ private fun time(ms: Long): String {
     val t = Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault())
     return if (t.toLocalDate() == LocalDate.now()) t.format(DateTimeFormatter.ofPattern("H:mm"))
     else t.format(DateTimeFormatter.ofPattern("d/M"))
+}
+
+/** La regola che ha trattenuto la notifica, detta per esteso. */
+private fun whyLabel(reason: String?): String? = when (reason) {
+    null -> null
+    "predefinito" -> tr(R.string.why_default)
+    "app frenata" -> tr(R.string.why_braked)
+    "pagamento" -> tr(R.string.why_payment)
+    "regola dell'app", "scelta per l'app" -> tr(R.string.why_app)
+    "regola del tipo" -> tr(R.string.why_type)
+    "regola della persona", "trattenuta da te" -> tr(R.string.why_person)
+    "modalità", "in sordina" -> tr(R.string.why_mode)
+    else -> reason
+}
+
+/** Un gruppo in sordina come bersaglio di una regola. */
+private fun Held.target(): RuleTarget {
+    val who = groupKey.takeIf { it.startsWith("p:") }?.removePrefix("p:")
+    return RuleTarget(
+        pkg = pkg, appLabel = appLabel, channel = channel, channelName = channelName,
+        person = who, personTitle = if (who != null) groupTitle else null,
+        title = groupTitle, key = key,
+    )
+}
+
+
+
+/** Scorrendo di lato oltre il 40% parte [onSwiped]; sotto compare "Letta". Se [enabled] è falso è un contenitore e basta. */
+@Composable
+private fun Swipeable(key: Any, enabled: Boolean, shape: androidx.compose.ui.graphics.Shape, onSwiped: () -> Unit, content: @Composable () -> Unit) {
+    if (!enabled) {
+        Box(Modifier.fillMaxWidth()) { content() }
+        return
+    }
+    val c = S.c
+    val feel = LocalFeel.current
+    val scope = rememberCoroutineScope()
+    val offset = remember(key) { Animatable(0f) }
+    var width by remember { mutableIntStateOf(1) }
+    val passed = kotlin.math.abs(offset.value) > width * 0.4f
+    LaunchedEffect(passed) { if (passed) feel.threshold() }
+    Box(
+        Modifier.fillMaxWidth().clip(shape).onSizeChanged { width = it.width.coerceAtLeast(1) }
+            .pointerInput(key) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        scope.launch {
+                            val v = offset.value
+                            if (kotlin.math.abs(v) > width * 0.4f) {
+                                offset.animateTo(if (v > 0) width.toFloat() else -width.toFloat(), feel.spec(tween(160)))
+                                feel.confirm()
+                                onSwiped()
+                            } else offset.animateTo(0f, feel.spec(spring(dampingRatio = 0.7f, stiffness = 500f)))
+                        }
+                    },
+                    onDragCancel = { scope.launch { offset.animateTo(0f, feel.spec(spring())) } },
+                ) { ch, dx -> ch.consume(); scope.launch { offset.snapTo(offset.value + dx) } }
+            },
+    ) {
+        if (offset.value != 0f) {
+            val fg by animateColorAsState(if (passed) c.accent else c.soft, label = "read")
+            Row(
+                Modifier.matchParentSize().background(if (passed) c.accent.copy(alpha = 0.2f) else c.line).padding(horizontal = 22.dp),
+                horizontalArrangement = if (offset.value >= 0) Arrangement.Start else Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.Rounded.Check, null, Modifier.size(18.dp), tint = fg)
+                Spacer(Modifier.width(6.dp))
+                Text(if (passed) tr(R.string.read_done) else tr(R.string.swipe_more), style = TextStyle(fontSize = 14.sp, color = fg))
+            }
+        }
+        Box(Modifier.fillMaxWidth().graphicsLayer { translationX = offset.value }) { content() }
+    }
 }

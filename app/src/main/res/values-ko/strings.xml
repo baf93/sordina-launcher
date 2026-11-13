@@ -219,12 +219,6 @@
     <string name="s_tap_app">앱을 눌러 선택하세요.</string>
     <string name="s_search_app">앱 검색…</string>
     <string name="lv_auto_hint">Sordina가 결정</string>
-    <string name="lv_always">항상</string>
-    <string name="lv_always_hint">바로, 소리와 함께, 밤에도</string>
-    <string name="lv_silent">바로, 조용히</string>
-    <string name="lv_silent_hint">바로, 소리 없이</string>
-    <string name="lv_summary_hint">요약 시간에</string>
-    <string name="lv_summary">요약</string>
     <string name="s_braked_hint">열기 전에 잠깐 멈춤.</string>
     <string name="s_add_app">앱 추가…</string>
     <string name="s_braked_none">없어요. 위에서 앱을 검색하세요.</string>

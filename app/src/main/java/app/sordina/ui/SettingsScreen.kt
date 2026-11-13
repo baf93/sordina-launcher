@@ -8,7 +8,10 @@ import app.sordina.Lang
 import android.Manifest
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.Rule
+import androidx.compose.material.icons.automirrored.rounded.TrendingUp
 import androidx.activity.compose.BackHandler
+import app.sordina.service.SordinaListener
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.Text
@@ -43,6 +46,11 @@ import app.sordina.SordinaApp
 import app.sordina.data.AppEntry
 import app.sordina.data.CarApps
 import app.sordina.data.Level
+import app.sordina.data.RuleScope
+import app.sordina.data.Rules
+import app.sordina.data.RuleTarget
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.drawable.toBitmap
 import app.sordina.data.LockPrivacy
 import app.sordina.data.Moments
 import app.sordina.data.Search
@@ -55,7 +63,7 @@ import app.sordina.ui.theme.ThemeMode
 
 
 /** Le sottopagine: solo per le liste vere (persone, app, sfondi, Home Assistant). */
-private enum class Sub { MAIN, HOURS, PEOPLE, LEVELS, BRAKED, ORDER, PINNED, EXCLUDED, HA, PERMS, LOOK }
+private enum class Sub { MAIN, PEOPLE, LEVELS, BRAKED, ORDER, PINNED, EXCLUDED, HA, PERMS, LOOK, RULES }
 
 private fun hm(min: Int) = Moments.fmt(min)
 /** "1 h", "1 h 30" */
@@ -96,11 +104,6 @@ fun SettingsScreen(
     if (sub != Sub.MAIN) {
         Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 16.dp, vertical = 16.dp)) {
             when (sub) {
-                Sub.HOURS -> {
-                    Header(tr(R.string.s_summaries), back)
-                    Hint(tr(R.string.ob5_sub))
-                    SummaryHours(app, ops, Modifier.weight(1f).padding(top = 8.dp))
-                }
                 Sub.PEOPLE -> {
                     Header(tr(R.string.s_important), back)
                     Hint(tr(R.string.s_important_hint))
@@ -108,6 +111,7 @@ fun SettingsScreen(
                 }
                 Sub.LEVELS -> LevelsPage(app, apps, back)
                 Sub.BRAKED -> BrakedPage(app, apps, onChange = { ops.changed() }, onBack = back)
+                Sub.RULES -> RulesPage(app, apps, onChange = { ops.changed() }, onBack = back)
                 Sub.ORDER -> key(tick) {
                     Header(tr(R.string.s_your_order), back)
                     Hint(tr(R.string.s_use_arrows))
@@ -217,13 +221,13 @@ fun SettingsScreen(
             Group {
                 Line(tr(R.string.s_important), "${prefs.importantNames.size}", icon = Icons.Rounded.FavoriteBorder) { sub = Sub.PEOPLE }
                 Line(tr(R.string.s_apps_pass), "${prefs.appLevels.size}", icon = Icons.Rounded.Bolt) { sub = Sub.LEVELS }
-                // Riepiloghi e notte si scelgono sul quadrante, come nella prima configurazione
-                val times = prefs.summaryTimes.joinToString(" · ") { if (it % 60 == 0) "${it / 60}" else hm(it) }
-                Line(tr(R.string.s_summaries), times, if (prefs.nightEnabled) "${tr(R.string.s_night)} ${hm(prefs.nightStart)} – ${hm(prefs.nightEnd)}" else null, Icons.Rounded.Schedule) { sub = Sub.HOURS }
-                Toggle(tr(R.string.s_car), prefs.carEnabled, tr(R.string.s_calls_only), Icons.Rounded.DirectionsCar) { v -> change { prefs.carEnabled = v } }
-                if (perms.policy) Toggle(tr(R.string.s_dnd), prefs.silenceManaged, tr(R.string.s_dnd_hint), Icons.Rounded.DoNotDisturbOn) { v ->
-                    change { if (v) app.silence.enable() else app.silence.disable() }
+                // Il silenzio lo decidono le modalità di Android (Non disturbare, Riposo, Guida…)
+                Line(tr(R.string.s_modes), if (app.moments.androidQuiet()) tr(R.string.moment_quiet) else "", tr(R.string.s_modes_hint), Icons.Rounded.DoNotDisturbOn) {
+                    runCatching { ctx.startActivity(android.content.Intent("android.settings.ZEN_MODE_SETTINGS").addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
                 }
+                Toggle(tr(R.string.s_urgent), prefs.urgentEnabled, tr(R.string.s_urgent_hint), Icons.Rounded.PriorityHigh) { v -> change { prefs.urgentEnabled = v } }
+                val rules = Rules.all(prefs).size
+                Line(tr(R.string.rules), if (rules == 0) tr(R.string.none_f) else "$rules", tr(R.string.rules_hint), Icons.AutoMirrored.Rounded.Rule) { sub = Sub.RULES }
                 Toggle(tr(R.string.s_system), prefs.systemPass, if (prefs.systemPass) tr(R.string.s_system_on) else tr(R.string.s_system_off), Icons.Rounded.Settings) { v -> change { prefs.systemPass = v } }
                 val orders = listOf(
                     Option(tr(R.string.s_order_auto), tr(R.string.s_order_auto_hint)),
@@ -240,17 +244,10 @@ fun SettingsScreen(
             // ── Casa cambia: sera, notte, auto
             Section(tr(R.string.s_scenes))
             Group {
-                val evening = app.moments.eveningStart()
-                Toggle(tr(R.string.s_scene_evening), prefs.homeEvening,
-                    if (prefs.nightEnabled) tr(R.string.s_scene_evening_hint, hm(evening)) else tr(R.string.s_scene_evening_off),
+                Toggle(tr(R.string.s_scene_evening), prefs.homeEvening, tr(R.string.s_scene_evening_hint, hm(20 * 60)),
                     Icons.Rounded.WbTwilight) { v -> change { prefs.homeEvening = v } }
-                if (prefs.homeEvening && prefs.nightEnabled) {
-                    val lengths = listOf(60, 90, 120, 180)
-                    Pick(tr(R.string.s_scene_evening_len), span(prefs.eveningMinutes), lengths.map { Option(span(it)) },
-                        { lengths[it] == prefs.eveningMinutes }, icon = Icons.Rounded.Schedule, title = tr(R.string.s_scene_evening_len)) { change { prefs.eveningMinutes = lengths[it] } }
-                }
                 Toggle(tr(R.string.s_scene_night), prefs.homeNight,
-                    if (prefs.nightEnabled) tr(R.string.s_scene_night_hint) else tr(R.string.s_scene_evening_off),
+                    tr(R.string.s_scene_night_hint),
                     Icons.Rounded.Bedtime) { v -> change { prefs.homeNight = v } }
                 Toggle(tr(R.string.s_scene_car), prefs.homeCar, tr(R.string.s_scene_car_hint), Icons.Rounded.DirectionsCar) { v -> change { prefs.homeCar = v } }
                 if (prefs.homeCar) {
@@ -275,7 +272,15 @@ fun SettingsScreen(
                 Line(tr(R.string.s_braked_apps), if (prefs.braked.isEmpty()) tr(R.string.none_f) else "${prefs.braked.size}", icon = Icons.Rounded.PanTool) { sub = Sub.BRAKED }
                 val secs = listOf(5, 10, 20, 30, 60)
                 Pick(tr(R.string.s_wait), "${prefs.brakeSeconds} s", secs.map { Option(trn(R.plurals.n_seconds, it)) }, { secs[it] == prefs.brakeSeconds }, icon = Icons.Rounded.HourglassEmpty, title = tr(R.string.s_wait_title)) { change { prefs.brakeSeconds = secs[it] } }
-                Toggle(tr(R.string.s_stay), prefs.brakedStay, tr(R.string.s_stay_hint), Icons.Rounded.NotificationsOff) { v -> change { prefs.brakedStay = v } }
+                Toggle(tr(R.string.s_brake_grow), prefs.brakeGrow, tr(R.string.s_brake_grow_hint), Icons.AutoMirrored.Rounded.TrendingUp) { v -> change { prefs.brakeGrow = v } }
+                Toggle(tr(R.string.s_brake_guard), prefs.brakeGuard, tr(R.string.s_brake_guard_hint), Icons.Rounded.History) { v -> change { prefs.brakeGuard = v } }
+                // Quando frena: sempre, o solo in una fascia
+                val windows = listOf(-1 to -1, 20 * 60 to 8 * 60, 22 * 60 to 7 * 60)
+                val windowLabels = listOf(tr(R.string.s_brake_always), "${hm(20 * 60)} – ${hm(8 * 60)}", "${hm(22 * 60)} – ${hm(7 * 60)}")
+                val wi = windows.indexOfFirst { it.first == prefs.brakeFrom && it.second == prefs.brakeTo }.let { if (it < 0) 0 else it }
+                Pick(tr(R.string.s_brake_when), windowLabels[wi], windowLabels.map { Option(it) }, { it == wi }, icon = Icons.Rounded.Schedule) { i ->
+                    change { prefs.brakeFrom = windows[i].first; prefs.brakeTo = windows[i].second }
+                }
             }
 
             // ── Casa
@@ -334,6 +339,10 @@ fun SettingsScreen(
             Section(tr(R.string.s_other))
             Group {
                 Line(tr(R.string.s_perms), icon = Icons.Rounded.Lock) { sub = Sub.PERMS }
+                // Se Android addormenta Sordina, le notifiche non vengono più smistate
+                val free = SordinaListener.batteryFree(ctx)
+                Line(tr(R.string.s_battery), if (free) tr(R.string.s_battery_free) else tr(R.string.s_battery_limited), tr(R.string.s_battery_hint), Icons.Rounded.BatteryChargingFull,
+                    onClick = if (free) null else ({ ops.openBatterySettings() }))
                 Line(tr(R.string.s_export), icon = Icons.Rounded.Upload, trailing = {}) { ops.exportSettings() }
                 Line(tr(R.string.s_import), icon = Icons.Rounded.Download, trailing = {}) { ops.importSettings() }
                 var ask by remember { mutableStateOf(false) }
@@ -474,6 +483,56 @@ private fun BrakedPage(app: SordinaApp, apps: List<AppEntry>, onChange: () -> Un
                 }
             })
         }
+    }
+}
+
+/** Le regole scelte da te: per tipo di notifica, persona o gruppo, app. Si aggiungono dalla pagina Sordina, si tolgono da qui. */
+@Composable
+private fun RulesPage(app: SordinaApp, apps: List<AppEntry>, onChange: () -> Unit, onBack: () -> Unit) {
+    val prefs = app.prefs
+    var rules by remember { mutableStateOf(Rules.all(prefs)) }
+    val names = remember { prefs.ruleNames }
+    fun appName(pkg: String) = apps.firstOrNull { it.packageName == pkg }?.label ?: pkg
+    fun name(r: Rules.Saved) = when (r.scope) {
+        RuleScope.TYPE -> names[r.key] ?: (appName(r.pkg.orEmpty()) + " · " + r.key.substringAfter('|'))
+        RuleScope.PERSON -> names[r.key] ?: r.key.replaceFirstChar { it.uppercase() }
+        RuleScope.APP -> appName(r.key)
+    }
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    // Quello che c'è adesso nella tendina: si tocca per dargli una regola (es. la notifica fissa di un'app)
+    var tray by remember { mutableStateOf(SordinaListener.tray()) }
+    var ruleFor by remember { mutableStateOf<RuleTarget?>(null) }
+    androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { kotlinx.coroutines.delay(5_000); tray = SordinaListener.tray() } }
+    val icons = remember { HashMap<String, androidx.compose.ui.graphics.ImageBitmap?>() }
+    fun icon(pkg: String) = icons.getOrPut(pkg) {
+        runCatching { ctx.packageManager.getApplicationIcon(pkg).toBitmap(96, 96).asImageBitmap() }.getOrNull()
+    }
+    Header(tr(R.string.rules), onBack)
+    Hint(tr(R.string.rules_page_hint))
+    if (rules.isEmpty()) Hint(tr(R.string.s_rules_none))
+    LazyColumn(Modifier.fillMaxWidth()) {
+        listOf(RuleScope.TYPE to R.string.rules_kind_type, RuleScope.PERSON to R.string.rules_kind_person, RuleScope.APP to R.string.rules_kind_app).forEach { (scope, title) ->
+            val list = rules.filter { it.scope == scope }.sortedBy { name(it).lowercase() }
+            if (list.isNotEmpty()) item(key = "h" + scope.name) { Section(tr(title)) }
+            items(list, key = { scope.name + it.key }) { r ->
+                Line(name(r), hint = r.level.label, trailing = {
+                    SmallPill(tr(R.string.remove)) { Rules.remove(prefs, r); rules = Rules.all(prefs); onChange() }
+                })
+            }
+        }
+        item(key = "tray_h") { Section(tr(R.string.tray)) }
+        item(key = "tray_hint") { Hint(if (tray.isEmpty()) tr(R.string.tray_none) else tr(R.string.tray_hint)) }
+        items(tray, key = { "t_" + (it.key ?: it.title) }) { t ->
+            TrayRow(t, t.scopes.firstNotNullOfOrNull { Rules.get(prefs, t, it) }, icon(t.pkg)) { ruleFor = t }
+        }
+    }
+    ruleFor?.let { t ->
+        RuleSheet(t, { x, s -> Rules.get(prefs, x, s) }, { x, s, lv ->
+            Rules.set(prefs, x, s, lv)
+            SordinaListener.reapply(ctx, x.pkg)
+            rules = Rules.all(prefs)
+            onChange()
+        }, onDismiss = { ruleFor = null })
     }
 }
 

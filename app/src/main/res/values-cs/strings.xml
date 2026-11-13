@@ -219,12 +219,6 @@
     <string name="s_tap_app">Klepni na aplikaci.</string>
     <string name="s_search_app">Hledat aplikaci…</string>
     <string name="lv_auto_hint">Rozhodne Sordina</string>
-    <string name="lv_always">Vždy</string>
-    <string name="lv_always_hint">Hned, se zvukem, i v noci</string>
-    <string name="lv_silent">Hned, potichu</string>
-    <string name="lv_silent_hint">Hned, bez zvuku</string>
-    <string name="lv_summary_hint">V časech přehledu</string>
-    <string name="lv_summary">Přehled</string>
     <string name="s_braked_hint">Pauza před otevřením.</string>
     <string name="s_add_app">Přidat aplikaci…</string>
     <string name="s_braked_none">Žádné. Najdi aplikaci nahoře.</string>

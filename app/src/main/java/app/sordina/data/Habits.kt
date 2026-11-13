@@ -21,8 +21,18 @@ class Habits(private val context: Context) {
         // Tieni solo oggi
         val e = sp.edit()
         sp.all.keys.filter { it.startsWith("brake_") && it != k }.forEach { e.remove(it) }
-        e.putString(k, if (v.isEmpty()) entry else "$v|$entry").apply()
+        e.putString(k, if (v.isEmpty()) entry else "$v|$entry")
+        // Le aperture dell'ultima ora, con l'ora: l'attesa cresce se ci torni subito
+        val now = System.currentTimeMillis()
+        val recent = (recentOpens(pkg, now) + now).joinToString(",")
+        e.putString("recent_$pkg", recent).apply()
     }
+
+    private fun recentOpens(pkg: String, now: Long): List<Long> =
+        sp.getString("recent_$pkg", "").orEmpty().split(',').mapNotNull { it.toLongOrNull() }.filter { now - it < 3_600_000 }
+
+    /** Quante volte hai aperto comunque quest'app nell'ultima ora. */
+    fun opensLastHour(pkg: String): Int = recentOpens(pkg, System.currentTimeMillis()).size
 
     /** (pacchetto, per abitudine) di oggi. */
     fun brakesToday(): List<Pair<String, Boolean>> =

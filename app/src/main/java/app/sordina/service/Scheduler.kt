@@ -13,15 +13,17 @@ import app.sordina.data.Moments
 import java.time.LocalDateTime
 
 /**
- * Un solo promemoria di sistema alla volta, al prossimo evento: riepilogo, inizio o fine della notte.
- * Le notifiche posticipate tornano da sole (lo fa Android): qui si aggiornano solo la scheda e il silenzio.
+ * Un solo promemoria di sistema alla volta: la fine della sordina a tempo, o un giro ogni 6 ore
+ * per rinnovare le notifiche in sordina e aggiornare la scheda.
  */
 object Scheduler {
     const val ACTION_TICK = "app.sordina.TICK"
 
     fun refresh(context: Context) {
         val app = SordinaApp.of(context)
-        app.silence.apply(app.moments.current())
+        app.silence.check()
+        // Rinnova le notifiche in sordina (se il servizio è collegato)
+        SordinaListener.sync()
         app.status.update()
         scheduleNext(context)
     }
@@ -29,13 +31,9 @@ object Scheduler {
     private fun scheduleNext(context: Context) {
         val app = SordinaApp.of(context)
         val now = LocalDateTime.now()
-        val candidates = listOfNotNull(
-            app.moments.nextSummary(now),
-            app.moments.nextNightEdge(now),
-            // Fine della frase "Riepilogo delle 13": un'ora dopo l'ultimo riepilogo
-            app.moments.lastSummaryToday(now)?.let { now.toLocalDate().atTime(it / 60, it % 60).plusHours(1) }?.takeIf { it.isAfter(now) },
-        )
-        val next = candidates.minOrNull() ?: return
+        // Fine della sordina a tempo, se c'è; comunque un giro ogni 6 ore (rinnovo delle posticipate, Casa)
+        val focusEnd = app.moments.focusUntil()?.let { java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime() }
+        val next = listOfNotNull(focusEnd, now.plusHours(6)).min()
         val am = context.getSystemService(AlarmManager::class.java)
         val pi = PendingIntent.getBroadcast(
             context, 0, Intent(context, TickReceiver::class.java).setAction(ACTION_TICK),

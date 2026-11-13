@@ -219,12 +219,6 @@
     <string name="s_tap_app">चुनने के लिए ऐप छुएँ।</string>
     <string name="s_search_app">ऐप खोजें…</string>
     <string name="lv_auto_hint">Sordina तय करती है</string>
-    <string name="lv_always">हमेशा</string>
-    <string name="lv_always_hint">तुरंत, आवाज़ के साथ, रात में भी</string>
-    <string name="lv_silent">तुरंत, चुपचाप</string>
-    <string name="lv_silent_hint">तुरंत, बिना आवाज़</string>
-    <string name="lv_summary_hint">सारांश के समय</string>
-    <string name="lv_summary">सारांश</string>
     <string name="s_braked_hint">खोलने से पहले एक ठहराव।</string>
     <string name="s_add_app">ऐप जोड़ें…</string>
     <string name="s_braked_none">कोई नहीं। ऊपर ऐप खोजें।</string>

@@ -219,12 +219,6 @@
     <string name="s_tap_app">Нажмите на приложение.</string>
     <string name="s_search_app">Найти приложение…</string>
     <string name="lv_auto_hint">Решает Sordina</string>
-    <string name="lv_always">Всегда</string>
-    <string name="lv_always_hint">Сразу, со звуком, даже ночью</string>
-    <string name="lv_silent">Сразу, тихо</string>
-    <string name="lv_silent_hint">Сразу, без звука</string>
-    <string name="lv_summary_hint">Во время сводок</string>
-    <string name="lv_summary">Сводка</string>
     <string name="s_braked_hint">Пауза перед открытием.</string>
     <string name="s_add_app">Добавить приложение…</string>
     <string name="s_braked_none">Нет. Найдите приложение выше.</string>

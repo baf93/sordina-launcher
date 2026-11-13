@@ -219,12 +219,6 @@
     <string name="s_tap_app">Tryk på en app for at vælge.</string>
     <string name="s_search_app">Søg efter en app…</string>
     <string name="lv_auto_hint">Sordina bestemmer</string>
-    <string name="lv_always">Altid</string>
-    <string name="lv_always_hint">Straks, med lyd, også om natten</string>
-    <string name="lv_silent">Straks, lydløst</string>
-    <string name="lv_silent_hint">Straks, uden lyd</string>
-    <string name="lv_summary_hint">På oversigtstiderne</string>
-    <string name="lv_summary">Oversigt</string>
     <string name="s_braked_hint">En pause før du åbner.</string>
     <string name="s_add_app">Tilføj en app…</string>
     <string name="s_braked_none">Ingen. Søg en app ovenfor.</string>

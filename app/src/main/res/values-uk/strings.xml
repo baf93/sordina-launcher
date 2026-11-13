@@ -219,12 +219,6 @@
     <string name="s_tap_app">Торкніться застосунку.</string>
     <string name="s_search_app">Знайти застосунок…</string>
     <string name="lv_auto_hint">Вирішує Sordina</string>
-    <string name="lv_always">Завжди</string>
-    <string name="lv_always_hint">Одразу, зі звуком, навіть уночі</string>
-    <string name="lv_silent">Одразу, тихо</string>
-    <string name="lv_silent_hint">Одразу, без звуку</string>
-    <string name="lv_summary_hint">У час зведень</string>
-    <string name="lv_summary">Зведення</string>
     <string name="s_braked_hint">Пауза перед відкриттям.</string>
     <string name="s_add_app">Додати застосунок…</string>
     <string name="s_braked_none">Немає. Знайдіть застосунок вище.</string>

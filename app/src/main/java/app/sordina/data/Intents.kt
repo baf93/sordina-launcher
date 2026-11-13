@@ -26,6 +26,8 @@ sealed interface Act {
     data object SordinaSettings : Act
     data class Web(val query: String) : Act
     data class Calc(val result: String) : Act
+    /** Sordina a tempo fino a [until] (millisecondi); null = la togli */
+    data class Quiet(val until: Long?) : Act
 }
 
 enum class Via(val label: String, val pkgs: List<String>) {
@@ -191,6 +193,8 @@ class Intents(
         if ("torcia" in nw || nq == "luce telefono") {
             out += Candidate("torch", tr(R.string.torch), tr(R.string.torch_hint), Kind.ACTION, 97, false, Act.Torch); return
         }
+        // Sordina a tempo: "sordina per 45 minuti", "silenzio fino alle 15", "non disturbare un'ora", "basta sordina"
+        quiet(nw, nq)?.let { out += it; return }
         // Musica in riproduzione
         MEDIA[nq]?.let { (title, key) -> out += Candidate("media:$key", title, tr(R.string.music_playing), Kind.ACTION, 96, false, Act.Media(key)); return }
 
@@ -313,6 +317,27 @@ class Intents(
                 out += Candidate("music", tr(R.string.play_x, what), tr(R.string.in_music_app), Kind.ACTION, 82, false, Act.Music(what))
             }
         }
+    }
+
+    private fun quiet(nw: List<String>, nq: String): Candidate? {
+        val words = setOf("sordina", "silenzio", "concentrazione", "focus", "silenzia", "zitto")
+        val dnd = nq.startsWith("non disturbare") || nq.startsWith("modalita silenziosa")
+        if (nw.none { it in words } && !dnd) return null
+        val stop = nw.any { it in setOf("basta", "fine", "stop", "togli", "spegni", "esci", "finita", "via") }
+        if (stop) return Candidate("quiet:off", tr(R.string.quiet_off), tr(R.string.quiet_off_hint), Kind.ACTION, 96, false, Act.Quiet(null))
+        val now = System.currentTimeMillis()
+        val d = DateParser.duration(nq)
+        val until = when {
+            d != null && d.first >= 60 -> now + d.first * 1000L
+            nw.contains("fino") || nw.contains("alle") -> DateParser.parse(nq, eveningBias = false).whenAt?.takeIf { !it.allDay }
+                ?.start?.atZone(java.time.ZoneId.systemDefault())?.toInstant()?.toEpochMilli()?.takeIf { it > now }
+            else -> null
+        }
+        // "sordina" da sola resta l'apertura delle impostazioni; con un tempo è la sordina a tempo
+        if (until == null) return if (dnd || nw.size > 1) Candidate("quiet:1h", tr(R.string.quiet_for, fmtDuration(3600)), tr(R.string.quiet_hint), Kind.ACTION, 90, false, Act.Quiet(now + 3_600_000)) else null
+        val at = java.time.Instant.ofEpochMilli(until).atZone(java.time.ZoneId.systemDefault())
+            .format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
+        return Candidate("quiet", tr(R.string.quiet_until, at), tr(R.string.quiet_hint), Kind.ACTION, 96, false, Act.Quiet(until))
     }
 
     private fun haCandidate(e: HaEntity, op: HaOp, level: Int?, score: Int): Candidate {

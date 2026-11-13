@@ -29,4 +29,6 @@ interface Ops {
     fun backdropChanged()
     /** Dopo un cambio delle impostazioni: ricalcola proposte, scheda, silenzio. */
     fun changed()
+    /** Chiede di togliere Sordina dall'ottimizzazione della batteria */
+    fun openBatterySettings()
 }

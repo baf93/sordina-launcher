@@ -219,12 +219,6 @@
     <string name="s_tap_app">Valitse sovellus napauttamalla.</string>
     <string name="s_search_app">Hae sovellusta…</string>
     <string name="lv_auto_hint">Sordina päättää</string>
-    <string name="lv_always">Aina</string>
-    <string name="lv_always_hint">Heti, äänellä, myös yöllä</string>
-    <string name="lv_silent">Heti, äänettä</string>
-    <string name="lv_silent_hint">Heti, ilman ääntä</string>
-    <string name="lv_summary_hint">Yhteenvetojen aikaan</string>
-    <string name="lv_summary">Yhteenveto</string>
     <string name="s_braked_hint">Tauko ennen avaamista.</string>
     <string name="s_add_app">Lisää sovellus…</string>
     <string name="s_braked_none">Ei yhtään. Hae sovellus yllä.</string>

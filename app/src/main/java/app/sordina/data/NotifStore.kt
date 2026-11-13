@@ -30,12 +30,45 @@ data class Held(
     val postTime: Long = 0,
     /** Titolo della notifica (per le app: l'oggetto), separato dal testo */
     val title: String? = null,
+    /** Perché aspetta (o perché è passata): "predefinito", "app frenata", "lavoro, fuori orario"… */
+    val reason: String? = null,
+    /** Il canale (il "tipo" di notifica) e il suo nome, per le regole */
+    val channel: String? = null,
+    val channelName: String? = null,
 ) {
     /** Raggruppa per persona; se non c'è una persona, per app. */
     val groupKey: String
         get() = if (isMessage && (conversation ?: person) != null) "p:" + Search.normalize(conversation ?: person!!) else "a:$pkg"
     val groupTitle: String
         get() = if (isMessage) (conversation ?: person ?: appLabel) else appLabel
+}
+
+/**
+ * Elenchi di chiavi di notifica su file. Le chiavi possono contenere un a capo (WhatsApp, Revolut):
+ * per questo si scrivono in JSON. Il vecchio formato a righe si rilegge ricucendo le chiavi spezzate.
+ */
+object KeyList {
+    fun read(f: File): List<String> {
+        if (!f.exists()) return emptyList()
+        val raw = f.readText()
+        if (raw.trimStart().startsWith("[")) {
+            val a = JSONArray(raw)
+            return (0 until a.length()).map { a.getString(it) }
+        }
+        return legacy(raw)
+    }
+
+    /** Righe del vecchio formato: una riga che comincia con "|" è il seguito della chiave di prima. */
+    fun legacy(raw: String): List<String> {
+        val out = ArrayList<String>()
+        for (l in raw.split('\n')) {
+            if (l.isEmpty()) continue
+            if (l.startsWith("|") && out.isNotEmpty()) out[out.size - 1] = out.last() + "\n" + l else out += l
+        }
+        return out
+    }
+
+    fun write(f: File, keys: Collection<String>) = f.writeText(JSONArray(keys.toList()).toString())
 }
 
 /** Decisione presa su una notifica, per la pagina "Oggi". */
@@ -68,7 +101,7 @@ class NotifStore(context: Context) {
     init {
         runCatching { load() }
         runCatching { loadLearn() }
-        runCatching { if (dismissedFile.exists()) dismissed += dismissedFile.readLines().filter { it.isNotBlank() } }
+        runCatching { dismissed += KeyList.read(dismissedFile) }
     }
 
     fun get(key: String): Held? = _held.value[key]
@@ -89,7 +122,7 @@ class NotifStore(context: Context) {
 
     private fun saveDismissed() {
         val snap = dismissed.toList()
-        io.execute { runCatching { dismissedFile.writeText(snap.joinToString("\n")) } }
+        io.execute { runCatching { KeyList.write(dismissedFile, snap) } }
     }
 
     @Synchronized
@@ -189,7 +222,7 @@ class NotifStore(context: Context) {
                     put("person", h.person ?: JSONObject.NULL); put("conv", h.conversation ?: JSONObject.NULL)
                     put("text", h.text); put("time", h.time); put("level", h.level.name)
                     put("count", h.count); put("msg", h.isMessage)
-                    put("release", h.releaseAt); put("post", h.postTime); put("title", h.title ?: JSONObject.NULL)
+                    put("release", h.releaseAt); put("post", h.postTime); put("title", h.title ?: JSONObject.NULL); put("why", h.reason ?: JSONObject.NULL); put("ch", h.channel ?: JSONObject.NULL); put("chn", h.channelName ?: JSONObject.NULL)
                 })
             }
             runCatching { file.writeText(arr.toString()) }
@@ -211,6 +244,9 @@ class NotifStore(context: Context) {
                 count = o.optInt("count", 1), isMessage = o.optBoolean("msg"),
                 releaseAt = o.optLong("release"), postTime = o.optLong("post"),
                 title = o.optString("title").takeIf { !o.isNull("title") && it.isNotEmpty() },
+                reason = o.optString("why").takeIf { !o.isNull("why") && it.isNotEmpty() },
+                channel = o.optString("ch").takeIf { !o.isNull("ch") && it.isNotEmpty() },
+                channelName = o.optString("chn").takeIf { !o.isNull("chn") && it.isNotEmpty() },
             )
             m[h.key] = h
         }

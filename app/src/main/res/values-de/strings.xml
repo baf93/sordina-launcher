@@ -219,12 +219,6 @@
     <string name="s_tap_app">Tippe auf eine App.</string>
     <string name="s_search_app">App suchen…</string>
     <string name="lv_auto_hint">Sordina entscheidet</string>
-    <string name="lv_always">Immer</string>
-    <string name="lv_always_hint">Sofort, mit Ton, auch nachts</string>
-    <string name="lv_silent">Sofort, lautlos</string>
-    <string name="lv_silent_hint">Sofort, ohne Ton</string>
-    <string name="lv_summary_hint">Zu den Übersichtszeiten</string>
-    <string name="lv_summary">Übersicht</string>
     <string name="s_braked_hint">Eine Pause vor dem Öffnen.</string>
     <string name="s_add_app">App hinzufügen…</string>
     <string name="s_braked_none">Keine. Suche oben eine App.</string>

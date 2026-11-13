@@ -113,7 +113,7 @@ fun Onboarding(
     onDone: () -> Unit,
 ) {
     var step by rememberSaveable(startStep) { mutableIntStateOf(startStep) }
-    val last = 5
+    val last = 4
     val c = S.c
     fun next() { if (step < last) step++ else onDone() }
     androidx.activity.compose.BackHandler(enabled = step > 0) { step-- }
@@ -144,7 +144,6 @@ fun Onboarding(
                 1 -> Needs(perms, ops)
                 2 -> Faces(app, perms, ops)
                 3 -> Distracting(app, apps, usage, ops)
-                4 -> Dial(app, ops)
                 else -> AnimatedContent(finished, transitionSpec = { fadeIn(tween(500, delayMillis = 150)) togetherWith fadeOut(tween(300)) }, label = "end") { f ->
                     if (f) AllSet(perms, label, { action() }, onLater = onDone) else MiniHome(app, perms) { finished = true }
                 }
@@ -434,180 +433,6 @@ private fun Distracting(app: SordinaApp, apps: List<AppEntry>, usage: Map<String
         query = q, onSearch = { q = it ?: "" }, searchHint = tr(R.string.s_add_app)) {
         PickList(installed.sortedBy { it.label.lowercase() }, { it.packageName }, { it.label }, q,
             leading = { a -> AppDot(a.packageName) }, selected = braked, onScrolled = { small = it }) { toggle(it.packageName) }
-    }
-}
-
-// 5 · Il giorno su un quadrante: punti = riepiloghi, arco = notte. Si tocca e si trascina.
-
-@Composable
-private fun Dial(app: SordinaApp, ops: Ops) {
-    Screen(tr(R.string.ob_l5), tr(R.string.ob5_title), tr(R.string.ob5_sub)) {
-        SummaryHours(app, ops, scenes = true)
-    }
-}
-
-/** Cosa si sta trascinando sul quadrante. */
-private sealed interface Grab {
-    data class Dot(val from: Int) : Grab
-    data object NightStart : Grab
-    data object NightEnd : Grab
-}
-
-/**
- * Il quadrante delle 24 ore con sotto la riga della notte. Lo stesso nella prima configurazione e nelle Impostazioni.
- * Tocca l'anello: aggiunge un riepilogo (all'ora o alla mezz'ora più vicina). Tocca un punto: lo toglie.
- * Trascina un punto: lo sposta di un quarto d'ora alla volta. Trascina le due estremità grigie: cambia la notte.
- */
-@Composable
-internal fun SummaryHours(app: SordinaApp, ops: Ops, modifier: Modifier = Modifier, scenes: Boolean = false) {
-    val c = S.c
-    val prefs = app.prefs
-    val feel = LocalFeel.current
-    var times by remember { mutableStateOf(prefs.summaryTimes) }
-    var nightOn by remember { mutableStateOf(prefs.nightEnabled) }
-    var nStart by remember { mutableIntStateOf(prefs.nightStart) }
-    var nEnd by remember { mutableIntStateOf(prefs.nightEnd) }
-    var grab by remember { mutableStateOf<Grab?>(null) }
-    var dragMin by remember { mutableIntStateOf(0) }
-    var saved by remember { mutableIntStateOf(0) }
-    val next = remember(saved) { app.moments.nextSummary() }
-    val measurer = androidx.compose.ui.text.rememberTextMeasurer()
-    // Quello che si vede mentre trascini un punto: gli altri più il punto spostato
-    val shown = grab.let { g -> if (g is Grab.Dot) (times - g.from + dragMin) else times }
-    fun label(m: Int) = if (m % 60 == 0) "${m / 60}" else hm(m)
-
-    Column(modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
-        androidx.compose.foundation.layout.Box(
-            Modifier.weight(1f, fill = false).widthIn(max = 380.dp).aspectRatio(1f, matchHeightConstraintsFirst = true),
-            contentAlignment = Alignment.Center,
-        ) {
-            androidx.compose.foundation.Canvas(
-                Modifier.fillMaxSize().pointerInput(Unit) {
-                    val center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
-                    fun ring() = size.width / 2f - 26.dp.toPx()
-                    fun minOf(o: androidx.compose.ui.geometry.Offset): Int {
-                        var ang = Math.toDegrees(kotlin.math.atan2((o.x - center.x).toDouble(), -(o.y - center.y).toDouble())); if (ang < 0) ang += 360.0
-                        return (ang / 360.0 * 1440).toInt()
-                    }
-                    fun at(m: Int): androidx.compose.ui.geometry.Offset {
-                        val a = Math.toRadians(m / 4.0 - 90.0)
-                        return androidx.compose.ui.geometry.Offset(center.x + ring() * kotlin.math.cos(a).toFloat(), center.y + ring() * kotlin.math.sin(a).toFloat())
-                    }
-                    fun snap(m: Int, step: Int) = ((Math.round(m / step.toDouble()) * step).toInt()) % 1440
-                    awaitEachGesture {
-                        val down = awaitFirstDown()
-                        val p = down.position
-                        val hit = 24.dp.toPx()
-                        // Cosa c'è sotto il dito: un punto, un'estremità della notte, o l'anello vuoto
-                        val dot = prefs.summaryTimes.minByOrNull { (at(it) - p).getDistance() }?.takeIf { (at(it) - p).getDistance() < hit }
-                        val edge = when {
-                            !prefs.nightEnabled -> null
-                            (at(prefs.nightStart) - p).getDistance() < hit -> Grab.NightStart
-                            (at(prefs.nightEnd) - p).getDistance() < hit -> Grab.NightEnd
-                            else -> null
-                        }
-                        val onRing = kotlin.math.abs((p - center).getDistance() - ring()) < 30.dp.toPx()
-                        val target: Grab? = edge ?: dot?.let { Grab.Dot(it) }
-                        var moved = false
-                        if (target != null) { down.consume(); dragMin = (target as? Grab.Dot)?.from ?: 0 }
-                        while (true) {
-                            val ev = awaitPointerEvent()
-                            val ch = ev.changes.firstOrNull { it.id == down.id } ?: break
-                            if (!ch.pressed) break
-                            if (target != null && (moved || (ch.position - p).getDistance() > viewConfiguration.touchSlop)) {
-                                if (!moved) { moved = true; grab = target; feel.tick() }
-                                ch.consume()
-                                val m = snap(minOf(ch.position), 15)
-                                when (target) {
-                                    is Grab.Dot -> if (m != dragMin) { dragMin = m; feel.tick() }
-                                    Grab.NightStart -> if (m != nStart) { nStart = m; feel.tick() }
-                                    Grab.NightEnd -> if (m != nEnd) { nEnd = m; feel.tick() }
-                                }
-                            }
-                        }
-                        when {
-                            moved -> when (val g = target) {
-                                is Grab.Dot -> prefs.summaryTimes = prefs.summaryTimes - g.from + dragMin
-                                Grab.NightStart -> prefs.nightStart = nStart
-                                Grab.NightEnd -> prefs.nightEnd = nEnd
-                                null -> {}
-                            }
-                            // Un tocco su un punto lo toglie (ne resta sempre almeno uno)
-                            dot != null -> if (prefs.summaryTimes.size > 1) prefs.summaryTimes = prefs.summaryTimes - dot
-                            // Un tocco sull'anello aggiunge un riepilogo all'ora o alla mezz'ora più vicina
-                            onRing && edge == null -> prefs.summaryTimes = prefs.summaryTimes + snap(minOf(p), 30)
-                            else -> return@awaitEachGesture
-                        }
-                        grab = null
-                        times = prefs.summaryTimes; nStart = prefs.nightStart; nEnd = prefs.nightEnd
-                        feel.tick(); ops.changed(); saved++
-                    }
-                },
-            ) {
-                val ring = size.width / 2f - 26.dp.toPx()
-                val center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
-                fun at(m: Int, r: Float = ring): androidx.compose.ui.geometry.Offset {
-                    val a = Math.toRadians(m / 4.0 - 90.0)
-                    return androidx.compose.ui.geometry.Offset(center.x + r * kotlin.math.cos(a).toFloat(), center.y + r * kotlin.math.sin(a).toFloat())
-                }
-                val w = 18.dp.toPx()
-                val box = androidx.compose.ui.geometry.Size(ring * 2, ring * 2)
-                val tl = androidx.compose.ui.geometry.Offset(center.x - ring, center.y - ring)
-                drawCircle(c.tile, ring, center, style = androidx.compose.ui.graphics.drawscope.Stroke(w))
-                if (nightOn) {
-                    // Minuti → angoli: 0 in alto, in senso orario; Compose parte da destra (le 6)
-                    val start = nStart / 4f - 90f
-                    var sweep = (nEnd - nStart) / 4f
-                    if (sweep <= 0) sweep += 360f
-                    drawArc(c.dot, start, sweep, false, tl, box, style = androidx.compose.ui.graphics.drawscope.Stroke(w, cap = androidx.compose.ui.graphics.StrokeCap.Round))
-                    // Le due estremità si prendono col dito
-                    listOf(nStart to Grab.NightStart, nEnd to Grab.NightEnd).forEach { (m, g) ->
-                        val big = grab == g
-                        drawCircle(c.bg, (if (big) 12 else 10).dp.toPx(), at(m))
-                        drawCircle(c.soft, (if (big) 12 else 10).dp.toPx(), at(m), style = androidx.compose.ui.graphics.drawscope.Stroke(2.5.dp.toPx()))
-                    }
-                }
-                // Le ore piene, appena accennate; 0 · 6 · 12 · 18 scritte per orientarsi
-                for (h in 0 until 24) {
-                    if (h * 60 !in shown) drawCircle(c.soft.copy(alpha = 0.5f), 2.dp.toPx(), at(h * 60))
-                    if (h % 6 == 0 && shown.none { kotlin.math.abs(it - h * 60) < 90 }) {
-                        val l = measurer.measure("$h", androidx.compose.ui.text.TextStyle(fontSize = 12.sp, color = c.soft.copy(alpha = 0.6f)))
-                        val q = at(h * 60, ring - 30.dp.toPx())
-                        drawText(l, topLeft = androidx.compose.ui.geometry.Offset(q.x - l.size.width / 2f, q.y - l.size.height / 2f))
-                    }
-                }
-                // I riepiloghi: il punto in accento e l'ora accanto, dentro l'anello
-                shown.forEach { m ->
-                    val big = grab is Grab.Dot && m == dragMin
-                    drawCircle(c.accent, (if (big) 13 else 10).dp.toPx(), at(m))
-                    val l = measurer.measure(label(m), androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = c.accent))
-                    val q = at(m, ring - 34.dp.toPx())
-                    drawText(l, topLeft = androidx.compose.ui.geometry.Offset(q.x - l.size.width / 2f, q.y - l.size.height / 2f))
-                }
-            }
-            // Al centro: mentre trascini, l'ora che stai scegliendo; altrimenti il prossimo riepilogo
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                val g = grab
-                val big = when (g) {
-                    is Grab.Dot -> hm(dragMin)
-                    Grab.NightStart, Grab.NightEnd -> "${hm(nStart)} – ${hm(nEnd)}"
-                    null -> hm(next.hour * 60 + next.minute)
-                }
-                androidx.compose.material3.Text(big, style = androidx.compose.ui.text.TextStyle(fontSize = if (g is Grab.NightStart || g is Grab.NightEnd) 30.sp else 46.sp, color = c.ink))
-                androidx.compose.material3.Text(
-                    when (g) { is Grab.Dot -> tr(R.string.ob5_summary); null -> tr(R.string.ob5_next); else -> tr(R.string.s_night) },
-                    style = androidx.compose.ui.text.TextStyle(fontSize = 15.sp, color = c.soft),
-                )
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-        Group {
-            Toggle(tr(R.string.s_night), nightOn, if (nightOn) "${hm(nStart)} – ${hm(nEnd)} · ${tr(R.string.s_night_hint)}" else tr(R.string.s_night_hint), Icons.Rounded.Bedtime) { v ->
-                prefs.nightEnabled = v; nightOn = v; ops.changed(); saved++
-            }
-        }
-        // Nella prima configurazione: quali Case cambiano da sole (tutte accese; si tocca per spegnere)
-        if (scenes) ScenePills(app, ops)
     }
 }
 
@@ -1030,32 +855,3 @@ private fun AllSet(perms: PermState, label: String, onGo: () -> Unit, onLater: (
 }
 
 /** Sera · Notte · Auto: tre pillole da accendere o spegnere, sotto il quadrante. */
-@Composable
-private fun ScenePills(app: SordinaApp, ops: Ops) {
-    val c = S.c
-    val prefs = app.prefs
-    val feel = LocalFeel.current
-    var evening by remember { mutableStateOf(prefs.homeEvening) }
-    var night by remember { mutableStateOf(prefs.homeNight) }
-    var car by remember { mutableStateOf(prefs.homeCar) }
-    androidx.compose.material3.Text(tr(R.string.ob_scenes), Modifier.padding(top = 14.dp, bottom = 8.dp, start = 4.dp),
-        style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = c.soft))
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
-        @Composable
-        fun pill(label: String, on: Boolean, flip: () -> Unit) {
-            androidx.compose.foundation.layout.Box(
-                Modifier.weight(1f).height(40.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(20.dp))
-                    .background(if (on) c.accent else c.card)
-                    .border(1.dp, if (on) c.accent else c.line, androidx.compose.foundation.shape.RoundedCornerShape(20.dp))
-                    .clickableNoRipple { feel.tick(); flip(); ops.changed() },
-                contentAlignment = Alignment.Center,
-            ) {
-                androidx.compose.material3.Text(label, maxLines = 1,
-                    style = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = if (on) c.bg else c.ink))
-            }
-        }
-        pill(tr(R.string.s_scene_evening), evening) { evening = !evening; prefs.homeEvening = evening }
-        pill(tr(R.string.s_scene_night), night) { night = !night; prefs.homeNight = night }
-        pill(tr(R.string.s_scene_car), car) { car = !car; prefs.homeCar = car }
-    }
-}

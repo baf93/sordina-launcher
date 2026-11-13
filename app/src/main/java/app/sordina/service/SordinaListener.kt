@@ -25,22 +25,32 @@ class SordinaListener : NotificationListenerService() {
     private val labels = HashMap<String, String>()
     private var contexts: Contexts? = null
     private val main = android.os.Handler(android.os.Looper.getMainLooper())
+    private var offTicks = 0
     private val syncLoop = object : Runnable {
         override fun run() {
-            // A schermo spento non serve: il primo controllo utile è quando lo riaccendi e apri Sordina
+            // A schermo acceso ogni minuto; a schermo spento ogni tre: un messaggio urgente arrivato
+            // in una chat già in sordina deve passare anche se il telefono è in tasca
             val on = runCatching { getSystemService(android.os.PowerManager::class.java).isInteractive }.getOrDefault(true)
-            if (on) runCatching { resync() }
+            if (on || ++offTicks >= 3) { offTicks = 0; runCatching { resync() } }
+            lastBeat = System.currentTimeMillis()
             main.postDelayed(this, SYNC_MILLIS)
         }
     }
 
     override fun onListenerConnected() {
         instance = this
+        lastBeat = System.currentTimeMillis()
         runCatching { reconcile() }
         contexts = Contexts(this).also { it.start() }
         Scheduler.refresh(this)
         main.removeCallbacks(syncLoop)
         main.postDelayed(syncLoop, SYNC_MILLIS)
+    }
+
+    /** Una modalità di Android si accende o si spegne: Casa e regole si adeguano subito. */
+    override fun onInterruptionFilterChanged(interruptionFilter: Int) {
+        runCatching { Scheduler.refresh(this) }
+        reapply(this)
     }
 
     override fun onListenerDisconnected() {
@@ -66,7 +76,7 @@ class SordinaListener : NotificationListenerService() {
                 info.person?.let { app.brain.onMessageOpened(info.pkg, it) }
             }
         }
-        app.signals.remove(sbn.key)
+        app.signals.removeSource(sbn.key)
         if (app.store.get(sbn.key) != null) {
             app.store.remove(sbn.key)
             app.status.cancelAlert(sbn.key)
@@ -85,43 +95,39 @@ class SordinaListener : NotificationListenerService() {
         card(sbn, info)
         val now = System.currentTimeMillis()
         val existing = store.get(key)
-        // Torna dal riepilogo: adesso si vede, resta "in attesa" finché non la leggi.
-        // Basta la stessa chiave dopo l'ora di rilascio: Android può cambiarle orario o testo quando la ripubblica.
-        if (existing != null && existing.releaseAt > 0 && now >= existing.releaseAt - 60_000) {
-            store.put(existing.copy(releaseAt = 0), sbn.notification.contentIntent)
-            app.status.update()
-            return
-        }
-        // Rete di sicurezza: arrivata prima del riepilogo appena passato e ripubblicata subito dopo
-        // (es. Sordina riavviata nel frattempo): è una che torna, non va posticipata di nuovo.
-        val returning = existing == null && justAfterSummary(now) && sbn.postTime < lastSummaryMillis(now)
-
-        // Notifiche già silenziose (importanza bassa o minima): sono tecniche, non disturbano, restano dove sono
         val ranking = runCatching { Ranking().takeIf { currentRanking.getRanking(key, it) } }.getOrNull()
         val importance = ranking?.importance ?: NotificationManager.IMPORTANCE_DEFAULT
-        if (importance in 1..NotificationManager.IMPORTANCE_LOW && existing == null) return
-
         val verdict = Classifier.classify(info, packageName, app.prefs, app.people, app.moments.current())
-        val level = verdict.level ?: return
+        val level = verdict.level
+
+        // Una notifica fissa o silenziosa (la "connessione attiva" di un'app) messa in sordina con una regola per tipo:
+        // sparisce dalla tendina ma non entra nell'elenco, non c'è niente da leggere. Quando Android la rimette, si riposticipa.
+        val technical = info.ongoing || importance in 1..NotificationManager.IMPORTANCE_LOW
+        if (technical) {
+            if (level == Level.RIEPILOGO && verdict.reason == "regola del tipo") runCatching { snoozeNotification(key, HOLD_MILLIS) }
+            if (existing == null) return
+        }
+        if (level == null) {
+            // Prima aspettava, adesso una regola la lascia passare: resta nella tendina, Sordina la dimentica
+            if (existing != null) { store.remove(key); app.status.update() }
+            return
+        }
         val label = label(sbn.packageName)
 
         if (info.isGroupSummary) {
-            // Il riassunto del gruppo segue i suoi messaggi: aspetta solo se tutti i suoi messaggi aspettano
+            // Il riassunto del gruppo segue i suoi messaggi: sparisce solo se tutti i suoi messaggi sono in sordina
             val mine = store.held.value.values.filter { it.pkg == sbn.packageName }
-            val allWaiting = mine.isNotEmpty() && mine.all { it.level == Level.RIEPILOGO && it.releaseAt > now }
-            if (level == Level.RIEPILOGO && allWaiting && existing == null && !returning) snoozeNotification(key, (if (sbn.packageName in app.prefs.braked && app.prefs.brakedStay) STAY_MILLIS else releaseAt() - now))
+            val allWaiting = mine.isNotEmpty() && mine.all { it.releaseAt > 0 }
+            if (level == Level.RIEPILOGO && allWaiting) snoozeNotification(key, HOLD_MILLIS)
             return
         }
         if (info.text.isBlank() && info.title.isBlank()) return
 
-        val stays = sbn.packageName in app.prefs.braked && app.prefs.brakedStay
-        val release = when {
-            level != Level.RIEPILOGO || returning -> 0L
-            stays -> now + STAY_MILLIS
-            else -> releaseAt()
-        }
-        val held = heldOf(sbn, info, label, level, release)
-        if (release > 0) snoozeNotification(key, release - now)
+        // In sordina: resta lì finché non la leggi. Android la tiene posticipata per un giorno e Sordina rinnova
+        // finché è viva: se si fermasse, entro un giorno tutto torna da solo nella tendina. Nulla si perde.
+        val until = if (level == Level.RIEPILOGO) now + HOLD_MILLIS else 0L
+        val held = heldOf(sbn, info, label, level, until, verdict.reason)
+        if (until > 0) snoozeNotification(key, HOLD_MILLIS)
         store.put(held, sbn.notification.contentIntent)
         // Il doppione serve solo se Non disturbare sta davvero zittendo l'originale (che resta comunque in tendina)
         val muted = ranking?.matchesInterruptionFilter() == false
@@ -130,7 +136,7 @@ class SordinaListener : NotificationListenerService() {
         app.status.update()
     }
 
-    private fun heldOf(sbn: StatusBarNotification, info: NotifInfo, label: String, level: Level, release: Long): Held {
+    private fun heldOf(sbn: StatusBarNotification, info: NotifInfo, label: String, level: Level, release: Long, reason: String? = null): Held {
         val text = if (info.isMessage) info.text.ifBlank { info.title }
         else listOf(info.title, info.text).filter { it.isNotBlank() }.distinct().joinToString(": ")
         return Held(
@@ -140,8 +146,16 @@ class SordinaListener : NotificationListenerService() {
             text = text, time = sbn.postTime, level = level, count = info.count,
             isMessage = info.isMessage, releaseAt = release, postTime = sbn.postTime,
             title = if (info.isMessage) null else info.title.takeIf { it.isNotBlank() && it != info.text },
+            reason = reason,
+            channel = info.channel, channelName = channelName(sbn.key),
         )
     }
+
+    /** Il nome del canale come lo mostra Android ("Websocket", "Messaggi"…). */
+    private fun channelName(key: String): String? = runCatching {
+        val r = Ranking()
+        if (currentRanking.getRanking(key, r)) r.channel?.name?.toString() else null
+    }.getOrNull()
 
     /**
      * Android non avvisa quando un'app aggiorna o chiude una notifica posticipata: l'aggiornamento resta
@@ -153,9 +167,13 @@ class SordinaListener : NotificationListenerService() {
         val app = SordinaApp.of(this)
         val store = app.store
         val now = System.currentTimeMillis()
-        val waiting = store.held.value.values.filter { it.releaseAt > now }
+        val waiting = store.held.value.values.filter { it.releaseAt > 0 }
         if (waiting.isEmpty()) return
         val snoozed = runCatching { snoozedNotifications }.getOrNull()?.associateBy { it.key } ?: return
+        // Rinnova la sospensione prima che Android la restituisca: finché Sordina vive, restano in sordina
+        for (h in waiting) if (h.releaseAt - now < RENEW_BELOW && h.key in snoozed) {
+            if (runCatching { snoozeNotification(h.key, HOLD_MILLIS) }.isSuccess) store.put(h.copy(releaseAt = now + HOLD_MILLIS), null)
+        }
         // Le attive si chiedono solo se serve: è una lista pesante (immagini comprese)
         val active by lazy { activeNotifications.orEmpty().mapTo(HashSet()) { it.key } }
         var changed = false
@@ -166,7 +184,7 @@ class SordinaListener : NotificationListenerService() {
                 continue
             }
             val info = Classifier.read(sbn).let { if (isSystemComponent(it.pkg)) it.copy(system = true) else it }
-            val fresh = heldOf(sbn, info, h.appLabel, h.level, h.releaseAt)
+            val fresh = heldOf(sbn, info, h.appLabel, h.level, store.get(h.key)?.releaseAt ?: h.releaseAt, h.reason)
             if (fresh.postTime == h.postTime && fresh.text == h.text && fresh.count == h.count) continue
             card(sbn, info)
             val level = Classifier.classify(info, packageName, app.prefs, app.people, app.moments.current()).level
@@ -185,7 +203,11 @@ class SordinaListener : NotificationListenerService() {
         if (sbn.packageName == packageName) return
         runCatching {
             CardDetector.detect(sbn.key, sbn.packageName, label(sbn.packageName), info.category, info.title, info.text,
-                info.ongoing, Classifier.isOtp(info.title + " " + info.text), buttons(sbn), progress(sbn), sbn.postTime)?.let { SordinaApp.of(this).signals.put(it) }
+                info.ongoing, Classifier.isOtp(info.title + " " + info.text), buttons(sbn), progress(sbn), sbn.postTime).let { c ->
+                val signals = SordinaApp.of(this).signals
+                // Aggiornata e non serve più una scheda (la corsa è finita, il codice è stato sostituito): via quella di prima
+                if (c == null) signals.remove(sbn.key) else signals.put(c)
+            }
         }
     }
 
@@ -213,21 +235,6 @@ class SordinaListener : NotificationListenerService() {
             val preinstalled = (ai.flags and (android.content.pm.ApplicationInfo.FLAG_SYSTEM or android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0
             preinstalled && packageManager.getLaunchIntentForPackage(pkg) == null
         }.getOrElse { it is android.content.pm.PackageManager.NameNotFoundException }
-    }
-
-    private fun releaseAt(): Long = Moments.millis(SordinaApp.of(this).moments.nextSummary())
-
-    /** L'ultimo riepilogo di oggi, in millisecondi (0 se non ce n'è ancora stato). */
-    private fun lastSummaryMillis(now: Long): Long {
-        val t = java.time.Instant.ofEpochMilli(now).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime()
-        val h = SordinaApp.of(this).moments.lastSummaryToday(t) ?: return 0
-        return Moments.millis(t.toLocalDate().atTime(h / 60, h % 60))
-    }
-
-    /** Siamo nei 10 minuti dopo un riepilogo: è il momento in cui Android restituisce le posticipate. */
-    private fun justAfterSummary(now: Long): Boolean {
-        val last = lastSummaryMillis(now)
-        return last > 0 && now - last in 0..10 * 60_000
     }
 
     private fun label(pkg: String): String = labels.getOrPut(pkg) {
@@ -260,15 +267,60 @@ class SordinaListener : NotificationListenerService() {
             ?.notification?.contentIntent
 
     companion object {
-        /** Le frenate "restano qui": posticipate a lungo, escono solo se le leggi o le lasci passare. */
-        const val STAY_MILLIS = 30L * 24 * 3_600_000
+        /** Quanto Android tiene posticipata una notifica in sordina; Sordina rinnova prima della fine. */
+        const val HOLD_MILLIS = 24L * 3_600_000
+        /** Si rinnova quando ne mancano meno di queste */
+        private const val RENEW_BELOW = 18L * 3_600_000
         private const val SYNC_MILLIS = 60_000L
         @Volatile var instance: SordinaListener? = null
             private set
+        /** L'ultimo giro del controllo periodico: se è fermo da molto, il motore non sta lavorando. */
+        @Volatile var lastBeat = 0L
+            private set
+
+        /**
+         * Il motore funziona? Accesso alle notifiche dato, servizio collegato e vivo.
+         * null = tutto bene; altrimenti cosa non va.
+         */
+        fun health(context: Context): Health? = when {
+            !isEnabled(context) -> Health.NO_ACCESS
+            // Appena avviata, Android collega il servizio dopo qualche secondo: non è un guasto
+            instance == null && android.os.SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime() > 20_000 -> Health.STOPPED
+            !batteryFree(context) -> Health.BATTERY
+            else -> null
+        }
+
+        /** Sordina è fuori dall'ottimizzazione della batteria (Android non la addormenta). */
+        fun batteryFree(context: Context): Boolean = runCatching {
+            context.getSystemService(android.os.PowerManager::class.java).isIgnoringBatteryOptimizations(context.packageName)
+        }.getOrDefault(true)
 
         fun isEnabled(context: Context): Boolean {
             val flat = Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners").orEmpty()
             return flat.split(':').any { ComponentName.unflattenFromString(it)?.packageName == context.packageName }
+        }
+
+        /**
+         * Quello che c'è adesso nella tendina, per dargli una regola dalla pagina Sordina.
+         * Anche le notifiche fisse (es. quella sempre accesa di Home Assistant); non i riassunti dei gruppi.
+         */
+        fun tray(): List<app.sordina.data.RuleTarget> {
+            val l = instance ?: return emptyList()
+            val sbns = runCatching { l.activeNotifications?.toList() }.getOrNull().orEmpty()
+            return sbns.filter { it.packageName != l.packageName && !Classifier.read(it).isGroupSummary }
+                .sortedByDescending { it.postTime }
+                .map { sbn ->
+                    val info = Classifier.read(sbn)
+                    val who = Classifier.personKey(info)
+                    app.sordina.data.RuleTarget(
+                        pkg = sbn.packageName, appLabel = l.label(sbn.packageName),
+                        channel = info.channel, channelName = l.channelName(sbn.key),
+                        person = who, personTitle = if (who != null) info.conversation ?: info.person else null,
+                        title = info.title.ifBlank { info.text }, text = if (info.title.isBlank()) "" else info.text,
+                        ongoing = info.ongoing, key = sbn.key,
+                    )
+                }
+                .distinctBy { Triple(it.pkg, it.channel, it.person ?: it.key) }
         }
 
         /** Ricontrolla subito le posticipate (all'apertura di Sordina). */
@@ -339,9 +391,41 @@ class SordinaListener : NotificationListenerService() {
             app.status.update()
         }
 
+        /**
+         * Le regole o la modalità sono cambiate: quello che è in sordina e adesso passerebbe torna nella tendina;
+         * con [tray], anche quello che è nella tendina e adesso andrebbe in sordina ci va subito.
+         */
+        fun reapply(context: Context, pkg: String? = null) {
+            val l = instance ?: return
+            l.main.post {
+                runCatching {
+                    val app = SordinaApp.of(context)
+                    val moment = app.moments.current()
+                    val snoozed = runCatching { l.snoozedNotifications }.getOrNull().orEmpty().associateBy { it.key }
+                    for (h in app.store.held.value.values.filter { it.releaseAt > 0 }) {
+                        val sbn = snoozed[h.key] ?: continue
+                        val info = Classifier.read(sbn)
+                        if (Classifier.classify(info, l.packageName, app.prefs, app.people, moment).level != Level.RIEPILOGO) {
+                            // Torna fra mezzo secondo e passa dalle regole come nuova
+                            app.store.remove(h.key)
+                            runCatching { l.snoozeNotification(h.key, 500) }
+                        }
+                    }
+                    // Solo l'app della regola: le altre notifiche nella tendina restano come sono
+                    if (pkg != null) l.activeNotifications.orEmpty().filter { it.packageName == pkg }.forEach { runCatching { l.handle(it) } }
+                    app.status.update()
+                }
+            }
+        }
+
         fun readGroup(context: Context, groupKey: String) {
             val store = SordinaApp.of(context).store
             markRead(context, store.held.value.values.filter { it.groupKey == groupKey })
+        }
+
+        /** Una notifica sola, letta scorrendo nella pagina Sordina. */
+        fun readOne(context: Context, key: String) {
+            markRead(context, listOfNotNull(SordinaApp.of(context).store.get(key)))
         }
 
         fun readAll(context: Context) {
@@ -361,6 +445,7 @@ class SordinaListener : NotificationListenerService() {
             for (h in items) {
                 app.store.remove(h.key)
                 app.status.cancelAlert(h.key)
+                app.signals.removeSource(h.key)
                 if (h.releaseAt > System.currentTimeMillis()) app.store.markDismissed(h.key)
                 else runCatching { instance?.cancelNotification(h.key) }
             }
@@ -368,3 +453,6 @@ class SordinaListener : NotificationListenerService() {
         }
     }
 }
+
+/** Cosa impedisce al motore di Sordina di lavorare. */
+enum class Health { NO_ACCESS, STOPPED, BATTERY }

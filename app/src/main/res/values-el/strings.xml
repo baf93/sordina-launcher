@@ -219,12 +219,6 @@
     <string name="s_tap_app">Άγγιξε μια εφαρμογή για επιλογή.</string>
     <string name="s_search_app">Αναζήτηση εφαρμογής…</string>
     <string name="lv_auto_hint">Αποφασίζει η Sordina</string>
-    <string name="lv_always">Πάντα</string>
-    <string name="lv_always_hint">Αμέσως, με ήχο, και τη νύχτα</string>
-    <string name="lv_silent">Αμέσως, αθόρυβα</string>
-    <string name="lv_silent_hint">Αμέσως, χωρίς ήχο</string>
-    <string name="lv_summary_hint">Τις ώρες της σύνοψης</string>
-    <string name="lv_summary">Σύνοψη</string>
     <string name="s_braked_hint">Μια παύση πριν ανοίξεις.</string>
     <string name="s_add_app">Προσθήκη εφαρμογής…</string>
     <string name="s_braked_none">Καμία. Αναζήτησε μια εφαρμογή πάνω.</string>

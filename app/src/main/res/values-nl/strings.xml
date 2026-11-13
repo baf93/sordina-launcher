@@ -219,12 +219,6 @@
     <string name="s_tap_app">Tik op een app om te kiezen.</string>
     <string name="s_search_app">Zoek een app…</string>
     <string name="lv_auto_hint">Sordina beslist</string>
-    <string name="lv_always">Altijd</string>
-    <string name="lv_always_hint">Meteen, met geluid, ook \'s nachts</string>
-    <string name="lv_silent">Meteen, stil</string>
-    <string name="lv_silent_hint">Meteen, zonder geluid</string>
-    <string name="lv_summary_hint">Op de overzichtstijden</string>
-    <string name="lv_summary">Overzicht</string>
     <string name="s_braked_hint">Een pauze voor het openen.</string>
     <string name="s_add_app">App toevoegen…</string>
     <string name="s_braked_none">Geen. Zoek hierboven een app.</string>

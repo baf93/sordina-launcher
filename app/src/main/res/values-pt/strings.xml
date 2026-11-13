@@ -219,12 +219,6 @@
     <string name="s_tap_app">Toque num app para escolher.</string>
     <string name="s_search_app">Buscar um app…</string>
     <string name="lv_auto_hint">A Sordina decide</string>
-    <string name="lv_always">Sempre</string>
-    <string name="lv_always_hint">Na hora, com som, até à noite</string>
-    <string name="lv_silent">Na hora, em silêncio</string>
-    <string name="lv_silent_hint">Na hora, sem som</string>
-    <string name="lv_summary_hint">Nos horários do resumo</string>
-    <string name="lv_summary">Resumo</string>
     <string name="s_braked_hint">Uma pausa antes de abrir.</string>
     <string name="s_add_app">Adicionar um app…</string>
     <string name="s_braked_none">Nenhum. Busque um app acima.</string>

@@ -219,12 +219,6 @@
     <string name="s_tap_app">アプリをタップして選択。</string>
     <string name="s_search_app">アプリを検索…</string>
     <string name="lv_auto_hint">Sordina が判断</string>
-    <string name="lv_always">常に</string>
-    <string name="lv_always_hint">すぐ、音あり、夜も</string>
-    <string name="lv_silent">すぐ、静かに</string>
-    <string name="lv_silent_hint">すぐ、音なし</string>
-    <string name="lv_summary_hint">まとめの時刻に</string>
-    <string name="lv_summary">まとめ</string>
     <string name="s_braked_hint">開く前にひと呼吸。</string>
     <string name="s_add_app">アプリを追加…</string>
     <string name="s_braked_none">なし。上でアプリを検索。</string>

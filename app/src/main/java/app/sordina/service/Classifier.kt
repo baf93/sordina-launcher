@@ -25,6 +25,10 @@ data class NotifInfo(
     val count: Int,
     /** Componente di sistema senza icona nel cassetto (auricolari, Bluetooth, Play Services…) */
     val system: Boolean = false,
+    /** Il tipo di notifica (canale dell'app), per le regole per tipo */
+    val channel: String? = null,
+    /** Quanti messaggi di fila la stessa persona ha scritto negli ultimi minuti (insiste?) */
+    val burst: Int = 1,
 )
 
 /** null = la notifica passa intatta, senza che Sordina la tocchi. */
@@ -67,55 +71,98 @@ object Classifier {
         }
     }
 
+    /** Parole che rendono urgente un messaggio (di serie). */
+    val URGENT_WORDS = listOf(
+        "urgente", "urgenza", "emergenza", "chiamami", "richiamami", "chiamami subito", "rispondimi", "aiuto", "sos",
+        "ospedale", "pronto soccorso", "incidente", "urgent", "emergency", "call me", "asap",
+    )
+
+    /** Un messaggio urgente: contiene una delle parole (intere, senza badare a maiuscole e accenti). */
+    fun isUrgent(text: String, words: List<String> = URGENT_WORDS): Boolean {
+        val t = " " + Search.normalize(text) + " "
+        return words.map { Search.normalize(it) }.filter { it.isNotBlank() }.any { w -> Regex("(?<![\\p{L}\\d])" + Regex.escape(w) + "(?![\\p{L}\\d])").containsMatchIn(t) }
+    }
+
+    /** Messaggi di fila dalla stessa persona entro pochi minuti: oltre questa soglia "insiste". */
+    const val BURST = 3
+    const val BURST_MILLIS = 5 * 60_000L
+
+    /** Caratteri invisibili che le mail usano per riempire l'anteprima (͏ ‌ ﻿ …) e spazi di troppo. */
+    private val INVISIBLE = Regex("[\\u034F\\u00AD\\u180E\\u200B-\\u200F\\u202A-\\u202E\\u2060-\\u2064\\uFEFF]")
+    fun clean(s: String): String = INVISIBLE.replace(s, "")
+        .replace(Regex("[ \\t\\u00A0]+"), " ")
+        .replace(Regex(" *\\n[ \\n]*"), "\n")
+        .trim()
+
+    /** Chiave di una regola per tipo di notifica (canale dell'app). */
+    fun channelKey(pkg: String, channel: String?) = "$pkg|${channel.orEmpty()}"
+
+    /** Chiave di una regola per persona o gruppo: il gruppo se c'è, altrimenti chi scrive. */
+    fun personKey(n: NotifInfo): String? = if (n.isMessage) (n.conversation ?: n.person)?.let { Search.normalize(it) }?.ifBlank { null } else null
+
+    /**
+     * Le regole, dalla più specifica alla più generale:
+     * tipo di notifica (canale) > "lascia passare per qualche ora" > persona o gruppo > app > le regole di Sordina.
+     * Una modalità di Android accesa trattiene anche quello che passerebbe in silenzio.
+     */
     fun classify(n: NotifInfo, self: String, prefs: Prefs, people: People, moment: Moment): Verdict {
-        // 1. Sempre intatte
+        // 1. Mai toccate
         if (n.pkg == self) return Verdict(null, "Sordina")
         if (n.pkg in SYSTEM_PKGS) return Verdict(null, "sistema")
+        val quiet = moment == Moment.QUIET
+        fun ruled(level: Level, why: String) = when {
+            level == Level.SUBITO && quiet -> Verdict(Level.RIEPILOGO, "modalità")
+            else -> Verdict(level, why)
+        }
+
+        // 2. Regola per questo tipo di notifica: vale anche per quelle fisse (la notifica sempre accesa di un'app)
+        prefs.channelRules[channelKey(n.pkg, n.channel)]?.let { return ruled(it, "regola del tipo") }
+
+        // 3. Chiamate, sveglie, navigazione, musica, notifiche in corso: passano come sono
         if (n.system && prefs.systemPass) return Verdict(null, "sistema")
         if (n.category in PASS_CATEGORIES) return Verdict(null, "chiamata, sveglia o servizio")
         if (n.isMedia) return Verdict(null, "musica")
         if (n.ongoing) return Verdict(null, "in corso")
 
-        // 2. Codici di accesso
-        if (isOtp(n.title + " " + n.text)) return Verdict(Level.SUBITO, "codice di accesso")
-
-        // 2b. Lasciata passare per un po' dalla pagina Sordina (il contatto o l'app intera)
+        val who = personKey(n)
+        // 4. Lasciata passare per qualche ora dalla pagina Sordina: vince sulle tue regole per persona e app, per quelle ore
         val now = System.currentTimeMillis()
         val pass = prefs.passUntil
-        val who = if (n.isMessage) (n.conversation ?: n.person) else null
-        if ((pass["a:" + n.pkg] ?: 0L) > now || (who != null && (pass["p:" + Search.normalize(who)] ?: 0L) > now)) {
-            return Verdict(null, "lasciata passare")
-        }
+        if ((pass["a:" + n.pkg] ?: 0L) > now || (who != null && (pass["p:$who"] ?: 0L) > now)) return Verdict(null, "lasciata passare")
+
+        // 5. Regola per persona o gruppo ("In sordina" vince anche su codici e persone importanti: l'hai scelto tu)
+        if (who != null) prefs.personRules[who]?.let { return ruled(it, "regola della persona") }
+
+        // 6. Codici di accesso
+        if (isOtp(n.title + " " + n.text)) return Verdict(Level.SUBITO, "codice di accesso")
+
         // Conversazione in corso: hai appena letto o risposto a questa persona
-        if (who != null && Talking.active(n.pkg, who, now)) return Verdict(null, "conversazione in corso")
+        if (n.isMessage && Talking.active(n.pkg, n.conversation ?: n.person ?: "", now)) return Verdict(null, "conversazione in corso")
 
-        // 3. Livello scelto per l'app (gli allarmi di Home Assistant passano dall'app con "Sempre")
+        // 7. Regola dell'app "Passa sempre"
         val appLevel = prefs.appLevels[n.pkg]
-        if (appLevel == Level.SEMPRE) return Verdict(Level.SEMPRE, "l'app passa sempre")
+        if (appLevel == Level.SEMPRE) return Verdict(Level.SEMPRE, "regola dell'app")
 
-        // 4. Persone importanti
+        // 8. Persone importanti e urgenze
         if (n.isMessage && (people.isImportant(n.person) || (n.conversation == null && people.isImportant(n.title)))) {
             return Verdict(Level.SUBITO, "persona importante")
         }
-        // Pagamenti: li vedi nella scheda in Casa, la notifica aspetta il riepilogo
+        if (prefs.urgentEnabled && n.isMessage && n.conversation == null && n.pkg !in prefs.braked) {
+            val words = prefs.urgentWords.split(',').map { it.trim() }.filter { it.isNotEmpty() }.ifEmpty { URGENT_WORDS }
+            if (isUrgent(n.text, words)) return Verdict(Level.SUBITO, "urgente")
+            if (n.burst >= BURST) return Verdict(Level.SUBITO, "insiste")
+        }
+
+        // 9. Regola dell'app
+        if (appLevel != null) return ruled(appLevel, "regola dell'app")
+
+        // 10. Le regole di Sordina
+        // Pagamenti: li vedi nella scheda in Casa, la notifica resta in sordina
         if (!n.isMessage && CardDetector.paymentCents(n.title + " " + n.text) != null) return Verdict(Level.RIEPILOGO, "pagamento")
-        // Chiamate perse, promemoria ed eventi: ti servono adesso
-        if (n.category == "missed_call") return Verdict(Level.SUBITO, "chiamata persa")
-        if (n.category == Notification.CATEGORY_REMINDER || n.category == Notification.CATEGORY_EVENT) {
-            return Verdict(Level.SUBITO, "promemoria")
-        }
-
-        // App frenata: aspetta sempre il riepilogo (persone importanti e codici passano comunque)
         if (n.pkg in prefs.braked) return Verdict(Level.RIEPILOGO, "app frenata")
-
-        // 5. Livello dell'app, ma di notte e in auto aspetta anche "Subito"
-        if (appLevel == Level.SUBITO) {
-            return if (moment == Moment.NONE) Verdict(Level.SUBITO, "scelta per l'app")
-            else Verdict(Level.RIEPILOGO, moment.label.lowercase())
-        }
-        if (appLevel == Level.RIEPILOGO) return Verdict(Level.RIEPILOGO, "scelta per l'app")
-
-        // 6. Predefinito
+        // Chiamate perse, promemoria ed eventi: ti servono adesso
+        if (n.category == "missed_call") return ruled(Level.SUBITO, "chiamata persa")
+        if (n.category == Notification.CATEGORY_REMINDER || n.category == Notification.CATEGORY_EVENT) return ruled(Level.SUBITO, "promemoria")
         return Verdict(Level.RIEPILOGO, "predefinito")
     }
 
@@ -134,16 +181,22 @@ object Classifier {
             e.getParcelableArray(Notification.EXTRA_MESSAGES)
         }.getOrNull()
         val isGroupConv = if (Build.VERSION.SDK_INT >= 28) e.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION) else convTitle != null
+        var burst = 1
+        fun senderOf(b: android.os.Bundle): String? = (if (Build.VERSION.SDK_INT >= 28) {
+            @Suppress("DEPRECATION")
+            (b.get("sender_person") as? android.app.Person)?.name?.toString()
+        } else null) ?: b.getCharSequence("sender")?.toString()
         if (!messages.isNullOrEmpty()) {
             count = messages.size
             val last = messages.last() as? android.os.Bundle
             if (last != null) {
                 text = last.getCharSequence("text")?.toString() ?: text
-                val sender = if (Build.VERSION.SDK_INT >= 28) {
-                    @Suppress("DEPRECATION")
-                    (last.get("sender_person") as? android.app.Person)?.name?.toString()
-                } else null
-                person = sender ?: last.getCharSequence("sender")?.toString()
+                person = senderOf(last)
+                // Quanti messaggi di fila, della stessa persona, negli ultimi minuti
+                val since = System.currentTimeMillis() - BURST_MILLIS
+                burst = messages.toList().asReversed().mapNotNull { it as? android.os.Bundle }
+                    .takeWhile { senderOf(it) == person }
+                    .count { it.getLong("time") >= since }.coerceAtLeast(1)
             }
         }
         val isMessage = n.category == Notification.CATEGORY_MESSAGE || !messages.isNullOrEmpty() ||
@@ -164,10 +217,12 @@ object Classifier {
             isGroupSummary = (n.flags and Notification.FLAG_GROUP_SUMMARY) != 0,
             person = person?.trim()?.ifBlank { null },
             conversation = conversation?.trim()?.ifBlank { null },
-            text = text.trim(),
-            title = title.trim(),
+            text = clean(text),
+            title = clean(title),
             isMessage = isMessage,
             count = count,
+            burst = burst,
+            channel = n.channelId,
         )
     }
 

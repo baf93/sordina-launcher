@@ -219,12 +219,6 @@
     <string name="s_tap_app">Seçmek için bir uygulamaya dokun.</string>
     <string name="s_search_app">Uygulama ara…</string>
     <string name="lv_auto_hint">Sordina karar verir</string>
-    <string name="lv_always">Her zaman</string>
-    <string name="lv_always_hint">Hemen, sesli, gece bile</string>
-    <string name="lv_silent">Hemen, sessiz</string>
-    <string name="lv_silent_hint">Hemen, sessizce</string>
-    <string name="lv_summary_hint">Özet saatlerinde</string>
-    <string name="lv_summary">Özet</string>
     <string name="s_braked_hint">Açmadan önce bir mola.</string>
     <string name="s_add_app">Uygulama ekle…</string>
     <string name="s_braked_none">Yok. Yukarıda bir uygulama ara.</string>

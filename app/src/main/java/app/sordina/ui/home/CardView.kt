@@ -2,6 +2,7 @@ package app.sordina.ui.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -85,13 +86,18 @@ private fun glyph(kind: CardKind): ImageVector = when (kind) {
 /**
  * Una scheda: in alto simbolo e etichetta, al centro la cosa (titolo, codice, importo o tratta),
  * sotto eventuale barra o passi, in fondo i pulsanti tutti della stessa larghezza.
+ * Tocco: apre. Pressione lunga: toglie la scheda per oggi.
  */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 internal fun CardView(card: Card, onAction: (Card, CardAction) -> Unit, onCard: (Card) -> Unit) {
     val c = S.c
     val feel = LocalFeel.current
     Column(
-        Modifier.fillMaxSize().clickable { feel.tick(); onCard(card) }
+        Modifier.fillMaxSize().combinedClickable(
+            onClick = { feel.tick(); onCard(card) },
+            onLongClick = { onAction(card, CardAction("", app.sordina.data.CardOp.Hide)) },
+        )
             // A destra resta posto per i puntini della pila
             .padding(start = 20.dp, end = 28.dp, top = 16.dp, bottom = 16.dp),
     ) {

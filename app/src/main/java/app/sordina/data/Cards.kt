@@ -30,8 +30,10 @@ sealed interface CardOp {
     data class Done(val key: String) : CardOp
     /** La notifica torna fra un'ora */
     data class Later(val key: String) : CardOp
-    /** Toglie solo la scheda */
+    /** "Ok": toglie la scheda e chiude le notifiche da cui nasce */
     data object Dismiss : CardOp
+    /** Pressione lunga: toglie solo la scheda, per oggi */
+    data object Hide : CardOp
     data object Weather : CardOp
 }
 
@@ -73,7 +75,16 @@ data class Card(
     val avatar: Boolean = false,
     /** Le notifiche da cui nasce (un pagamento può arrivare da due app): "Ok" le chiude tutte */
     val sources: List<String> = emptyList(),
-)
+    /** Riunione o impegno: quando comincia (l'etichetta "Tra 10 min" si ricalcola ogni minuto) */
+    val startsAt: Long? = null,
+) {
+    /** Una cosa da vedere una volta: aperta o usata, la scheda ha fatto il suo lavoro. */
+    val oneShot: Boolean get() = kind in ONE_SHOT
+
+    companion object {
+        val ONE_SHOT = setOf(CardKind.OTP, CardKind.ASK, CardKind.CALL, CardKind.REMINDER, CardKind.PAYMENT, CardKind.TICKET, CardKind.PARCEL, CardKind.BIRTHDAY, CardKind.HABIT)
+    }
+}
 
 /**
  * Le schede che nascono dalle notifiche (OTP, chiamate, timer, biglietti, pacchi) e dalla musica.
@@ -107,26 +118,50 @@ class Signals(context: android.content.Context) {
     @Synchronized
     fun remove(key: String) { if (key in _cards.value) _cards.value = _cards.value - key }
 
+    /**
+     * La notifica [key] non c'è più (chiusa, letta in Sordina): via anche le schede nate da lei,
+     * comprese quelle con una chiave loro (il pagamento visto da banca e portafoglio).
+     */
+    @Synchronized
+    fun removeSource(key: String) {
+        val gone = _cards.value.values.filter { it.key == key || key in it.sources }.map { it.key }
+        if (gone.isNotEmpty()) _cards.value = _cards.value - gone.toSet()
+    }
+
     /** Chiave → quando è stata tolta. */
     private val dismissed = LinkedHashMap<String, Long>()
+    private val _dismissedKeys = MutableStateFlow<Set<String>>(emptySet())
+    /** Le schede tolte a mano nell'ultimo giorno: valgono anche per quelle che non nascono dalle notifiche (eventi, pioggia, abitudini). */
+    val dismissedKeys: StateFlow<Set<String>> = _dismissedKeys
 
     init {
         runCatching {
             val since = System.currentTimeMillis() - 86_400_000L
-            if (dismissedFile.exists()) dismissedFile.readLines().forEach { l ->
-                val (k, t) = l.split('\t').let { it.getOrNull(0) to it.getOrNull(1)?.toLongOrNull() }
-                if (k != null && t != null && t > since) dismissed[k] = t
+            if (dismissedFile.exists()) {
+                val raw = dismissedFile.readText()
+                if (raw.trimStart().startsWith("{")) {
+                    val o = org.json.JSONObject(raw)
+                    o.keys().forEach { k -> o.optLong(k).takeIf { it > since }?.let { dismissed[k] = it } }
+                } else KeyList.legacy(raw).forEach { l ->
+                    // Vecchio formato "chiave\tora", con le chiavi che contengono un a capo ricucite
+                    val k = l.substringBeforeLast('\t'); val t = l.substringAfterLast('\t', "").toLongOrNull()
+                    if (t != null && t > since) dismissed[k] = t
+                }
             }
+            _dismissedKeys.value = dismissed.keys.toSet()
         }
     }
 
-    /** Tolta a mano: non torna se la notifica viene ripubblicata, né dopo un riavvio. */
+    fun isDismissed(key: String) = key in dismissed
+
+    /** Tolta a mano: non torna se la notifica viene ripubblicata, né dopo un riavvio (per un giorno). */
     @Synchronized
     fun dismiss(key: String) {
         dismissed[key] = System.currentTimeMillis()
         while (dismissed.size > 200) dismissed.remove(dismissed.keys.first())
         remove(key)
-        val snap = dismissed.entries.joinToString("\n") { "${it.key}\t${it.value}" }
+        _dismissedKeys.value = dismissed.keys.toSet()
+        val snap = org.json.JSONObject(dismissed as Map<*, *>).toString()
         runCatching { dismissedFile.writeText(snap) }
     }
 
@@ -178,7 +213,7 @@ object CardDetector {
     private val PARCEL = Regex("(\\bpacco\\b|consegn|spedizion|corriere|out for delivery|in arrivo oggi|arriva oggi|delivered|ritiro)", RegexOption.IGNORE_CASE)
     private val ROUTE = Regex("([A-ZÀ-Ý][\\p{L}. ]{1,20}?)\\s*(?:→|->|–|—| - | > )\\s*([A-ZÀ-Ý][\\p{L}. ]{1,20})")
     private val MISSED = Regex("(chiamata persa|chiamate perse|missed call)", RegexOption.IGNORE_CASE)
-    private val PAY_WORDS = Regex("(pagament|pagato|addebit|autorizzat|transazion|acquisto|payment|paid|purchase|charged)", RegexOption.IGNORE_CASE)
+    private val PAY_WORDS = Regex("(pagament|pagato|addebit|autorizzat|transazion|acquisto|\\bspes[ao]\\b|payment|paid|purchase|charged|spent|\\bvisa\\b|mastercard|maestro|\\bamex\\b|contactless)", RegexOption.IGNORE_CASE)
     private val AMOUNT = Regex("(?:€|EUR)\\s?(\\d{1,3}(?:\\.\\d{3})*,\\d{2}|\\d+[.,]\\d{2})(?!\\d)|(?<![\\d.,])(\\d{1,3}(?:\\.\\d{3})*,\\d{2}|\\d+[.,]\\d{2})\\s?(?:€|EUR)")
     private val NOT_PAID = Regex("(alla consegna|al ritiro|on delivery|da pagare|in scadenza|to pay)", RegexOption.IGNORE_CASE)
     private const val PAY_NEAR = 60
@@ -187,6 +222,7 @@ object CardDetector {
     private val STEPS = listOf(
         4 to Regex("(consegnat|delivered|ritirat)", RegexOption.IGNORE_CASE),
         3 to Regex("(in consegna|out for delivery|arriva oggi|in arrivo oggi|arriving today)", RegexOption.IGNORE_CASE),
+        3 to Regex("(pronto per il ritiro|disponibile per il ritiro|è arrivato|arrivato in negozio|ready for pickup)", RegexOption.IGNORE_CASE),
         2 to Regex("(in transito|in viaggio|in transit|on its way|in arrivo)", RegexOption.IGNORE_CASE),
         1 to Regex("(spedit|shipped|preso in carico|affidato)", RegexOption.IGNORE_CASE),
     )
@@ -199,6 +235,23 @@ object CardDetector {
             .replace(Regex("\\b\\d{5,}\\b"), " ").replace(Regex("[\\n\\r]+"), " ")
         return DateParser.parse(window, now, eveningBias = false).whenAt?.takeIf { !it.allDay }
     }
+
+    /** "15:30 - 16:00" o "15.30–16.00": l'orario di una riunione. */
+    private val SPAN = Regex("(?<![\\d:.])([01]?\\d|2[0-3])[:.]([0-5]\\d)\\s*[-–—]\\s*([01]?\\d|2[0-3])[:.]([0-5]\\d)(?![\\d:.])")
+
+    /** Inizio e fine (millisecondi) della riunione scritta nel testo, nel giorno [day]. */
+    fun meetingSpan(text: String, day: java.time.LocalDate): Pair<Long, Long>? {
+        val m = SPAN.find(text) ?: return null
+        val (h1, m1, h2, m2) = m.destructured
+        val zone = java.time.ZoneId.systemDefault()
+        val from = day.atTime(h1.toInt(), m1.toInt()).atZone(zone).toInstant().toEpochMilli()
+        var to = day.atTime(h2.toInt(), m2.toInt()).atZone(zone).toInstant().toEpochMilli()
+        if (to <= from) to += 86_400_000
+        return from to to
+    }
+
+    /** La prima riga che dice qualcosa (le mail ripetono il titolo e riempiono di spazi). */
+    fun firstLine(text: String): String = text.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() } ?: ""
 
     fun otpCode(text: String): String? {
         // Il punto o la virgola contano solo dentro un numero (12.50, 1.234): "è 482913." resta un codice
@@ -259,8 +312,16 @@ object CardDetector {
             return Card(key, CardKind.TIMER, appLabel, title.ifBlank { tr(R.string.timer) }, text.ifBlank { null },
                 actions = listOf(CardAction(tr(R.string.open), CardOp.OpenNotif(key))))
         }
-        if (category == "reminder" && !ongoing) {
-            return Card(key, CardKind.REMINDER, appLabel, title.ifBlank { text }, text.takeIf { title.isNotBlank() && it.isNotBlank() },
+        // Riunione o impegno avvisato dall'app (Outlook, Teams, calendari): "15:30 - 16:00, Microsoft Teams Meeting"
+        if (category == "event" && !ongoing) meetingSpan(text, java.time.Instant.ofEpochMilli(now).atZone(java.time.ZoneId.systemDefault()).toLocalDate())?.let { (from, to) ->
+            val rest = text.replace(SPAN, "").lines().map { it.trim(' ', ',', '-', '·', '\t') }.filter { it.isNotEmpty() }
+                .joinToString(" · ").ifBlank { null }
+            return Card(key, CardKind.EVENT, appLabel, title.ifBlank { text }, rest,
+                actions = listOf(CardAction(tr(R.string.open), CardOp.OpenNotif(key)), CardAction(tr(R.string.ok), CardOp.Done(key))),
+                time = from, expiresAt = to, startsAt = from, bar = Bar(from, to), sources = listOf(key))
+        }
+        if ((category == "reminder" || category == "event") && !ongoing) {
+            return Card(key, CardKind.REMINDER, appLabel, title.ifBlank { text }, firstLine(text).takeIf { title.isNotBlank() && it.isNotBlank() },
                 actions = listOf(CardAction(tr(R.string.done), CardOp.Done(key)), CardAction(tr(R.string.later), CardOp.Later(key))),
                 expiresAt = now + 12 * 3600_000)
         }
@@ -275,15 +336,22 @@ object CardDetector {
             val w = DateParser.parse(all).whenAt
             val route = ROUTE.find(all)?.let { "${it.groupValues[1].trim()} → ${it.groupValues[2].trim()}" }
             val name = route ?: title.ifBlank { tr(R.string.trip) }
+            // Il tocco sulla scheda apre il biglietto; i pulsanti: in calendario (se c'è l'ora) e Ok
             val actions = buildList {
                 if (w != null) add(CardAction(tr(R.string.add_calendar), CardOp.AddEvent(name, w)))
-                add(CardAction(tr(R.string.open), CardOp.OpenNotif(key)))
+                else add(CardAction(tr(R.string.open), CardOp.OpenNotif(key)))
+                add(CardAction(tr(R.string.ok), CardOp.Dismiss))
             }
-            return Card(key, CardKind.TICKET, appLabel, name, w?.let { DateParser.describe(it) } ?: text.take(60),
-                actions = actions, expiresAt = now + 2 * 86_400_000, look = if (route != null) CardLook.ROUTE else CardLook.TITLE)
+            // Serve fino a poco dopo la partenza; senza ora, due giorni
+            val until = w?.let { it.start.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() + 3 * 3_600_000 }
+                ?.takeIf { it > now } ?: (now + 2 * 86_400_000)
+            return Card(key, CardKind.TICKET, appLabel, name, w?.let { DateParser.describe(it) } ?: firstLine(text).take(60),
+                actions = actions, expiresAt = until, look = if (route != null) CardLook.ROUTE else CardLook.TITLE, sources = listOf(key))
         }
         paymentCents(all)?.let { cents ->
-            val rest = AMOUNT.replace(text.ifBlank { title }, "").replace(Regex("\\s+"), " ").trim(' ', ',', '.', ':', '-')
+            // Sotto l'importo: dove (il titolo, se è un negozio e non l'app o l'importo), altrimenti la prima riga senza cifre
+            val shop = title.takeIf { it.isNotBlank() && !it.equals(appLabel, true) && AMOUNT.find(it) == null && !PAY_WORDS.containsMatchIn(it) }
+            val rest = shop ?: AMOUNT.replace(firstLine(text.ifBlank { title }), "").replace(Regex("\\s+"), " ").trim(' ', ',', '.', ':', '-')
             // Stessa chiave per lo stesso importo: banca e portafoglio fanno una scheda sola
             return Card("pay:$cents", CardKind.PAYMENT, appLabel, money(cents), rest.take(70).ifBlank { null },
                 actions = listOf(CardAction(tr(R.string.open), CardOp.OpenNotif(key)), CardAction(tr(R.string.ok), CardOp.Dismiss)),
@@ -296,13 +364,22 @@ object CardDetector {
             val name = title.ifBlank { tr(R.string.parcel) }
             val actions = buildList {
                 if (w != null) add(CardAction(tr(R.string.add_calendar), CardOp.AddEvent(name, w)))
-                add(CardAction(tr(R.string.open), CardOp.OpenNotif(key)))
+                else add(CardAction(tr(R.string.open), CardOp.OpenNotif(key)))
+                add(CardAction(tr(R.string.ok), CardOp.Dismiss))
             }
-            val until = w?.let { it.start.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() + 3_600_000 }
+            val until = w?.let { it.start.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() + 3_600_000 }?.takeIf { it > now }
             // "Luogo e ora di ritiro": la vai a prendere tu
             val pickup = PICKUP.find(all)?.value?.lowercase()?.let { it.startsWith("ritiro") || it.startsWith("pick") } == true
-            return Card(key, CardKind.PARCEL, tr(if (pickup) R.string.pickup_x else R.string.delivery_x, appLabel), name, w?.let { DateParser.describe(it) } ?: text.take(70).ifBlank { null },
-                actions = actions, expiresAt = until ?: (now + 12 * 3600_000), step = if (w != null) null else step)
+            // Consegnato o ritirato: basta vederlo un'ora. Da ritirare: finché non dici Ok, al massimo tre giorni.
+            val life = when {
+                until != null -> until
+                step == 4 -> now + 3_600_000
+                pickup -> now + 3 * 86_400_000
+                else -> now + 12 * 3_600_000
+            }
+            return Card(key, CardKind.PARCEL, tr(if (pickup) R.string.pickup_x else R.string.delivery_x, appLabel), name,
+                w?.let { DateParser.describe(it) } ?: firstLine(text).take(70).ifBlank { null },
+                actions = actions, expiresAt = life, step = if (w != null) null else step, sources = listOf(key))
         }
         return null
     }

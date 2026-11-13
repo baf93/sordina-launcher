@@ -219,12 +219,6 @@
     <string name="s_tap_app">輕觸一個應用程式來選擇。</string>
     <string name="s_search_app">搜尋應用程式…</string>
     <string name="lv_auto_hint">由 Sordina 決定</string>
-    <string name="lv_always">一律</string>
-    <string name="lv_always_hint">立即，有聲音，夜間也是</string>
-    <string name="lv_silent">立即，靜音</string>
-    <string name="lv_silent_hint">立即，無聲音</string>
-    <string name="lv_summary_hint">在摘要時間</string>
-    <string name="lv_summary">摘要</string>
     <string name="s_braked_hint">開啟前停一下。</string>
     <string name="s_add_app">新增應用程式…</string>
     <string name="s_braked_none">目前沒有。在上方搜尋應用程式。</string>
