@@ -202,7 +202,7 @@ class Signals(context: android.content.Context) {
 
 /** Riconosce dalle notifiche le cose che meritano una scheda. Regole semplici, sul testo. */
 object CardDetector {
-    private val CLOCK_PKGS = setOf("com.sec.android.app.clockpackage", "com.google.android.deskclock", "com.android.deskclock")
+    val CLOCK_PKGS =setOf("com.sec.android.app.clockpackage", "com.google.android.deskclock", "com.android.deskclock")
     private val DIALER_PKGS = setOf("com.samsung.android.dialer", "com.google.android.dialer", "com.android.dialer", "com.android.server.telecom")
     val HA_PKGS = setOf("io.homeassistant.companion.android", "io.homeassistant.companion.android.minimal")
     /** Corse e consegne di cibo: la notifica in corso dice quanto manca. */

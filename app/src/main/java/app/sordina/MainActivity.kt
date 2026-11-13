@@ -388,12 +388,24 @@ class MainActivity : ComponentActivity(), Ops {
     private fun hm(min: Int): String = java.time.LocalTime.of(min / 60 % 24, min % 60)
         .format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
 
-    /** La prossima sveglia, se suona entro un giorno. */
+    /**
+     * La prossima sveglia di domani, se suona entro un giorno. Android dà la prossima "sveglia" di qualunque app:
+     * anche i promemoria del Calendario Samsung. Vale solo quella di un'app orologio.
+     */
     private fun nextAlarm(): String? {
-        val t = runCatching { getSystemService(android.app.AlarmManager::class.java)?.nextAlarmClock?.triggerTime }.getOrNull() ?: return null
+        val info = runCatching { getSystemService(android.app.AlarmManager::class.java)?.nextAlarmClock }.getOrNull() ?: return null
+        val owner = info.showIntent?.creatorPackage
+        val clocks = CardDetector.CLOCK_PKGS + listOfNotNull(
+            runCatching { packageManager.resolveActivity(Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS), 0)?.activityInfo?.packageName }.getOrNull(),
+        )
+        if (owner != null && owner !in clocks) return null
+        val t = info.triggerTime
         if (t - System.currentTimeMillis() > 24 * 3_600_000L) return null
-        return java.time.Instant.ofEpochMilli(t).atZone(java.time.ZoneId.systemDefault())
-            .format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
+        val at = java.time.Instant.ofEpochMilli(t).atZone(java.time.ZoneId.systemDefault())
+        // Sta sotto "Domani": una sveglia di stasera non è di domani (dopo mezzanotte invece sì)
+        val now = java.time.LocalDateTime.now()
+        if (at.toLocalDate() == now.toLocalDate() && now.hour >= 12) return null
+        return at.format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
     }
 
     private fun sceneLine(s: Scene): String? = when (s) {

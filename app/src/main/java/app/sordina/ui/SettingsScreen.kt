@@ -97,7 +97,7 @@ fun SettingsScreen(
     val mainScroll = rememberScrollState()
     val haScroll = rememberScrollState()
     fun change(block: () -> Unit) { block(); tick++; ops.changed() }
-    BackHandler(sub != Sub.MAIN) { sub = Sub.MAIN }
+    BackHandler(sub != Sub.MAIN) { sub = if (sub == Sub.LEVELS) Sub.RULES else Sub.MAIN }
     val prefs = app.prefs
     val back = { sub = Sub.MAIN }
 
@@ -109,9 +109,9 @@ fun SettingsScreen(
                     Hint(tr(R.string.s_important_hint))
                     Column(Modifier.verticalScroll(rememberScrollState())) { ImportantPicker(app, perms, ops) }
                 }
-                Sub.LEVELS -> LevelsPage(app, apps, back)
+                Sub.LEVELS -> LevelsPage(app, apps) { sub = Sub.RULES }
                 Sub.BRAKED -> BrakedPage(app, apps, onChange = { ops.changed() }, onBack = back)
-                Sub.RULES -> RulesPage(app, apps, onChange = { ops.changed() }, onBack = back)
+                Sub.RULES -> RulesPage(app, apps, onChange = { ops.changed() }, onApps = { sub = Sub.LEVELS }, onBack = back)
                 Sub.ORDER -> key(tick) {
                     Header(tr(R.string.s_your_order), back)
                     Hint(tr(R.string.s_use_arrows))
@@ -216,23 +216,26 @@ fun SettingsScreen(
             val ctx = androidx.compose.ui.platform.LocalContext.current
             fun granted(p: String) = ctx.checkSelfPermission(p) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
-            // ── Sordina
-            Section(tr(R.string.s_sordina))
+            val free = SordinaListener.batteryFree(ctx)
+
+            // ── Da sistemare: solo se manca qualcosa senza cui Sordina non funziona
+            if (!perms.listener || !perms.home || !free) {
+                Section(tr(R.string.s_fix))
+                Group {
+                    if (!perms.listener) Line(tr(R.string.perm_notifications), tr(R.string.grant), icon = Icons.Rounded.Notifications) { ops.openListenerSettings() }
+                    if (!perms.home) Line(tr(R.string.perm_home), tr(R.string.grant), icon = Icons.Rounded.Home) { ops.openHomeSettings() }
+                    if (!free) Line(tr(R.string.s_battery), tr(R.string.s_battery_limited), tr(R.string.s_battery_hint), Icons.Rounded.BatteryChargingFull) { ops.openBatterySettings() }
+                }
+            }
+
+            // ── Notifiche: cosa passa e cosa resta in sordina
+            Section(tr(R.string.perm_notifications))
             Group {
-                Line(tr(R.string.s_important), "${prefs.importantNames.size}", icon = Icons.Rounded.FavoriteBorder) { sub = Sub.PEOPLE }
-                Line(tr(R.string.s_apps_pass), "${prefs.appLevels.size}", icon = Icons.Rounded.Bolt) { sub = Sub.LEVELS }
-                // Il silenzio lo decidono le modalità di Android (Non disturbare, Riposo, Guida…)
-                Line(tr(R.string.s_modes), if (app.moments.androidQuiet()) tr(R.string.moment_quiet) else "", tr(R.string.s_modes_hint), Icons.Rounded.DoNotDisturbOn) {
-                    runCatching { ctx.startActivity(android.content.Intent("android.settings.ZEN_MODE_SETTINGS").addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
-                }
-                // In auto con Android Auto: Non disturbare, così sullo schermo dell'auto arriva solo l'importante
-                Toggle(tr(R.string.s_car_quiet), prefs.carQuiet && perms.policy, if (perms.policy) tr(R.string.s_car_quiet_hint) else tr(R.string.s_car_quiet_access), Icons.Rounded.DirectionsCar) { v ->
-                    if (v && !perms.policy) runCatching { ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
-                    change { prefs.carQuiet = v }
-                }
-                Toggle(tr(R.string.s_urgent), prefs.urgentEnabled, tr(R.string.s_urgent_hint), Icons.Rounded.PriorityHigh) { v -> change { prefs.urgentEnabled = v } }
+                Line(tr(R.string.s_important), "${prefs.importantNames.size}", tr(R.string.s_important_hint), Icons.Rounded.FavoriteBorder) { sub = Sub.PEOPLE }
+                // Una sola porta per le regole: tipo, persona, app (le regole per app stanno dentro)
                 val rules = Rules.all(prefs).size
                 Line(tr(R.string.rules), if (rules == 0) tr(R.string.none_f) else "$rules", tr(R.string.rules_hint), Icons.AutoMirrored.Rounded.Rule) { sub = Sub.RULES }
+                Toggle(tr(R.string.s_urgent), prefs.urgentEnabled, tr(R.string.s_urgent_hint), Icons.Rounded.PriorityHigh) { v -> change { prefs.urgentEnabled = v } }
                 Toggle(tr(R.string.s_system), prefs.systemPass, if (prefs.systemPass) tr(R.string.s_system_on) else tr(R.string.s_system_off), Icons.Rounded.Settings) { v -> change { prefs.systemPass = v } }
                 val orders = listOf(
                     Option(tr(R.string.s_order_auto), tr(R.string.s_order_auto_hint)),
@@ -246,8 +249,21 @@ fun SettingsScreen(
                 if (prefs.sordinaOrder == 2) Line(tr(R.string.s_your_order), icon = Icons.Rounded.Reorder) { sub = Sub.ORDER }
             }
 
-            // ── Casa cambia: sera, notte, auto
-            Section(tr(R.string.s_scenes))
+            // ── Silenzio: quando passa solo l'importante. Lo decidono le modalità di Android (Non disturbare, Riposo, Guida…)
+            Section(tr(R.string.s_silence))
+            Group {
+                Line(tr(R.string.s_modes), if (app.moments.androidQuiet()) tr(R.string.moment_quiet) else "", tr(R.string.s_modes_hint), Icons.Rounded.DoNotDisturbOn) {
+                    runCatching { ctx.startActivity(android.content.Intent("android.settings.ZEN_MODE_SETTINGS").addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                }
+                // In auto con Android Auto: Non disturbare, così sullo schermo dell'auto arriva solo l'importante
+                Toggle(tr(R.string.s_car_quiet), prefs.carQuiet && perms.policy, if (perms.policy) tr(R.string.s_car_quiet_hint) else tr(R.string.s_car_quiet_access), Icons.Rounded.DirectionsCar) { v ->
+                    if (v && !perms.policy) runCatching { ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                    change { prefs.carQuiet = v }
+                }
+            }
+
+            // ── Home: come cambia (sera, notte, auto) e da dove prende le informazioni
+            Section(tr(R.string.perm_home))
             Group {
                 Toggle(tr(R.string.s_scene_evening), prefs.homeEvening, tr(R.string.s_scene_evening_hint, hm(20 * 60)),
                     Icons.Rounded.WbTwilight) { v -> change { prefs.homeEvening = v } }
@@ -270,26 +286,7 @@ fun SettingsScreen(
                     }
                 }
             }
-
-            // ── Freno
-            Section(tr(R.string.s_brake))
-            Group {
-                Line(tr(R.string.s_braked_apps), if (prefs.braked.isEmpty()) tr(R.string.none_f) else "${prefs.braked.size}", icon = Icons.Rounded.PanTool) { sub = Sub.BRAKED }
-                val secs = listOf(5, 10, 20, 30, 60)
-                Pick(tr(R.string.s_wait), "${prefs.brakeSeconds} s", secs.map { Option(trn(R.plurals.n_seconds, it)) }, { secs[it] == prefs.brakeSeconds }, icon = Icons.Rounded.HourglassEmpty, title = tr(R.string.s_wait_title)) { change { prefs.brakeSeconds = secs[it] } }
-                Toggle(tr(R.string.s_brake_grow), prefs.brakeGrow, tr(R.string.s_brake_grow_hint), Icons.AutoMirrored.Rounded.TrendingUp) { v -> change { prefs.brakeGrow = v } }
-                Toggle(tr(R.string.s_brake_guard), prefs.brakeGuard, tr(R.string.s_brake_guard_hint), Icons.Rounded.History) { v -> change { prefs.brakeGuard = v } }
-                // Quando frena: sempre, o solo in una fascia
-                val windows = listOf(-1 to -1, 20 * 60 to 8 * 60, 22 * 60 to 7 * 60)
-                val windowLabels = listOf(tr(R.string.s_brake_always), "${hm(20 * 60)} – ${hm(8 * 60)}", "${hm(22 * 60)} – ${hm(7 * 60)}")
-                val wi = windows.indexOfFirst { it.first == prefs.brakeFrom && it.second == prefs.brakeTo }.let { if (it < 0) 0 else it }
-                Pick(tr(R.string.s_brake_when), windowLabels[wi], windowLabels.map { Option(it) }, { it == wi }, icon = Icons.Rounded.Schedule) { i ->
-                    change { prefs.brakeFrom = windows[i].first; prefs.brakeTo = windows[i].second }
-                }
-            }
-
-            // ── Casa
-            Section(tr(R.string.s_home))
+            Spacer(Modifier.height(12.dp))
             Group {
                 val wx = granted(Manifest.permission.ACCESS_COARSE_LOCATION)
                 if (wx) Line(tr(R.string.s_weather), tr(R.string.on_m), icon = Icons.Rounded.Cloud)
@@ -300,6 +297,43 @@ fun SettingsScreen(
                 if (loc) Line(tr(R.string.s_recognize_home), tr(R.string.on_m), tr(R.string.s_wifi_hint), Icons.Rounded.Wifi)
                 else Line(tr(R.string.s_recognize_home), tr(R.string.turn_on), tr(R.string.s_wifi_hint), Icons.Rounded.Wifi) { ops.request(Manifest.permission.ACCESS_FINE_LOCATION) }
                 Line(tr(R.string.s_ha), if (app.ha.configured) tr(R.string.connected) else tr(R.string.connect), icon = Icons.Rounded.Home) { sub = Sub.HA }
+            }
+
+            // ── Freno: le opzioni compaiono solo quando c'è almeno un'app frenata
+            Section(tr(R.string.s_brake))
+            Group {
+                Line(tr(R.string.s_braked_apps), if (prefs.braked.isEmpty()) tr(R.string.none_f) else "${prefs.braked.size}", icon = Icons.Rounded.PanTool) { sub = Sub.BRAKED }
+                if (prefs.braked.isNotEmpty()) {
+                    val secs = listOf(5, 10, 20, 30, 60)
+                    Pick(tr(R.string.s_wait), "${prefs.brakeSeconds} s", secs.map { Option(trn(R.plurals.n_seconds, it)) }, { secs[it] == prefs.brakeSeconds }, icon = Icons.Rounded.HourglassEmpty, title = tr(R.string.s_wait_title)) { change { prefs.brakeSeconds = secs[it] } }
+                    // Quando frena: sempre, o solo in una fascia
+                    val windows = listOf(-1 to -1, 20 * 60 to 8 * 60, 22 * 60 to 7 * 60)
+                    val windowLabels = listOf(tr(R.string.s_brake_always), "${hm(20 * 60)} – ${hm(8 * 60)}", "${hm(22 * 60)} – ${hm(7 * 60)}")
+                    val wi = windows.indexOfFirst { it.first == prefs.brakeFrom && it.second == prefs.brakeTo }.let { if (it < 0) 0 else it }
+                    Pick(tr(R.string.s_brake_when), windowLabels[wi], windowLabels.map { Option(it) }, { it == wi }, icon = Icons.Rounded.Schedule) { i ->
+                        change { prefs.brakeFrom = windows[i].first; prefs.brakeTo = windows[i].second }
+                    }
+                    Toggle(tr(R.string.s_brake_grow), prefs.brakeGrow, tr(R.string.s_brake_grow_hint), Icons.AutoMirrored.Rounded.TrendingUp) { v -> change { prefs.brakeGrow = v } }
+                    Toggle(tr(R.string.s_brake_guard), prefs.brakeGuard, icon = Icons.Rounded.History) { v -> change { prefs.brakeGuard = v } }
+                }
+            }
+
+            // ── Ricerca
+            Section(tr(R.string.s_search))
+            Group {
+                Toggle(tr(R.string.s_keyboard), prefs.keyboardOnOpen, icon = Icons.Rounded.Keyboard) { v -> change { prefs.keyboardOnOpen = v } }
+                if (prefs.pinned.isEmpty()) Line(tr(R.string.s_pinned), tr(R.string.none_f), tr(R.string.s_hold_suggestion), Icons.Rounded.PushPin)
+                else Line(tr(R.string.s_pinned), "${prefs.pinned.size}", icon = Icons.Rounded.PushPin) { sub = Sub.PINNED }
+                if (prefs.excluded.isEmpty()) Line(tr(R.string.s_excluded), tr(R.string.none_f), tr(R.string.s_hold_suggestion), Icons.Rounded.Block)
+                else Line(tr(R.string.s_excluded), "${prefs.excluded.size}", icon = Icons.Rounded.Block) { sub = Sub.EXCLUDED }
+                // Quanto ci prende la ricerca è un dato, non un'impostazione: sta sotto "Dimentica"
+                val t = prefs.intentTotal
+                var ask by remember { mutableStateOf(false) }
+                if (prefs.aliases.isNotEmpty() || t > 0) Line(tr(R.string.s_forget), hint = if (t == 0) null else "${tr(R.string.s_first_hit)}: ${prefs.intentFirst * 100 / t}%",
+                    icon = Icons.Rounded.Restore, trailing = {}) { ask = true }
+                if (ask) Confirm(tr(R.string.s_forget_title), tr(R.string.s_forget_text), tr(R.string.forget),
+                    onConfirm = { change { prefs.aliases = emptyMap(); prefs.intentFirst = 0; prefs.intentTotal = 0; app.brain.forgetTyping() } },
+                    onDismiss = { ask = false })
             }
 
             // ── Aspetto
@@ -318,26 +352,9 @@ fun SettingsScreen(
                 val themes = ThemeMode.entries.map { Option(it.label, if (it == ThemeMode.AUTO) tr(R.string.s_like_phone) else null) }
                 Pick(tr(R.string.s_theme), mode.label, themes, { it == mode.ordinal }, icon = Icons.Rounded.Contrast) { onMode(ThemeMode.entries[it]) }
                 Line(tr(R.string.s_look), listOf(tr(R.string.wp_solid_l), tr(R.string.wp_phone_l), tr(R.string.wp_photo_l), tr(R.string.wp_abstract_l))[backdrop.coerceIn(0, 3)], icon = Icons.Rounded.Wallpaper) { sub = Sub.LOOK }
-                Toggle(tr(R.string.s_icons), prefs.appIcons, tr(R.string.s_icons_hint), Icons.Rounded.Apps) { v -> change { prefs.appIcons = v } }
+                Toggle(tr(R.string.s_icons), prefs.appIcons, icon = Icons.Rounded.Apps) { v -> change { prefs.appIcons = v } }
                 Toggle(tr(R.string.s_animations), prefs.animations, icon = Icons.Rounded.Animation) { v -> change { prefs.animations = v } }
                 Toggle(tr(R.string.s_haptics), prefs.haptics, icon = Icons.Rounded.Vibration) { v -> change { prefs.haptics = v } }
-            }
-
-            // ── Ricerca
-            Section(tr(R.string.s_search))
-            Group {
-                Toggle(tr(R.string.s_keyboard), prefs.keyboardOnOpen, icon = Icons.Rounded.Keyboard) { v -> change { prefs.keyboardOnOpen = v } }
-                if (prefs.pinned.isEmpty()) Line(tr(R.string.s_pinned), tr(R.string.none_f), tr(R.string.s_hold_suggestion), Icons.Rounded.PushPin)
-                else Line(tr(R.string.s_pinned), "${prefs.pinned.size}", icon = Icons.Rounded.PushPin) { sub = Sub.PINNED }
-                if (prefs.excluded.isEmpty()) Line(tr(R.string.s_excluded), tr(R.string.none_f), tr(R.string.s_hold_suggestion), Icons.Rounded.Block)
-                else Line(tr(R.string.s_excluded), "${prefs.excluded.size}", icon = Icons.Rounded.Block) { sub = Sub.EXCLUDED }
-                val t = prefs.intentTotal
-                var ask by remember { mutableStateOf(false) }
-                Line(tr(R.string.s_first_hit), if (t == 0) "–" else "${prefs.intentFirst * 100 / t}%", icon = Icons.Rounded.TrackChanges)
-                if (prefs.aliases.isNotEmpty() || t > 0) Line(tr(R.string.s_forget), icon = Icons.Rounded.Restore, trailing = {}) { ask = true }
-                if (ask) Confirm(tr(R.string.s_forget_title), tr(R.string.s_forget_text), tr(R.string.forget),
-                    onConfirm = { change { prefs.aliases = emptyMap(); prefs.intentFirst = 0; prefs.intentTotal = 0; app.brain.forgetTyping() } },
-                    onDismiss = { ask = false })
             }
 
             // ── Altro
@@ -345,8 +362,7 @@ fun SettingsScreen(
             Group {
                 Line(tr(R.string.s_perms), icon = Icons.Rounded.Lock) { sub = Sub.PERMS }
                 // Se Android addormenta Sordina, le notifiche non vengono più smistate
-                val free = SordinaListener.batteryFree(ctx)
-                Line(tr(R.string.s_battery), if (free) tr(R.string.s_battery_free) else tr(R.string.s_battery_limited), tr(R.string.s_battery_hint), Icons.Rounded.BatteryChargingFull,
+                Line(tr(R.string.s_battery), if (free) tr(R.string.s_battery_free) else tr(R.string.s_battery_limited), icon = Icons.Rounded.BatteryChargingFull,
                     onClick = if (free) null else ({ ops.openBatterySettings() }))
                 Line(tr(R.string.s_export), icon = Icons.Rounded.Upload, trailing = {}) { ops.exportSettings() }
                 Line(tr(R.string.s_import), icon = Icons.Rounded.Download, trailing = {}) { ops.importSettings() }
@@ -493,7 +509,7 @@ private fun BrakedPage(app: SordinaApp, apps: List<AppEntry>, onChange: () -> Un
 
 /** Le regole scelte da te: per tipo di notifica, persona o gruppo, app. Si aggiungono dalla pagina Sordina, si tolgono da qui. */
 @Composable
-private fun RulesPage(app: SordinaApp, apps: List<AppEntry>, onChange: () -> Unit, onBack: () -> Unit) {
+private fun RulesPage(app: SordinaApp, apps: List<AppEntry>, onChange: () -> Unit, onApps: () -> Unit, onBack: () -> Unit) {
     val prefs = app.prefs
     var rules by remember { mutableStateOf(Rules.all(prefs)) }
     val names = remember { prefs.ruleNames }
@@ -514,6 +530,8 @@ private fun RulesPage(app: SordinaApp, apps: List<AppEntry>, onChange: () -> Uni
     }
     Header(tr(R.string.rules), onBack)
     Hint(tr(R.string.rules_page_hint))
+    // Una regola per tutta un'app, scegliendola dall'elenco (prima era "App che passano", un doppione)
+    Group { Line(tr(R.string.s_apps_pass), hint = tr(R.string.s_tap_app), icon = Icons.Rounded.Bolt, onClick = onApps) }
     if (rules.isEmpty()) Hint(tr(R.string.s_rules_none))
     LazyColumn(Modifier.fillMaxWidth()) {
         listOf(RuleScope.TYPE to R.string.rules_kind_type, RuleScope.PERSON to R.string.rules_kind_person, RuleScope.APP to R.string.rules_kind_app).forEach { (scope, title) ->
