@@ -2,6 +2,9 @@
 
 package app.sordina.ui.sordina
 
+import androidx.compose.ui.graphics.drawscope.rotate
+import app.sordina.ui.Motion
+
 import app.sordina.R
 import app.sordina.tr
 import app.sordina.trn
@@ -150,10 +153,17 @@ fun SordinaScreen(
     Box(Modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 110.dp)) {
             item(key = "top") {
-                Header("Sordina", onBack, subtitle = when (total) {
-                            0 -> tr(R.string.sordina_empty)
-                            else -> trn(R.plurals.n_notifications, total)
-                        }, modifier = Modifier.statusBarsPadding().padding(horizontal = 16.dp))
+                Header("Sordina", onBack, modifier = Modifier.statusBarsPadding().padding(horizontal = 16.dp))
+            }
+            // Niente in sordina: una campanella che dorme
+            if (total == 0) item(key = "quiet") {
+                Column(Modifier.fillParentMaxHeight(0.8f).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    SleepingBell(Modifier.size(200.dp))
+                    Spacer(Modifier.height(20.dp))
+                    Text(tr(R.string.n_quiet_title), style = TextStyle(fontSize = 24.sp, color = c.ink))
+                    Spacer(Modifier.height(6.dp))
+                    Text(tr(R.string.n_quiet_text), style = TextStyle(fontSize = 16.sp, color = c.soft))
+                }
             }
             sections.forEach { s ->
                 if (s.label == null) item(key = "h_" + s.key) { Spacer(Modifier.height(10.dp)) }
@@ -235,7 +245,7 @@ private fun Block(
     val shape = RoundedCornerShape(22.dp)
     val person = h.groupKey.startsWith("p:")
     val single = g.size == 1
-    val arrow by animateFloatAsState(if (open) 180f else 0f, feel.spec(tween(220)), label = "arrow")
+    val arrow by animateFloatAsState(if (open) 180f else 0f, feel.spec(Motion.enter()), label = "arrow")
 
     // Il blocco intero si legge scorrendolo (le anteprime aperte, scorse una per una, si leggono da sole)
     Swipeable(h.groupKey, enabled = true, shape = shape, onSwiped = { if (single) onReadOne(h) else onRead(h.groupKey) }) {
@@ -258,8 +268,8 @@ private fun Block(
             }
             AnimatedVisibility(
                 open,
-                enter = if (feel.animations) expandVertically(tween(240)) + fadeIn(tween(200)) else fadeIn(tween(0)),
-                exit = if (feel.animations) shrinkVertically(tween(200)) + fadeOut(tween(150)) else fadeOut(tween(0)),
+                enter = if (feel.animations) expandVertically(Motion.enter()) + fadeIn(Motion.enter(220, 60)) else fadeIn(tween(0)),
+                exit = if (feel.animations) shrinkVertically(Motion.enter(220)) + fadeOut(Motion.exit()) else fadeOut(tween(0)),
             ) {
                 Column(Modifier.fillMaxWidth().padding(top = 8.dp)) {
                     // Perché aspetta: la regola che l'ha fermata, da correggere con i tasti qui sotto
@@ -459,5 +469,50 @@ private fun Swipeable(key: Any, enabled: Boolean, shape: androidx.compose.ui.gra
             }
         }
         Box(Modifier.fillMaxWidth().graphicsLayer { translationX = offset.value }) { content() }
+    }
+}
+
+
+/** Una campanella che dorme: inclinata, occhi chiusi, qualche "z". Ferma, disegnata una volta. */
+@Composable
+private fun SleepingBell(modifier: Modifier = Modifier) {
+    val c = S.c
+    androidx.compose.foundation.Canvas(modifier) {
+        val w = size.width
+        val cx = w * 0.46f; val cy = w * 0.56f
+        // Un alone tenue dietro
+        drawCircle(c.accent.copy(alpha = 0.10f), radius = w * 0.40f, center = androidx.compose.ui.geometry.Offset(w * 0.5f, w * 0.52f))
+        val s = w * 0.46f
+        fun o(x: Float, y: Float) = androidx.compose.ui.geometry.Offset(cx + x * s, cy + y * s)
+        rotate(-16f, androidx.compose.ui.geometry.Offset(cx, cy)) {
+            val bell = androidx.compose.ui.graphics.Path().apply {
+                moveTo(cx - 0.44f * s, cy + 0.30f * s)
+                cubicTo(cx - 0.36f * s, cy + 0.14f * s, cx - 0.36f * s, cy - 0.06f * s, cx - 0.33f * s, cy - 0.20f * s)
+                cubicTo(cx - 0.27f * s, cy - 0.52f * s, cx + 0.27f * s, cy - 0.52f * s, cx + 0.33f * s, cy - 0.20f * s)
+                cubicTo(cx + 0.36f * s, cy - 0.06f * s, cx + 0.36f * s, cy + 0.14f * s, cx + 0.44f * s, cy + 0.30f * s)
+                close()
+            }
+            // Il batacchio, poi la campana, il bordo e il pomello
+            drawCircle(c.accent.copy(alpha = 0.75f), radius = 0.09f * s, center = o(0f, 0.44f))
+            drawPath(bell, c.accent)
+            drawRoundRect(c.accent, topLeft = o(-0.50f, 0.26f), size = androidx.compose.ui.geometry.Size(1.0f * s, 0.12f * s),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(0.06f * s))
+            drawCircle(c.accent, radius = 0.07f * s, center = o(0f, -0.50f))
+            // Occhi chiusi e un sorriso
+            val eye = androidx.compose.ui.graphics.drawscope.Stroke(width = 0.035f * s, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+            val ink = c.bg
+            for (x in listOf(-0.14f, 0.14f)) drawArc(ink, 10f, 160f, false, topLeft = o(x - 0.08f, -0.06f),
+                size = androidx.compose.ui.geometry.Size(0.16f * s, 0.10f * s), style = eye)
+            drawArc(ink, 20f, 140f, false, topLeft = o(-0.045f, 0.13f), size = androidx.compose.ui.geometry.Size(0.09f * s, 0.05f * s), style = eye)
+        }
+        // Le z, sempre più piccole e leggere salendo
+        fun z(x: Float, y: Float, d: Float, a: Float) {
+            val p = androidx.compose.ui.graphics.Path().apply { moveTo(x, y); lineTo(x + d, y); lineTo(x, y + d); lineTo(x + d, y + d) }
+            drawPath(p, c.soft.copy(alpha = a), style = androidx.compose.ui.graphics.drawscope.Stroke(width = w * 0.016f,
+                cap = androidx.compose.ui.graphics.StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round))
+        }
+        z(w * 0.66f, w * 0.30f, w * 0.085f, 0.9f)
+        z(w * 0.78f, w * 0.17f, w * 0.065f, 0.65f)
+        z(w * 0.87f, w * 0.07f, w * 0.048f, 0.4f)
     }
 }

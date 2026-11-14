@@ -198,7 +198,9 @@ private fun Actions(card: Card, onAction: (Card, CardAction) -> Unit) {
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         card.actions.forEachIndexed { i, a ->
-            ActionButton(a.label, primary = i == 0, Modifier.weight(1f)) { feel.confirm(); onAction(card, a) }
+            // Con tre pulsanti l'ultimo ("Ignora") prende solo lo spazio che serve: gli altri restano leggibili
+            val small = card.actions.size > 2 && i == card.actions.lastIndex
+            ActionButton(a.label, primary = i == 0, if (small) Modifier else Modifier.weight(1f)) { feel.confirm(); onAction(card, a) }
         }
     }
 }

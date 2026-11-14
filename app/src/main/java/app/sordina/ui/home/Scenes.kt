@@ -1,5 +1,7 @@
 package app.sordina.ui.home
 
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import app.sordina.R
 import app.sordina.tr
 
@@ -21,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Alarm
+import androidx.compose.material.icons.rounded.Call
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MusicNote
@@ -67,12 +70,29 @@ internal fun Evening(content: @Composable () -> Unit) {
 
 /** Sotto il programma di oggi: domani (sveglia, appuntamenti, tempo), quando comincia la notte, com'è andata oggi. */
 @Composable
-internal fun EveningBlock(state: HomeState, onScene: (String) -> Unit) {
+internal fun TomorrowCorner(state: HomeState, onScene: (String) -> Unit) {
     val c = S.c
-    Text(tr(R.string.scene_tomorrow), Modifier.padding(top = 20.dp, bottom = 2.dp), style = TextStyle(fontSize = 13.sp, color = c.soft))
-    Tomorrow(state, onScene)
-    state.sceneLine?.let { Text(it, Modifier.padding(top = 12.dp), style = TextStyle(fontSize = 14.sp, color = c.soft)) }
-    state.recap?.let { Text(it, Modifier.padding(top = 2.dp), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 14.sp, color = c.soft)) }
+    // Allineato a sinistra dentro l'angolo: le icone stanno in colonna
+    // Tutto il blocco porta alle sveglie (il meteo si apre già da quello di oggi)
+    Column(Modifier.padding(top = 4.dp, start = 12.dp).clickableNoRipple { onScene("alarm") }, horizontalAlignment = Alignment.Start) {
+        Text(tr(R.string.tomorrow_cap), Modifier.padding(bottom = 6.dp), style = TextStyle(fontSize = 13.sp, color = c.soft))
+        // La sveglia c'è sempre: senza, l'icona spenta; un tocco apre le sveglie
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Rounded.Alarm, null, Modifier.size(18.dp), tint = if (state.alarm != null) c.accent else c.soft)
+            // Senza sveglia, un trattino: si vede che non c'è
+            Spacer(Modifier.width(6.dp))
+            Text(state.alarm ?: "—", style = TextStyle(fontSize = 18.sp, color = if (state.alarm != null) c.ink else c.soft))
+        }
+        state.tomorrowWeather?.let { w ->
+            // Solo le temperature: il cielo lo dice l'icona
+            val temps = w.split(' ').filter { '°' in it || it == "/" }.joinToString(" ").ifBlank { w }
+            Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(weatherIcon(w), null, Modifier.size(18.dp), tint = c.soft)
+                Spacer(Modifier.width(6.dp))
+                Text(temps, style = TextStyle(fontSize = 15.sp, color = c.soft))
+            }
+        }
+    }
 }
 
 /** Sveglia, i primi appuntamenti di domani e il tempo: uguale la sera e la notte. */
@@ -128,7 +148,14 @@ internal fun NightHome(
             Row(Modifier.padding(top = 4.dp).clickableNoRipple { onScene("alarm") }, verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.Alarm, null, Modifier.size(18.dp), tint = if (state.alarm != null) c.accent else c.soft)
                 Spacer(Modifier.width(6.dp))
-                Text(state.alarm?.let { tr(R.string.scene_alarm_at, it) } ?: tr(R.string.scene_no_alarm), style = TextStyle(fontSize = 17.sp, color = c.soft))
+                // Con la sveglia: anche quanto manca ("Sveglia alle 7:00 · tra 7 h 20 min")
+                val left = state.alarmAt?.let { at -> ((at - System.currentTimeMillis()) / 60_000L).toInt().coerceAtLeast(0) }
+                val text = when {
+                    state.alarm == null -> tr(R.string.scene_no_alarm)
+                    left != null -> tr(R.string.n_alarm_in, state.alarm, app.sordina.ui.shortDuration(left))
+                    else -> tr(R.string.scene_alarm_at, state.alarm)
+                }
+                Text(text, style = TextStyle(fontSize = 17.sp, color = c.soft))
             }
             state.sceneLine?.let {
                 Text(it, Modifier.padding(top = 10.dp), textAlign = TextAlign.Center, style = TextStyle(fontSize = 14.sp, color = c.soft))
@@ -151,7 +178,8 @@ internal fun NightHome(
             Spacer(Modifier.height(18.dp))
         }
         SearchBar(state, onSearch, onMicDown, onMicUp)
-        Spacer(Modifier.height(28.dp))
+        // La barra sta nello stesso punto di giorno e di sera
+        Spacer(Modifier.height(36.dp))
         SordinaRow(state) { onSheet() }
         Spacer(Modifier.height(20.dp))
     }
@@ -189,39 +217,42 @@ internal fun CarHome(
             val line = if (state.listening) state.partial.ifBlank { "…" } else state.sceneLine
             line?.let { Text(it, maxLines = 3, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = if (state.listening) 22.sp else 16.sp, color = if (state.listening) c.ink else c.soft)) }
         }
+        // Il prossimo impegno, solo quello: com'è nella Casa di sempre (il giorno sopra, l'ora in accento, il titolo)
+        state.next?.takeIf { !state.listening }?.let { e ->
+            Column(Modifier.padding(start = 24.dp, end = 24.dp, top = 24.dp)) {
+                e.day?.let { Text(it, Modifier.padding(bottom = 2.dp), style = TextStyle(fontSize = 13.sp, color = c.soft)) }
+                AgendaLine(e.copy(accent = true)) { feel.tick(); onScene(e.key) }
+            }
+        }
         Spacer(Modifier.weight(1f))
         if (state.cards.isNotEmpty()) {
             Stack(state.cards, false, onAction, onCard)
             Spacer(Modifier.height(12.dp))
         }
         if (roomy && state.people.isNotEmpty()) {
-            // Una fila che scorre: le prime quattro si vedono intere, le altre si intravedono a destra
+            // Una fila di nomi interi: un tocco chiama, una pressione lunga la toglie da qui
             androidx.compose.foundation.lazy.LazyRow(
                 Modifier.fillMaxWidth(),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(state.people.size, key = { state.people[it].second }) { i ->
-                    val (label, name) = state.people[i]
-                    Column(
-                        Modifier.width(104.dp).height(88.dp).clip(RoundedCornerShape(22.dp)).background(surface())
-                            .pointerInput(name) { detectTapGestures(onTap = { feel.tick(); onScene("call:$name") }, onLongPress = { feel.tick(); onScene("hide:$name") }) }.padding(horizontal = 6.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+                    val name = state.people[i].second
+                    Row(
+                        Modifier.height(64.dp).clip(RoundedCornerShape(32.dp)).background(surface())
+                            .pointerInput(name) { detectTapGestures(onTap = { feel.tick(); onScene("call:$name") }, onLongPress = { feel.tick(); onScene("hide:$name") }) }
+                            .padding(horizontal = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Box(Modifier.size(40.dp).clip(CircleShape).background(c.line), contentAlignment = Alignment.Center) {
-                            Text(name.trim().take(1).uppercase(), style = TextStyle(fontSize = 18.sp, color = c.ink))
-                        }
-                        Spacer(Modifier.height(6.dp))
-                        Text(label, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 14.sp, color = c.ink))
+                        Text(name, maxLines = 1, softWrap = false, style = TextStyle(fontSize = 18.sp, color = c.ink))
                     }
                 }
             }
             Spacer(Modifier.height(10.dp))
         }
         Row(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            CarTile(Icons.Rounded.Navigation, state.navLabel ?: tr(R.string.car_navigate)) { feel.tick(); onScene("nav") }
-            CarTile(Icons.Rounded.MusicNote, state.musicLabel ?: tr(R.string.car_music)) { feel.tick(); onScene("music") }
-            if (state.homeApp) CarTile(Icons.Rounded.Home, tr(R.string.car_home_app)) { feel.tick(); onScene("ha") }
+            // Una sola riga: con meno app i pulsanti si allargano fino a coprire tutta la larghezza
+            state.carApps.forEach { s -> CarTile(s) { feel.tick(); onScene("app:${s.pkg}") } }
         }
         Spacer(Modifier.height(10.dp))
         // Il microfono: largo quanto lo schermo, si colpisce senza guardare
@@ -242,13 +273,14 @@ internal fun CarHome(
 }
 
 @Composable
-private fun RowScope.CarTile(icon: ImageVector, label: String, onClick: () -> Unit) {
-    val c = S.c
-    // Solo il simbolo, grande: il nome resta per chi usa il lettore dello schermo
+private fun RowScope.CarTile(s: CarShortcut, onClick: () -> Unit) {
+    // Solo l'icona dell'app, grande: il nome resta per chi usa il lettore dello schermo
     Box(
-        Modifier.weight(1f).height(76.dp).clip(RoundedCornerShape(24.dp)).background(surface()).clickableNoRipple(onClick),
+        Modifier.weight(1f).height(76.dp).clip(RoundedCornerShape(24.dp)).background(surface()).clickableNoRipple(onClick)
+            .semantics { contentDescription = s.label },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, label, Modifier.size(34.dp), tint = c.accent)
+        s.icon?.let { androidx.compose.foundation.Image(it, null, Modifier.size(44.dp)) }
+            ?: Text(s.label.take(1).uppercase(), style = TextStyle(fontSize = 24.sp, color = S.c.accent))
     }
 }

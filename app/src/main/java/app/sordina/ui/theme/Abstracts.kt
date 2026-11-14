@@ -12,10 +12,12 @@ import kotlin.random.Random
 
 /**
  * Gli sfondi di Sordina, disegnati nel codice: niente immagini da includere, nessuna licenza.
- * Tre tipi: Tinte (forme sfocate su un colore), Dune (onde a strati, opache) e Forme (geometrie piatte, stile Bauhaus). Tutti con un filo di grana.
+ * Cinque tipi: Tinte (forme sfocate su un colore), Dune (onde a strati, opache), Forme (geometrie piatte, stile Bauhaus),
+ * Sfumature (un colore che scivola nell'altro) e Linee (fili che ondeggiano). Tutti con un filo di grana.
+ * I nuovi si aggiungono in fondo: la scelta salvata è un indice.
  */
 object Abstracts {
-    enum class Kind(private val res: Int) { SOFT(R.string.wk_soft), DUNE(R.string.wk_dune), SHAPES(R.string.wk_shapes); val label: String get() = app.sordina.tr(res) }
+    enum class Kind(private val res: Int) { SOFT(R.string.wk_soft), GRADIENT(R.string.wk_gradient), DUNE(R.string.wk_dune), LINES(R.string.wk_lines), SHAPES(R.string.wk_shapes); val label: String get() = app.sordina.tr(res) }
 
     /** colors: per Dune dal cielo al primo piano; per Forme [fondo, tre colori, punto]. */
     class Preset(val kind: Kind, private val nameRes: Int, val colors: List<Int>) { val name: String get() = app.sordina.tr(nameRes) }
@@ -42,7 +44,36 @@ object Abstracts {
         Preset(Kind.SHAPES, R.string.wp_olive, listOf(c(0xFF2F3324), c(0xFFA3A35B), c(0xFFE0C9A6), c(0xFF6E7A4E), c(0xFFF0E6D2))),
         Preset(Kind.SHAPES, R.string.wp_sea, listOf(c(0xFFE8EEF0), c(0xFF1F4E79), c(0xFF7FB3D5), c(0xFFF4A259), c(0xFF0F2A44))),
         Preset(Kind.SHAPES, R.string.wp_terracotta, listOf(c(0xFF3B241C), c(0xFFD97A4E), c(0xFFF2C9A0), c(0xFF8C3B2B), c(0xFFF7EBDD))),
+        // Tinte, altre
+        Preset(Kind.SOFT, R.string.wp_mint, listOf(c(0xFFE3EFE8), c(0xFF9FD3BE), c(0xFFCFE3A8), c(0xFFF5F8F2))),
+        Preset(Kind.SOFT, R.string.wp_lavender, listOf(c(0xFF221E33), c(0xFF6F5BA8), c(0xFF3E5A9A), c(0xFFB58BC9))),
+        Preset(Kind.SOFT, R.string.wp_peach, listOf(c(0xFFF7E6DA), c(0xFFF4B39A), c(0xFFF2D0A4), c(0xFFE7A7B4))),
+        Preset(Kind.SOFT, R.string.wp_aurora, listOf(c(0xFF07131A), c(0xFF1F8A70), c(0xFF3B4FA0), c(0xFF0F5A5C))),
+        // Dune, altre
+        Preset(Kind.DUNE, R.string.wp_forest, listOf(c(0xFFDDE5D3), c(0xFF8FA886), c(0xFF5C7A5A), c(0xFF34503A), c(0xFF17261C))),
+        Preset(Kind.DUNE, R.string.wp_ocean, listOf(c(0xFFDDEFF2), c(0xFF8CC7D1), c(0xFF4A93A8), c(0xFF22607A), c(0xFF0E2F45))),
+        Preset(Kind.DUNE, R.string.wp_dawn, listOf(c(0xFFFBEFE4), c(0xFFF6CFC0), c(0xFFD9A6B8), c(0xFF9C7BA6), c(0xFF4E4570))),
+        // Forme, altre
+        Preset(Kind.SHAPES, R.string.wp_mint, listOf(c(0xFFEFF5F0), c(0xFF2E8C6E), c(0xFFF2B8A2), c(0xFF9ED0C0), c(0xFF1F2A28))),
+        Preset(Kind.SHAPES, R.string.wp_ink, listOf(c(0xFF0B0F1A), c(0xFF2B4C8C), c(0xFFE6D3A3), c(0xFF5E7FBF), c(0xFFF4F1EA))),
+        Preset(Kind.SHAPES, R.string.wp_lavender, listOf(c(0xFFEEEAF4), c(0xFF8E74C2), c(0xFFF0C27B), c(0xFFC7B8E6), c(0xFF2A2440))),
+        // Sfumature: [tre colori dall'alto in basso, bagliore]
+        Preset(Kind.GRADIENT, R.string.wp_dawn, listOf(c(0xFFFFE3C8), c(0xFFF6A8A0), c(0xFF8E7CC3), c(0xFFFFF4E6))),
+        Preset(Kind.GRADIENT, R.string.wp_night, listOf(c(0xFF0A0E1F), c(0xFF1B2547), c(0xFF3A2D5C), c(0xFF5A6FB0))),
+        Preset(Kind.GRADIENT, R.string.wp_mint, listOf(c(0xFFF2FAF5), c(0xFFB8E2CF), c(0xFF6FB7A4), c(0xFFFFFFFF))),
+        Preset(Kind.GRADIENT, R.string.wp_ember, listOf(c(0xFF1A0E0A), c(0xFF5A1F14), c(0xFFC4623A), c(0xFFF2A65A))),
+        Preset(Kind.GRADIENT, R.string.wp_ocean, listOf(c(0xFF0C2B3A), c(0xFF1F6E86), c(0xFF6FC1C4), c(0xFFBDE8E3))),
+        Preset(Kind.GRADIENT, R.string.wp_sand, listOf(c(0xFFF6EFE6), c(0xFFE8D6C0), c(0xFFCFB194), c(0xFFFFFAF2))),
+        Preset(Kind.GRADIENT, R.string.wp_aurora, listOf(c(0xFF050B12), c(0xFF0F3B3A), c(0xFF1F8A70), c(0xFF6A5ACD))),
+        // Linee: [fondo, filo chiaro, filo scuro]
+        Preset(Kind.LINES, R.string.wp_ink, listOf(c(0xFF0E1116), c(0xFF5E7FBF), c(0xFF2A3446))),
+        Preset(Kind.LINES, R.string.wp_sand, listOf(c(0xFFF3ECE1), c(0xFFC4623A), c(0xFFD9C8B0))),
+        Preset(Kind.LINES, R.string.wp_sage, listOf(c(0xFF1F2A24), c(0xFFA7C4A0), c(0xFF3D5245))),
+        Preset(Kind.LINES, R.string.wp_rose, listOf(c(0xFFF8ECEE), c(0xFFC9718A), c(0xFFE8C3CC))),
+        Preset(Kind.LINES, R.string.wp_ember, listOf(c(0xFF140C0A), c(0xFFF2A65A), c(0xFF5A2A1C))),
+        Preset(Kind.LINES, R.string.wp_fog, listOf(c(0xFFE9EDF1), c(0xFF4A6382), c(0xFFC5CFDA))),
     )
+
 
     fun render(index: Int, w: Int, h: Int, grain: Boolean = true): Bitmap {
         val i = index.coerceIn(0, all.size - 1)
@@ -53,6 +84,8 @@ object Abstracts {
             Kind.SOFT -> soft(cv, w, h, p.colors)
             Kind.DUNE -> dunes(cv, w, h, p.colors, Random(i * 31 + 7))
             Kind.SHAPES -> shapes(cv, w, h, p.colors, i)
+            Kind.GRADIENT -> gradient(cv, w, h, p.colors, i)
+            Kind.LINES -> lines(cv, w, h, p.colors, Random(i * 17 + 3))
         }
         if (grain) grain(bmp, w, h, Random(i))
         return bmp
@@ -105,6 +138,52 @@ object Abstracts {
             1 -> { circle(0.22f, 0.3f, 0.45f, 1); pill(0.52f, 0.42f, 1.12f, 1.05f, 2); half(-0.05f, 1.0f, 0.42f, 180f, 3); circle(0.82f, 0.15f, 0.08f, 4); arc(0.3f, 0.66f, 0.18f, 270f, 4) }
             else -> { half(0.5f, 0.0f, 0.62f, 0f, 1); circle(0.28f, 0.62f, 0.3f, 2); pill(0.58f, 0.55f, 0.92f, 1.08f, 3); circle(0.82f, 0.4f, 0.06f, 4); arc(0.25f, 0.9f, 0.22f, 180f, 4) }
         }
+    }
+
+    /** Tre colori che scivolano dall'alto in basso, un po' in diagonale, e un bagliore morbido. */
+    private fun gradient(cv: Canvas, w: Int, h: Int, col: List<Int>, i: Int) {
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        val tilt = if (i % 2 == 0) 0.25f else -0.25f
+        paint.shader = android.graphics.LinearGradient(w * (0.5f - tilt), 0f, w * (0.5f + tilt), h.toFloat(),
+            intArrayOf(col[0], col[1], col[2]), floatArrayOf(0f, 0.55f, 1f), Shader.TileMode.CLAMP)
+        cv.drawRect(0f, 0f, w.toFloat(), h.toFloat(), paint)
+        val gx = if (i % 2 == 0) w * 0.8f else w * 0.2f
+        val gy = h * 0.72f
+        val r = maxOf(w, h) * 0.55f
+        val glow = col[3]
+        paint.shader = RadialGradient(gx, gy, r, intArrayOf(glow and 0x00FFFFFF or 0x66000000, glow and 0x00FFFFFF), floatArrayOf(0f, 1f), Shader.TileMode.CLAMP)
+        cv.drawCircle(gx, gy, r, paint)
+    }
+
+    /** Tanti fili sottili che ondeggiano insieme, dal chiaro allo scuro: come le curve di livello di una mappa. */
+    private fun lines(cv: Canvas, w: Int, h: Int, col: List<Int>, rnd: Random) {
+        cv.drawColor(col[0])
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = maxOf(1.5f, w / 260f); strokeCap = Paint.Cap.ROUND }
+        val n = 34
+        val f1 = 2.2f + rnd.nextFloat() * 1.5f
+        val f2 = 4.5f + rnd.nextFloat() * 2f
+        val ph = rnd.nextFloat() * 6.28f
+        for (k in 0 until n) {
+            val t = k / (n - 1f)
+            paint.color = blend(col[1], col[2], t)
+            val base = h * (0.18f + 0.78f * t)
+            val amp = h * 0.05f * (1f - 0.5f * t)
+            val path = Path()
+            var x = 0f
+            val step = w / 48f
+            while (x <= w + step) {
+                val u = x / w
+                val y = base + amp * kotlin.math.sin(u * f1 * 3.1416f + ph + t * 1.6f) + amp * 0.4f * kotlin.math.sin(u * f2 * 3.1416f - ph * 0.5f + t * 3f)
+                if (x == 0f) path.moveTo(x, y) else path.lineTo(x, y)
+                x += step
+            }
+            cv.drawPath(path, paint)
+        }
+    }
+
+    private fun blend(a: Int, b: Int, t: Float): Int {
+        fun ch(s: Int) = (((a shr s) and 255) * (1 - t) + ((b shr s) and 255) * t).toInt().coerceIn(0, 255)
+        return (0xFF shl 24) or (ch(16) shl 16) or (ch(8) shl 8) or ch(0)
     }
 
     private fun grain(bmp: Bitmap, w: Int, h: Int, rnd: Random) {

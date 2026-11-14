@@ -55,12 +55,31 @@ object Backdrops {
         true
     }.getOrDefault(false)
 
-    fun load(context: Context, mode: Int, preset: Int = 0): Backdrop = runCatching {
+    /**
+     * Lo sfondo a piena misura, per la schermata di blocco. [paper] è il fondo del tema (tinta unita del tema).
+     * null: lo sfondo del telefono (non c'è niente da copiare) o la foto non c'è più.
+     */
+    fun full(context: Context, mode: Int, preset: Int, solid: Int, paper: Int): Bitmap? = runCatching {
+        val dm = context.resources.displayMetrics
+        val w = dm.widthPixels; val h = dm.heightPixels
         when (mode) {
-            2, 3 -> {
+            0, 4 -> Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).apply { eraseColor(if (mode == 4) solid else paper) }
+            2 -> file(context).takeIf { it.exists() }?.let { BitmapFactory.decodeFile(it.absolutePath) }
+            3 -> Abstracts.render(preset, w, h)
+            else -> null
+        }
+    }.getOrNull()
+
+    fun load(context: Context, mode: Int, preset: Int = 0, solid: Int = 0): Backdrop = runCatching {
+        when (mode) {
+            2, 3, 4 -> {
                 val dm = context.resources.displayMetrics
-                val bmp = if (mode == 3) Abstracts.render(preset, dm.widthPixels / 2, dm.heightPixels / 2)
-                else file(context).takeIf { it.exists() }?.let { BitmapFactory.decodeFile(it.absolutePath) } ?: return Backdrop()
+                // La tinta scelta: un'immagine minuscola, allargata a tutto schermo (niente memoria sprecata)
+                val bmp = when (mode) {
+                    4 -> Bitmap.createBitmap(9, 16, Bitmap.Config.ARGB_8888).apply { eraseColor(solid) }
+                    3 -> Abstracts.render(preset, dm.widthPixels / 2, dm.heightPixels / 2)
+                    else -> file(context).takeIf { it.exists() }?.let { BitmapFactory.decodeFile(it.absolutePath) } ?: return Backdrop()
+                }
                 val small = Bitmap.createScaledBitmap(bmp, 54, (54f * bmp.height / bmp.width).toInt().coerceAtLeast(2), true)
                 val h = small.height
                 Backdrop(

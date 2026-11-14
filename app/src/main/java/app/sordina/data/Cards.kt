@@ -323,6 +323,8 @@ object CardDetector {
                 time = from, expiresAt = to, startsAt = from, bar = Bar(from, to), sources = listOf(key))
         }
         if ((category == "reminder" || category == "event") && !ongoing) {
+            // Il riassunto del gruppo (Samsung Calendario) non ha né titolo né testo: niente scheda vuota
+            if (title.isBlank() && text.isBlank()) return null
             return Card(key, CardKind.REMINDER, appLabel, title.ifBlank { text }, firstLine(text).takeIf { title.isNotBlank() && it.isNotBlank() },
                 actions = listOf(CardAction(tr(R.string.done), CardOp.Done(key)), CardAction(tr(R.string.later), CardOp.Later(key))),
                 expiresAt = now + 12 * 3600_000)

@@ -83,9 +83,14 @@ object Classifier {
         return words.map { Search.normalize(it) }.filter { it.isNotBlank() }.any { w -> Regex("(?<![\\p{L}\\d])" + Regex.escape(w) + "(?![\\p{L}\\d])").containsMatchIn(t) }
     }
 
-    /** Messaggi di fila dalla stessa persona entro pochi minuti: oltre questa soglia "insiste". */
-    const val BURST = 3
-    const val BURST_MILLIS = 5 * 60_000L
+    /**
+     * "Insiste": almeno 8 messaggi di fila della stessa persona, senza che tu abbia risposto, nell'ultima mezz'ora,
+     * sparsi su almeno 10 minuti. Una chiacchierata scritta di getto non è insistere: continuare a cercarti sì.
+     * Chi scrive "urgente" passa comunque, subito.
+     */
+    const val BURST = 8
+    const val BURST_MILLIS = 30 * 60_000L
+    const val BURST_SPAN = 10 * 60_000L
 
     /** Caratteri invisibili che le mail usano per riempire l'anteprima (͏ ‌ ﻿ …) e spazi di troppo. */
     private val INVISIBLE = Regex("[\\u034F\\u00AD\\u180E\\u200B-\\u200F\\u202A-\\u202E\\u2060-\\u2064\\uFEFF]")
@@ -137,15 +142,18 @@ object Classifier {
         if (isOtp(n.title + " " + n.text)) return Verdict(Level.SUBITO, "codice di accesso")
 
         // Conversazione in corso: hai appena letto o risposto a questa persona
-        if (n.isMessage && Talking.active(n.pkg, n.conversation ?: n.person ?: "", now)) return Verdict(null, "conversazione in corso")
+        if (n.isMessage && prefs.talkPass && Talking.active(n.pkg, n.conversation ?: n.person ?: "", now)) return Verdict(null, "conversazione in corso")
 
         // 7. Regola dell'app "Passa sempre"
         val appLevel = prefs.appLevels[n.pkg]
         if (appLevel == Level.SEMPRE) return Verdict(Level.SEMPRE, "regola dell'app")
 
         // 8. Persone importanti e urgenze
-        if (n.isMessage && (people.isImportant(n.person) || (n.conversation == null && people.isImportant(n.title)))) {
-            return Verdict(Level.SUBITO, "persona importante")
+        // In un gruppo passa solo se hai scelto "anche nei gruppi in cui scrive"
+        if (n.isMessage) {
+            val inGroup = n.conversation != null
+            val who = people.importantKey(n.person) ?: if (!inGroup) people.importantKey(n.title) else null
+            if (who != null && (!inGroup || who in prefs.importantInGroups)) return Verdict(Level.SUBITO, "persona importante")
         }
         if (prefs.urgentEnabled && n.isMessage && n.conversation == null && n.pkg !in prefs.braked) {
             val words = prefs.urgentWords.split(',').map { it.trim() }.filter { it.isNotEmpty() }.ifEmpty { URGENT_WORDS }
@@ -197,6 +205,21 @@ object Classifier {
         out
     }.getOrDefault(emptyList())
 
+    /** L'ultimo messaggio della conversazione l'hai scritto tu (risposta dalla notifica). */
+    fun lastIsMine(sbn: StatusBarNotification): Boolean = runCatching {
+        val e = sbn.notification.extras
+        @Suppress("DEPRECATION")
+        val last = e.getParcelableArray(Notification.EXTRA_MESSAGES)?.lastOrNull() as? android.os.Bundle ?: return false
+        val me = if (Build.VERSION.SDK_INT >= 28) {
+            @Suppress("DEPRECATION")
+            (e.get(Notification.EXTRA_MESSAGING_PERSON) as? android.app.Person)?.name?.toString()
+        } else null
+        @Suppress("DEPRECATION")
+        val p = if (Build.VERSION.SDK_INT >= 28) (last.get("sender_person") as? android.app.Person)?.name?.toString() else null
+        val s = p ?: last.getCharSequence("sender")?.toString()
+        s == null || (me != null && s == me)
+    }.getOrDefault(false)
+
     /** Estrae le informazioni utili da una notifica. */
     fun read(sbn: StatusBarNotification): NotifInfo {
         val n = sbn.notification
@@ -225,9 +248,11 @@ object Classifier {
                 person = senderOf(last)
                 // Quanti messaggi di fila, della stessa persona, negli ultimi minuti
                 val since = System.currentTimeMillis() - BURST_MILLIS
-                burst = messages.toList().asReversed().mapNotNull { it as? android.os.Bundle }
+                val times = messages.toList().asReversed().mapNotNull { it as? android.os.Bundle }
                     .takeWhile { senderOf(it) == person }
-                    .count { it.getLong("time") >= since }.coerceAtLeast(1)
+                    .map { it.getLong("time") }.filter { it >= since }
+                // Tutti in un attimo: è un messaggio spezzato in più righe, non conta come insistere
+                burst = if (times.size >= 2 && times.max() - times.min() >= BURST_SPAN) times.size else 1
             }
         }
         val isMessage = n.category == Notification.CATEGORY_MESSAGE || !messages.isNullOrEmpty() ||

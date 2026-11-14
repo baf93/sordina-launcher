@@ -25,6 +25,17 @@ object Search {
         // Iniziali: "ha" -> "Home Assistant"
         val initials = words.mapNotNull { it.firstOrNull() }.joinToString("")
         if (query.length >= 2 && initials.startsWith(query)) return 75
+        // Le parole in qualsiasi ordine, anche a metà: "maps google" -> "Google Maps", "rossi eli" -> "Elisa Rossi"
+        val qw = query.split(' ')
+        if (qw.size >= 2) {
+            val left = words.toMutableList()
+            val all = qw.all { q ->
+                val i = left.indexOfFirst { it.startsWith(q) || (q.length >= 4 && levenshtein(q, it.take(q.length)) <= 1) }
+                if (i >= 0) left.removeAt(i)
+                i >= 0
+            }
+            if (all) return 78
+        }
         if (text.contains(query)) return 65
         // Errori di battitura: confronto con l'inizio di ogni parola
         if (query.length >= 3) {

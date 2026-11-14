@@ -72,14 +72,17 @@ class People(private val context: Context, private val prefs: Prefs) {
     }
 
     /** Persone importanti: scelte a mano (nomi normalizzati). */
-    fun isImportant(name: String?): Boolean {
-        if (name.isNullOrBlank()) return false
+    fun isImportant(name: String?): Boolean = importantKey(name) != null
+
+    /** Quale persona importante è [name] (il suo nome salvato), oppure null. */
+    fun importantKey(name: String?): String? {
+        if (name.isNullOrBlank()) return null
         val n = Search.normalize(name)
         val set = prefs.importantNames
-        if (n in set) return true
+        if (n in set) return n
         // "Anna Rossi" importante riconosce anche la notifica che dice solo "Anna"... ma non il contrario
         // (Un importante salvato solo come "Marco" non fa passare ogni "Marco Bianchi")
-        return set.any { it.startsWith("$n ") }
+        return set.firstOrNull { it.startsWith("$n ") }
     }
 
     fun importantList(): List<String> = prefs.importantNames.sorted()
@@ -93,6 +96,7 @@ class People(private val context: Context, private val prefs: Prefs) {
 
     fun removeImportantName(n: String) {
         prefs.importantNames = prefs.importantNames - n
+        prefs.importantInGroups = prefs.importantInGroups - n
         all().firstOrNull { it.normalized == n }?.let { setStarred(it.id, false) }
     }
 

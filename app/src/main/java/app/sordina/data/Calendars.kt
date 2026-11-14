@@ -150,10 +150,10 @@ fun Calendars.next(context: Context, now: Long = System.currentTimeMillis()): Up
     }.getOrNull()
 }
 
-/** Il programma: gli eventi con orario rimasti oggi (al massimo 3); se non ce ne sono, il prossimo nei 7 giorni. */
+/** Il programma: i prossimi 3 eventi con orario, oggi o nei 7 giorni dopo. Mai di più. */
 fun Calendars.agenda(context: Context, now: Long = System.currentTimeMillis()): List<Upcoming> {
     if (context.checkSelfPermission(Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) return emptyList()
-    val endOfDay = java.time.LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    val endOfDay = now + 7 * 24 * 3600_000L
     val out = ArrayList<Upcoming>()
     runCatching {
         val b = CalendarContract.Instances.CONTENT_URI.buildUpon()

@@ -41,10 +41,18 @@ class Prefs(context: Context) {
         set(v) = put { putBoolean("onboarded", v) }
 
     // Aspetto
-    /** Sfondo di Casa: 0 tinta unita, 1 sfondo del telefono, 2 foto scelta */
+    /** Sfondo di Casa: 0 tinta del tema, 1 sfondo del telefono, 2 foto scelta, 3 astratto, 4 tinta scelta ([solidColor]) */
     var wallpaperMode: Int
         get() = sp.getInt("wallpaperMode", 0)
         set(v) = put { putInt("wallpaperMode", v) }
+    /** Il colore della tinta unita scelta (wallpaperMode 4) */
+    var solidColor: Int
+        get() = sp.getInt("solidColor", 0xFF2F3A45.toInt())
+        set(v) = put { putInt("solidColor", v) }
+    /** Nel tema scuro, fondo nero vero: sugli schermi OLED i pixel neri sono spenti. Acceso di base: è l'aria di Sordina */
+    var trueBlack: Boolean
+        get() = sp.getBoolean("trueBlack", true)
+        set(v) = put { putBoolean("trueBlack", v) }
     /** Quale degli sfondi astratti di Sordina (wallpaperMode 3) */
     var wallpaperPreset: Int
         get() = sp.getInt("wallpaperPreset", 0)
@@ -78,7 +86,7 @@ class Prefs(context: Context) {
         set(v) = put { putString("mode", v.name) }
 
     var keyboardOnOpen: Boolean
-        get() = sp.getBoolean("keyboardOnOpen", false)
+        get() = sp.getBoolean("keyboardOnOpen", true)
         set(v) = put { putBoolean("keyboardOnOpen", v) }
 
     // Proposte
@@ -129,6 +137,18 @@ class Prefs(context: Context) {
         get() = sp.getStringSet("importantNames", emptySet())!!.toSet()
         set(v) = put { putStringSet("importantNames", v) }
 
+    /**
+     * Le persone importanti che passano anche quando scrivono in un gruppo, non solo nella chat a due.
+     * La prima volta: tutte quelle che c'erano già (prima passavano anche nei gruppi); le nuove, solo in chat.
+     */
+    var importantInGroups: Set<String>
+        get() {
+            if (!sp.contains("importantInGroups")) { val v = importantNames; put { putStringSet("importantInGroups", v) }; return v }
+            return sp.getStringSet("importantInGroups", emptySet())!!.toSet()
+        }
+        set(v) = put { putStringSet("importantInGroups", v) }
+
+
     /** Sordina gestisce Non disturbare (scelta esplicita al primo avvio). */
     var silenceManaged: Boolean
         get() = sp.getBoolean("silenceManaged", false)
@@ -154,10 +174,40 @@ class Prefs(context: Context) {
     var homeEvening: Boolean
         get() = sp.getBoolean("homeEvening", true)
         set(v) = put { putBoolean("homeEvening", v) }
+    /** Sera e Notte cominciano all'ora scelta (minuti dalla mezzanotte); finiscono alle 6 */
+    var eveningFrom: Int
+        get() = sp.getInt("eveningFrom", 20 * 60)
+        set(v) = put { putInt("eveningFrom", v) }
+    var nightFrom: Int
+        get() = sp.getInt("nightFrom", 23 * 60)
+        set(v) = put { putInt("nightFrom", v) }
+    /** La prima sveglia di stamattina vista di notte (millis) e il giorno in cui la Notte è già finita (epoch day) */
+    var nightAlarm: Long
+        get() = sp.getLong("nightAlarm", 0L)
+        set(v) = put { putLong("nightAlarm", v) }
+    var nightDone: Long
+        get() = sp.getLong("nightDone", -1L)
+        set(v) = put { putLong("nightDone", v) }
     var homeNight: Boolean
         get() = sp.getBoolean("homeNight", true)
         set(v) = put { putBoolean("homeNight", v) }
     /** In auto: le app dei due pulsanti grandi (pacchetto); null = la prima che c'è */
+    /** Cosa mostra la Home: meteo, impegni, schede intelligenti. Tutto acceso di serie. */
+    var homeWeather: Boolean
+        get() = sp.getBoolean("homeWeather", true)
+        set(v) = put { putBoolean("homeWeather", v) }
+    var homeAgenda: Boolean
+        get() = sp.getBoolean("homeAgenda", true)
+        set(v) = put { putBoolean("homeAgenda", v) }
+    var homeCards: Boolean
+        get() = sp.getBoolean("homeCards", true)
+        set(v) = put { putBoolean("homeCards", v) }
+
+    /** In auto: fino a tre app scelte da te (pacchetti), in fila sulla Home. null = mai scelte: Sordina propone navigazione, musica e casa. */
+    var carApps: List<String>?
+        get() = sp.getString("carApps", null)?.split('|')?.filter { it.isNotBlank() }
+        set(v) = put { if (v == null) remove("carApps") else putString("carApps", v.take(3).joinToString("|")) }
+
     var carNavApp: String?
         get() = sp.getString("carNavApp", null)
         set(v) = put { putString("carNavApp", v) }
@@ -192,6 +242,11 @@ class Prefs(context: Context) {
 
     // Urgenze
     /** Un messaggio urgente o insistente passa anche se non è di una persona importante. */
+    /** Chi ti risponde passa: dopo che scrivi, rispondi o chiami qualcuno (anche in un gruppo), i suoi messaggi passano per un po'. */
+    var talkPass: Boolean
+        get() = sp.getBoolean("talkPass", true)
+        set(v) = put { putBoolean("talkPass", v) }
+
     var urgentEnabled: Boolean
         get() = sp.getBoolean("urgentEnabled", true)
         set(v) = put { putBoolean("urgentEnabled", v) }
@@ -361,5 +416,7 @@ class Prefs(context: Context) {
 
     companion object {
         const val MAX_PINNED = 4
+        /** Una fissata che non è un'app ("scrivi a Elisa su Telegram"): davanti alla cosa del cervello */
+        const val PIN_ACTION = "do:"
     }
 }

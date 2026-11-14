@@ -110,6 +110,9 @@ import java.util.Locale
 data class AgendaRow(val label: String, val text: String, val key: String, val accent: Boolean = false, val day: String? = null)
 
 /** Quello che Casa mostra, preparato da fuori. */
+/** Una scorciatoia in auto: l'app, il suo nome (per il lettore dello schermo), la sua icona */
+data class CarShortcut(val pkg: String, val label: String, val icon: androidx.compose.ui.graphics.ImageBitmap?)
+
 data class HomeState(
     /** Quante notifiche sono in sordina */
     val waiting: Int,
@@ -144,11 +147,12 @@ data class HomeState(
     val recap: String? = null,
     /** Auto: chi chiami di solito adesso (nome breve, nome completo) */
     val people: List<Pair<String, String>> = emptyList(),
-    /** Auto: i nomi delle app scelte per navigare e per la musica (null = "Naviga", "Musica") */
-    val navLabel: String? = null,
-    val musicLabel: String? = null,
-    /** Auto: c'è Home Assistant, un pulsante per aprirlo */
-    val homeApp: Boolean = false,
+    /** Auto: fino a tre app scelte da te, con la loro icona */
+    val carApps: List<CarShortcut> = emptyList(),
+    /** Notte: quando suona la sveglia, per dire quanto manca */
+    val alarmAt: Long? = null,
+    /** Auto: solo il prossimo impegno; [AgendaRow.key] è "nav:luogo" se ha un indirizzo */
+    val next: AgendaRow? = null,
 )
 
 /** Casa: ora, data, meteo, evento; la pila; la barra; in fondo cosa è in sordina. */
@@ -224,8 +228,14 @@ private fun DayHome(
             val c = S.c
             val dayName = now.format(DateTimeFormatter.ofPattern("EEEE", Locale.getDefault())).replaceFirstChar { it.uppercase() }
             val date = now.format(DateTimeFormatter.ofPattern("d MMMM", Locale.getDefault()))
-            Text(dayName, style = TextStyle(fontSize = 34.sp, lineHeight = 40.sp, color = c.ink))
-            Text(date, style = TextStyle(fontSize = 34.sp, lineHeight = 40.sp, color = c.soft))
+            Row {
+                Column(Modifier.weight(1f)) {
+                    Text(dayName, style = TextStyle(fontSize = 34.sp, lineHeight = 40.sp, color = c.ink))
+                    Text(date, style = TextStyle(fontSize = 34.sp, lineHeight = 40.sp, color = c.soft))
+                }
+                // La sera, in alto a destra: la prossima sveglia e il tempo di domani. Niente altro.
+                if (state.scene == Scene.EVENING) TomorrowCorner(state, onScene)
+            }
             state.weather?.let { w ->
                 Row(Modifier.padding(top = 10.dp).clickableNoRipple { onAgenda("weather") }, verticalAlignment = Alignment.CenterVertically) {
                     Icon(weatherIcon(w), null, Modifier.size(20.dp), tint = c.ink)
@@ -233,12 +243,16 @@ private fun DayHome(
                     Text(w, style = TextStyle(fontSize = 18.sp, color = c.ink))
                 }
             }
+            // La sera, sotto il meteo e prima degli impegni: com'è andata oggi. Tocco: le statistiche del telefono
+            state.recap?.let {
+                Text(it, Modifier.padding(top = 10.dp).clickableNoRipple { onScene("usage") }, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    style = TextStyle(fontSize = 15.sp, color = c.soft))
+            }
             if (state.agenda.isNotEmpty()) Spacer(Modifier.height(24.dp))
             state.agenda.forEachIndexed { i, r ->
                 if (r.day != null && r.day != state.agenda.getOrNull(i - 1)?.day) Text(r.day, Modifier.padding(top = if (i == 0) 0.dp else 10.dp, bottom = 2.dp), style = TextStyle(fontSize = 13.sp, color = c.soft))
                 AgendaLine(r) { onAgenda(r.key) }
             }
-            if (state.scene == Scene.EVENING) EveningBlock(state, onScene)
         } }
         Spacer(Modifier.weight(1f))
         if (state.cards.isNotEmpty()) {
@@ -246,6 +260,7 @@ private fun DayHome(
             Spacer(Modifier.height(18.dp))
         }
         SearchBar(state, onSearch, onMicDown, onMicUp)
+        // La barra sta sempre allo stesso posto, in ogni momento
         Spacer(Modifier.height(36.dp))
         // Sopra una foto la riga sta su una pillola: si legge su qualsiasi fondo
         if (state.translucent) SordinaRow(state, pill = true) { onSheet(true) }

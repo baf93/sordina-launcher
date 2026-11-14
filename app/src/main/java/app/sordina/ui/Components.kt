@@ -159,14 +159,25 @@ fun Section(title: String) {
     Text(title, Modifier.padding(start = 16.dp, bottom = 8.dp), style = TextStyle(fontSize = 13.sp, color = S.c.soft))
 }
 
-/** Un gruppo di righe in un riquadro arrotondato, separate da una linea sottile. */
+/** Un gruppo di righe in un blocco arrotondato come quelli della pagina Sordina, separate da una linea sottile. */
 @Composable
 fun Group(content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
     androidx.compose.foundation.layout.Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(S.c.line),
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(0.5.dp),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(S.c.line),
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(1.dp),
         content = content,
     )
+}
+
+/**
+ * Titolo di una parte di pagina, grande come le categorie della pagina Sordina; sotto, se serve, a cosa serve.
+ */
+@Composable
+fun Topic(title: String, hint: String? = null) {
+    androidx.compose.foundation.layout.Column(Modifier.padding(start = 12.dp, end = 12.dp, top = 26.dp, bottom = 10.dp)) {
+        Text(title, style = TextStyle(fontSize = 20.sp, color = S.c.ink))
+        if (hint != null) Text(hint, Modifier.padding(top = 2.dp), style = TextStyle(fontSize = 14.sp, lineHeight = 19.sp, color = S.c.soft))
+    }
 }
 
 @Composable
@@ -182,10 +193,11 @@ fun Hint(text: String, modifier: Modifier = Modifier) {
 @Composable
 private fun RowIcon(icon: androidx.compose.ui.graphics.vector.ImageVector) {
     val c = S.c
+    // Tondo nell'accento, come i tasti della pagina Sordina
     androidx.compose.foundation.layout.Box(
-        Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)).background(c.dot.copy(alpha = 0.35f)),
+        Modifier.size(36.dp).clip(androidx.compose.foundation.shape.CircleShape).background(c.accent.copy(alpha = 0.12f)),
         contentAlignment = androidx.compose.ui.Alignment.Center,
-    ) { androidx.compose.material3.Icon(icon, null, Modifier.size(20.dp), tint = c.ink) }
+    ) { androidx.compose.material3.Icon(icon, null, Modifier.size(19.dp), tint = c.accent) }
 }
 
 /** Riga: icona, etichetta (e sotto una nota), valore a destra, freccia se porta altrove. */
@@ -202,16 +214,16 @@ fun Line(
     androidx.compose.foundation.layout.Row(
         Modifier.fillMaxWidth().background(c.card)
             .let { if (onClick != null) it.clickable(onClick = onClick) else it }
-            .padding(horizontal = 16.dp, vertical = 14.dp).heightIn(min = 34.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp).heightIn(min = 36.dp),
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
     ) {
         if (icon != null) { RowIcon(icon); androidx.compose.foundation.layout.Spacer(Modifier.width(12.dp)) }
         androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
-            Text(label, style = TextStyle(fontSize = 16.sp, color = c.ink))
-            if (hint != null) Text(hint, style = TextStyle(fontSize = 13.sp, color = c.soft))
+            Text(label, style = TextStyle(fontSize = 17.sp, color = c.ink))
+            if (hint != null) Text(hint, Modifier.padding(top = 1.dp), style = TextStyle(fontSize = 13.sp, lineHeight = 17.sp, color = c.soft))
         }
         // Il valore cede per primo: su un telefono stretto con caratteri grandi l'etichetta non va spezzata a metà parola
-        val valueMax = (androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp * 0.32f).dp.coerceAtMost(150.dp)
+        val valueMax = (androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp * 0.45f).dp.coerceAtMost(220.dp)
         if (value.isNotEmpty()) Text(value, Modifier.padding(start = 12.dp).widthIn(max = valueMax), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, style = TextStyle(fontSize = 15.sp, color = c.soft))
         if (trailing != null) { androidx.compose.foundation.layout.Spacer(Modifier.width(8.dp)); trailing() }
         else if (onClick != null) androidx.compose.material3.Icon(
@@ -221,12 +233,22 @@ fun Line(
     }
 }
 
+/**
+ * Dove gli interruttori ricordano com'erano: le impostazioni si ricostruiscono dopo ogni modifica,
+ * e senza memoria l'interruttore comparirebbe già spostato invece di scorrere.
+ */
+val LocalToggleMemory = androidx.compose.runtime.staticCompositionLocalOf<HashMap<String, Boolean>?> { null }
+
 @Composable
 fun Toggle(label: String, checked: Boolean, hint: String? = null, icon: androidx.compose.ui.graphics.vector.ImageVector? = null, onChange: (Boolean) -> Unit) {
     val c = S.c
+    val memory = LocalToggleMemory.current
+    // Primo fotogramma com'era prima, subito dopo com'è adesso: così il pallino scorre
+    var shown by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(memory?.get(label) ?: checked) }
+    androidx.compose.runtime.LaunchedEffect(checked) { shown = checked; memory?.set(label, checked) }
     Line(label, hint = hint, icon = icon, trailing = {
         androidx.compose.material3.Switch(
-            checked, onChange,
+            shown, onChange,
             colors = androidx.compose.material3.SwitchDefaults.colors(
                 checkedTrackColor = c.accent, checkedThumbColor = androidx.compose.ui.graphics.Color.White,
                 uncheckedTrackColor = c.bg, uncheckedBorderColor = c.dot, uncheckedThumbColor = c.soft,
@@ -476,8 +498,8 @@ fun androidx.compose.foundation.layout.BoxScope.Bubble(said: Said?, onGone: () -
     androidx.compose.animation.AnimatedVisibility(
         said != null,
         Modifier.align(androidx.compose.ui.Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 170.dp, start = 28.dp, end = 28.dp),
-        enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it / 2 },
-        exit = androidx.compose.animation.fadeOut(),
+        enter = androidx.compose.animation.fadeIn(Motion.enter(220)) + androidx.compose.animation.slideInVertically(Motion.enter()) { it / 2 },
+        exit = androidx.compose.animation.fadeOut(Motion.exit()),
     ) {
         Text(
             shown?.text.orEmpty(),

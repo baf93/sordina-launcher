@@ -8,6 +8,8 @@
         tools:ignore="ProtectedPermissions" />
     <!-- Scorrere in giù da Casa apre la tendina delle notifiche -->
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+    <!-- Impronta o PIN per aprire le app nascoste -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <!-- Scheda di Sordina e ri-avvisi -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Sordina fuori dall'ottimizzazione della batteria: se Android la addormenta, le notifiche non vengono più smistate -->
@@ -32,6 +34,8 @@
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+    <!-- Solo per mettere lo sfondo di Sordina anche sulla schermata di blocco, se lo chiedi -->
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
 
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
@@ -93,7 +97,7 @@
             android:clearTaskOnLaunch="true"
             android:resumeWhilePausing="true"
             android:excludeFromRecents="true"
-            android:screenOrientation="unspecified"
+            android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize|stateHidden"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density">
             <intent-filter>

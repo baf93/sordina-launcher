@@ -67,12 +67,21 @@ class AppCatalog(private val context: Context) {
         runCatching { context.startActivity(intent) }
     }
 
-    /** Icona piccola, caricata solo quando serve e tenuta in memoria. */
-    fun icon(app: AppEntry, sizePx: Int): ImageBitmap? = synchronized(iconCache) {
-        iconCache[app.key] ?: runCatching {
-            app.info.getIcon(0).toBitmap(sizePx, sizePx).asImageBitmap()
-        }.getOrNull()?.also { iconCache[app.key] = it }
+    /** Una sola misura per tutte le icone: lista, ricerca e freno la rimpiccioliscono disegnandola. */
+    private val iconPx = (36 * context.resources.displayMetrics.density).toInt()
+
+    /** L'icona se è già pronta, senza mai caricarla: si disegna subito senza bloccare lo scorrimento. */
+    fun cachedIcon(app: AppEntry): ImageBitmap? = synchronized(iconCache) { iconCache[app.key] }
+
+    /** Icona piccola, caricata solo quando serve e tenuta in memoria. Meglio chiamarla fuori dal thread principale. */
+    fun icon(app: AppEntry): ImageBitmap? {
+        cachedIcon(app)?.let { return it }
+        val bmp = runCatching { AppIcons.render(app.info.getIcon(0), iconPx).asImageBitmap() }.getOrNull() ?: return null
+        return synchronized(iconCache) { iconCache.getOrPut(app.key) { bmp } }
     }
+
+    /** Prepara in sottofondo le icone di tutte le app, così la lista scorre liscia. */
+    fun warmIcons(apps: List<AppEntry>) { apps.forEach { icon(it) } }
 
     fun registerChanges(onChange: () -> Unit): LauncherApps.Callback {
         val cb = object : LauncherApps.Callback() {
@@ -91,6 +100,19 @@ class AppCatalog(private val context: Context) {
 
 /** In auto: le app che sanno portarti in un posto e quelle che suonano (musica, podcast, audiolibri). */
 object CarApps {
+    /** Le scelte di base, in ordine: la prima installata vince. */
+    private val NAV_FIRST = listOf("com.google.android.apps.maps", "com.waze", "net.osmand.plus", "net.osmand", "com.here.app.maps", "com.sygic.aura")
+    private val MUSIC_FIRST = listOf("com.spotify.music", "com.google.android.apps.youtube.music", "deezer.android.app", "com.amazon.mp3", "com.apple.android.music", "com.aspiro.tidal")
+    /** La casa: Home Assistant, se no Google Home, SmartThings o Alexa. */
+    private val HOME_FIRST = CardDetector.HA_PKGS.toList() + listOf("com.google.android.apps.chromecast.app", "com.samsung.android.oneconnect", "com.amazon.dee.app")
+
+    private fun first(order: List<String>, apps: List<AppEntry>): String? =
+        order.firstOrNull { p -> apps.any { it.packageName == p && !it.isWork } }
+
+    fun preferredNav(apps: List<AppEntry>) = first(NAV_FIRST, apps)
+    fun preferredMusic(apps: List<AppEntry>) = first(MUSIC_FIRST, apps)
+    fun preferredHome(apps: List<AppEntry>) = first(HOME_FIRST, apps)
+
     fun navigation(context: android.content.Context, apps: List<AppEntry>): List<AppEntry> {
         val pm = context.packageManager
         val pkgs = runCatching {
@@ -106,5 +128,35 @@ object CarApps {
             pm.queryIntentServices(android.content.Intent("android.media.browse.MediaBrowserService"), 0).map { it.serviceInfo.packageName }.toSet()
         }.getOrDefault(emptySet())
         return apps.filter { !it.isWork && it.packageName in pkgs }.distinctBy { it.packageName }.sortedBy { it.normalized }
+    }
+}
+
+/**
+ * Tutte le icone con la stessa forma: le adattive prendono la maschera del telefono;
+ * le vecchie icone quadrate a pieno campo vanno nella stessa maschera, così niente spigoli vivi.
+ * Le vecchie icone che hanno già una forma loro (tonde, ritagliate) restano come sono.
+ */
+object AppIcons {
+    fun render(d: android.graphics.drawable.Drawable, px: Int): android.graphics.Bitmap {
+        val shaped = if (d is android.graphics.drawable.AdaptiveIconDrawable || !fullBleed(d)) d
+        else android.graphics.drawable.AdaptiveIconDrawable(
+            android.graphics.drawable.ColorDrawable(android.graphics.Color.WHITE),
+            // Il livello davanti è 1,5 volte la parte visibile: con 1/6 per lato l'icona riempie la maschera
+            android.graphics.drawable.InsetDrawable(d, 0.16f),
+        )
+        return shaped.toBitmap(px, px)
+    }
+
+    /** L'icona di un pacchetto qualsiasi (anche app di sistema senza voce nel cassetto), già nella forma giusta. */
+    fun forPackage(pm: android.content.pm.PackageManager, pkg: String, px: Int): ImageBitmap? =
+        runCatching { render(pm.getApplicationIcon(pkg), px).asImageBitmap() }.getOrNull()
+
+    /** Una vecchia icona che riempie tutto il quadrato: angoli pieni, quindi spigoli vivi. */
+    private fun fullBleed(d: android.graphics.drawable.Drawable): Boolean {
+        val s = 48
+        val b = runCatching { d.toBitmap(s, s) }.getOrNull() ?: return false
+        val m = 2
+        val corners = intArrayOf(b.getPixel(m, m), b.getPixel(s - 1 - m, m), b.getPixel(m, s - 1 - m), b.getPixel(s - 1 - m, s - 1 - m))
+        return corners.all { android.graphics.Color.alpha(it) > 200 }
     }
 }

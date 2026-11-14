@@ -52,12 +52,12 @@ data class SordinaStyle(
 
 private val Light = SordinaColors(
     bg = Color(0xFFF4F1EC), ink = Color(0xFF1F1D1A), soft = Color(0xFF8B857C),
-    line = Color(0xFFE4DED4), accent = Color(0xFFB4523A), tile = Color(0xFFFFFFFF),
+    line = Color(0xFFE4DED4), accent = Color(0xFF1E7F78), tile = Color(0xFFFFFFFF),
     card = Color(0xFFFFFFFF), dot = Color(0xFFD4CEC4), dark = false,
 )
 private val Dark = SordinaColors(
     bg = Color(0xFF121212), ink = Color(0xFFEDEDED), soft = Color(0xFF8C8C8C),
-    line = Color(0xFF2A2A2A), accent = Color(0xFFE08A63), tile = Color(0xFF1E1E1E),
+    line = Color(0xFF2A2A2A), accent = Color(0xFF3FB0A6), tile = Color(0xFF1E1E1E),
     card = Color(0xFF1E1E1E), dot = Color(0xFF3A3A3A), dark = true,
 )
 
@@ -73,8 +73,14 @@ fun isLowRam(context: Context): Boolean {
     return am.isLowRamDevice || am.memoryClass <= 192
 }
 
+/**
+ * Nero vero per gli OLED: il fondo resta spento, le schede e la barra si staccano bene dal nero
+ * (abbastanza chiare da vederne i bordi, abbastanza scure da consumare poco).
+ */
+private val Black = Dark.copy(bg = Color.Black, card = Color(0xFF212121), tile = Color(0xFF212121), line = Color(0xFF333333), dot = Color(0xFF444444))
+
 @Composable
-fun SordinaTheme(family: ThemeFamily, mode: ThemeMode, accent: Color? = null, content: @Composable () -> Unit) {
+fun SordinaTheme(family: ThemeFamily, mode: ThemeMode, accent: Color? = null, black: Boolean = false, content: @Composable () -> Unit) {
     val dark = when (mode) {
         ThemeMode.AUTO -> isSystemInDarkTheme()
         ThemeMode.LIGHT -> false
@@ -82,7 +88,7 @@ fun SordinaTheme(family: ThemeFamily, mode: ThemeMode, accent: Color? = null, co
     }
     val context = LocalContext.current
     val low = remember { isLowRam(context) }
-    val colors = (if (dark) Dark else Light).let { if (accent != null) it.copy(accent = accent) else it }
+    val colors = (if (dark) (if (black) Black else Dark) else Light).let { if (accent != null) it.copy(accent = accent) else it }
     val style = SordinaStyle(family = family, colors = colors, light = low)
     val scheme = if (dark) {
         darkColorScheme(primary = colors.accent, background = colors.bg, surface = colors.card, onSurface = colors.ink, onBackground = colors.ink)
@@ -97,3 +103,17 @@ fun SordinaTheme(family: ThemeFamily, mode: ThemeMode, accent: Color? = null, co
 /** Sfondo pieno, senza texture. */
 @Composable
 fun Modifier.paper(): Modifier = this.background(LocalSordina.current.colors.bg)
+
+/**
+ * Il colore principale "Auto": quello dello sfondo, reso leggibile (né spento, né troppo scuro o chiaro).
+ * Uno sfondo grigio o senza colori dà null: resta il colore del tema.
+ */
+fun autoAccent(argb: Int?): Int? {
+    argb ?: return null
+    val hsl = FloatArray(3)
+    androidx.core.graphics.ColorUtils.colorToHSL(argb, hsl)
+    if (hsl[1] < 0.18f) return null
+    hsl[1] = hsl[1].coerceIn(0.45f, 0.75f)
+    hsl[2] = hsl[2].coerceIn(0.48f, 0.62f)
+    return androidx.core.graphics.ColorUtils.HSLToColor(hsl)
+}

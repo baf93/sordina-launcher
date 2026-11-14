@@ -39,7 +39,10 @@ class Proposals(private val context: Context, private val brain: Brain, private 
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
-    fun compute(apps: List<AppEntry>, prefs: Prefs, nowMs: Long = System.currentTimeMillis()): Result {
+    fun compute(allApps: List<AppEntry>, prefs: Prefs, nowMs: Long = System.currentTimeMillis()): Result {
+        // Le app nascoste non si propongono mai, nemmeno se fissate
+        val hidden = prefs.hidden
+        val apps = allApps.filter { it.key !in hidden }
         val slot = slotOf(nowMs)
         val permission = hasPermission()
         // Dove sei senza Wi-Fi: la posizione che il telefono ha già (niente GPS)
@@ -48,37 +51,55 @@ class Proposals(private val context: Context, private val brain: Brain, private 
         val usage = brain.usage()
 
         fun appCandidate(a: AppEntry) = Candidate("app:${a.key}", a.label, null, Kind.APP, 60, false, Act.OpenApp(a), a)
-        val fixed = prefs.pinned.mapNotNull { k -> apps.firstOrNull { it.key == k } }.distinctBy { it.key }.take(Prefs.MAX_PINNED)
-        val fixedPkgs = fixed.mapTo(HashSet()) { it.packageName }
         val excluded = prefs.excluded
         val braked = prefs.braked
+        // Le fissate: app (la loro chiave) oppure azioni ("do:" + la cosa del cervello, es. scrivi a Elisa su Telegram)
+        val fixedItem = HashMap<String, String>()
+        val fixedC = prefs.pinned.mapNotNull { k ->
+            if (k.startsWith(Prefs.PIN_ACTION)) {
+                val item = k.removePrefix(Prefs.PIN_ACTION)
+                runCatching { intents.realize(item, apps.filter { it.key !in excluded }, usage) }.getOrNull()?.also { fixedItem[it.id] = item }
+            } else apps.firstOrNull { it.key == k }?.let(::appCandidate)
+        }.distinctBy { it.id }.take(Prefs.MAX_PINNED)
+        val fixedPkgs = fixedC.mapNotNullTo(HashSet()) { it.app?.packageName }
+        val fixedItems = fixedItem.values.toSet()
 
         val skip = { item: String ->
             val pkg = item.removePrefix("app:")
             when {
+                item in fixedItems -> true
                 item.startsWith("app:") -> pkg in braked || pkg in fixedPkgs || apps.none { it.packageName == pkg && it.key !in excluded }
                 else -> "brain:$item" in excluded
             }
         }
-        val suggestions = brain.suggest(COUNT, skip, runCatching { boosts(apps, nowMs) }.getOrDefault(emptyMap())) { item ->
+        // Sempre COUNT blocchi in tutto: le fissate prima, le proposte riempiono il resto
+        val count = (COUNT - fixedC.size).coerceAtLeast(0)
+        val suggestions = if (count == 0) emptyList() else brain.suggest(count, skip, runCatching { boosts(apps, nowMs) }.getOrDefault(emptyMap())) { item ->
             intents.realize(item, apps.filter { it.key !in excluded }, usage)
         }
         val why = HashMap<String, String>()
         val brainItem = HashMap<String, String>()
         suggestions.forEach { why[it.candidate.id] = it.why; brainItem[it.candidate.id] = it.item }
+        brainItem.putAll(fixedItem)
         var now = suggestions.map { it.candidate }
 
         // Poca storia: completa con le app più usate
-        if (now.size < COUNT) {
+        if (now.size < count) {
             val have = now.mapNotNullTo(HashSet()) { it.app?.packageName } + fixedPkgs
             val extra = usage.entries.sortedByDescending { it.value }.map { it.key }
                 .filter { it !in have && it !in braked }
                 .mapNotNull { pkg -> apps.firstOrNull { it.packageName == pkg && !it.isWork && it.key !in excluded } }
                 .map(::appCandidate)
-            now = (now + extra).take(COUNT)
+            now = (now + extra).take(count)
         }
-        fixed.forEach { why["app:${it.key}"] = app.sordina.tr(app.sordina.R.string.why_pinned) }
-        return Result(fixed.map(::appCandidate) + now, why, brainItem, usage, !permission, slot)
+        // Ancora pochi (telefono nuovo, niente accesso all'uso): le altre app, in ordine
+        if (now.size < count) {
+            val have = now.mapNotNullTo(HashSet()) { it.app?.packageName } + fixedPkgs
+            now = now + apps.filter { !it.isWork && it.key !in excluded && it.packageName !in braked && it.packageName !in have }
+                .distinctBy { it.packageName }.take(count - now.size).map(::appCandidate)
+        }
+        fixedC.forEach { why[it.id] = app.sordina.tr(app.sordina.R.string.why_pinned) }
+        return Result((fixedC + now).take(COUNT), why, brainItem, usage, !permission, slot)
     }
 
     /**

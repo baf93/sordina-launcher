@@ -91,6 +91,8 @@ import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Contacts
 import androidx.compose.material.icons.rounded.Bedtime
+import androidx.compose.material.icons.rounded.WbTwilight
+import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Inbox
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -113,7 +115,7 @@ fun Onboarding(
     onDone: () -> Unit,
 ) {
     var step by rememberSaveable(startStep) { mutableIntStateOf(startStep) }
-    val last = 4
+    val last = 6
     val c = S.c
     fun next() { if (step < last) step++ else onDone() }
     androidx.activity.compose.BackHandler(enabled = step > 0) { step-- }
@@ -124,7 +126,10 @@ fun Onboarding(
         step == 0 -> tr(R.string.ob_begin) to { next() }
         step == 1 && !perms.listener -> tr(R.string.ob_allow) to { ops.openListenerSettings() }
         step == 1 && !perms.usage -> tr(R.string.ob_allow) to { ops.openUsageSettings() }
+        step == 1 && !perms.battery -> tr(R.string.ob_allow) to { ops.openBatterySettings() }
         step == 1 && !perms.contacts -> tr(R.string.ob_allow) to { ops.request(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS) }
+        step == 1 && !perms.calendar -> tr(R.string.ob_allow) to { ops.request(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR) }
+        step == 1 && !perms.location -> tr(R.string.ob_allow) to { ops.request(Manifest.permission.ACCESS_COARSE_LOCATION) }
         step == 1 && Build.VERSION.SDK_INT >= 33 && !perms.post -> tr(R.string.ob_allow) to { ops.request(Manifest.permission.POST_NOTIFICATIONS) }
         step == last && !perms.home -> tr(R.string.ob_set_home) to { ops.openHomeSettings() }
         step == last -> tr(R.string.onb_go_home) to { onDone() }
@@ -138,12 +143,14 @@ fun Onboarding(
             Spacer(Modifier.width(16.dp))
             Dots(step, last)
         }
-        AnimatedContent(step, transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(150)) }, label = "step", modifier = Modifier.weight(1f)) { s ->
+        AnimatedContent(step, transitionSpec = { Motion.forward(targetState > initialState) }, label = "step", modifier = Modifier.weight(1f)) { s ->
             when (s) {
                 0 -> Waiting(app)
                 1 -> Needs(perms, ops)
                 2 -> Faces(app, perms, ops)
-                3 -> Distracting(app, apps, usage, ops)
+                3 -> AlwaysApps(app, apps, ops)
+                4 -> Distracting(app, apps, usage, ops)
+                5 -> Moments(app, ops)
                 else -> AnimatedContent(finished, transitionSpec = { fadeIn(tween(500, delayMillis = 150)) togetherWith fadeOut(tween(300)) }, label = "end") { f ->
                     if (f) AllSet(perms, label, { action() }, onLater = onDone) else MiniHome(app, perms) { finished = true }
                 }
@@ -155,7 +162,8 @@ fun Onboarding(
                 Spacer(Modifier.height(14.dp))
                 Pill(label) { action() }
                 // "Più tardi" solo dove serve: altrove il pulsante sta in fondo e il contenuto ha più posto
-                val later = (step == 1 && !(perms.listener && perms.usage)) || (step == last && !perms.home)
+                // Ai permessi sempre, finché ne manca uno: un "no" ad Android non deve bloccare l'avvio
+                val later = (step == 1 && label == tr(R.string.ob_allow)) || (step == last && !perms.home)
                 if (later) androidx.compose.foundation.layout.Box(
                     Modifier.fillMaxWidth().clickableNoRipple { if (step == last) onDone() else next() }.padding(top = 14.dp, bottom = 4.dp),
                     contentAlignment = Alignment.Center,
@@ -275,7 +283,7 @@ private fun hm(m: Int): String = java.time.LocalTime.of((m / 60) % 24, m % 60)
 private fun appIcon(pkg: String, px: Int = 144): androidx.compose.ui.graphics.ImageBitmap? {
     val pm = androidx.compose.ui.platform.LocalContext.current.packageManager
     return remember(pkg) {
-        runCatching { pm.getApplicationIcon(pkg).toBitmap(px, px).asImageBitmap() }.getOrNull()
+        app.sordina.data.AppIcons.forPackage(pm, pkg, px)
     }
 }
 
@@ -327,13 +335,17 @@ private fun Waiting(app: SordinaApp) {
 @Composable
 private fun Needs(perms: PermState, ops: Ops) {
     Screen(tr(R.string.ob_l2), tr(R.string.ob2_title), tr(R.string.ob2_sub)) {
-        Column(Modifier.fillMaxWidth()) {
-            androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().padding(bottom = 36.dp), contentAlignment = Alignment.Center) {
+        // Prima quelli senza cui Sordina non lavora, poi quelli che riempiono la Home
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+            androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().padding(bottom = 24.dp), contentAlignment = Alignment.Center) {
                 Wave(Modifier.width(120.dp).height(62.dp))
             }
             Need(perms.listener, tr(R.string.ob_perm_notif_l), tr(R.string.ob_perm_notif)) { ops.openListenerSettings() }
             Need(perms.usage, tr(R.string.ob_perm_usage_l), tr(R.string.ob_perm_usage)) { ops.openUsageSettings() }
+            Need(perms.battery, tr(R.string.s_battery), tr(R.string.ob_perm_battery)) { ops.openBatterySettings() }
             Need(perms.contacts, tr(R.string.perm_contacts), tr(R.string.ob_perm_contacts)) { ops.request(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS) }
+            Need(perms.calendar, tr(R.string.s_calendar), tr(R.string.h_p_cal)) { ops.request(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR) }
+            Need(perms.location, tr(R.string.s_weather), tr(R.string.h_weather)) { ops.request(Manifest.permission.ACCESS_COARSE_LOCATION) }
             if (Build.VERSION.SDK_INT >= 33) Need(perms.post, tr(R.string.onb_alerts), tr(R.string.ob_perm_post)) { ops.request(Manifest.permission.POST_NOTIFICATIONS) }
         }
     }
@@ -385,7 +397,27 @@ private fun Faces(app: SordinaApp, perms: PermState, ops: Ops) {
     }
 }
 
-// 4 · Le icone delle app che distraggono; l'attesa è l'anello che si riempie
+// 4 · Le app che passano sempre: suonano subito, come prima di Sordina
+
+@Composable
+private fun AlwaysApps(app: SordinaApp, apps: List<AppEntry>, ops: Ops) {
+    val installed = remember(apps) { apps.filter { !it.isWork }.distinctBy { it.packageName }.sortedBy { it.label.lowercase() } }
+    var chosen by remember { mutableStateOf(app.prefs.appLevels.filterValues { it == Level.SEMPRE }.keys) }
+    fun toggle(pkg: String) {
+        app.prefs.setAppLevel(pkg, if (pkg in chosen) null else Level.SEMPRE)
+        chosen = app.prefs.appLevels.filterValues { it == Level.SEMPRE }.keys
+        ops.changed()
+    }
+    var q by remember { mutableStateOf("") }
+    var small by remember { mutableStateOf(false) }
+    Screen(tr(R.string.ob_lapps), tr(R.string.ob_apps_title), tr(R.string.ob_apps_sub), collapsed = small,
+        query = q, onSearch = { q = it ?: "" }, searchHint = tr(R.string.s_search_app)) {
+        PickList(installed, { it.packageName }, { it.label }, q,
+            leading = { a -> AppDot(a.packageName) }, selected = chosen, onScrolled = { small = it }) { toggle(it.packageName) }
+    }
+}
+
+// 5 · Le icone delle app che distraggono; l'attesa è l'anello che si riempie
 
 /** Video in streaming: la categoria dichiarata dalle app non basta (molte non la dichiarano). */
 private val VIDEO = setOf(
@@ -436,7 +468,56 @@ private fun Distracting(app: SordinaApp, apps: List<AppEntry>, usage: Map<String
     }
 }
 
-// 6 · Casa in piccolo: su le app, un'app che distrae chiede un respiro, giù la tendina, il resto aspetta in basso.
+// 6 · Sera, notte, auto: la Home cambia da sola. Già accesi: si spegne quello che non serve.
+
+@Composable
+private fun Moments(app: SordinaApp, ops: Ops) {
+    val prefs = app.prefs
+    var evening by remember { mutableStateOf(prefs.homeEvening) }
+    var night by remember { mutableStateOf(prefs.homeNight) }
+    var car by remember { mutableStateOf(prefs.homeCar) }
+    Screen(tr(R.string.ob_l5), tr(R.string.ob5_title), tr(R.string.ob5_sub)) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+            MomentCard(Icons.Rounded.WbTwilight, tr(R.string.s_scene_evening), tr(R.string.n_from, hm(prefs.eveningFrom)), evening) {
+                evening = !evening; prefs.homeEvening = evening; ops.changed()
+            }
+            MomentCard(Icons.Rounded.Bedtime, tr(R.string.s_scene_night), tr(R.string.n_from, hm(prefs.nightFrom)), night) {
+                night = !night; prefs.homeNight = night; ops.changed()
+            }
+            MomentCard(Icons.Rounded.DirectionsCar, tr(R.string.s_scene_car), tr(R.string.ob5_car), car) {
+                car = !car; prefs.homeCar = car; ops.changed()
+            }
+        }
+    }
+}
+
+@Composable
+private fun MomentCard(icon: androidx.compose.ui.graphics.vector.ImageVector, name: String, note: String, on: Boolean, onToggle: () -> Unit) {
+    val c = S.c
+    val feel = LocalFeel.current
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = 5.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(22.dp)).background(surface())
+            .clickableNoRipple { feel.tick(); onToggle() }.padding(horizontal = 16.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        androidx.compose.foundation.layout.Box(
+            Modifier.size(44.dp).clip(androidx.compose.foundation.shape.CircleShape).background(if (on) c.accent.copy(alpha = 0.16f) else c.tile),
+            contentAlignment = Alignment.Center,
+        ) { androidx.compose.material3.Icon(icon, null, Modifier.size(22.dp), tint = if (on) c.accent else c.soft) }
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            androidx.compose.material3.Text(name, style = androidx.compose.ui.text.TextStyle(fontSize = 18.sp, color = if (on) c.ink else c.soft))
+            androidx.compose.material3.Text(note, style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = c.soft))
+        }
+        androidx.compose.foundation.layout.Box(
+            Modifier.size(24.dp).clip(androidx.compose.foundation.shape.CircleShape)
+                .let { if (on) it.background(c.accent) else it.border(1.5.dp, c.dot, androidx.compose.foundation.shape.CircleShape) },
+            contentAlignment = Alignment.Center,
+        ) { if (on) androidx.compose.material3.Icon(Icons.Rounded.Check, null, Modifier.size(15.dp), tint = c.bg) }
+    }
+}
+
+// 7 · Casa in piccolo: su le app, un'app che distrae chiede un respiro, giù la tendina, il resto aspetta in basso.
 
 private fun seg(u: Float, a: Float, b: Float) = ((u - a) / (b - a)).coerceIn(0f, 1f)
 private fun lerp(a: Float, b: Float, p: Float) = a + (b - a) * p
@@ -672,20 +753,22 @@ fun ImportantPicker(app: SordinaApp, perms: PermState, ops: Ops) {
         val names = app.prefs.importantNames
         val chosen = names.sorted()
         if (chosen.isNotEmpty()) {
-            Cap(tr(R.string.onb_important))
-            Spacer(Modifier.height(4.dp))
-            chosen.forEach { n ->
-                val display = all.firstOrNull { it.normalized == n }?.name ?: n.replaceFirstChar { it.uppercase() }
-                Line(display, tr(R.string.remove_l)) { app.people.removeImportantName(n); tick++ }
+            Group {
+                chosen.forEach { n ->
+                    val display = all.firstOrNull { it.normalized == n }?.name ?: n.replaceFirstChar { it.uppercase() }
+                    Line(display, trailing = { SmallPill(tr(R.string.remove)) { app.people.removeImportantName(n); tick++ } })
+                }
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(14.dp))
         }
-        Field(q, { q = it }, tr(R.string.search_contact))
+        Field(q, { q = it }, tr(R.string.search_contact), Modifier.padding(horizontal = 4.dp))
         val list = if (q.isBlank()) all.filter { it.starred && it.normalized !in names }.take(8)
         else app.people.search(q, 6).filter { it.normalized !in names }
-        if (q.isBlank() && list.isNotEmpty()) Hint(tr(R.string.from_favorites))
-        list.forEach { ct -> Line(ct.name, tr(R.string.add_l), ct.number) { app.people.setImportant(ct, true); q = ""; tick++ } }
-        if (q.isBlank() && list.isEmpty() && chosen.isEmpty()) Serif(tr(R.string.onb_search_people), size = 14.sp, color = c.soft, italic = true)
+        if (q.isBlank() && list.isNotEmpty()) Hint(tr(R.string.from_favorites), Modifier.padding(start = 4.dp, top = 10.dp))
+        if (list.isNotEmpty()) Group {
+            list.forEach { ct -> Line(ct.name, hint = ct.number, trailing = { SmallPill(tr(R.string.add_l).replaceFirstChar { it.uppercase() }) { app.people.setImportant(ct, true); q = ""; tick++ } }) }
+        }
+        if (q.isBlank() && list.isEmpty() && chosen.isEmpty()) Hint(tr(R.string.onb_search_people), Modifier.padding(start = 4.dp))
     }
 }
 
@@ -737,7 +820,7 @@ fun HaForm(app: SordinaApp, ops: Ops) {
  * filtro in basso. Tocca una riga per aggiungerla o toglierla.
  */
 @Composable
-private fun <T> PickList(
+internal fun <T> PickList(
     items: List<T>, key: (T) -> String, label: (T) -> String, q: String,
     leading: @Composable (T) -> Unit, selected: Set<String>, onScrolled: (Boolean) -> Unit, onToggle: (T) -> Unit,
 ) {
@@ -817,7 +900,7 @@ private fun Initial(name: String) {
 }
 
 @Composable
-private fun AppDot(pkg: String) {
+internal fun AppDot(pkg: String) {
     val icon = appIcon(pkg, 96)
     if (icon != null) androidx.compose.foundation.Image(icon, null, Modifier.size(30.dp))
     else androidx.compose.foundation.layout.Box(Modifier.size(30.dp).clip(androidx.compose.foundation.shape.CircleShape).background(S.c.tile))
@@ -854,4 +937,3 @@ private fun AllSet(perms: PermState, label: String, onGo: () -> Unit, onLater: (
     }
 }
 
-/** Sera · Notte · Auto: tre pillole da accendere o spegnere, sotto il quadrante. */

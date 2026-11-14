@@ -61,6 +61,32 @@ object Lang {
 
     private fun Resources_system(): Locale = android.content.res.Resources.getSystem().configuration.locales[0]
 
+    /** La lingua scelta corrisponde a [tag] (anche "it-IT" per "it"). */
+    fun matches(chosen: String?, tag: String) = chosen != null && (chosen.equals(tag, true) || chosen.startsWith("$tag-", true))
+
+    /** Le lingue in ordine alfabetico, come le legge chi usa la lingua attuale. */
+    fun sorted(context: Context): List<Pair<String, String>> {
+        val c = java.text.Collator.getInstance(context.resources.configuration.locales[0])
+        return ALL.sortedWith { a, b -> c.compare(a.second, b.second) }
+    }
+
+    /** Il nome di una lingua nella lingua che stai usando: "Deutsch" → "Tedesco". */
+    fun localName(context: Context, tag: String): String {
+        val now = context.resources.configuration.locales[0]
+        val l = Locale.forLanguageTag(tag)
+        val n = if (tag.contains('-')) l.getDisplayName(now) else l.getDisplayLanguage(now)
+        return n.replaceFirstChar { it.titlecase(now) }
+    }
+
+    /** La lingua del telefono, col suo nome. */
+    fun systemName(): String {
+        val l = Resources_system()
+        val t = l.toLanguageTag()
+        return ALL.firstOrNull { matches(t, it.first) }?.second
+            ?: ALL.firstOrNull { t.substringBefore('-') == it.first.substringBefore('-') }?.second
+            ?: l.getDisplayName(l).replaceFirstChar { it.titlecase(l) }
+    }
+
     /** Il nome della lingua scelta, per la riga delle impostazioni. */
     fun label(context: Context): String? = chosen(context)?.let { t -> ALL.firstOrNull { it.first.equals(t, true) || t.startsWith(it.first + "-", true) }?.second ?: Locale.forLanguageTag(t).displayName }
 

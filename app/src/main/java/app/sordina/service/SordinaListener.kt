@@ -70,7 +70,7 @@ class SordinaListener : NotificationListenerService() {
         // Aperta o letta nell'app (anche rispondendo): con quella persona stai parlando, i suoi prossimi messaggi passano
         if (reason == REASON_CLICK || reason == REASON_APP_CANCEL) runCatching {
             val info = Classifier.read(sbn)
-            if (info.isMessage && !info.isGroupSummary) Talking.mark(info.pkg, info.conversation ?: info.person)
+            if (info.isMessage && !info.isGroupSummary && app.prefs.talkPass) Talking.mark(info.pkg, info.conversation ?: info.person)
             // In auto: mentre scrivi a qualcuno, Non disturbare lascia passare i messaggi
             if (info.isMessage && SordinaApp.of(this).prefs.quietCar) Scheduler.refresh(this)
             // Toccata da te, in una chat a due: il cervello impara a chi rispondi e quando
@@ -92,8 +92,14 @@ class SordinaListener : NotificationListenerService() {
         val key = sbn.key
         // Letta in Sordina mentre era posticipata: quando torna, si chiude
         if (store.takeDismissed(key)) { cancelNotification(key); return }
+        // App nascosta: la notifica non si vede mai e non finisce in Sordina (né schede, né conteggi)
+        if (sbn.packageName in hiddenPackages(app.prefs.hidden)) { runCatching { cancelNotification(key) }; return }
 
         val info = Classifier.read(sbn).let { if (isSystemComponent(it.pkg)) it.copy(system = true) else it }
+        // Hai appena risposto dalla notifica (l'ultimo messaggio è tuo): la chat, o il gruppo, passa per un po'
+        if (info.isMessage && !info.isGroupSummary && app.prefs.talkPass && Classifier.lastIsMine(sbn)) {
+            Talking.mark(info.pkg, info.conversation ?: info.title)
+        }
         card(sbn, info)
         val now = System.currentTimeMillis()
         val existing = store.get(key)
@@ -242,6 +248,9 @@ class SordinaListener : NotificationListenerService() {
      * Le notifiche di sistema passano: app preinstallate che non si aprono dal cassetto
      * (auricolari, Bluetooth, Play Services, batteria…). La shell resta fuori: serve per le prove.
      */
+    /** I pacchetti delle app nascoste (la chiave è "pacchetto/attività#utente") */
+    private fun hiddenPackages(keys: Set<String>): Set<String> = keys.mapTo(HashSet()) { it.substringBefore('/') }
+
     private fun isSystemComponent(pkg: String): Boolean = systemCache.getOrPut(pkg) {
         if (pkg == "com.android.shell") return false
         runCatching {

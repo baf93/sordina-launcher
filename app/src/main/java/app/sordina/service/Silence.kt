@@ -25,11 +25,11 @@ class Silence(private val context: Context, private val prefs: Prefs) {
     fun start(until: Long): Boolean {
         if (!hasAccess()) return false
         return runCatching {
+            prefs.quietCar = false
             policy(messagesFromAnyone = false)
             nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
             prefs.quietUntil = until
             prefs.quietOwned = true
-            prefs.quietCar = false
         }.isSuccess
     }
 
@@ -49,13 +49,18 @@ class Silence(private val context: Context, private val prefs: Prefs) {
      */
     private fun policy(messagesFromAnyone: Boolean) {
         if (Build.VERSION.SDK_INT < 35) return
+        // Chiamate: le persone importanti (i preferiti) e chi richiama entro pochi minuti. Sveglie e musica sempre.
+        // Messaggi: in auto passano tutti a Non disturbare, così decidono le tue regole di Sordina (le stesse di sempre);
+        // nel silenzio chiesto a mano solo i preferiti, o tutti mentre stai scrivendo a qualcuno.
+        val car = prefs.quietCar
+        val messages = if (car || (messagesFromAnyone && prefs.talkPass)) Policy.PRIORITY_SENDERS_ANY else Policy.PRIORITY_SENDERS_STARRED
         val categories = Policy.PRIORITY_CATEGORY_CALLS or Policy.PRIORITY_CATEGORY_REPEAT_CALLERS or Policy.PRIORITY_CATEGORY_MESSAGES or
             Policy.PRIORITY_CATEGORY_CONVERSATIONS or Policy.PRIORITY_CATEGORY_ALARMS or Policy.PRIORITY_CATEGORY_MEDIA
-        val messages = if (messagesFromAnyone) Policy.PRIORITY_SENDERS_ANY else Policy.PRIORITY_SENDERS_STARRED
-        val wanted = Policy(categories, Policy.PRIORITY_SENDERS_STARRED, messages, 0, Policy.CONVERSATION_SENDERS_IMPORTANT)
+        val conversations = if (car) Policy.CONVERSATION_SENDERS_ANYONE else Policy.CONVERSATION_SENDERS_IMPORTANT
+        val wanted = Policy(categories, Policy.PRIORITY_SENDERS_STARRED, messages, 0, conversations)
         val now = nm.notificationPolicy
         if (now.priorityCategories != wanted.priorityCategories || now.priorityMessageSenders != wanted.priorityMessageSenders ||
-            now.priorityCallSenders != wanted.priorityCallSenders) nm.notificationPolicy = wanted
+            now.priorityCallSenders != wanted.priorityCallSenders || now.priorityConversationSenders != wanted.priorityConversationSenders) nm.notificationPolicy = wanted
     }
 
     /** Ai cambi e allo scadere: finito il tempo, si spegne; spento a mano, Sordina se ne dimentica. In auto, si accende. */
@@ -80,10 +85,11 @@ class Silence(private val context: Context, private val prefs: Prefs) {
         }
         if (inCar && prefs.carQuiet && !prefs.carDeclined && !isActive() && hasAccess()) {
             runCatching {
+                // Prima segna che è il silenzio dell'auto: così valgono le tue scelte per l'auto
+                prefs.quietCar = true
                 policy(messagesFromAnyone = Talking.lastUntil(now) != null)
                 nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
                 prefs.quietOwned = true
-                prefs.quietCar = true
                 prefs.quietUntil = Long.MAX_VALUE
             }
             return

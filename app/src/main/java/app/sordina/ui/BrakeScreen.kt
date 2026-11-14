@@ -123,7 +123,7 @@ private fun hook(s: Habits.Streak, today: Pair<Int, Int>?, gain: Int): String = 
     Habits.levelOf(s.totalMinutes + gain) > s.level -> tr(R.string.brake_hook_levelup, s.level + 1)
     s.today == 0 && s.days > 1 -> tr(R.string.brake_hook_keep, "${s.days} ${trn(R.plurals.n_days_row, s.days)}")
     s.today == 0 -> tr(R.string.brake_hook_first)
-    today != null && today.second >= 30 -> tr(R.string.brake_hook_minutes, duration(today.second))
+    today != null && today.second >= 30 -> tr(R.string.brake_hook_minutes, shortDuration(today.second))
     today != null && today.first >= 3 -> tr(R.string.brake_hook_opens, today.first)
     else -> tr(PHRASES.random())
 }
@@ -156,7 +156,7 @@ private fun Playing(
             icon?.let { Image(it, null, Modifier.size(22.dp).clip(RoundedCornerShape(7.dp))); Spacer(Modifier.width(8.dp)) }
             Text(app.label, style = TextStyle(fontSize = 15.sp, color = c.ink))
             if (today != null) Text(
-                "  ·  " + if (today.first == 0) tr(R.string.brake_not_today) else tr(R.string.brake_today, trn(R.plurals.n_times, today.first), duration(today.second)),
+                "  ·  " + if (today.first == 0) tr(R.string.brake_not_today) else tr(R.string.brake_today, trn(R.plurals.n_times, today.first), shortDuration(today.second)),
                 maxLines = 1, style = TextStyle(fontSize = 13.sp, color = c.soft),
             )
         }
@@ -341,7 +341,7 @@ private fun Won(gain: Int, before: Habits.Streak, s: Habits.Streak, onDone: () -
         Text(
             when {
                 newDay && s.days > 1 -> tr(R.string.brake_streak_up, "${s.days} ${trn(R.plurals.n_days_row, s.days)}")
-                else -> tr(R.string.time_back, duration(gain))
+                else -> tr(R.string.time_back, shortDuration(gain))
             },
             Modifier.padding(top = 6.dp), textAlign = TextAlign.Center, style = TextStyle(fontSize = 16.sp, color = c.soft),
         )
@@ -349,7 +349,7 @@ private fun Won(gain: Int, before: Habits.Streak, s: Habits.Streak, onDone: () -
         Player(s, highlight = levelUp, before = before)
         Row(Modifier.padding(top = 10.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Stat("${s.today}", tr(R.string.stat_today), Modifier.weight(1f))
-            Stat(duration(s.weekMinutes), tr(R.string.stat_in_7_days), Modifier.weight(1f))
+            Stat(shortDuration(s.weekMinutes), tr(R.string.stat_in_7_days), Modifier.weight(1f))
         }
         Spacer(Modifier.weight(1f))
         Text(tr(R.string.back_home), Modifier.padding(bottom = 8.dp), style = TextStyle(fontSize = 13.sp, color = c.soft))
@@ -368,7 +368,8 @@ private fun Stat(value: String, label: String, modifier: Modifier = Modifier) {
     }
 }
 
-private fun duration(min: Int): String = when {
+/** "45 min", "2 h", "7 h 20 min" */
+internal fun shortDuration(min: Int): String = when {
     min < 1 -> tr(R.string.less_than_minute)
     min < 60 -> tr(R.string.minutes_short, min)
     min % 60 == 0 -> tr(R.string.hours_short, min / 60)

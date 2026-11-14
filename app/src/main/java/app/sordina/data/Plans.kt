@@ -176,6 +176,8 @@ class Plans(context: Context) {
             p.place?.let { add(CardAction(tr(R.string.navigate), CardOp.Navigate(it))) }
             if (w != null) add(CardAction(tr(R.string.add_calendar), CardOp.AddEvent(name, w)))
         }.let { a -> if (near) a else a.sortedByDescending { it.op is CardOp.AddEvent } }
+            // Un piano letto in una chat potrebbe non riguardarti: lo togli senza metterlo in calendario
+            .let { a -> if (a.isEmpty()) a else a + CardAction(tr(R.string.ignore), CardOp.Dismiss) }
         return Card("plan:${p.key}", if (p.flight != null) CardKind.TICKET else CardKind.PLAN, p.label,
             if (p.flight != null) name else w?.let { DateParser.describe(it).replaceFirstChar { c -> c.uppercase() } } ?: name,
             if (p.flight != null) w?.let { DateParser.describe(it) } else p.place ?: p.snippet,

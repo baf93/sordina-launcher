@@ -51,6 +51,7 @@ import app.sordina.data.AppEntry
 import app.sordina.data.Search
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PanTool
+import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.Info
@@ -76,21 +77,24 @@ fun AllAppsScreen(
     onToggleHidden: (AppEntry) -> Unit,
     isBraked: (AppEntry) -> Boolean = { false },
     onToggleBrake: (AppEntry) -> Unit = {},
+    isPinned: (AppEntry) -> Boolean = { false },
+    onTogglePin: (AppEntry) -> Unit = {},
     icon: ((AppEntry) -> androidx.compose.ui.graphics.ImageBitmap?)? = null,
+    cachedIcon: (AppEntry) -> androidx.compose.ui.graphics.ImageBitmap? = { null },
+    /** Solo le nascoste (da Impostazioni › Freno, dopo l'impronta): tenendo premuto c'è Mostra al posto di Nascondi */
+    showHidden: Boolean = false,
 ) {
     val c = S.c
     var filter by remember { mutableStateOf("") }
-    var showHidden by remember { mutableStateOf(false) }
     var scrubbing by remember { mutableStateOf<String?>(null) }
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
     val visible = remember(apps, hidden, filter) {
         val q = Search.normalize(filter)
-        apps.filter { it.key !in hidden && !it.isWork && (q.isEmpty() || Search.score(q, it.normalized) > 0) }
+        apps.filter { (it.key in hidden) == showHidden && !it.isWork && (q.isEmpty() || Search.score(q, it.normalized) > 0) }
     }
-    val work = remember(apps, hidden) { apps.filter { it.isWork && it.key !in hidden } }
-    val hiddenApps = remember(apps, hidden) { apps.filter { it.key in hidden } }
+    val work = remember(apps, hidden) { apps.filter { it.isWork && (it.key in hidden) == showHidden } }
 
     val rows = remember(visible) {
         val out = ArrayList<Row_>()
@@ -112,34 +116,27 @@ fun AllAppsScreen(
     Column(Modifier.fillMaxSize().systemBarsPadding().imePadding().padding(bottom = 12.dp)) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
             LazyColumn(Modifier.fillMaxSize().padding(start = 28.dp, end = 40.dp), state = listState) {
+                // Le chiavi e i tipi aiutano Compose a riusare le righe: lo scorrimento resta liscio
                 item(key = "count") {
                     // Testata come nelle altre pagine: titolo grande, sotto quante sono
                     Column(Modifier.padding(top = 12.dp, bottom = 4.dp)) {
-                        Text(tr(R.string.all_apps), style = TextStyle(fontSize = 30.sp, lineHeight = 36.sp, color = c.ink))
+                        Text(if (showHidden) tr(R.string.hidden_apps) else tr(R.string.all_apps), style = TextStyle(fontSize = 30.sp, lineHeight = 36.sp, color = c.ink))
                         Text(trn(R.plurals.n_apps, visible.size + work.size), Modifier.padding(top = 2.dp), style = TextStyle(fontSize = 15.sp, color = c.soft))
                     }
                 }
-                items(rows, key = { r -> if (r is Row_.Item) r.app.key else "h_" + (r as Row_.Header).letter }) { r ->
+                items(rows, key = { r -> if (r is Row_.Item) r.app.key else "h_" + (r as Row_.Header).letter }, contentType = { r -> if (r is Row_.Item) 1 else 0 }) { r ->
                     when (r) {
                         is Row_.Header -> Text(r.letter, Modifier.padding(top = 18.dp, bottom = 2.dp), style = TextStyle(fontSize = 26.sp, color = c.accent))
-                        is Row_.Item -> AppRow(r.app, icon, false, onLaunch, onInfo, onUninstall, onToggleHidden, isBraked, onToggleBrake)
+                        is Row_.Item -> AppRow(r.app, icon, cachedIcon, showHidden, onLaunch, onInfo, onUninstall, onToggleHidden, isBraked, onToggleBrake, isPinned, onTogglePin)
                     }
                 }
                 if (work.isNotEmpty() && filter.isBlank()) {
                     item { Text(tr(R.string.apps_lavoro), Modifier.padding(top = 26.dp, bottom = 2.dp), style = TextStyle(fontSize = 26.sp, color = c.accent)) }
-                    items(work, key = { "w_" + it.key }) { AppRow(it, icon, false, onLaunch, onInfo, onUninstall, onToggleHidden, isBraked, onToggleBrake) }
+                    items(work, key = { "w_" + it.key }) { AppRow(it, icon, cachedIcon, showHidden, onLaunch, onInfo, onUninstall, onToggleHidden, isBraked, onToggleBrake, isPinned, onTogglePin) }
                 }
-                if (hiddenApps.isNotEmpty() && filter.isBlank()) {
-                    item {
-                        Text(
-                            if (showHidden) tr(R.string.apps_hide_hidden) else trn(R.plurals.n_hidden, hiddenApps.size),
-                            Modifier.padding(top = 26.dp, bottom = 8.dp).combinedClickable { showHidden = !showHidden },
-                            style = TextStyle(fontSize = 15.sp, color = c.soft),
-                        )
-                    }
-                    if (showHidden) items(hiddenApps, key = { "x_" + it.key }) {
-                        AppRow(it, icon, true, onLaunch, onInfo, onUninstall, onToggleHidden, isBraked, onToggleBrake)
-                    }
+                // Le nascoste qui non ci sono, nemmeno come numero: stanno in Impostazioni › Freno, dietro l'impronta
+                if (showHidden && visible.isEmpty() && work.isEmpty() && filter.isBlank()) item {
+                    Text(tr(R.string.hidden_none), Modifier.padding(top = 24.dp), style = TextStyle(fontSize = 17.sp, color = c.soft))
                 }
                 if (visible.isEmpty() && filter.isNotBlank()) item {
                     Text(tr(R.string.apps_none_with, filter), Modifier.padding(top = 24.dp), style = TextStyle(fontSize = 17.sp, color = c.soft))
@@ -183,6 +180,7 @@ fun AllAppsScreen(
 private fun AppRow(
     app: AppEntry,
     icon: ((AppEntry) -> androidx.compose.ui.graphics.ImageBitmap?)?,
+    cachedIcon: (AppEntry) -> androidx.compose.ui.graphics.ImageBitmap?,
     isHidden: Boolean,
     onLaunch: (AppEntry) -> Unit,
     onInfo: (AppEntry) -> Unit,
@@ -190,20 +188,29 @@ private fun AppRow(
     onToggleHidden: (AppEntry) -> Unit,
     isBraked: (AppEntry) -> Boolean,
     onToggleBrake: (AppEntry) -> Unit,
+    isPinned: (AppEntry) -> Boolean,
+    onTogglePin: (AppEntry) -> Unit,
 ) {
     val c = S.c
     var menu by remember { mutableStateOf(false) }
     Box {
         Row(Modifier.fillMaxWidth().combinedClickable(onClick = { onLaunch(app) }, onLongClick = { menu = true }).padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
-        val bmp = remember(app.key) { icon?.invoke(app) }
-        if (bmp != null) androidx.compose.foundation.Image(bmp, null, Modifier.padding(end = 16.dp).size(30.dp))
+        // Mai caricare un'icona mentre scorri: se non è pronta arriva un attimo dopo, con lo spazio già tenuto
+        if (icon != null) {
+            val bmp by androidx.compose.runtime.produceState(cachedIcon(app), app.key) {
+                if (value == null) value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { icon(app) }
+            }
+            Box(Modifier.padding(end = 16.dp).size(30.dp)) { bmp?.let { androidx.compose.foundation.Image(it, null, Modifier.size(30.dp)) } }
+        }
         Text(
             app.label,
             maxLines = 1, overflow = TextOverflow.Ellipsis,
-            style = TextStyle(fontSize = 20.sp, color = if (isHidden) c.soft else c.ink),
+            style = TextStyle(fontSize = 20.sp, color = c.ink),
         )
         }
-        if (menu) Sheet(app.label, onDismiss = { menu = false }, leading = remember(app.key) { icon?.invoke(app) }?.let { b -> { androidx.compose.foundation.Image(b, null, Modifier.size(28.dp)) } }) {
+        if (menu) Sheet(app.label, onDismiss = { menu = false }, leading = remember(app.key) { cachedIcon(app) }?.let { b -> { androidx.compose.foundation.Image(b, null, Modifier.size(28.dp)) } }) {
+            // Una nascosta non viene mai proposta: fissarla non serve
+            if (!isHidden) SheetRow(if (isPinned(app)) tr(R.string.unpin) else tr(R.string.pin), Icons.Rounded.PushPin) { menu = false; onTogglePin(app) }
             SheetRow(if (isBraked(app)) tr(R.string.unbrake) else tr(R.string.brake), Icons.Rounded.PanTool) { menu = false; onToggleBrake(app) }
             SheetRow(if (isHidden) tr(R.string.show_in_list) else tr(R.string.hide_from_list), if (isHidden) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff) { menu = false; onToggleHidden(app) }
             SheetRow(tr(R.string.app_info), Icons.Rounded.Info) { menu = false; onInfo(app) }

@@ -1,5 +1,9 @@
 package app.sordina
 
+import app.sordina.ui.theme.autoAccent
+import app.sordina.data.AppIcons
+import app.sordina.ui.Motion
+
 import app.sordina.data.Prefs
 import app.sordina.data.Held
 import app.sordina.data.Habits
@@ -94,6 +98,7 @@ import app.sordina.ui.SettingsScreen
 import app.sordina.ui.apps.AllAppsScreen
 import app.sordina.ui.home.HomeScreen
 import app.sordina.ui.home.HomeState
+import app.sordina.ui.home.CarShortcut
 import app.sordina.ui.home.AgendaRow
 import app.sordina.ui.intent.IntentScreen
 import app.sordina.ui.intent.Notice
@@ -123,11 +128,14 @@ class MainActivity : ComponentActivity(), Ops {
     private var appsCallback: LauncherApps.Callback? = null
 
     private var screen by mutableStateOf(Screen.HOME)
+    /** Si torna alla ricerca da Tutte le app: niente tastiera, anche se di solito si apre */
+    private var backFromApps = false
     private var apps by mutableStateOf<List<AppEntry>>(emptyList())
     private var proposals by mutableStateOf(Proposals.Result(emptyList(), emptyMap(), emptyMap(), emptyMap(), false, -1))
     private var family by mutableStateOf(ThemeFamily.CARTA)
     private var mode by mutableStateOf(ThemeMode.AUTO)
     private var hidden by mutableStateOf<Set<String>>(emptySet())
+    private var emptyPreview by mutableStateOf(false)
     private var prefsVersion by mutableIntStateOf(0)
     private var perms by mutableStateOf(PermState())
     private var query by mutableStateOf("")
@@ -141,6 +149,7 @@ class MainActivity : ComponentActivity(), Ops {
     private var backdrop by mutableStateOf(Backdrop())
     private var accentPref by mutableIntStateOf(0)
     private var glassPref by mutableStateOf(false)
+    private var blackPref by mutableStateOf(false)
     private var agendaEvents by mutableStateOf<List<Upcoming>>(emptyList())
     private var weatherNow by mutableStateOf<String?>(null)
     private var rainAt by mutableStateOf<Pair<Long, Int>?>(null)
@@ -203,11 +212,11 @@ class MainActivity : ComponentActivity(), Ops {
 
         setContent {
             val accentColor = when (accentPref) {
-                0 -> null
-                1 -> backdrop.accent?.let { androidx.compose.ui.graphics.Color(it) }
+                // Auto: segue lo sfondo (se ha un colore), se no quello del tema
+                0, 1 -> autoAccent(backdrop.accent)?.let { androidx.compose.ui.graphics.Color(it) }
                 else -> androidx.compose.ui.graphics.Color(accentPref)
             }
-            SordinaTheme(family, mode, accentColor) {
+            SordinaTheme(family, mode, accentColor, blackPref) {
                 val view = androidx.compose.ui.platform.LocalView.current
                 val feel = remember(prefsVersion) { Feel(prefs.animations, prefs.haptics, view) }
                 androidx.compose.runtime.CompositionLocalProvider(LocalFeel provides feel, LocalGlass provides (backdrop.active && glassPref)) {
@@ -239,6 +248,19 @@ class MainActivity : ComponentActivity(), Ops {
             screen = Screen.ONBOARDING; return
         }
         if (screen == Screen.ONBOARDING) return
+        // Solo nella versione di prova: "sordinaEmpty" = la pagina Sordina come se non ci fosse niente
+        if (intent?.hasExtra("sordinaEmpty") == true && (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            emptyPreview = intent.getBooleanExtra("sordinaEmpty", false)
+        }
+        // Solo nella versione di prova: "scene" = CAR, EVENING, NIGHT o DAY per vedere quella Casa ("" per tornare normale)
+        if (intent?.hasExtra("scene") == true && (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            app.moments.preview = intent.getStringExtra("scene")?.let { s -> Scene.entries.firstOrNull { it.name == s } }
+            // "carApps" = pacchetti separati da virgola ("" = quelle proposte)
+            intent.getStringExtra("carApps")?.let { v -> prefs.carApps = v.split(',').filter { it.isNotBlank() }.ifEmpty { null }; prefsVersion++ }
+            scene = app.moments.scene(); screen = Screen.HOME
+            lifecycleScope.launch(Dispatchers.IO) { sceneExtras(scene) }
+            return
+        }
         // Un'app frenata è tornata davanti senza passare dal freno
         intent?.getStringExtra(BrakeGuard.EXTRA)?.let { pkg ->
             intent.removeExtra(BrakeGuard.EXTRA)
@@ -277,6 +299,8 @@ class MainActivity : ComponentActivity(), Ops {
         lifecycleScope.launch {
             apps = withContext(Dispatchers.Default) { catalog.load() }
             refreshProposals(forceProposals)
+            // Le icone si preparano in sottofondo, così la lista e la ricerca non devono caricarle mentre scorri
+            if (prefs.appIcons) { val list = apps; launch(Dispatchers.Default) { catalog.warmIcons(list) } }
         }
     }
 
@@ -305,9 +329,9 @@ class MainActivity : ComponentActivity(), Ops {
         val current = apps
         lifecycleScope.launch(Dispatchers.IO) {
             events = app.calendars.upcoming(this@MainActivity)
-            val endOfDay = java.time.LocalDate.now().plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
             val all = (app.calendars.agenda(this@MainActivity) + app.ha.calendarEvents(prefs.haCalendars)).sortedBy { it.begin }
-            agendaEvents = all.filter { it.begin < endOfDay }.take(3).ifEmpty { all.take(1) }
+            // Sempre i prossimi tre, oggi o nei giorni dopo: mai di più
+            agendaEvents = all.take(3)
             weatherNow = app.weather.now()
             rainAt = app.weather.rain
             // I compleanni cambiano col giorno: la rubrica si rilegge una volta al giorno, non a ogni ritorno a Casa
@@ -330,7 +354,8 @@ class MainActivity : ComponentActivity(), Ops {
         val (ctx, start) = app.routines.active().maxByOrNull { it.value } ?: return emptyList()
         val braked = prefs.braked
         val best = app.brain.best(BRAIN_HABIT_P, start, { it.startsWith("app:") && it.removePrefix("app:") in braked || "brain:$it" in prefs.excluded }) {
-            app.intents.realize(it, current, proposals.usage)
+            // Le nascoste non si propongono, nemmeno qui
+            app.intents.realize(it, current.filter { a -> a.key !in hidden }, proposals.usage)
         } ?: return emptyList()
         val c = best.candidate
         val op = when (val a = c.act) {
@@ -378,6 +403,14 @@ class MainActivity : ComponentActivity(), Ops {
         }.getOrDefault(emptyList())
     }
 
+    /** Le scorciatoie in auto: le tue (fino a tre) o, se non ne hai scelte, navigazione, musica e casa che usi di più. */
+    /** In auto, di base: Maps, Spotify e Home Assistant, o quelle che fanno lo stesso lavoro sul telefono. */
+    override fun carApps(): List<String> = prefs.carApps ?: listOfNotNull(
+        prefs.carNavApp ?: CarApps.preferredNav(apps) ?: favourite(CarApps.navigation(this, apps)),
+        prefs.carMusicApp ?: CarApps.preferredMusic(apps) ?: favourite(CarApps.music(this, apps)),
+        CarApps.preferredHome(apps),
+    ).distinct().take(3)
+
     /** Fra le app candidate, quella che usi di più (per i pulsanti in auto quando non ne hai scelta una). */
     private fun favourite(list: List<AppEntry>): String? {
         if (list.isEmpty()) return null
@@ -392,7 +425,11 @@ class MainActivity : ComponentActivity(), Ops {
      * La prossima sveglia di domani, se suona entro un giorno. Android dà la prossima "sveglia" di qualunque app:
      * anche i promemoria del Calendario Samsung. Vale solo quella di un'app orologio.
      */
-    private fun nextAlarm(): String? {
+    private fun nextAlarm(): String? = nextAlarmAt()?.let {
+        java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
+    }
+
+    private fun nextAlarmAt(): Long? {
         val info = runCatching { getSystemService(android.app.AlarmManager::class.java)?.nextAlarmClock }.getOrNull() ?: return null
         val owner = info.showIntent?.creatorPackage
         val clocks = CardDetector.CLOCK_PKGS + listOfNotNull(
@@ -405,7 +442,7 @@ class MainActivity : ComponentActivity(), Ops {
         // Sta sotto "Domani": una sveglia di stasera non è di domani (dopo mezzanotte invece sì)
         val now = java.time.LocalDateTime.now()
         if (at.toLocalDate() == now.toLocalDate() && now.hour >= 12) return null
-        return at.format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
+        return t
     }
 
     private fun sceneLine(s: Scene): String? = when (s) {
@@ -417,12 +454,23 @@ class MainActivity : ComponentActivity(), Ops {
 
     private fun onScene(key: String) {
         when {
+            // Benessere digitale: Samsung, poi Google, se no le Impostazioni
+            key == "usage" -> listOf(
+                Intent().setClassName("com.samsung.android.forest", "com.samsung.android.forest.home.DefaultActivity"),
+                Intent().setClassName("com.google.android.apps.wellbeing", "com.google.android.apps.wellbeing.settings.TopLevelSettingsActivity"),
+                Intent(android.provider.Settings.ACTION_SETTINGS),
+            ).firstOrNull { runCatching { startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess }
             key == "alarm" -> start(Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             key.startsWith("nav:") -> key.removePrefix("nav:").let { place ->
                 start(Intent(Intent.ACTION_VIEW, Uri.parse("google.navigation:q=" + Uri.encode(place))))
                     || start(Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=" + Uri.encode(place))))
             }
             key == "mic" -> voiceTap()
+            key.startsWith("app:") -> key.removePrefix("app:").let { pkg ->
+                // Se è l'app che sta suonando, si apre il lettore; altrimenti l'app
+                if (app.signals.controller?.packageName == pkg) openMusic()
+                else packageManager.getLaunchIntentForPackage(pkg)?.let { start(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            }
             key == "ha" -> CardDetector.HA_PKGS.firstNotNullOfOrNull { packageManager.getLaunchIntentForPackage(it) }?.let { start(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             key == "nav" -> {
                 // L'app scelta da te; se non l'hai scelta, Maps o Waze
@@ -464,6 +512,8 @@ class MainActivity : ComponentActivity(), Ops {
             calendar = g(Manifest.permission.WRITE_CALENDAR),
             mic = g(Manifest.permission.RECORD_AUDIO),
             call = g(Manifest.permission.CALL_PHONE),
+            location = g(Manifest.permission.ACCESS_COARSE_LOCATION),
+            battery = SordinaListener.batteryFree(this),
         )
         if (perms.contacts && !was.contacts) app.people.invalidate()
         checkHealth()
@@ -501,7 +551,7 @@ class MainActivity : ComponentActivity(), Ops {
         return (base + 5 * app.habits.opensLastHour(pkg)).coerceAtMost(60)
     }
 
-    private fun understand(q: String): Understanding = app.intents.understand(q, apps.filter { it.key !in hidden || q.length > 2 }, proposals.usage)
+    private fun understand(q: String): Understanding = app.intents.understand(q, apps.filter { it.key !in hidden }, proposals.usage)
 
     private fun run(c: Candidate, index: Int) {
         // index < 0: toccata tra le proposte, non dalla ricerca (non conta per "giusta al primo colpo")
@@ -520,6 +570,12 @@ class MainActivity : ComponentActivity(), Ops {
                 if (out.message != null) notice = Notice(out.message, undo?.let { u -> { lifecycleScope.launch { u(); notice = Notice(tr(R.string.undone)) } } })
                 if (out.message != null && screen == Screen.HOME) say(out.message)
                 if (out.ok) app.routines.onCommand(c.title, query.ifBlank { c.title })
+                // Hai appena scritto o chiamato qualcuno: la sua risposta passa per i prossimi 15 minuti
+                val talkTo = (act as? Act.Message)?.contact ?: (act as? Act.Call)?.contact
+                if (out.ok && talkTo != null && prefs.talkPass) {
+                    val k = "p:" + Search.normalize(talkTo.name)
+                    prefs.passUntil = prefs.passUntil + (k to System.currentTimeMillis() + 15 * 60_000L)
+                }
             }
         }
     }
@@ -597,6 +653,14 @@ class MainActivity : ComponentActivity(), Ops {
     }
 
     /** Il programma di Casa: meteo e momento adesso, poi eventi e ritorno delle notifiche in ordine di ora. */
+    /** In auto: il prossimo impegno (o quello in corso). Con un indirizzo, un tocco ci porta. */
+    private fun nextEvent(): AgendaRow? {
+        val ms = System.currentTimeMillis()
+        val e = agendaEvents.filter { it.end > ms && !it.allDay }.minByOrNull { it.begin } ?: return null
+        val row = agendaRows(0).firstOrNull { it.key == "event:${e.id}" } ?: return null
+        return row.copy(key = e.location?.takeIf { it.isNotBlank() }?.let { "nav:$it" } ?: row.key)
+    }
+
     private fun agendaRows(waiting: Int): List<AgendaRow> {
         val zone = java.time.ZoneId.systemDefault()
         val today = java.time.LocalDate.now()
@@ -877,6 +941,19 @@ class MainActivity : ComponentActivity(), Ops {
     override fun importSettings() { runCatching { importLauncher.launch(arrayOf("application/json", "text/plain", "*/*")) } }
     override fun openUrl(url: String) { start(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
 
+    /** Lo sfondo di Casa anche sulla schermata di blocco: disegnato a piena misura e dato ad Android. */
+    override fun setLockWallpaper(paper: Int) {
+        lifecycleScope.launch {
+            val ok = withContext(Dispatchers.IO) {
+                runCatching {
+                    val bmp = Backdrops.full(this@MainActivity, prefs.wallpaperMode, prefs.wallpaperPreset, prefs.solidColor, paper) ?: return@runCatching false
+                    android.app.WallpaperManager.getInstance(this@MainActivity).setBitmap(bmp, null, true, android.app.WallpaperManager.FLAG_LOCK) != 0
+                }.getOrDefault(false)
+            }
+            say(if (ok) tr(R.string.lock_done) else tr(R.string.lock_fail))
+        }
+    }
+
     @SuppressLint("BatteryLife")
     override fun openBatterySettings() {
         prefs.batteryAsked = true
@@ -899,6 +976,7 @@ class MainActivity : ComponentActivity(), Ops {
     override fun backdropChanged() {
         accentPref = prefs.accent
         glassPref = prefs.glass
+        blackPref = prefs.trueBlack
         val m = prefs.wallpaperMode
         // Lo sfondo della finestra (carta, dal tema) coprirebbe quello del telefono: con lo sfondo del telefono diventa trasparente.
         // Le schermate che non lo mostrano hanno comunque la loro carta (Modifier.paper).
@@ -909,16 +987,13 @@ class MainActivity : ComponentActivity(), Ops {
             window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
             window.setBackgroundDrawableResource(R.color.paper)
         }
-        lifecycleScope.launch { backdrop = withContext(Dispatchers.IO) { Backdrops.load(this@MainActivity, m, prefs.wallpaperPreset) } }
+        lifecycleScope.launch { backdrop = withContext(Dispatchers.IO) { Backdrops.load(this@MainActivity, m, prefs.wallpaperPreset, prefs.solidColor) } }
     }
     private val notifIcons = HashMap<String, androidx.compose.ui.graphics.ImageBitmap?>()
 
     /** L'icona dell'app di una notifica (anche app di sistema senza voce nel cassetto). */
     private fun notifIcon(pkg: String): androidx.compose.ui.graphics.ImageBitmap? = notifIcons.getOrPut(pkg) {
-        runCatching {
-            val px = (40 * resources.displayMetrics.density).toInt()
-            packageManager.getApplicationIcon(pkg).toBitmap(px, px).asImageBitmap()
-        }.getOrNull()
+        AppIcons.forPackage(packageManager, pkg, (40 * resources.displayMetrics.density).toInt())
     }
 
     /** Lascia passare un contatto o un'app: per qualche ora, oppure sempre (importante / livello Subito). */
@@ -938,7 +1013,39 @@ class MainActivity : ComponentActivity(), Ops {
         hint(if (level == null) tr(R.string.rule_removed) else tr(R.string.rule_set, t.name(s), level.label))
     }
 
+    /** Telefoni prima di Android 10: la schermata di conferma del blocco, con il suo risultato */
+    private var pendingUnlock: (() -> Unit)? = null
+    private val credentialLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+        if (r.resultCode == RESULT_OK) pendingUnlock?.invoke()
+        pendingUnlock = null
+    }
+
+    override fun unlock(title: String, onOk: () -> Unit) {
+        val km = getSystemService(android.app.KeyguardManager::class.java)
+        // Senza blocco schermo non c'è niente da chiedere
+        if (km == null || !km.isDeviceSecure) { onOk(); return }
+        // Se l'impronta non si può chiedere, la schermata del PIN di Android; mai un crash
+        if (Build.VERSION.SDK_INT >= 29 && runCatching {
+            val b = android.hardware.biometrics.BiometricPrompt.Builder(this).setTitle(title)
+            if (Build.VERSION.SDK_INT >= 30) b.setAllowedAuthenticators(
+                android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_WEAK or android.hardware.biometrics.BiometricManager.Authenticators.DEVICE_CREDENTIAL,
+            ) else @Suppress("DEPRECATION") b.setDeviceCredentialAllowed(true)
+            b.build().authenticate(android.os.CancellationSignal(), mainExecutor, object : android.hardware.biometrics.BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: android.hardware.biometrics.BiometricPrompt.AuthenticationResult?) { onOk() }
+            })
+        }.isSuccess) return
+        // Niente impronta (o Android 8–9): la conferma del blocco schermo. Se non si apre nemmeno quella, resta chiuso
+        @Suppress("DEPRECATION")
+        val i = km.createConfirmDeviceCredentialIntent(title, null) ?: return
+        pendingUnlock = onOk
+        runCatching { credentialLauncher.launch(i) }.onFailure { pendingUnlock = null }
+    }
+
+    override fun openHidden(a: AppEntry) { catalog.launch(a) }
+
     override fun changed() {
+        // Le nascoste si cambiano anche dalle Impostazioni
+        hidden = prefs.hidden
         prefsVersion++
         moment = app.moments.current()
         scene = app.moments.scene()
@@ -992,7 +1099,7 @@ class MainActivity : ComponentActivity(), Ops {
         BackHandler(enabled = screen == Screen.HOME) { }
         BackHandler(enabled = screen != Screen.HOME && screen != Screen.ONBOARDING) {
             screen = when (screen) {
-                Screen.ALL_APPS -> Screen.INTENT
+                Screen.ALL_APPS -> { backFromApps = true; Screen.INTENT }
                 else -> Screen.HOME
             }
         }
@@ -1005,25 +1112,28 @@ class MainActivity : ComponentActivity(), Ops {
         val dismissedCards by app.signals.dismissedKeys.collectAsState()
         val music by app.signals.music.collectAsState()
 
+        // Fissa o togli una chiave (un'app, oppure "do:" + un'azione); al massimo 4, dentro i 6 blocchi
+        fun togglePinKey(key: String, label: String) {
+            val p = prefs.pinned
+            when {
+                key in p -> prefs.pinned = p - key
+                p.size >= Prefs.MAX_PINNED -> {
+                    notice = Notice(tr(R.string.pins_full, Prefs.MAX_PINNED, label))
+                    if (prefs.haptics) window.decorView.performHapticFeedback(
+                        if (Build.VERSION.SDK_INT >= 30) android.view.HapticFeedbackConstants.REJECT else android.view.HapticFeedbackConstants.LONG_PRESS,
+                    )
+                    return
+                }
+                else -> prefs.pinned = p + key
+            }
+            prefsVersion++
+            refreshProposals(force = true)
+        }
         val actionsP = ProposalActions(
             isPinned = { a -> prefsVersion.let { prefs.pinned.contains(a.key) } },
-            togglePin = { a ->
-                val p = prefs.pinned
-                when {
-                    a.key in p -> prefs.pinned = p - a.key
-                    // Al massimo 4 fisse, sopra le 6 consigliate
-                    p.size >= Prefs.MAX_PINNED -> {
-                        notice = Notice(tr(R.string.pins_full, Prefs.MAX_PINNED, a.label))
-                        if (prefs.haptics) window.decorView.performHapticFeedback(
-                            if (Build.VERSION.SDK_INT >= 30) android.view.HapticFeedbackConstants.REJECT else android.view.HapticFeedbackConstants.LONG_PRESS,
-                        )
-                        return@ProposalActions
-                    }
-                    else -> prefs.pinned = p + a.key
-                }
-                prefsVersion++
-                refreshProposals(force = true)
-            },
+            togglePin = { a -> togglePinKey(a.key, a.label) },
+            isPinnedAction = { c -> prefsVersion.let { proposals.brainItem[c.id]?.let { Prefs.PIN_ACTION + it in prefs.pinned } == true } },
+            togglePinAction = { c -> proposals.brainItem[c.id]?.let { togglePinKey(Prefs.PIN_ACTION + it, c.title) } },
             exclude = { a ->
                 prefs.excluded = prefs.excluded + a.key
                 prefs.pinned = prefs.pinned - a.key
@@ -1064,10 +1174,8 @@ class MainActivity : ComponentActivity(), Ops {
                 transitionSpec = {
                     // Verso l'alto si sale (Casa → ricerca → app), tornando si scende; spente le animazioni, si cambia e basta
                     val up = targetState.ordinal > initialState.ordinal
-                    val d = if (up) 1 else -1
                     if (!feelNow.animations) androidx.compose.animation.EnterTransition.None togetherWith androidx.compose.animation.ExitTransition.None
-                    else (fadeIn(tween(240, delayMillis = 40)) + androidx.compose.animation.slideInVertically(tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it / 14 * d }) togetherWith
-                        (fadeOut(tween(140)) + androidx.compose.animation.slideOutVertically(tween(220)) { -it / 24 * d })
+                    else Motion.vertical(up)
                 },
                 label = "screen",
             ) { s ->
@@ -1088,13 +1196,14 @@ class MainActivity : ComponentActivity(), Ops {
                                 .sortedByDescending { it.actions.size }.distinctBy { if (it.kind == CardKind.PLAN) "plan|${it.label}|${it.title}" else it.key }
                             (listOfNotNull(health?.let(::healthCard)) + fromNotifs + listOfNotNull(music, rainCard(ms)) + calendar +
                                 (habitCards + birthdayCards()).filter { it.key !in doneHabits })
-                                .filter { it.expiresAt > ms && it.key !in dismissedCards }
+                                // Una scheda senza titolo non dice niente: mai in Casa
+                                .filter { it.expiresAt > ms && it.key !in dismissedCards && it.title.isNotBlank() }
                                 // Ogni Casa tiene solo le schede che le servono: in auto e di notte quasi nulla
                                 // Sordina che non funziona si dice sempre, in ogni Casa
                                 .filter { k -> k.kind == CardKind.HEALTH || when (scene) {
                                     Scene.CAR -> k.kind in setOf(CardKind.CALL, CardKind.MUSIC, CardKind.TIMER, CardKind.RIDE) ||
                                         // In auto: l'impegno con un indirizzo, per andarci
-                                        (k.kind in setOf(CardKind.EVENT, CardKind.PLAN) && k.actions.any { it.op is CardOp.Navigate })
+                                        (k.kind == CardKind.PLAN && k.actions.any { it.op is CardOp.Navigate })
                                     Scene.NIGHT -> k.kind in setOf(CardKind.CALL, CardKind.MUSIC, CardKind.TIMER, CardKind.OTP, CardKind.ASK)
                                     Scene.EVENING -> k.kind != CardKind.HABIT
                                     Scene.DAY -> true
@@ -1113,9 +1222,12 @@ class MainActivity : ComponentActivity(), Ops {
                                 waiting = waiting,
                                 until = null,
                                 moment = if (moment == Moment.NONE) null else moment.label,
-                                cards = cards,
-                                agenda = remember(agendaEvents, moment, now, scene, health) { agendaRows(waiting).let { if (scene == Scene.EVENING) it.take(2) else it } },
-                                weather = weatherNow,
+                                // Senza schede resta solo quella che dice che Sordina non funziona
+                                cards = if (prefs.homeCards) cards else cards.filter { it.kind == CardKind.HEALTH },
+                                agenda = remember(agendaEvents, moment, now, scene, health) { agendaRows(waiting) }
+                                    // Senza impegni in Casa resta solo l'avviso che Sordina è ferma
+                                    .let { r -> if (prefs.homeAgenda) r else r.filter { it.key == "moment" } },
+                                weather = if (prefs.homeWeather) weatherNow else null,
                                 listening = voice.listening,
                                 partial = voice.partial,
                                 topDark = backdrop.topDark,
@@ -1124,14 +1236,17 @@ class MainActivity : ComponentActivity(), Ops {
                                 glass = backdrop.active && glassPref,
                                 scene = scene,
                                 alarm = remember(now, scene) { if (scene == Scene.EVENING || scene == Scene.NIGHT) nextAlarm() else null },
+                                alarmAt = remember(now, scene) { if (scene == Scene.NIGHT) nextAlarmAt() else null },
                                 tomorrow = remember(tomorrowEvents) { tomorrowEvents.map { e -> AgendaRow(hm(java.time.Instant.ofEpochMilli(e.begin).atZone(java.time.ZoneId.systemDefault()).let { it.hour * 60 + it.minute }), e.title, "event:${e.id}") } },
-                                tomorrowWeather = tomorrowWeather,
+                                tomorrowWeather = if (prefs.homeWeather) tomorrowWeather else null,
                                 sceneLine = remember(scene, moment, prefsVersion) { sceneLine(scene) },
                                 recap = recap,
                                 people = carPeople,
-                                navLabel = remember(apps, prefsVersion) { apps.firstOrNull { it.packageName == prefs.carNavApp }?.label },
-                                musicLabel = remember(apps, prefsVersion) { apps.firstOrNull { it.packageName == prefs.carMusicApp }?.label },
-                                homeApp = remember(apps, prefsVersion) { app.ha.configured || apps.any { it.packageName in CardDetector.HA_PKGS } },
+                                next = remember(agendaEvents, scene, now) { if (scene == Scene.CAR) nextEvent() else null },
+                                carApps = remember(apps, prefsVersion, scene) {
+                                    if (scene != Scene.CAR) emptyList()
+                                    else carApps().mapNotNull { p -> apps.firstOrNull { it.packageName == p }?.let { CarShortcut(p, it.label, catalog.icon(it)) } }
+                                },
                             ),
                             groups = groups,
                             onScene = ::onScene,
@@ -1161,19 +1276,22 @@ class MainActivity : ComponentActivity(), Ops {
                         proposals = proposals.items,
                         needsUsagePermission = proposals.needsPermission,
                         actions = actionsP,
-                        keyboardOnOpen = remember(prefsVersion) { prefs.keyboardOnOpen },
+                        // Tornando indietro da Tutte le app la tastiera resta chiusa: stavi guardando, non scrivendo
+                        keyboardOnOpen = remember(prefsVersion) { prefs.keyboardOnOpen && !backFromApps }.also { androidx.compose.runtime.SideEffect { backFromApps = false } },
                         voice = voice,
                         notice = notice,
                         onRun = ::run,
                         // Una proposta presa: Sordina aveva visto giusto
                         onLaunch = { a -> if (query.isBlank()) app.brain.hit("app:${a.packageName}"); launch(a) },
                         onAllApps = { screen = Screen.ALL_APPS },
+                        onHome = { screen = Screen.HOME },
                         onGrantUsage = ::openUsageSettings,
                         onVoiceDown = ::voiceDown,
                         onVoiceUp = ::voiceUp,
                     )
                     Screen.ALL_APPS -> AllAppsScreen(
-                        icon = if (remember(prefsVersion) { prefs.appIcons }) { a -> catalog.icon(a, (30 * resources.displayMetrics.density).toInt()) } else null,
+                        icon = if (remember(prefsVersion) { prefs.appIcons }) { a -> catalog.icon(a) } else null,
+                        cachedIcon = { a -> catalog.cachedIcon(a) },
                         apps = apps,
                         hidden = hidden,
                         // Cercata nell'elenco: andava proposta
@@ -1183,12 +1301,21 @@ class MainActivity : ComponentActivity(), Ops {
                         onToggleHidden = { a ->
                             hidden = if (a.key in hidden) hidden - a.key else hidden + a.key
                             prefs.hidden = hidden
+                            // Sparisce subito anche dalle proposte
+                            refreshProposals(force = true)
                         },
                         isBraked = { a -> prefsVersion.let { a.packageName in prefs.braked } },
                         onToggleBrake = { a ->
                             val b = prefs.braked
                             prefs.braked = if (a.packageName in b) b - a.packageName else b + a.packageName
                             changed()
+                        },
+                        isPinned = actionsP.isPinned,
+                        onTogglePin = { a ->
+                            // Qui l'avviso della ricerca non si vede: se sono già tutte occupate lo dice un toast
+                            if (a.key !in prefs.pinned && prefs.pinned.size >= Prefs.MAX_PINNED)
+                                android.widget.Toast.makeText(this@MainActivity, tr(R.string.pins_full, Prefs.MAX_PINNED, a.label), android.widget.Toast.LENGTH_LONG).show()
+                            else actionsP.togglePin(a)
                         },
                     )
                     Screen.SETTINGS -> SettingsScreen(
@@ -1206,11 +1333,35 @@ class MainActivity : ComponentActivity(), Ops {
                         onWipe = ::wipe,
                         ops = this@MainActivity,
                         onBack = { screen = Screen.HOME },
+                        hiddenApps = {
+                            AllAppsScreen(
+                                showHidden = true,
+                                icon = if (remember(prefsVersion) { prefs.appIcons }) { a -> catalog.icon(a) } else null,
+                                cachedIcon = { a -> catalog.cachedIcon(a) },
+                                apps = apps,
+                                hidden = hidden,
+                                // Aperta da qui: niente freno, e il cervello non la impara
+                                onLaunch = { a -> openHidden(a) },
+                                onInfo = { catalog.openInfo(it) },
+                                onUninstall = { catalog.uninstall(it) },
+                                onToggleHidden = { a ->
+                                    hidden = hidden - a.key
+                                    prefs.hidden = hidden
+                                    changed()
+                                },
+                                isBraked = { a -> prefsVersion.let { a.packageName in prefs.braked } },
+                                onToggleBrake = { a ->
+                                    val b = prefs.braked
+                                    prefs.braked = if (a.packageName in b) b - a.packageName else b + a.packageName
+                                    changed()
+                                },
+                            )
+                        },
                     )
                     Screen.BRAKE -> brakeTarget?.let { a ->
                         BrakeScreen(
                             app = a,
-                            icon = remember(a.key) { catalog.icon(a, (26 * resources.displayMetrics.density).toInt()) },
+                            icon = remember(a.key) { catalog.icon(a) },
                             today = remember(a.key) { app.habits.appToday(a.packageName) },
                             seconds = remember(a.key) { brakeWait(a.packageName) },
                             streak = remember(a.key) { app.habits.streak() },
@@ -1227,7 +1378,7 @@ class MainActivity : ComponentActivity(), Ops {
                     } ?: run { screen = Screen.HOME }
                     Screen.SORDINA -> {
                         SordinaScreen(
-                        groups = groups,
+                        groups = if (emptyPreview) emptyList() else groups,
                         overrides = remember(prefsVersion) { prefs.categoryOverrides },
                         braked = remember(prefsVersion) { prefs.braked },
                         order = remember(prefsVersion) { when (prefs.sordinaOrder) { 1 -> null; 2 -> Categories.custom(prefs.categoryOrder); else -> Categories.AUTO } },

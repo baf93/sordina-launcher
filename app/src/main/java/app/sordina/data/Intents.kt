@@ -95,7 +95,7 @@ class Intents(
         val raw = query.trim()
         if (raw.isEmpty()) return Understanding(emptyList(), false)
         // Le frasi dette in mille modi diventano quella che il motore conosce ("puoi chiamare Elisa?" → "chiama Elisa")
-        val q = runCatching { Phrase.canonical(raw, hints(apps)) }.getOrDefault(raw).ifBlank { raw }
+        val q = reorder(runCatching { Phrase.canonical(raw, hints(apps)) }.getOrDefault(raw).ifBlank { raw })
         track(Search.normalize(raw))
         val ow = q.split(Regex("\\s+"))
         val nw = ow.map { Search.normalize(it) }
@@ -188,6 +188,23 @@ class Intents(
                 ?.copy(score = 60)
             else -> null
         }
+    }
+
+    /**
+     * Prima chi, poi cosa: "elisa telegram", "mamma chiama", "elisa su whatsapp arrivo"
+     * diventano "telegram elisa", "chiama mamma", "whatsapp elisa arrivo".
+     * Solo se il resto comincia con una persona che conosci: le app e le altre frasi restano come sono.
+     */
+    private fun reorder(q: String): String {
+        val ow = q.trim().split(Regex("\\s+"))
+        val nw = ow.map { Search.normalize(it) }
+        if (ow.size < 2 || nw[0] in LEAD_VERBS) return q
+        val i = (1 until nw.size).firstOrNull { nw[it] in LEAD_VERBS } ?: return q
+        // "su telegram", "via whatsapp": la preposizione se ne va con l'app
+        val skip = setOf(i) + (if (nw[i] in VIA_WORDS && nw[i - 1] in setOf("su", "via", "con", "per")) setOf(i - 1) else emptySet())
+        val rest = ow.indices.filter { it !in skip }
+        if (rest.isEmpty() || personIn(rest.map { nw[it] }.filter { it.isNotEmpty() }) == null) return q
+        return (listOf(ow[i]) + rest.map { ow[it] }).joinToString(" ")
     }
 
     /** Solo il testo, senza il cervello: per ricapire un comando ricordato. */
@@ -543,6 +560,10 @@ class Intents(
 
         /** Le parole che non sono un nome, in "chiama la mamma", "scrivi a papà". */
         private val FILLER = setOf("chiama", "telefona", "scrivi", "manda", "messaggio", "a", "ad", "al", "alla", "la", "il", "lo", "mia", "mio", "un", "una", "su", "whatsapp", "telegram", "sms", "signal")
+
+        private val VIA_WORDS = setOf("whatsapp", "telegram", "sms", "signal")
+        /** Le parole che reggono una frase verso una persona: possono stare anche dopo il nome. */
+        private val LEAD_VERBS = VIA_WORDS + setOf("chiama", "telefona", "chiamare", "telefonare", "scrivi", "scrivere", "messaggio", "manda", "invia")
 
         private val CALL_VERBS = listOf("chiama", "telefona", "call")
         private val MSG_VERBS = listOf("scrivi", "messaggio", "manda", "write", "text")
