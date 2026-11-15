@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
+import android.content.pm.ShortcutInfo
 import android.graphics.Rect
 import android.net.Uri
 import android.os.Process
@@ -16,17 +17,26 @@ import androidx.core.graphics.drawable.toBitmap
 import java.text.Collator
 import java.util.Locale
 
-/** Un'app avviabile. La chiave distingue anche le app del profilo di lavoro. */
+/**
+ * Un'app avviabile. La chiave distingue anche le app del profilo di lavoro.
+ * Oppure una web app aggiunta dal browser (Brave, Samsung Internet, Firefox…): per Android è una scorciatoia
+ * fissata sulla Home, [shortcut]; il pacchetto è quello del browser.
+ */
 class AppEntry(
     val label: String,
     val component: ComponentName,
     val user: UserHandle,
     val isWork: Boolean,
-    internal val info: LauncherActivityInfo,
+    internal val info: LauncherActivityInfo?,
+    internal val shortcut: ShortcutInfo? = null,
 ) {
     val packageName: String get() = component.packageName
-    val key: String = component.flattenToShortString() + "#" + user.hashCode()
+    /** Senza "/" per le web app: le regole per pacchetto (app nascoste) non devono toccare il browser */
+    val key: String = (shortcut?.let { "${it.`package`}:web:${it.id}" } ?: component.flattenToShortString()) + "#" + user.hashCode()
+    val isWeb: Boolean get() = shortcut != null
     val normalized: String = Search.normalize(label)
+    /** La lettera dell'elenco ("#" se non comincia con una lettera): calcolata una volta, non a ogni apertura */
+    val letter: String by lazy { normalized.firstOrNull()?.takeIf { it.isLetter() }?.uppercaseChar()?.toString() ?: "#" }
 }
 
 /** Catalogo delle app installate, letto da LauncherApps (funziona per ogni profilo). */
@@ -47,14 +57,32 @@ class AppCatalog(private val context: Context) {
                     isWork = user != me,
                     info = info,
                 )
-            }
+            } + webApps(user, user != me)
         }
             .filter { it.packageName != context.packageName }
             .sortedWith { a, b -> collator.compare(a.label, b.label) }
     }
 
+    /**
+     * Le web app fissate su Sordina (vedi [app.sordina.PinShortcutActivity]). Android le mostra solo alla Home
+     * predefinita, e solo quelle fissate su di lei: quelle aggiunte prima, quando c'era un'altra Home, restano là.
+     */
+    private fun webApps(user: UserHandle, work: Boolean): List<AppEntry> = runCatching {
+        if (!launcherApps.hasShortcutHostPermission()) return@runCatching emptyList()
+        val q = LauncherApps.ShortcutQuery().setQueryFlags(LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED)
+        launcherApps.getShortcuts(q, user).orEmpty().filter { it.isEnabled }.map { s ->
+            AppEntry(
+                label = (s.shortLabel ?: s.longLabel)?.toString()?.trim().orEmpty().ifEmpty { s.id },
+                component = s.activity ?: ComponentName(s.`package`, ""),
+                user = user, isWork = work, info = null, shortcut = s,
+            )
+        }
+    }.getOrDefault(emptyList())
+
     fun launch(app: AppEntry) {
-        runCatching { launcherApps.startMainActivity(app.component, app.user, null, null) }
+        val s = app.shortcut
+        if (s != null) runCatching { launcherApps.startShortcut(s, null, null) }
+        else runCatching { launcherApps.startMainActivity(app.component, app.user, null, null) }
     }
 
     fun openInfo(app: AppEntry) {
@@ -62,6 +90,15 @@ class AppCatalog(private val context: Context) {
     }
 
     fun uninstall(app: AppEntry) {
+        // Una web app si toglie e basta: restano fissate le altre dello stesso browser
+        app.shortcut?.let { s ->
+            runCatching {
+                val q = LauncherApps.ShortcutQuery().setQueryFlags(LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED).setPackage(s.`package`)
+                val keep = launcherApps.getShortcuts(q, app.user).orEmpty().map { it.id }.filter { it != s.id }
+                launcherApps.pinShortcuts(s.`package`, keep, app.user)
+            }
+            return
+        }
         val intent = Intent(Intent.ACTION_DELETE, Uri.parse("package:${app.packageName}"))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         runCatching { context.startActivity(intent) }
@@ -76,7 +113,10 @@ class AppCatalog(private val context: Context) {
     /** Icona piccola, caricata solo quando serve e tenuta in memoria. Meglio chiamarla fuori dal thread principale. */
     fun icon(app: AppEntry): ImageBitmap? {
         cachedIcon(app)?.let { return it }
-        val bmp = runCatching { AppIcons.render(app.info.getIcon(0), iconPx).asImageBitmap() }.getOrNull() ?: return null
+        val bmp = runCatching {
+            val d = app.shortcut?.let { launcherApps.getShortcutIconDrawable(it, context.resources.displayMetrics.densityDpi) } ?: app.info!!.getIcon(0)
+            AppIcons.render(d, iconPx).asImageBitmap()
+        }.getOrNull() ?: return null
         return synchronized(iconCache) { iconCache.getOrPut(app.key) { bmp } }
     }
 
@@ -85,11 +125,23 @@ class AppCatalog(private val context: Context) {
 
     fun registerChanges(onChange: () -> Unit): LauncherApps.Callback {
         val cb = object : LauncherApps.Callback() {
-            override fun onPackageRemoved(packageName: String?, user: UserHandle?) = onChange()
+            override fun onPackageRemoved(packageName: String?, user: UserHandle?) {
+                // Hai tolto un'app che avevi frenato: un'impresa
+                if (packageName != null && packageName in app.sordina.SordinaApp.of(context).prefs.braked) app.sordina.data.Tally.flag("farewell")
+                onChange()
+            }
             override fun onPackageAdded(packageName: String?, user: UserHandle?) = onChange()
             override fun onPackageChanged(packageName: String?, user: UserHandle?) = onChange()
             override fun onPackagesAvailable(p: Array<out String>?, u: UserHandle?, r: Boolean) = onChange()
             override fun onPackagesUnavailable(p: Array<out String>?, u: UserHandle?, r: Boolean) = onChange()
+            // Una web app fissata o tolta. Le app cambiano spesso le loro scorciatoie (WhatsApp con ogni chat):
+            // si ricarica solo se cambiano quelle fissate qui.
+            private val pinned = HashMap<String, Set<String>>()
+            override fun onShortcutsChanged(p: String, s: MutableList<ShortcutInfo>, u: UserHandle) {
+                val now = s.filter { it.isPinned }.mapTo(HashSet()) { it.id }
+                val k = "$p#${u.hashCode()}"
+                if ((pinned.put(k, now) ?: emptySet<String>()) != now) onChange()
+            }
         }
         launcherApps.registerCallback(cb)
         return cb

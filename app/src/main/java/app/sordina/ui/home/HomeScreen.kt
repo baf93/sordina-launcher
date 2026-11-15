@@ -41,7 +41,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.Mic
-import androidx.compose.material.icons.rounded.NotificationsOff
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Search
@@ -77,6 +76,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -174,8 +175,10 @@ fun HomeScreen(
     onReadAll: () -> Unit,
     onReadGroup: (String) -> Unit = {},
     onScene: (String) -> Unit = {},
+    /** Doppio tocco sul fondo: spegne lo schermo (null = spento nelle impostazioni) */
+    onDoubleTap: (() -> Unit)? = null,
 ) {
-    val gestures = Modifier.homeGestures(onSwipeUp, onSwipeDown, onLongPress)
+    val gestures = Modifier.homeGestures(onSwipeUp, onSwipeDown, onLongPress, onDoubleTap)
     when (state.scene) {
         // In auto niente pressione lunga: si toccano pulsanti grandi, le impostazioni non devono aprirsi per sbaglio
         Scene.CAR -> { CarHome(state, Modifier.homeGestures(onSwipeUp, onSwipeDown, {}), onSearch, onMicDown, onMicUp, onAction, onCard, onScene) { onSheet(true) }; return }
@@ -187,10 +190,11 @@ fun HomeScreen(
     else DayHome(state, gestures, onSearch, onMicDown, onMicUp, onAction, onCard, onAgenda, onScene, onSheet)
 }
 
-/** Su: le app. Giù: la tendina. Tieni premuto: le impostazioni. Uguale in tutte le Case. */
+/** Su: le app. Giù: la tendina. Tieni premuto: le impostazioni. Doppio tocco: spegne (se scelto). Uguale in tutte le Case. */
 @Composable
-internal fun Modifier.homeGestures(onSwipeUp: () -> Unit, onSwipeDown: () -> Unit, onLongPress: () -> Unit): Modifier {
+internal fun Modifier.homeGestures(onSwipeUp: () -> Unit, onSwipeDown: () -> Unit, onLongPress: () -> Unit, onDoubleTap: (() -> Unit)? = null): Modifier {
     val threshold = with(LocalDensity.current) { 64.dp.toPx() }
+    val double = androidx.compose.runtime.rememberUpdatedState(onDoubleTap)
     return this
         .pointerInput(Unit) {
             var total = 0f
@@ -200,7 +204,10 @@ internal fun Modifier.homeGestures(onSwipeUp: () -> Unit, onSwipeDown: () -> Uni
                 onVerticalDrag = { _, dy -> total += dy },
             )
         }
-        .pointerInput(Unit) { detectTapGestures(onLongPress = { onLongPress() }) }
+        // Il doppio tocco si riconosce solo se è acceso: altrimenti nessuna attesa in più sui tocchi
+        .pointerInput(onDoubleTap != null) {
+            detectTapGestures(onLongPress = { onLongPress() }, onDoubleTap = if (onDoubleTap != null) ({ double.value?.invoke() }) else null)
+        }
 }
 
 @Composable
@@ -294,7 +301,8 @@ internal fun SearchBar(state: HomeState, onSearch: () -> Unit, onMicDown: () -> 
             style = TextStyle(fontSize = 16.sp, color = if (state.listening) c.ink else c.soft))
         Box(
             Modifier.size(42.dp).clip(CircleShape).background(if (state.listening) c.accent else androidx.compose.ui.graphics.Color.Transparent)
-                .pointerInput(Unit) { awaitEachGesture { awaitFirstDown(); feel.tick(); onMicDown(); waitForUpOrCancellation(); onMicUp() } },
+                // Il tocco resta al microfono: se arrivasse anche alla barra, al rilascio si aprirebbe la ricerca
+                .pointerInput(Unit) { awaitEachGesture { awaitFirstDown().consume(); feel.tick(); onMicDown(); waitForUpOrCancellation()?.consume(); onMicUp() } },
             contentAlignment = Alignment.Center,
         ) {
             Icon(Icons.Rounded.Mic, tr(R.string.speak), Modifier.size(22.dp), tint = if (state.listening) c.bg else c.accent)
@@ -310,23 +318,35 @@ internal fun weatherIcon(w: String): ImageVector = when {
     else -> Icons.Rounded.Cloud
 }
 
-/** In fondo: quante notifiche sono in sordina e fino a quando. */
+/**
+ * In fondo: la sordina grande, che con la faccia dice com'è Casa, e accanto quante notifiche aspettano.
+ * Niente frasi: il numero e la faccia bastano. Il testo intero resta per chi usa il lettore dello schermo.
+ */
 @Composable
 internal fun SordinaRow(state: HomeState, pill: Boolean = false, onClick: () -> Unit) {
     val c = S.c
     val on = state.waiting > 0
-    // Con caratteri molto grandi la riga si accorcia in coda invece di toccare i bordi
+    val said = (listOf(if (on) trn(R.plurals.n_waiting, state.waiting) else tr(R.string.nothing_waiting)) +
+        listOfNotNull(state.moment, if (on) state.until else null)).joinToString(" · ")
     Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp), contentAlignment = Alignment.Center) { Row(
-        (if (pill) Modifier.clip(RoundedCornerShape(18.dp)).background(surface()).padding(horizontal = 14.dp) else Modifier)
-            .heightIn(min = 36.dp).clickableNoRipple(onClick),
+        (if (pill) Modifier.clip(RoundedCornerShape(24.dp)).background(surface()).padding(horizontal = 16.dp, vertical = 4.dp) else Modifier)
+            .heightIn(min = 48.dp).clickableNoRipple(onClick)
+            .semantics(mergeDescendants = true) { contentDescription = said },
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Rounded.NotificationsOff, null, Modifier.size(16.dp), tint = c.soft)
-        Spacer(Modifier.width(6.dp))
-        Text(if (on) trn(R.plurals.n_waiting, state.waiting) else tr(R.string.nothing_waiting), style = TextStyle(fontSize = 14.sp, color = c.soft))
-        val tail = listOfNotNull(state.moment, if (on) state.until else null)
-        if (tail.isNotEmpty()) Text(" · " + tail.joinToString(" · "), Modifier.weight(1f, fill = false), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 14.sp, color = c.soft))
+        // La sordina a contorno dice com'è Casa: occhi aperti, chiusi con una modalità di Android, cappellino di notte
+        val pose = when {
+            state.scene == app.sordina.data.Scene.CAR -> app.sordina.ui.Pose.DRIVE
+            state.scene == app.sordina.data.Scene.NIGHT -> app.sordina.ui.Pose.NIGHT
+            state.moment != null -> app.sordina.ui.Pose.QUIET
+            else -> app.sordina.ui.Pose.AWAKE
+        }
+        app.sordina.ui.MascotGlyph(pose, c.soft, Modifier.size(40.dp))
+        if (on) {
+            Spacer(Modifier.width(10.dp))
+            Text("${state.waiting}", style = TextStyle(fontSize = 24.sp, color = c.soft))
+        }
     } }
 }
 

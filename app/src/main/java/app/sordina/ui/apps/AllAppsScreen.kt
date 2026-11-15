@@ -23,7 +23,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
+import app.sordina.ui.imeJump
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
@@ -100,7 +100,7 @@ fun AllAppsScreen(
         val out = ArrayList<Row_>()
         var last = ""
         for (a in visible) {
-            val l = letterOf(a.label)
+            val l = a.letter
             if (l != last) { out += Row_.Header(l); last = l }
             out += Row_.Item(a)
         }
@@ -113,7 +113,7 @@ fun AllAppsScreen(
         if (idx >= 0) scope.launch { listState.scrollToItem(idx + 1) }
     }
 
-    Column(Modifier.fillMaxSize().systemBarsPadding().imePadding().padding(bottom = 12.dp)) {
+    Column(Modifier.fillMaxSize().systemBarsPadding().imeJump().padding(bottom = 12.dp)) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
             LazyColumn(Modifier.fillMaxSize().padding(start = 28.dp, end = 40.dp), state = listState) {
                 // Le chiavi e i tipi aiutano Compose a riusare le righe: lo scorrimento resta liscio

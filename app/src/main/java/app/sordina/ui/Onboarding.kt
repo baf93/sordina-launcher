@@ -1,5 +1,6 @@
 package app.sordina.ui
 
+import app.sordina.data.Backup
 import app.sordina.tr
 
 import app.sordina.R
@@ -115,6 +116,9 @@ fun Onboarding(
     onDone: () -> Unit,
 ) {
     var step by rememberSaveable(startStep) { mutableIntStateOf(startStep) }
+    // Una copia ritrovata dal backup di Google (telefono nuovo o app reinstallata): si può rimettere tutto com'era
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    var found by remember { mutableStateOf(Backup.found(ctx)) }
     val last = 6
     val c = S.c
     fun next() { if (step < last) step++ else onDone() }
@@ -123,6 +127,7 @@ fun Onboarding(
     var finished by remember { mutableStateOf(false) }
     LaunchedEffect(step) { if (step != last) finished = false }
     val (label, action) = when {
+        step == 0 && found != null -> tr(R.string.ob_restore) to { if (Backup.restore(ctx)) Backup.restart(ctx) }
         step == 0 -> tr(R.string.ob_begin) to { next() }
         step == 1 && !perms.listener -> tr(R.string.ob_allow) to { ops.openListenerSettings() }
         step == 1 && !perms.usage -> tr(R.string.ob_allow) to { ops.openUsageSettings() }
@@ -160,14 +165,18 @@ fun Onboarding(
         androidx.compose.animation.AnimatedVisibility(!ending, enter = fadeIn(), exit = fadeOut(tween(250))) {
             Column {
                 Spacer(Modifier.height(14.dp))
+                found?.takeIf { step == 0 }?.let { d ->
+                    androidx.compose.material3.Text(tr(R.string.ob_restore_found, d.format(java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.LONG))),
+                        Modifier.fillMaxWidth().padding(bottom = 14.dp), style = androidx.compose.ui.text.TextStyle(fontSize = 15.sp, lineHeight = 21.sp, color = c.ink, textAlign = androidx.compose.ui.text.style.TextAlign.Center))
+                }
                 Pill(label) { action() }
                 // "Più tardi" solo dove serve: altrove il pulsante sta in fondo e il contenuto ha più posto
                 // Ai permessi sempre, finché ne manca uno: un "no" ad Android non deve bloccare l'avvio
-                val later = (step == 1 && label == tr(R.string.ob_allow)) || (step == last && !perms.home)
+                val later = (step == 1 && label == tr(R.string.ob_allow)) || (step == last && !perms.home) || (step == 0 && found != null)
                 if (later) androidx.compose.foundation.layout.Box(
-                    Modifier.fillMaxWidth().clickableNoRipple { if (step == last) onDone() else next() }.padding(top = 14.dp, bottom = 4.dp),
+                    Modifier.fillMaxWidth().clickableNoRipple { if (step == 0 && found != null) { Backup.forget(ctx); found = null } else if (step == last) onDone() else next() }.padding(top = 14.dp, bottom = 4.dp),
                     contentAlignment = Alignment.Center,
-                ) { Serif(tr(R.string.later), size = 14.sp, color = c.soft) }
+                ) { Serif(tr(if (step == 0 && found != null) R.string.ob_restore_no else R.string.later), size = 14.sp, color = c.soft) }
             }
         }
     }
@@ -238,12 +247,15 @@ private fun Screen(
     label: String, title: String, text: String,
     collapsed: Boolean = false,
     query: String = "", onSearch: ((String?) -> Unit)? = null, searchHint: String = "",
+    /** La sordina che parla: sta sopra il titolo, come se lo dicesse lei */
+    mascot: Mood? = null,
     visual: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit,
 ) {
     val c = S.c
     val size by androidx.compose.animation.core.animateFloatAsState(if (collapsed) 21f else 32f, tween(220), label = "title")
     var searching by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().padding(top = 18.dp)) {
+        if (mascot != null) { Mascot(mascot, Modifier.size(76.dp)); Spacer(Modifier.height(10.dp)) }
         androidx.compose.material3.Text(label.uppercase(), style = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, letterSpacing = 1.2.sp, color = c.accent))
         Spacer(Modifier.height(6.dp))
         if (searching && onSearch != null) {
@@ -334,12 +346,10 @@ private fun Waiting(app: SordinaApp) {
 
 @Composable
 private fun Needs(perms: PermState, ops: Ops) {
-    Screen(tr(R.string.ob_l2), tr(R.string.ob2_title), tr(R.string.ob2_sub)) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    Screen(tr(R.string.ob_l2), tr(R.string.ob2_title), tr(R.string.ob2_sub), mascot = Mood.HELLO) {
         // Prima quelli senza cui Sordina non lavora, poi quelli che riempiono la Home
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-            androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().padding(bottom = 24.dp), contentAlignment = Alignment.Center) {
-                Wave(Modifier.width(120.dp).height(62.dp))
-            }
             Need(perms.listener, tr(R.string.ob_perm_notif_l), tr(R.string.ob_perm_notif)) { ops.openListenerSettings() }
             Need(perms.usage, tr(R.string.ob_perm_usage_l), tr(R.string.ob_perm_usage)) { ops.openUsageSettings() }
             Need(perms.battery, tr(R.string.s_battery), tr(R.string.ob_perm_battery)) { ops.openBatterySettings() }
@@ -347,6 +357,8 @@ private fun Needs(perms: PermState, ops: Ops) {
             Need(perms.calendar, tr(R.string.s_calendar), tr(R.string.h_p_cal)) { ops.request(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR) }
             Need(perms.location, tr(R.string.s_weather), tr(R.string.h_weather)) { ops.request(Manifest.permission.ACCESS_COARSE_LOCATION) }
             if (Build.VERSION.SDK_INT >= 33) Need(perms.post, tr(R.string.onb_alerts), tr(R.string.ob_perm_post)) { ops.request(Manifest.permission.POST_NOTIFICATIONS) }
+            // Facoltativa, in fondo: freno istantaneo e doppio tocco per spegnere
+            Need(perms.access, tr(R.string.perm_access), tr(R.string.ob_perm_access)) { app.sordina.service.SordinaAccess.openSettings(ctx) }
         }
     }
 }
@@ -434,10 +446,10 @@ private val CHATS = setOf(
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun Distracting(app: SordinaApp, apps: List<AppEntry>, usage: Map<String, Double>, ops: Ops) {
-    val installed = remember(apps) { apps.filter { !it.isWork }.distinctBy { it.packageName } }
+    val installed = remember(apps) { apps.filter { !it.isWork && !it.isWeb }.distinctBy { it.packageName } }
     val candidates = remember(installed, usage) {
         installed.filter { a ->
-            val cat = runCatching { a.info.applicationInfo.category }.getOrDefault(-1)
+            val cat = a.info?.applicationInfo?.category ?: -1
             a.packageName !in CHATS && (Categories.isSocial(a.packageName) || a.packageName in VIDEO ||
                 cat == android.content.pm.ApplicationInfo.CATEGORY_VIDEO || cat == android.content.pm.ApplicationInfo.CATEGORY_GAME)
         }.sortedWith(compareByDescending<AppEntry> { usage[it.packageName] ?: 0.0 }.thenBy { it.label.lowercase() })
@@ -705,26 +717,6 @@ private fun MiniChip(text: String, icon: androidx.compose.ui.graphics.vector.Ima
     }
 }
 
-/** Il segno di Sordina, l'onda smorzata, nei colori del tema (si legge anche al buio). */
-@Composable
-fun Wave(modifier: Modifier = Modifier) {
-    val c = S.c
-    androidx.compose.foundation.Canvas(modifier) {
-        val k = minOf(size.width / 60f, size.height / 31f)
-        val ox = (size.width - 60f * k) / 2f
-        fun x(v: Float) = ox + (v - 25f) * k
-        fun y(v: Float) = (v - 37f) * k
-        fun wave(x0: Float, yy: Float, a: Float, half: Float) = androidx.compose.ui.graphics.Path().apply {
-            moveTo(x(x0), y(yy))
-            quadraticTo(x(x0 + half / 2), y(yy - a), x(x0 + half), y(yy))
-            quadraticTo(x(x0 + half * 1.5f), y(yy + a), x(x0 + half * 2), y(yy))
-        }
-        drawPath(wave(34f, 46f, 6f, 20f), c.ink.copy(alpha = 0.35f), style = androidx.compose.ui.graphics.drawscope.Stroke(4f * k, cap = androidx.compose.ui.graphics.StrokeCap.Round))
-        drawPath(wave(28f, 60f, 16f, 26f), c.ink, style = androidx.compose.ui.graphics.drawscope.Stroke(5.5f * k, cap = androidx.compose.ui.graphics.StrokeCap.Round))
-        drawCircle(c.accent, 5f * k, androidx.compose.ui.geometry.Offset(x(80f), y(60f)))
-    }
-}
-
 @Composable
 fun Done(ok: Boolean, label: String) {
     val c = S.c
@@ -785,34 +777,6 @@ fun CalendarPicker(app: SordinaApp, ops: Ops) {
     }
 }
 
-/** Indirizzo, token e prova di Home Assistant. */
-@Composable
-fun HaForm(app: SordinaApp, ops: Ops) {
-    val prefs = app.prefs
-    var url by remember { mutableStateOf(prefs.haUrl) }
-    var token by remember { mutableStateOf("") }
-    var result by remember { mutableStateOf<String?>(null) }
-    var testing by remember { mutableStateOf(false) }
-    var alarms by remember { mutableStateOf(prefs.appLevels[HomeAssistant.COMPANION_PKG] == Level.SEMPRE) }
-    Field(url, { url = it }, "http://homeassistant.local:8123", keyboard = KeyboardType.Uri)
-    Field(token, { token = it }, if (prefs.haTokenEnc.isNotBlank()) tr(R.string.ha_token_saved) else tr(R.string.ha_token), password = true)
-    Hint(tr(R.string.ha_hint))
-    if (testing) {
-        LaunchedEffect(Unit) {
-            prefs.haUrl = url
-            if (token.isNotBlank()) app.ha.setToken(token)
-            result = withContext(Dispatchers.IO) { app.ha.test() }
-            testing = false
-            ops.changed()
-        }
-    }
-    Secondary(if (testing) tr(R.string.trying) else tr(R.string.save_test), Modifier.fillMaxWidth()) { if (!testing) testing = true }
-    result?.let { Hint(it) }
-    Toggle(tr(R.string.ha_alarms), alarms) { v ->
-        alarms = v
-        prefs.setAppLevel(HomeAssistant.COMPANION_PKG, if (v) Level.SEMPRE else null)
-    }
-}
 
 
 /**
@@ -917,12 +881,15 @@ private fun AllSet(perms: PermState, label: String, onGo: () -> Unit, onLater: (
     val grow = remember { androidx.compose.animation.core.Animatable(0.85f) }
     LaunchedEffect(Unit) { grow.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.55f, stiffness = 260f)) }
     Column(Modifier.fillMaxSize().padding(bottom = 24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
-        Wave(Modifier.width(120.dp).height(62.dp))
-        Spacer(Modifier.height(28.dp))
+        Mascot(Mood.DONE, Modifier.size(150.dp))
+        Spacer(Modifier.height(20.dp))
         androidx.compose.material3.Text(tr(R.string.ob_done_title), style = androidx.compose.ui.text.TextStyle(fontSize = 34.sp, lineHeight = 40.sp, color = c.ink))
         Spacer(Modifier.height(10.dp))
         if (!perms.home) androidx.compose.material3.Text(tr(R.string.ob_done_home), Modifier.padding(horizontal = 12.dp),
             style = androidx.compose.ui.text.TextStyle(fontSize = 15.sp, lineHeight = 21.sp, color = c.soft, textAlign = androidx.compose.ui.text.style.TextAlign.Center))
+        val ctx = androidx.compose.ui.platform.LocalContext.current
+        androidx.compose.material3.Text(tr(R.string.ob_backup), Modifier.padding(top = 14.dp, start = 12.dp, end = 12.dp).clickableNoRipple { Backup.openSettings(ctx) },
+            style = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = c.soft, textAlign = androidx.compose.ui.text.style.TextAlign.Center, textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline))
         Spacer(Modifier.height(40.dp))
         androidx.compose.foundation.layout.Box(
             Modifier.fillMaxWidth().height(68.dp).graphicsLayer { scaleX = grow.value; scaleY = grow.value }

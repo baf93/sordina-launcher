@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icona a tema di Android: la sagoma della sordina, con occhi e sorriso ritagliati -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <group android:translateX="54" android:translateY="58.2" android:scaleX="0.6" android:scaleY="0.6">
+        <path android:fillColor="#FF000000" android:pathData="M-3,-54 L3,-54 Q9,-54 9,-48 L9,-46 Q9,-40 3,-40 L-3,-40 Q-9,-40 -9,-46 L-9,-48 Q-9,-54 -3,-54 Z" />
+        <path android:fillColor="#FF000000" android:fillType="evenOdd"
+            android:pathData="M-12,-42 Q0,-46 12,-42 L33,26 Q34,40 0,40 Q-34,40 -33,26 Z M-11.6,2 a3.6,3.6 0 1,0 7.2,0 a3.6,3.6 0 1,0 -7.2,0 Z M4.4,2 a3.6,3.6 0 1,0 7.2,0 a3.6,3.6 0 1,0 -7.2,0 Z M-7,11 Q0,20 7,11 Q0,15 -7,11 Z" />
+    </group>
+</vector>

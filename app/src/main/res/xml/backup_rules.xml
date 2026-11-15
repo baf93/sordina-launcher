@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nel backup di Google va solo la copia di ogni giorno (vedi Backup.kt): niente notifiche, niente sfondo -->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="file" path="backup/sordina.json" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="file" path="backup/sordina.json" />
+    </device-transfer>
+</data-extraction-rules>

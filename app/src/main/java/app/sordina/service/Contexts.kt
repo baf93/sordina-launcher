@@ -1,5 +1,6 @@
 package app.sordina.service
 
+import app.sordina.data.Tally
 import android.Manifest
 import android.app.UiModeManager
 import android.content.BroadcastReceiver
@@ -42,6 +43,7 @@ class Contexts(private val service: SordinaListener) {
     private var sessions: MediaSessionManager.OnActiveSessionsChangedListener? = null
     private val callbacks = HashMap<MediaController, MediaController.Callback>()
     private var lastSsid: String? = null
+    private val labels = HashMap<String, String?>()
 
     fun start() {
         // Com'è adesso, per il cervello: i cambi arriveranno dai ricevitori
@@ -67,18 +69,22 @@ class Contexts(private val service: SordinaListener) {
         val r = object : BroadcastReceiver() {
             override fun onReceive(c: Context, i: Intent) {
                 when (i.action) {
-                    UiModeManager.ACTION_ENTER_CAR_MODE -> { app.routines.onContext("car"); app.brain.onState("car", true); Scheduler.refresh(c) }
-                    UiModeManager.ACTION_EXIT_CAR_MODE -> { app.brain.onState("car", false); Scheduler.refresh(c) }
+                    UiModeManager.ACTION_ENTER_CAR_MODE -> { Tally.onCar(); app.routines.onContext("car"); app.brain.onState("car", true); Scheduler.refresh(c) }
+                    UiModeManager.ACTION_EXIT_CAR_MODE -> { Tally.onCarExit(c); app.brain.onState("car", false); Scheduler.refresh(c) }
                     Intent.ACTION_POWER_CONNECTED -> {
                         app.brain.onState("chg", true)
                         app.brain.tuneIfDue(true)
                         if (LocalTime.now().hour >= 20) app.routines.onContext("charge")
                     }
                     Intent.ACTION_POWER_DISCONNECTED -> app.brain.onState("chg", false)
+                    // Schermo acceso: prima che tu guardi, le posticipate aggiornate (un messaggio urgente
+                    // arrivato in una chat in sordina) tornano; e il freno ricomincia a guardare, se serve
+                    Intent.ACTION_SCREEN_ON -> { SordinaListener.sync(); BrakeGuard.screenOn(c, app.prefs) }
                 }
             }
         }
         val f = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON)
             addAction(UiModeManager.ACTION_ENTER_CAR_MODE)
             addAction(UiModeManager.ACTION_EXIT_CAR_MODE)
             addAction(Intent.ACTION_POWER_CONNECTED)
@@ -91,6 +97,7 @@ class Contexts(private val service: SordinaListener) {
             override fun onReceive(c: Context, i: Intent) {
                 val on = androidAuto(c, force = true)
                 app.brain.onState("car", on)
+                if (on) Tally.onCar() else Tally.onCarExit(c)
                 if (on) app.routines.onContext("car")
                 Scheduler.refresh(c)
             }
@@ -182,8 +189,11 @@ class Contexts(private val service: SordinaListener) {
         fun playing(c: MediaController) = c.playbackState?.state.let { it == PlaybackState.STATE_PLAYING || it == PlaybackState.STATE_BUFFERING }
         val c = all.firstOrNull { playing(it) } ?: all.firstOrNull { it.metadata != null && it.playbackState?.state == PlaybackState.STATE_PAUSED }
         if (c == null) { app.signals.setMusic(null, null); return }
-        val label = c?.packageName?.let { pkg ->
-            runCatching { service.packageManager.getApplicationLabel(service.packageManager.getApplicationInfo(pkg, 0)).toString() }.getOrNull()
+        // Il nome dell'app si chiede ad Android una volta sola: lo stato della musica cambia spesso
+        val label = c.packageName?.let { pkg ->
+            labels.getOrPut(pkg) {
+                runCatching { service.packageManager.getApplicationLabel(service.packageManager.getApplicationInfo(pkg, 0)).toString() }.getOrNull()
+            }
         }
         app.signals.setMusic(c, label)
     }

@@ -1,5 +1,6 @@
 package app.sordina.ui
 
+import app.sordina.data.Backup
 import app.sordina.ui.theme.autoAccent
 import app.sordina.data.Prefs
 import androidx.compose.ui.text.style.TextOverflow
@@ -53,6 +54,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
@@ -76,6 +78,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
@@ -90,6 +94,7 @@ import app.sordina.data.RuleTarget
 import app.sordina.data.Rules
 import app.sordina.data.Search
 import app.sordina.service.SordinaListener
+import app.sordina.service.SordinaAccess
 import app.sordina.ui.theme.Abstracts
 import app.sordina.ui.theme.S
 import app.sordina.ui.theme.ThemeFamily
@@ -105,9 +110,9 @@ private const val REPO = "https://github.com/baf93/sordina-launcher"
 
 private enum class Sub(val parent: String?) {
     MAIN(null),
-    NOTIF("MAIN"), HOME("MAIN"), BRAKE("MAIN"), SEARCH("MAIN"), THEMES("MAIN"), GENERAL("MAIN"),
-    PEOPLE("NOTIF"), ALWAYS("NOTIF"), RULES("NOTIF"), ORDER("NOTIF"), LEVELS("RULES"),
-    BRAKED("BRAKE"), HIDDEN("BRAKE"), PINNED("SEARCH"), EXCLUDED("SEARCH"), HA("HOME"), CAR_APPS("HOME"), PERMS("GENERAL"), CREDITS("GENERAL"), LANG("GENERAL"),
+    NOTIF("MAIN"), HOME("MAIN"), BRAKE("MAIN"), SEARCH("MAIN"), THEMES("MAIN"), GENERAL("MAIN"), PROGRESS("MAIN"),
+    PEOPLE("NOTIF"), ALWAYS("NOTIF"), RULES("NOTIF"), ORDER("HOME"), LEVELS("RULES"),
+    BRAKED("BRAKE"), HIDDEN("BRAKE"), MASCOTS("HOME"), PINNED("SEARCH"), EXCLUDED("SEARCH"), HA("MAIN"), CAR_APPS("HOME"), PERMS("GENERAL"), CREDITS("GENERAL"), LANG("GENERAL"),
 }
 
 private fun hm(min: Int) = Moments.fmt(min)
@@ -134,9 +139,13 @@ fun SettingsScreen(
     ops: Ops,
     onBack: () -> Unit,
     /** La lista delle app nascoste (si apre dopo l'impronta) */
+    /** Si apre già sugli adesivi (dal riquadro di un adesivo appena vinto) */
+    stickers: Boolean = false,
     hiddenApps: @Composable () -> Unit = {},
 ) {
-    var sub by rememberSaveable { mutableStateOf(Sub.MAIN) }
+    var sub by rememberSaveable { mutableStateOf(if (stickers) Sub.PROGRESS else Sub.MAIN) }
+    // Solo all'apertura: poi la pagina si comporta come sempre
+    val jumpToStickers = remember { stickers }
     var tick by remember { mutableIntStateOf(0) }
     // Ogni pagina ricorda dove eri: tornando indietro, sei lì
     val scrolls = remember { HashMap<Sub, ScrollState>() }
@@ -179,59 +188,36 @@ fun SettingsScreen(
                         }
                         Spacer(Modifier.height(18.dp))
                     } else Spacer(Modifier.height(10.dp))
+                    TopicCard(tr(R.string.t_progress), tr(R.string.t_progress_d), Icons.Rounded.EmojiEvents) { sub = Sub.PROGRESS }
                     TopicCard(tr(R.string.perm_notifications), tr(R.string.t_notif_d), Icons.Rounded.NotificationsActive) { sub = Sub.NOTIF }
                     TopicCard(tr(R.string.perm_home), tr(R.string.t_home_d), Icons.Rounded.Home) { sub = Sub.HOME }
                     TopicCard(tr(R.string.s_brake), tr(R.string.t_brake_d), Icons.Rounded.PanTool) { sub = Sub.BRAKE }
                     TopicCard(tr(R.string.s_search), tr(R.string.t_search_d), Icons.Rounded.Search) { sub = Sub.SEARCH }
+                    TopicCard(tr(R.string.s_ha), tr(R.string.t_ha_d), Icons.Rounded.Lightbulb) { sub = Sub.HA }
                     TopicCard(tr(R.string.t_themes), tr(R.string.t_themes_d), Icons.Rounded.Palette) { sub = Sub.THEMES }
                     TopicCard(tr(R.string.t_general), tr(R.string.t_general_d), Icons.Rounded.Tune) { sub = Sub.GENERAL }
                 }
 
                 // ── Notifiche: cosa passa subito e cosa aspetta
                 Sub.NOTIF -> Page(tr(R.string.perm_notifications), null, back, scrollOf(page)) {
-                    // Tre gruppi, dal più semplice al più fine: persone, app, tipi di notifica. Tocchi una voce e scegli.
+                    // Persone e app, divise per come vanno: chi passa sempre e chi resta in sordina. Tocchi un gettone e cambi.
                     val refresh = { tick++; ops.changed(); SordinaListener.reapply(ctx) }
                     Topic(tr(R.string.cat_people))
-                    Choices(app, apps, Kind.PEOPLE, tr(R.string.n_add_person), Icons.Rounded.PersonAdd, { sub = Sub.PEOPLE }, refresh)
+                    Choices(app, apps, Kind.PEOPLE, { sub = Sub.PEOPLE }, null, refresh)
                     Topic(tr(R.string.kind_apps))
-                    Choices(app, apps, Kind.APPS, tr(R.string.n_add_app), Icons.Rounded.Add, { sub = Sub.LEVELS }, refresh)
-                    Topic(tr(R.string.n_advanced), tr(R.string.n_adv_hint))
-                    Choices(app, apps, Kind.TYPES, tr(R.string.n_add_from_notif), Icons.Rounded.Notifications, { sub = Sub.RULES }, refresh)
+                    Choices(app, apps, Kind.APPS, { sub = Sub.ALWAYS }, { sub = Sub.RULES }, refresh)
                     // Le scorciatoie intelligenti: valgono per tutti
                     Topic(tr(R.string.n_also))
                     Group {
-                        Toggle(tr(R.string.s_urgent), prefs.urgentEnabled, tr(R.string.s_urgent_hint), Icons.Rounded.PriorityHigh) { v -> change { prefs.urgentEnabled = v } }
-                        Toggle(tr(R.string.s_talk), prefs.talkPass, tr(R.string.h_talk), Icons.Rounded.Forum) { v -> change { prefs.talkPass = v; if (!v) Talking.clear() } }
+                        Toggle(tr(R.string.s_urgent), prefs.urgentEnabled, null, Icons.Rounded.PriorityHigh) { v -> change { prefs.urgentEnabled = v } }
+                        Toggle(tr(R.string.s_talk), prefs.talkPass, null, Icons.Rounded.Forum) { v -> change { prefs.talkPass = v; if (!v) Talking.clear() } }
                         Toggle(tr(R.string.s_system), prefs.systemPass, null, Icons.Rounded.Settings) { v -> change { prefs.systemPass = v } }
-                    }
-                    // In auto valgono le stesse regole di sempre; in più, il telefono squilla solo per le persone importanti
-                    Topic(tr(R.string.s_scene_car))
-                    Group {
-                        Toggle(tr(R.string.n_car_calls_only), prefs.carQuiet && perms.policy, if (perms.policy) tr(R.string.n_car_calls_hint) else tr(R.string.s_car_quiet_access), Icons.Rounded.DirectionsCar) { v ->
-                            if (v && !perms.policy) runCatching { ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
-                            change { prefs.carQuiet = v }
-                        }
-                    }
-                    Topic(tr(R.string.sec_page))
-                    Group {
-                        val orders = listOf(
-                            Option(tr(R.string.s_order_auto), tr(R.string.s_order_auto_hint)),
-                            Option(tr(R.string.s_order_arrival)),
-                            Option(tr(R.string.s_order_yours)),
-                        )
-                        val oi = prefs.sordinaOrder.coerceIn(0, 2)
-                        Pick(tr(R.string.s_order), orders[oi].label, orders, { it == prefs.sordinaOrder }, icon = Icons.Rounded.Sort, title = tr(R.string.s_order_title)) { i ->
-                            change { prefs.sordinaOrder = i }
-                            if (i == 2) sub = Sub.ORDER
-                        }
-                        if (prefs.sordinaOrder == 2) Line(tr(R.string.s_your_order), icon = Icons.Rounded.Reorder) { sub = Sub.ORDER }
                     }
                 }
 
                 // ── Home: come cambia durante il giorno e cosa sa
                 Sub.HOME -> Page(tr(R.string.perm_home), null, back, scrollOf(page)) {
-                    // Cosa c'è in Casa: ognuna si spegne con un tocco
-                    Topic(tr(R.string.n_home_shows))
+                    // Cosa c'è in Home: ognuna si spegne con un tocco
                     Group {
                         val loc = granted(Manifest.permission.ACCESS_COARSE_LOCATION)
                         Toggle(tr(R.string.s_weather), prefs.homeWeather && loc, null, Icons.Rounded.Cloud) { v ->
@@ -244,6 +230,18 @@ fun SettingsScreen(
                         }
                         if (prefs.homeAgenda && perms.calendar) CalendarPick(app, ops)
                         Toggle(tr(R.string.n_cards), prefs.homeCards, null, Icons.Rounded.AutoAwesome) { v -> change { prefs.homeCards = v } }
+                        // Solo nella versione di prova: tutti i disegni, uno sotto l'altro
+                        if ((ctx.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) Line("Tutte le sordine", "", null, Icons.Rounded.Collections) { sub = Sub.MASCOTS }
+                    }
+                    // Doppio tocco sul fondo di Casa: spegne lo schermo. Serve l'accessibilità di Sordina
+                    Topic(tr(R.string.n_gestures))
+                    Group {
+                        val access by SordinaAccess.on.collectAsState()
+                        // Come il freno istantaneo: senza accessibilità resta spento, e accenderlo porta al permesso
+                        Toggle(tr(R.string.s_double_tap), access && prefs.doubleTapLock, if (access) null else tr(R.string.s_double_tap_hint), Icons.Rounded.TouchApp) { v ->
+                            change { prefs.doubleTapLock = v }
+                            if (v && !access) SordinaAccess.openSettings(ctx)
+                        }
                     }
                     // I momenti: cosa sono, detto in una riga
                     Topic(tr(R.string.n_moments))
@@ -259,6 +257,10 @@ fun SettingsScreen(
                         Hour(tr(R.string.s_scene_evening), prefs.homeEvening, prefs.eveningFrom, listOf(17, 18, 19, 20, 21, 22), Icons.Rounded.WbTwilight) { on, m -> prefs.homeEvening = on; prefs.eveningFrom = m }
                         Hour(tr(R.string.s_scene_night), prefs.homeNight, prefs.nightFrom, listOf(21, 22, 23, 0, 1), Icons.Rounded.Bedtime) { on, m -> prefs.homeNight = on; prefs.nightFrom = m }
                         Toggle(tr(R.string.s_scene_car), prefs.homeCar, null, Icons.Rounded.DirectionsCar) { v -> change { prefs.homeCar = v } }
+                        if (prefs.homeCar) Toggle(tr(R.string.n_car_calls_only), prefs.carQuiet && perms.policy, if (perms.policy) null else tr(R.string.s_car_quiet_access), Icons.Rounded.Call) { v ->
+                            if (v && !perms.policy) runCatching { ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                            change { prefs.carQuiet = v }
+                        }
                     }
                     if (prefs.homeCar) {
                         // Fino a tre app, in una riga sola: con meno app i pulsanti si allargano
@@ -268,11 +270,20 @@ fun SettingsScreen(
                             onMove = { i, j -> change { val l = car.toMutableList(); l[i] = l[j].also { l[j] = l[i] }; prefs.carApps = l } },
                             add = if (car.size < 3) tr(R.string.n_add_app) else null) { sub = Sub.CAR_APPS }
                     }
-                    Topic(tr(R.string.kind_home))
+                    // La pagina Sordina si apre da Casa: il suo ordine si sceglie qui
+                    Topic(tr(R.string.sec_page))
                     Group {
-                        if (granted(Manifest.permission.ACCESS_FINE_LOCATION)) Line(tr(R.string.s_recognize_home), tr(R.string.on_m), null, Icons.Rounded.Wifi)
-                        else Line(tr(R.string.s_recognize_home), tr(R.string.turn_on), null, Icons.Rounded.Wifi) { ops.request(Manifest.permission.ACCESS_FINE_LOCATION) }
-                        Line(tr(R.string.s_ha), if (app.ha.configured) tr(R.string.connected) else tr(R.string.connect), null, Icons.Rounded.Lightbulb) { sub = Sub.HA }
+                        val orders = listOf(
+                            Option(tr(R.string.s_order_auto), tr(R.string.s_order_auto_hint)),
+                            Option(tr(R.string.s_order_arrival)),
+                            Option(tr(R.string.s_order_yours)),
+                        )
+                        val oi = prefs.sordinaOrder.coerceIn(0, 2)
+                        Pick(tr(R.string.s_order), orders[oi].label, orders, { it == prefs.sordinaOrder }, icon = Icons.Rounded.Sort, title = tr(R.string.s_order_title)) { i ->
+                            change { prefs.sordinaOrder = i }
+                            if (i == 2) sub = Sub.ORDER
+                        }
+                        if (prefs.sordinaOrder == 2) Line(tr(R.string.s_your_order), icon = Icons.Rounded.Reorder) { sub = Sub.ORDER }
                     }
                 }
 
@@ -294,7 +305,20 @@ fun SettingsScreen(
                                 change { prefs.brakeFrom = windows[i].first; prefs.brakeTo = windows[i].second }
                             }
                             Toggle(tr(R.string.s_brake_grow), prefs.brakeGrow, tr(R.string.s_brake_grow_hint), Icons.AutoMirrored.Rounded.TrendingUp) { v -> change { prefs.brakeGrow = v } }
-                            Toggle(tr(R.string.s_brake_guard), prefs.brakeGuard, tr(R.string.h_guard), Icons.Rounded.History) { v -> change { prefs.brakeGuard = v } }
+                            Toggle(tr(R.string.s_brake_guard), prefs.brakeGuard, tr(R.string.h_guard), Icons.Rounded.History) { v ->
+                                change { prefs.brakeGuard = v }
+                                SordinaAccess.refresh()
+                            }
+                            // Con l'accessibilità il freno arriva subito, e senza controlli continui (meno batteria)
+                            if (prefs.brakeGuard) {
+                                val access by SordinaAccess.on.collectAsState()
+                                // Acceso da solo con l'accessibilità; senza, resta spento e accenderlo porta al permesso
+                                Toggle(tr(R.string.s_instant_brake), access && prefs.instantBrake, tr(R.string.s_instant_brake_hint), Icons.Rounded.Bolt) { v ->
+                                    change { prefs.instantBrake = v }
+                                    SordinaAccess.refresh()
+                                    if (v && !access) SordinaAccess.openSettings(ctx)
+                                }
+                            }
                         }
                     }
                     // In fondo, senza dire quante sono: le app nascoste, dietro impronta o PIN
@@ -347,6 +371,25 @@ fun SettingsScreen(
                     }
                     Topic(tr(R.string.sec_backup))
                     Group {
+                        // La copia di ogni giorno nel backup di Google, e (dopo una reinstallazione) quella ritrovata da rimettere
+                        val day = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+                        val found = remember { Backup.found(ctx) }
+                        var restore by remember { mutableStateOf(false) }
+                        if (found != null) Line(tr(R.string.s_restore, found.format(day)), icon = Icons.Rounded.Restore, trailing = {}) { restore = true }
+                        if (restore) Confirm(tr(R.string.s_restore_title), tr(R.string.s_restore_text), tr(R.string.s_restore_do),
+                            onConfirm = { if (Backup.restore(ctx)) Backup.restart(ctx) }, onDismiss = { restore = false })
+                        var how by remember { mutableStateOf(false) }
+                        val last = remember { Backup.last(ctx) }
+                        Line(tr(R.string.s_gbackup), hint = last?.let { tr(R.string.s_gbackup_last, it.format(day)) } ?: tr(R.string.s_gbackup_none),
+                            icon = Icons.Rounded.CloudUpload) { how = true }
+                        if (how) Sheet(tr(R.string.s_gbackup), onDismiss = { how = false }) {
+                            Column(Modifier.padding(horizontal = 24.dp)) {
+                                Text(tr(R.string.s_gbackup_how), style = TextStyle(fontSize = 16.sp, lineHeight = 23.sp, color = S.c.ink))
+                                Spacer(Modifier.height(18.dp))
+                                Primary(tr(R.string.s_gbackup_open), Modifier.fillMaxWidth()) { Backup.openSettings(ctx) }
+                                Spacer(Modifier.height(12.dp))
+                            }
+                        }
                         Line(tr(R.string.s_export), icon = Icons.Rounded.Upload, trailing = {}) { ops.exportSettings() }
                         Line(tr(R.string.s_import), icon = Icons.Rounded.Download, trailing = {}) { ops.importSettings() }
                         var ask by remember { mutableStateOf(false) }
@@ -465,20 +508,11 @@ fun SettingsScreen(
                         }
                     }
                 }
+                // Solo nella versione di prova: ogni disegno della mascotte, grande, con dove compare
+                Sub.MASCOTS -> Page("Tutte le sordine", null, back, scrollOf(page)) { MascotGallery() }
+                Sub.PROGRESS -> Page(tr(R.string.t_progress), null, back, scrollOf(page)) { ProgressPage(app.habits, jump = jumpToStickers) }
                 Sub.HA -> Page(tr(R.string.s_ha), null, back, scrollOf(page)) {
-                    Spacer(Modifier.height(8.dp))
-                    Box(Modifier.clip(RoundedCornerShape(22.dp)).background(S.c.card).padding(horizontal = 16.dp, vertical = 10.dp)) {
-                        Column { HaForm(app, ops) }
-                    }
-                    if (app.ha.configured) {
-                        HaCalendars(app, ops)
-                        Spacer(Modifier.height(18.dp))
-                        var ask by remember { mutableStateOf(false) }
-                        Group { Line(tr(R.string.disconnect), icon = Icons.Rounded.LinkOff) { ask = true } }
-                        if (ask) Confirm(tr(R.string.s_ha_disc_title), tr(R.string.s_ha_disc_text), tr(R.string.disconnect),
-                            onConfirm = { change { app.ha.setToken(""); prefs.haUrl = ""; prefs.haStatusEntity = ""; prefs.haCalendars = emptySet() } },
-                            onDismiss = { ask = false })
-                    }
+                    HaSettings(app, ops) { tick++ }
                 }
                 Sub.PERMS -> Page(tr(R.string.s_perms), null, back, scrollOf(page)) {
                     Spacer(Modifier.height(8.dp))
@@ -490,8 +524,11 @@ fun SettingsScreen(
                         PermLine(tr(R.string.perm_mic), tr(R.string.h_p_mic), perms.mic, Icons.Rounded.Mic) { ops.request(Manifest.permission.RECORD_AUDIO) }
                         PermLine(tr(R.string.perm_calls), tr(R.string.h_p_calls), perms.call, Icons.Rounded.Call) { ops.request(Manifest.permission.CALL_PHONE) }
                         PermLine(tr(R.string.s_calendar), tr(R.string.h_p_cal), perms.calendar, Icons.Rounded.CalendarToday) { ops.request(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR) }
+                        PermLine(tr(R.string.perm_location), tr(R.string.h_p_location), granted(Manifest.permission.ACCESS_FINE_LOCATION), Icons.Rounded.Wifi) { ops.request(Manifest.permission.ACCESS_FINE_LOCATION) }
                         // Se Android addormenta Sordina, le notifiche non vengono più smistate
                         PermLine(tr(R.string.s_battery), tr(R.string.s_battery_hint), SordinaListener.batteryFree(ctx), Icons.Rounded.BatteryChargingFull) { ops.openBatterySettings() }
+                        // Facoltativa: freno istantaneo e doppio tocco per spegnere
+                        PermLine(tr(R.string.perm_access), tr(R.string.ob_perm_access), perms.access, Icons.Rounded.Accessibility) { SordinaAccess.openSettings(ctx) }
                     }
                 }
             }
@@ -501,68 +538,126 @@ fun SettingsScreen(
     }
 }
 
-private enum class Kind { PEOPLE, APPS, TYPES }
+private enum class Kind { PEOPLE, APPS }
 
-/** Una scelta salvata: una persona (importante o con una regola), un'app, un tipo di notifica. */
-private class Choice(val name: String, val note: String?, val level: Level?, val important: Boolean, val key: String, val set: (Level?) -> Unit)
+/** Una scelta salvata: una persona (importante o con una regola), un'app, un tipo di notifica di un'app. */
+private class Choice(val name: String, val pkg: String?, val passes: Boolean, val important: Boolean, val key: String, val set: (Level?) -> Unit)
 
 /**
- * Un gruppo di scelte: ogni voce col suo modo a destra, in fondo "Aggiungi". Tocchi una voce e cambi o togli.
- * Le persone importanti passano sempre: per loro scegli solo se anche nei gruppi in cui scrivono.
+ * Persone o app, divise per come vanno: chi passa sempre e chi resta in sordina. Ogni voce è un gettone;
+ * lo tocchi e scegli fra le due, o lo togli. "Silenziosa", di chi l'aveva già, sta con chi passa.
+ * I tipi di notifica di un'app stanno con le app, col nome del tipo accanto.
  */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun Choices(app: SordinaApp, apps: List<AppEntry>, kind: Kind, add: String, addIcon: ImageVector, onAdd: () -> Unit, onChange: () -> Unit) {
+private fun Choices(app: SordinaApp, apps: List<AppEntry>, kind: Kind, onAdd: () -> Unit, onAddFromNotif: (() -> Unit)?, onChange: () -> Unit) {
     val prefs = app.prefs
     val names = prefs.ruleNames
     fun appName(pkg: String) = apps.firstOrNull { it.packageName == pkg }?.label ?: pkg
-    val inGroups = prefs.importantInGroups
     val list = buildList {
         when (kind) {
             Kind.PEOPLE -> {
-                prefs.importantNames.sorted().forEach { n ->
-                    add(Choice(n.replaceFirstChar { it.uppercase() }, if (n in inGroups) tr(R.string.n_in_groups) else tr(R.string.n_only_chats), Level.SEMPRE, true, n) { lv ->
+                prefs.importantNames.forEach { n ->
+                    add(Choice(n.replaceFirstChar { it.uppercase() }, null, true, true, n) { lv ->
                         if (lv == null) app.people.removeImportantName(n)
+                        else if (lv == Level.RIEPILOGO) { app.people.removeImportantName(n); prefs.personRules = prefs.personRules + (n to lv) }
                     })
                 }
-                prefs.personRules.toSortedMap().forEach { (k, v) ->
-                    add(Choice(names[k] ?: k.replaceFirstChar { it.uppercase() }, null, v, false, k) { lv ->
+                prefs.personRules.forEach { (k, v) ->
+                    add(Choice(names[k] ?: k.replaceFirstChar { it.uppercase() }, null, v != Level.RIEPILOGO, false, k) { lv ->
                         prefs.personRules = if (lv == null) prefs.personRules - k else prefs.personRules + (k to lv)
                     })
                 }
             }
-            Kind.APPS -> prefs.appLevels.entries.sortedBy { appName(it.key).lowercase() }.forEach { (k, v) ->
-                add(Choice(appName(k), null, v, false, k) { lv -> prefs.setAppLevel(k, lv) })
+            Kind.APPS -> {
+                prefs.appLevels.forEach { (k, v) -> add(Choice(appName(k), k, v != Level.RIEPILOGO, false, k) { lv -> prefs.setAppLevel(k, lv) }) }
+                prefs.channelRules.forEach { (k, v) ->
+                    val pkg = k.substringBefore('|')
+                    add(Choice(names[k] ?: (appName(pkg) + " · " + k.substringAfter('|')), pkg, v != Level.RIEPILOGO, false, k) { lv ->
+                        prefs.channelRules = if (lv == null) prefs.channelRules - k else prefs.channelRules + (k to lv)
+                    })
+                }
             }
-            Kind.TYPES -> prefs.channelRules.toSortedMap().forEach { (k, v) ->
-                add(Choice(names[k] ?: (appName(k.substringBefore('|')) + " · " + k.substringAfter('|')), null, v, false, k) { lv ->
-                    prefs.channelRules = if (lv == null) prefs.channelRules - k else prefs.channelRules + (k to lv)
-                })
+        }
+    }.sortedBy { it.name.lowercase() }
+    var editing by remember { mutableStateOf<Choice?>(null) }
+    val inGroups = prefs.importantInGroups
+    for (pass in listOf(true, false)) {
+        val mine = list.filter { it.passes == pass }
+        ChipBox(if (pass) tr(R.string.r_pass_title) else tr(R.string.lv_summary)) {
+            if (mine.isEmpty()) Text(tr(R.string.r_empty), Modifier.padding(vertical = 6.dp), style = TextStyle(fontSize = 15.sp, color = S.c.soft))
+            mine.forEach { w -> RuleChip(w.name, w.pkg, grouped = w.important && w.key in inGroups) { editing = w } }
+            // Si aggiunge sempre da chi passa: per la sordina c'è già tutto il resto
+            if (pass) {
+                AddChip(if (kind == Kind.PEOPLE) tr(R.string.n_add_person) else tr(R.string.n_add_app), onAdd)
+                onAddFromNotif?.let { AddChip(tr(R.string.n_add_from_notif), it) }
             }
         }
     }
-    var editing by remember { mutableStateOf<Choice?>(null) }
-    Group {
-        list.forEach { w -> Line(w.name, w.level?.label.orEmpty(), w.note) { editing = w } }
-        Line(add, icon = addIcon, trailing = {}, onClick = onAdd)
-    }
     editing?.let { w ->
         Sheet(w.name, onDismiss = { editing = null }) {
+            SheetRow(tr(R.string.lv_always), if (w.passes) Icons.Rounded.Check else null, accent = w.passes) {
+                if (!w.passes) w.set(Level.SEMPRE)
+                editing = null; onChange()
+            }
+            SheetRow(tr(R.string.lv_summary), if (!w.passes) Icons.Rounded.Check else null, accent = !w.passes) {
+                if (w.passes) w.set(Level.RIEPILOGO)
+                editing = null; onChange()
+            }
             if (w.important) {
                 val on = w.key in prefs.importantInGroups
-                SheetRow(tr(R.string.n_only_chats), if (!on) Icons.Rounded.Check else null, accent = !on) {
-                    prefs.importantInGroups = prefs.importantInGroups - w.key; editing = null; onChange()
-                }
-                SheetRow(tr(R.string.n_in_groups), if (on) Icons.Rounded.Check else null, accent = on) {
-                    prefs.importantInGroups = prefs.importantInGroups + w.key; editing = null; onChange()
-                }
-            } else Level.entries.forEach { lv ->
-                SheetRow(lv.label, if (lv == w.level) Icons.Rounded.Check else null, lv.hint, accent = lv == w.level) {
-                    if (lv != w.level) w.set(lv)
+                Toggle(tr(R.string.n_in_groups), on, null, Icons.Rounded.Groups) { v ->
+                    prefs.importantInGroups = if (v) prefs.importantInGroups + w.key else prefs.importantInGroups - w.key
                     editing = null; onChange()
                 }
             }
             SheetRow(tr(R.string.remove), Icons.Rounded.DeleteOutline) { w.set(null); editing = null; onChange() }
         }
+    }
+}
+
+/** Un riquadro con un titolo piccolo e i gettoni che vanno a capo. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun ChipBox(title: String, content: @Composable () -> Unit) {
+    val c = S.c
+    Column(Modifier.padding(vertical = 4.dp).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(c.card).padding(14.dp)) {
+        Text(title, Modifier.padding(start = 4.dp, bottom = 10.dp), style = TextStyle(fontSize = 14.sp, color = c.soft))
+        androidx.compose.foundation.layout.FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) { content() }
+    }
+}
+
+/** Un gettone: l'icona dell'app o l'iniziale della persona, e il nome. */
+@Composable
+private fun RuleChip(name: String, pkg: String?, grouped: Boolean, onClick: () -> Unit) {
+    val c = S.c
+    Row(
+        Modifier.clip(RoundedCornerShape(20.dp)).background(c.line).clickable(onClick = onClick).padding(start = 5.dp, end = 14.dp, top = 5.dp, bottom = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (pkg != null) Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) { AppDot(pkg) }
+        else Box(Modifier.size(28.dp).clip(CircleShape).background(c.accent.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
+            Text(name.take(1).uppercase(), style = TextStyle(fontSize = 13.sp, color = c.accent))
+        }
+        Spacer(Modifier.width(8.dp))
+        Text(name, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 15.sp, color = c.ink))
+        if (grouped) Icon(Icons.Rounded.Groups, tr(R.string.n_in_groups), Modifier.padding(start = 6.dp).size(16.dp), tint = c.soft)
+    }
+}
+
+@Composable
+private fun AddChip(label: String, onClick: () -> Unit) {
+    val c = S.c
+    Row(
+        Modifier.clip(RoundedCornerShape(20.dp)).border(1.dp, c.dot, RoundedCornerShape(20.dp)).clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Rounded.Add, null, Modifier.size(16.dp), tint = c.accent)
+        Spacer(Modifier.width(6.dp))
+        Text(label, style = TextStyle(fontSize = 14.sp, color = c.accent))
     }
 }
 
@@ -673,9 +768,9 @@ private fun CalendarPick(app: SordinaApp, ops: Ops) {
     ) { sel = cals[it].id; app.prefs.calendarId = sel; ops.changed() }
 }
 
-/** I calendari di Home Assistant da mostrare in Casa, dentro la pagina di Home Assistant. */
+/** I calendari di Home Assistant da mostrare in Casa, insieme a quello del telefono. */
 @Composable
-private fun HaCalendars(app: SordinaApp, ops: Ops) {
+internal fun HaCalendars(app: SordinaApp, ops: Ops) {
     val prefs = app.prefs
     var list by remember { mutableStateOf<List<Pair<String, String>>?>(null) }
     var chosen by remember { mutableStateOf(prefs.haCalendars) }
@@ -696,6 +791,7 @@ private fun HaCalendars(app: SordinaApp, ops: Ops) {
         }
     }
 }
+
 
 /** Una riga di un elenco lungo: i blocchi si toccano, il primo e l'ultimo arrotondati, come un [Group]. */
 @Composable
@@ -733,7 +829,6 @@ private fun LevelsPage(app: SordinaApp, apps: List<AppEntry>, onBack: () -> Unit
         val opts = listOf<Pair<Level?, Option>>(
             null to Option(tr(R.string.s_order_auto), tr(R.string.lv_auto_hint)),
             Level.SEMPRE to Option(tr(R.string.lv_always), tr(R.string.lv_always_hint)),
-            Level.SUBITO to Option(tr(R.string.lv_silent), tr(R.string.lv_silent_hint)),
             Level.RIEPILOGO to Option(tr(R.string.lv_summary), tr(R.string.lv_summary_hint)),
         )
         Sheet(a.label, onDismiss = { editing = null }) {
@@ -764,7 +859,9 @@ private fun RulesPage(app: SordinaApp, apps: List<AppEntry>, onChange: () -> Uni
     // Quello che c'è adesso nella tendina: si tocca per dargli una regola (es. la notifica fissa di un'app)
     var tray by remember { mutableStateOf(SordinaListener.tray()) }
     var ruleFor by remember { mutableStateOf<RuleTarget?>(null) }
-    LaunchedEffect(Unit) { while (true) { kotlinx.coroutines.delay(5_000); tray = SordinaListener.tray() } }
+    // Niente giri: la lista si rilegge quando arriva o sparisce una notifica
+    val trayVersion by SordinaListener.trayChanges.collectAsState()
+    LaunchedEffect(trayVersion) { tray = SordinaListener.tray() }
     val icons = remember { HashMap<String, ImageBitmap?>() }
     fun icon(pkg: String) = icons.getOrPut(pkg) {
         AppIcons.forPackage(ctx.packageManager, pkg, 96)
@@ -1029,6 +1126,51 @@ private fun ColorSheet(initial: Int, onDismiss: () -> Unit, onPick: (Int) -> Uni
             }
             Spacer(Modifier.height(20.dp))
             Primary(tr(R.string.done), Modifier.fillMaxWidth()) { onPick(color.toArgb()) }
+        }
+    }
+}
+
+/** Solo per la prova: ogni sordina, grande, con il posto in cui compare. */
+@Composable
+private fun MascotGallery() {
+    val c = S.c
+    val full = listOf(
+        Mood.HELLO to "Permessi (primo avvio)", Mood.WAIT to "Freno · attesa", Mood.READY to "Freno · puoi aprire",
+        Mood.WON to "Freno · lascia", Mood.SIGH to "Freno · apri comunque", Mood.REST to "Pagina Sordina vuota",
+        Mood.DONE to "Fine del primo avvio", Mood.FIX to "Impostazioni",
+    )
+    val lines = listOf(
+        Pose.AWAKE to "Home", Pose.QUIET to "Home · modalità di Android", Pose.NIGHT to "Home · notte",
+        Pose.DRIVE to "Home · auto",
+    )
+    run {
+        // Tutti gli adesivi, vinti, per controllarli a colpo d'occhio
+        app.sordina.data.Medal.entries.chunked(3).forEach { row ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                row.forEach { m ->
+                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Sticker(m, true, 104.dp)
+                        Text(medalName(m), maxLines = 1, style = TextStyle(fontSize = 12.sp, color = c.soft))
+                    }
+                }
+                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+        full.forEachIndexed { i, (m, where) ->
+            Column(Modifier.fillMaxWidth().padding(vertical = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                // Si ritocca per rivedere l'animazione
+                var k by remember { mutableStateOf(0) }
+                androidx.compose.runtime.key(k) { Mascot(m, Modifier.size(220.dp).clickableNoRipple { k++ }) }
+                Text("${i + 1} · $where", style = TextStyle(fontSize = 16.sp, color = c.ink))
+                Text(m.name, style = TextStyle(fontSize = 12.sp, color = c.soft))
+            }
+        }
+        lines.forEachIndexed { i, (p, where) ->
+            Column(Modifier.fillMaxWidth().padding(vertical = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                MascotGlyph(p, c.soft, Modifier.size(200.dp))
+                Text("${full.size + i + 1} · $where", style = TextStyle(fontSize = 16.sp, color = c.ink))
+                Text(p.name, style = TextStyle(fontSize = 12.sp, color = c.soft))
+            }
         }
     }
 }

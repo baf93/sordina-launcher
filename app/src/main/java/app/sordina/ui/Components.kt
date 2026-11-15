@@ -29,6 +29,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.imeAnimationTarget
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -42,19 +44,56 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle as JTextStyle
 import java.util.Locale
+import androidx.lifecycle.repeatOnLifecycle
 
-/** Ora attuale, aggiornata allo scoccare di ogni minuto. */
+/**
+ * Ora attuale, aggiornata allo scoccare di ogni minuto. Nessun ciclo: è Android che avvisa (il "minuto"
+ * di sistema, il cambio d'ora), e solo mentre Casa si vede. In sottofondo o a schermo spento non succede niente.
+ */
 @Composable
 fun rememberNow(): LocalDateTime {
     var now by remember { mutableStateOf(LocalDateTime.now()) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            val n = LocalDateTime.now()
-            now = n
-            delay((60 - n.second) * 1000L - n.nano / 1_000_000 + 50)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(owner) {
+        val r = object : android.content.BroadcastReceiver() {
+            override fun onReceive(c: android.content.Context, i: android.content.Intent) { now = LocalDateTime.now() }
         }
+        val f = android.content.IntentFilter().apply {
+            addAction(android.content.Intent.ACTION_TIME_TICK)
+            addAction(android.content.Intent.ACTION_TIME_CHANGED)
+            addAction(android.content.Intent.ACTION_TIMEZONE_CHANGED)
+        }
+        var on = false
+        fun register() {
+            if (on) return
+            on = true
+            now = LocalDateTime.now()
+            androidx.core.content.ContextCompat.registerReceiver(context, r, f, androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED)
+        }
+        fun unregister() { if (on) { on = false; runCatching { context.unregisterReceiver(r) } } }
+        val obs = androidx.lifecycle.LifecycleEventObserver { _, e ->
+            when (e) {
+                androidx.lifecycle.Lifecycle.Event.ON_START -> register()
+                androidx.lifecycle.Lifecycle.Event.ON_STOP -> unregister()
+                else -> {}
+            }
+        }
+        owner.lifecycle.addObserver(obs)
+        onDispose { owner.lifecycle.removeObserver(obs); unregister() }
     }
     return now
+}
+
+/** Ripete [block] ogni [every] millisecondi, solo mentre la schermata si vede: in sottofondo si ferma. */
+@Composable
+fun WhileVisible(every: Long, key: Any? = Unit, block: () -> Unit) {
+    val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    LaunchedEffect(owner, key) {
+        owner.lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+            while (true) { delay(every); block() }
+        }
+    }
 }
 
 fun LocalDateTime.dateLabel(): String {
@@ -529,3 +568,11 @@ fun RoundIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, label: Stri
         contentAlignment = androidx.compose.ui.Alignment.Center,
     ) { androidx.compose.material3.Icon(icon, label, Modifier.size(20.dp), tint = if (enabled) c.ink else c.dot) }
 }
+
+/**
+ * Come imePadding, ma salta subito alla posizione finale invece di seguire la tastiera fotogramma per fotogramma:
+ * una sola impaginazione per apertura o chiusura, non venti (e il campo di testo non riavvisa la tastiera ogni volta).
+ */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@androidx.compose.runtime.Composable
+fun Modifier.imeJump(): Modifier = this.then(Modifier.windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.imeAnimationTarget))

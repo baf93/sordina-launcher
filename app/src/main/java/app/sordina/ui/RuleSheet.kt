@@ -96,7 +96,8 @@ fun RuleSheet(
                 }
             }
             RuleLabel(tr(R.string.rule_does))
-            Level.entries.forEach { lv ->
+            // Due scelte: passa o resta in sordina. "Silenziosa" si vede solo se era già la regola
+            Level.entries.filter { it != Level.SUBITO || it == current }.forEach { lv ->
                 LevelRow(lv.label, lv.hint, lv == current) { feel.confirm(); onDismiss(); onRule(t, scope, lv) }
             }
             // "Togli regola" c'è sempre (spento se non c'è nulla da togliere): niente salti sotto il dito

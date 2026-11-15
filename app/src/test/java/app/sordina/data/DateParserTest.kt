@@ -19,6 +19,11 @@ class DateParserTest {
         assertEquals("calcetto", r.rest)
     }
 
+    @Test fun oraConLoSpazio() {
+        assertEquals(LocalDateTime.of(2026, 11, 11, 13, 30), p("Alle 13 30").whenAt!!.start)
+        assertEquals(LocalDateTime.of(2026, 11, 11, 13, 30), p("ci vediamo alle 13 e 30").whenAt!!.start)
+    }
+
     @Test fun domaniAlle1730() {
         val r = p("domani alle 17:30 dentista")
         assertEquals(LocalDateTime.of(2026, 11, 12, 17, 30), r.whenAt!!.start)

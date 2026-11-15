@@ -43,21 +43,28 @@ object Motion {
     fun <T> enter(ms: Int = NORMAL, delay: Int = 0) = androidx.compose.animation.core.tween<T>(ms, delay, Ease)
     fun <T> exit(ms: Int = FAST) = androidx.compose.animation.core.tween<T>(ms, 0, Out)
 
+    /**
+     * Tutte le transizioni sono fra pagine a schermo intero: senza sizeTransform = null Compose rimisurerebbe
+     * la dimensione a ogni fotogramma per animarla, ma non cambia mai.
+     */
+    private fun page(enter: androidx.compose.animation.EnterTransition, exit: androidx.compose.animation.ExitTransition) =
+        androidx.compose.animation.ContentTransform(enter, exit, sizeTransform = null)
+
     /** Una pagina più in fondo arriva da destra; tornando, quella prima rientra da sinistra. */
     fun forward(deeper: Boolean): androidx.compose.animation.ContentTransform {
         val d = if (deeper) 1 else -1
-        return (androidx.compose.animation.fadeIn(enter(220, 60)) + androidx.compose.animation.slideInHorizontally(enter(NORMAL + 40)) { it / 6 * d }) togetherWith
-            (androidx.compose.animation.fadeOut(exit()) + androidx.compose.animation.slideOutHorizontally(enter(NORMAL)) { -it / 12 * d })
+        return page(androidx.compose.animation.fadeIn(enter(220, 60)) + androidx.compose.animation.slideInHorizontally(enter(NORMAL + 40)) { it / 6 * d },
+            androidx.compose.animation.fadeOut(exit()) + androidx.compose.animation.slideOutHorizontally(enter(NORMAL)) { -it / 12 * d })
     }
 
     /** Tra le schermate principali: Casa → ricerca → app si sale, tornando si scende. */
     fun vertical(up: Boolean): androidx.compose.animation.ContentTransform {
         val d = if (up) 1 else -1
-        return (androidx.compose.animation.fadeIn(enter(220, 60)) + androidx.compose.animation.slideInVertically(enter(NORMAL + 60)) { it / 14 * d }) togetherWith
-            (androidx.compose.animation.fadeOut(exit()) + androidx.compose.animation.slideOutVertically(enter(NORMAL)) { -it / 28 * d })
+        return page(androidx.compose.animation.fadeIn(enter(220, 60)) + androidx.compose.animation.slideInVertically(enter(NORMAL + 60)) { it / 14 * d },
+            androidx.compose.animation.fadeOut(exit()) + androidx.compose.animation.slideOutVertically(enter(NORMAL)) { -it / 28 * d })
     }
 
     /** Un cambio sul posto: una dissolvenza e basta. */
     fun fade(): androidx.compose.animation.ContentTransform =
-        androidx.compose.animation.fadeIn(enter(NORMAL, 60)) togetherWith androidx.compose.animation.fadeOut(exit())
+        page(androidx.compose.animation.fadeIn(enter(NORMAL, 60)), androidx.compose.animation.fadeOut(exit()))
 }

@@ -34,6 +34,12 @@ class Habits(private val context: Context) {
     /** Quante volte hai aperto comunque quest'app nell'ultima ora. */
     fun opensLastHour(pkg: String): Int = recentOpens(pkg, System.currentTimeMillis()).size
 
+    /**
+     * Quanto costa aprire comunque: il doppio di una visita, e una visita in più per ogni volta che l'hai già
+     * aperta comunque nell'ultima ora (×2, ×3, ×4…). Per un detox, cedere costa più di quanto rende resistere.
+     */
+    fun openCost(pkg: String, gain: Int): Int = gain * (2 + opensLastHour(pkg))
+
     /** (pacchetto, per abitudine) di oggi. */
     fun brakesToday(): List<Pair<String, Boolean>> =
         sp.getString(todayKey(), "").orEmpty().split('|').filter { it.contains(':') }
@@ -43,8 +49,20 @@ class Habits(private val context: Context) {
 
     data class Day(val unlocks: Int?, val minutes: Map<String, Int>)
 
-    /** Sblocchi e minuti in primo piano da mezzanotte (serve l'accesso all'utilizzo). */
+    @Volatile private var todayCache: Pair<Long, Day>? = null
+    private val appTodayCache = HashMap<String, Pair<Long, Pair<Int, Int>?>>()
+
+    /**
+     * Sblocchi e minuti in primo piano da mezzanotte (serve l'accesso all'utilizzo). Legge tutta la giornata:
+     * il risultato vale qualche minuto, non si rilegge a ogni ritorno a Casa.
+     */
     fun today(): Day {
+        val now = System.currentTimeMillis()
+        todayCache?.let { (at, d) -> if (now - at in 0 until 5 * 60_000) return d }
+        return readToday().also { todayCache = now to it }
+    }
+
+    private fun readToday(): Day {
         val usm = context.getSystemService(UsageStatsManager::class.java) ?: return Day(null, emptyMap())
         val start = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val now = System.currentTimeMillis()
@@ -72,6 +90,12 @@ class Habits(private val context: Context) {
 
     /** Aperture e minuti di oggi per una sola app (tutte le aperture, non solo da Sordina). null senza accesso all'utilizzo. */
     fun appToday(pkg: String): Pair<Int, Int>? {
+        val now = System.currentTimeMillis()
+        synchronized(appTodayCache) { appTodayCache[pkg]?.let { (at, v) -> if (now - at in 0 until 60_000) return v } }
+        return readAppToday(pkg).also { v -> synchronized(appTodayCache) { appTodayCache.clear(); appTodayCache[pkg] = now to v } }
+    }
+
+    private fun readAppToday(pkg: String): Pair<Int, Int>? {
         val usm = context.getSystemService(UsageStatsManager::class.java) ?: return null
         val start = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val now = System.currentTimeMillis()
@@ -106,11 +130,14 @@ class Habits(private val context: Context) {
 
     // Le rinunce: ogni "Lascia stare" davanti a un'app frenata. Restano 60 giorni, solo qui.
 
-    data class Skip(val day: LocalDate, val pkg: String, val minutes: Int)
+    /** [hour]: l'ora della scelta (0..23), -1 per le voci salvate prima che si ricordasse */
+    data class Skip(val day: LocalDate, val pkg: String, val minutes: Int, val hour: Int = -1)
 
     private fun skips(): List<Skip> = sp.getString("skips", "").orEmpty().split('|').mapNotNull { s ->
         val p = s.split(',')
-        if (p.size != 3) null else runCatching { Skip(LocalDate.parse(p[0]), p[1], p[2].toInt()) }.getOrNull()
+        if (p.size !in 3..4) null else runCatching {
+            Skip(LocalDate.parse(p[0]), p[1], p[2].toInt(), p.getOrNull(3)?.toInt() ?: -1)
+        }.getOrNull()
     }
 
     /** Minuti che una rinuncia fa tornare: la durata media di una visita a quell'app oggi (tra 2 e 30). */
@@ -120,47 +147,302 @@ class Habits(private val context: Context) {
     }
 
     fun logSkip(pkg: String, minutes: Int) {
+        if (minutes > 0) Tally.add("skips")
         val keep = LocalDate.now().minusDays(60)
-        val list = skips().filter { it.day.isAfter(keep) } + Skip(LocalDate.now(), pkg, minutes)
-        sp.edit().putString("skips", list.joinToString("|") { "${it.day},${it.pkg},${it.minutes}" }).apply()
+        val (old, recent) = skips().partition { !it.day.isAfter(keep) }
+        val e = sp.edit()
+        // Le voci più vecchie di 60 giorni escono dall'elenco, ma i loro minuti restano nel totale (il livello non scende da solo)
+        if (old.isNotEmpty()) e.putInt("bank", sp.getInt("bank", 0) + old.sumOf { it.minutes })
+        val list = recent + Skip(LocalDate.now(), pkg, minutes, java.time.LocalTime.now().hour)
+        e.putString("skips", list.joinToString("|") { if (it.hour < 0) "${it.day},${it.pkg},${it.minutes}" else "${it.day},${it.pkg},${it.minutes},${it.hour}" }).apply()
     }
 
-    /** Aperta dal freno: toglie [minutes] dal totale (una voce negativa). La serie non si rompe: conta solo le vittorie. */
+    /** Aperta comunque dal freno: perdi i minuti di una visita (una voce negativa nel saldo di oggi). */
     fun logOpen(pkg: String, minutes: Int) {
         if (minutes > 0) logSkip(pkg, -minutes)
     }
 
-    data class Streak(val today: Int, val days: Int, val weekMinutes: Int, val week: List<Boolean>, val totalMinutes: Int = 0) {
+    /**
+     * Il punteggio. Ogni "Lascia stare" vale +minuti di una visita, ogni "Apri comunque" −gli stessi minuti.
+     * Il saldo di una giornata decide com'è andata: in positivo è tua, in negativo la perdi e la serie si azzera,
+     * a zero (nessuna scelta) è neutra e non conta né in un senso né nell'altro.
+     */
+    data class Streak(
+        /** Quante volte hai lasciato stare oggi */
+        val today: Int,
+        /** Il saldo di oggi, in minuti: quelli ripresi meno quelli persi */
+        val balance: Int,
+        /** Giornate in positivo di fila (le neutre non interrompono). Con oggi in negativo è 0 */
+        val days: Int,
+        /** Il saldo degli ultimi 7 giorni (anche negativo) */
+        val weekMinutes: Int,
+        /** Lunedì → domenica: 1 in positivo, -1 in negativo, 0 neutra o ancora da venire */
+        val week: List<Int>,
+        /** Il saldo di sempre: fa salire (e scendere) il livello */
+        val totalMinutes: Int = 0,
+        /** La serie più lunga di sempre (negli ultimi 60 giorni) */
+        val best: Int = 0,
+    ) {
         /** Il livello: sale con i minuti ripresi (15, 45, 90, 150… per i livelli 2, 3, 4, 5…). */
         val level: Int get() = levelOf(totalMinutes)
     }
 
-
-    /** Rinunce di oggi, giorni di fila con almeno una rinuncia, minuti ripresi negli ultimi 7 giorni, la settimana (lunedì → domenica). */
     fun streak(): Streak {
-        val all = skips()
+        val list = skips()
+        return summarize(list, LocalDate.now(), sp.getInt("bank", 0), brakeSince(list), lastLost(list), Medal.cleanBonus(Tally.get("cleanDays")))
+    }
+
+    /** Il giorno della prima app frenata (per chi c'era già: la prima scelta nello storico). null senza app frenate. */
+    private fun brakeSince(list: List<Skip>): LocalDate? {
+        if (app.sordina.SordinaApp.of(context).prefs.braked.isEmpty()) return null
+        Tally.text("brakeSince").takeIf { it.isNotEmpty() }?.let { return runCatching { LocalDate.parse(it) }.getOrNull() }
+        val first = list.minOfOrNull { it.day } ?: LocalDate.now()
+        Tally.putText("brakeSince", first.toString())
+        return first
+    }
+
+    /** L'ultima giornata finita in negativo: si ricorda anche quando esce dallo storico (oggi non è ancora finita). */
+    private fun lastLost(list: List<Skip>): LocalDate? {
         val today = LocalDate.now()
-        val wins = all.filter { it.minutes > 0 }
-        val days = wins.map { it.day }.toSet()
-        var d = if (today in days) today else today.minusDays(1)
+        val seen = list.groupBy { it.day }.filter { (d, v) -> d.isBefore(today) && v.sumOf { it.minutes } < 0 }.keys.maxOrNull()
+        val stored = Tally.text("lastLost").takeIf { it.isNotEmpty() }?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+        if (seen != null && (stored == null || seen.isAfter(stored))) { Tally.putText("lastLost", seen.toString()); return seen }
+        return stored
+    }
+
+    /** Il saldo di ogni giornata con almeno una scelta, negli ultimi 60 giorni. */
+    fun days(): Map<LocalDate, Int> = skips().groupBy { it.day }.mapValues { (_, v) -> v.sumOf { it.minutes } }
+
+    /**
+     * Le imprese vinte, con il giorno. Una volta vinta, un'impresa resta: anche quando lo storico la dimentica.
+     * [fresh]: rilegge anche le giornate al telefono non ancora salvate (legge l'utilizzo: mai sul thread principale).
+     */
+    fun medals(fresh: Boolean = false): Map<Medal, LocalDate> = score(fresh).first
+
+    /** Le imprese vinte e il calcolo completo (per vedere a che punto sono le altre). */
+    fun score(fresh: Boolean = false): Pair<Map<Medal, LocalDate>, Medal.Score> {
+        val have = storedMedals()
+        val score = Medal.Score(skips(), LocalDate.now(), sp.getInt("bank", 0), evidence(fresh))
+        val now = score.earned - have.keys
+        if (now.isEmpty()) return have to score
+        val all = have + now.associateWith { LocalDate.now() }
+        sp.edit().putString("medals", all.entries.joinToString(",") { "${it.key.name}:${it.value}" }).apply()
+        return all to score
+    }
+
+    /** Le imprese appena vinte (e da ora ricordate). */
+    fun newMedals(fresh: Boolean = false): List<Medal> {
+        val before = storedMedals().keys
+        return (medals(fresh).keys - before).sortedBy { it.ordinal }
+    }
+
+    /** Quello che serve alle imprese oltre allo storico del freno. */
+    private fun evidence(fresh: Boolean): Medal.Evidence {
+        val prefs = app.sordina.SordinaApp.of(context).prefs
+        val list = skips()
+        val since = brakeSince(list)
+        val lost = lastLost(list)
+        val today = LocalDate.now()
+        // I conteggi di sempre partono da quello che c'è nello storico (per chi c'era già)
+        Tally.raise("skips", list.count { it.minutes > 0 })
+        Tally.raise("best", summarize(list, today, sp.getInt("bank", 0), since, lost).best)
         var run = 0
-        while (d in days) { run++; d = d.minusDays(1) }
-        val weekStart = today.minusDays((today.dayOfWeek.value - 1).toLong())
-        return Streak(
-            today = wins.count { it.day == today },
-            days = run,
-            weekMinutes = all.filter { !it.day.isBefore(today.minusDays(6)) }.sumOf { it.minutes }.coerceAtLeast(0),
-            week = (0..6).map { weekStart.plusDays(it.toLong()) in days },
-            totalMinutes = all.sumOf { it.minutes }.coerceAtLeast(0),
+        list.forEach { if (it.minutes > 0) { run++; Tally.raise("skipRun", run) } else if (it.minutes < 0) run = 0 }
+        val installed = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).firstInstallTime }.getOrDefault(System.currentTimeMillis())
+        val rules = prefs.appLevels.values + prefs.personRules.values + prefs.channelRules.values
+        val phone = phoneDays(fresh, prefs.braked, installed)
+        if (fresh) { countClean(list, phone, since); Tally.checkArrival(context) }
+        return Medal.Evidence(
+            skipsEver = Tally.get("skips"), bestEver = Tally.get("best"), skipRunEver = Tally.get("skipRun"),
+            brakeSince = since, lastLost = lost,
+            cleanTotal = Tally.get("cleanDays"), cleanRun = Tally.get("cleanRun"), cleanBest = Tally.get("cleanBest"), cleanWeekend = Tally.has("cleanWeekend"),
+            held = Tally.get("held"), readAllDays = maxOf(Tally.get("readAllDays"), if (Tally.has("readAll")) 1 else 0),
+            focus = maxOf(Tally.get("focusCount"), if (Tally.has("focus")) 1 else 0), deep = Tally.has("deep"), quietDay = Tally.has("quietDay"),
+            restNights = Tally.get("restNights"),
+            important = prefs.importantNames.isNotEmpty(), rule = Level.RIEPILOGO in rules,
+            braked = prefs.braked, hidden = prefs.hidden.isNotEmpty(), farewell = Tally.has("farewell"),
+            carTrips = Tally.get("car"), handsFree = Tally.get("handsFree"), longDrive = Tally.has("longDrive"),
+            nightDrive = Tally.has("nightDrive"), arrived = Tally.has("arrived"),
+            daysWithSordina = ((System.currentTimeMillis() - installed) / 86_400_000L).toInt(),
+            phone = phone,
         )
     }
+
+    /**
+     * Le giornate senza tentazioni: finite, con le app frenate (dal giorno dopo la prima), senza nessuna scelta nel
+     * freno e, se c'è l'utilizzo, senza nessuna app frenata in primo piano. Si contano una volta sola, in ordine.
+     */
+    private fun countClean(list: List<Skip>, phone: Map<LocalDate, Medal.PhoneDay>, since: LocalDate?) {
+        if (since == null) { Tally.putInt("cleanRun", 0); return }
+        val today = LocalDate.now()
+        val tried = list.map { it.day }.toSet()
+        val done = Tally.text("cleanAt").takeIf { it.isNotEmpty() }?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+        var d = listOfNotNull(done?.plusDays(1), since.plusDays(1), today.minusDays(59)).maxOrNull()!!
+        if (done != null && done.plusDays(1).isBefore(d)) Tally.putInt("cleanRun", 0)
+        while (d.isBefore(today)) {
+            val clean = d !in tried && phone[d]?.brakedAny != true
+            if (clean) {
+                Tally.add("cleanDays")
+                Tally.add("cleanRun")
+                Tally.raise("cleanBest", Tally.get("cleanRun"))
+                if (d.dayOfWeek == java.time.DayOfWeek.SUNDAY && Tally.get("cleanRun") >= 2) Tally.flag("cleanWeekend")
+            } else Tally.putInt("cleanRun", 0)
+            Tally.putText("cleanAt", d.toString())
+            d = d.plusDays(1)
+        }
+    }
+
+    // Le giornate al telefono: una lettura dell'utilizzo per giornata finita, una volta sola, e poi restano qui (60 giorni)
+
+    private fun phoneDays(fresh: Boolean, braked: Set<String>, installed: Long): Map<LocalDate, Medal.PhoneDay> {
+        val zone = ZoneId.systemDefault()
+        val stored = Tally.text("phone2").split('|').mapNotNull { s ->
+            val p = s.split(',')
+            if (p.size != 3) null else runCatching {
+                val f = p[2].toInt()
+                LocalDate.parse(p[0]) to p[1].split(':').let { (m, u) ->
+                    Medal.PhoneDay(m.toInt(), u.toInt(), f and 1 != 0, f and 2 != 0, f and 4 != 0, f and 8 != 0, f and 16 != 0,
+                        f and 32 != 0, f and 64 != 0, f and 128 != 0, f and 256 != 0)
+                }
+            }.getOrNull()
+        }.toMap().toMutableMap()
+        val today = LocalDate.now()
+        if (!fresh || Tally.text("phoneAt2") == today.toString()) return stored
+        // Android tiene l'utilizzo per circa una settimana: si leggono i giorni mancanti, dopo l'installazione
+        val first = maxOf(today.minusDays(7), java.time.Instant.ofEpochMilli(installed).atZone(zone).toLocalDate().plusDays(1))
+        var d = first
+        while (d.isBefore(today)) {
+            if (d !in stored) readPhoneDay(d, braked)?.let { stored[d] = it }
+            d = d.plusDays(1)
+        }
+        val keep = today.minusDays(60)
+        Tally.putText("phone2", stored.filterKeys { it.isAfter(keep) }.entries.joinToString("|") { (day, p) ->
+            val f = (if (p.late) 1 else 0) or (if (p.slowMorning) 2 else 0) or (if (p.air) 4 else 0) or (if (p.brakedMorning) 8 else 0) or (if (p.brakedLunch) 16 else 0) or
+                (if (p.nightOff) 32 else 0) or (if (p.dinnerOff) 64 else 0) or (if (p.offline6h) 128 else 0) or (if (p.brakedAny) 256 else 0)
+            "$day,${p.minutes}:${p.unlocks},$f"
+        })
+        Tally.putText("phoneAt2", today.toString())
+        return stored
+    }
+
+    /** Una giornata intera dall'utilizzo di Android. null se non c'è niente (manca l'accesso o il telefono era spento). */
+    private fun readPhoneDay(day: LocalDate, braked: Set<String>): Medal.PhoneDay? {
+        val usm = context.getSystemService(UsageStatsManager::class.java) ?: return null
+        val zone = ZoneId.systemDefault()
+        val start = day.atStartOfDay(zone).toInstant().toEpochMilli()
+        val end = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+        fun at(h: Int) = start + h * 3_600_000L
+        return runCatching {
+            val ev = usm.queryEvents(start, end)
+            val e = UsageEvents.Event()
+            var events = 0
+            var fg = 0L
+            val open = HashMap<String, Long>()
+            val unlocks = ArrayList<Long>()
+            var wake = 0L
+            var brakedMorning = false
+            var brakedLunch = false
+            var brakedAny = false
+            while (ev.hasNextEvent()) {
+                ev.getNextEvent(e)
+                events++
+                val t = e.timeStamp
+                when (e.eventType) {
+                    KEYGUARD_HIDDEN -> unlocks += t
+                    SCREEN_INTERACTIVE -> if (wake == 0L && t >= at(4)) wake = t
+                    UsageEvents.Event.MOVE_TO_FOREGROUND -> {
+                        if (e.packageName != context.packageName) open[e.packageName] = t
+                        if (e.packageName in braked) {
+                            brakedAny = true
+                            if (t < at(10)) brakedMorning = true
+                            if (t in at(12) until at(14)) brakedLunch = true
+                        }
+                    }
+                    UsageEvents.Event.MOVE_TO_BACKGROUND -> open.remove(e.packageName)?.let { fg += t - it }
+                }
+            }
+            open.values.forEach { fg += end - it }
+            if (events == 0) return@runCatching null
+            val day8 = unlocks.filter { it in at(8)..at(22) }
+            val gap = day8.zipWithNext().maxOfOrNull { (a, b) -> b - a } ?: 0L
+            Medal.PhoneDay(
+                minutes = (fg / 60_000).toInt(), unlocks = unlocks.size,
+                late = unlocks.any { it >= at(23) },
+                slowMorning = wake > 0 && unlocks.none { it > wake && it <= wake + 30 * 60_000L } && unlocks.any { it > wake },
+                air = gap >= 3 * 3_600_000L, brakedMorning = brakedMorning, brakedLunch = brakedLunch,
+                nightOff = unlocks.none { it < at(6) }, dinnerOff = unlocks.none { it in at(18) until at(20) },
+                offline6h = gap >= 6 * 3_600_000L, brakedAny = brakedAny,
+            )
+        }.getOrNull()
+    }
+
+    /** Gli adesivi già vinti, con il giorno: solo una lettura, niente calcoli. */
+    fun wonMedals(): Map<Medal, LocalDate> = storedMedals()
+
+    private fun storedMedals(): Map<Medal, LocalDate> = sp.getString("medals", "").orEmpty().split(',').mapNotNull { e ->
+        runCatching { Medal.valueOf(e.substringBefore(':')) to LocalDate.parse(e.substringAfter(':')) }.getOrNull()
+    }.toMap()
 
     companion object {
         /** Minuti ripresi per arrivare al livello [l]. */
         fun levelStart(l: Int): Int = 15 * (l - 1) * l / 2
         fun levelOf(minutes: Int): Int { var l = 1; while (levelStart(l + 1) <= minutes) l++; return l }
-        /** Quanto costa aprire: metà del premio, senza mai farti scendere di livello. */
-        fun penalty(s: Streak, gain: Int): Int = minOf((gain + 1) / 2, s.totalMinutes - levelStart(s.level)).coerceAtLeast(0)
+
+        /**
+         * Il punteggio da un elenco di scelte (vedi [Streak]). [bank]: i minuti delle voci già uscite dall'elenco.
+         * [since]: il giorno della prima app frenata. Da lì ogni giornata non persa conta nella serie, anche senza
+         * tentativi (non provarci neanche è il risultato migliore). [lastLost]: l'ultima giornata persa, anche se è già
+         * uscita dall'elenco. [bonus]: i minuti regalati al livello (le giornate senza tentazioni).
+         */
+        fun summarize(all: List<Skip>, today: LocalDate, bank: Int = 0, since: LocalDate? = null, lastLost: LocalDate? = null, bonus: Int = 0): Streak {
+            val byDay = all.groupBy { it.day }.mapValues { (_, v) -> v.sumOf { it.minutes } }
+            fun state(d: LocalDate) = Integer.signum(byDay[d] ?: 0)
+            var run = 0
+            var best = 0
+            if (since != null) {
+                val lost = listOfNotNull(byDay.filterValues { it < 0 }.keys.maxOrNull(), lastLost).maxOrNull()
+                val from = listOfNotNull(since, lost?.plusDays(1)).maxOrNull()!!
+                run = if (from.isAfter(today)) 0 else java.time.temporal.ChronoUnit.DAYS.between(from, today).toInt() + 1
+                // La migliore negli ultimi 60 giorni (quelle prima le ricorda il contatore delle imprese)
+                var d = maxOf(since, today.minusDays(60)); var cur = 0
+                while (!d.isAfter(today)) { cur = if (state(d) < 0) 0 else cur + 1; best = maxOf(best, cur); d = d.plusDays(1) }
+            } else if (state(today) >= 0) {
+                if (state(today) > 0) run++
+                val first = byDay.keys.minOrNull()
+                var d = today.minusDays(1)
+                while (first != null && !d.isBefore(first)) {
+                    val s = state(d)
+                    if (s < 0) break
+                    if (s > 0) run++
+                    d = d.minusDays(1)
+                }
+            }
+            val weekStart = today.minusDays((today.dayOfWeek.value - 1).toLong())
+            return Streak(
+                best = maxOf(run, best, if (since == null) bestRun(byDay, today) else 0),
+                today = all.count { it.day == today && it.minutes > 0 },
+                balance = byDay[today] ?: 0,
+                days = run,
+                weekMinutes = all.filter { !it.day.isBefore(today.minusDays(6)) }.sumOf { it.minutes },
+                week = (0..6).map { weekStart.plusDays(it.toLong()).let { d -> if (d.isAfter(today)) 0 else state(d) } },
+                totalMinutes = (bank + bonus + all.sumOf { it.minutes }).coerceAtLeast(0),
+            )
+        }
+
+        /** La serie più lunga: giornate in positivo di fila, le neutre non interrompono, una negativa sì. */
+        fun bestRun(byDay: Map<LocalDate, Int>, today: LocalDate): Int {
+            var d = byDay.keys.minOrNull() ?: return 0
+            var run = 0; var best = 0
+            while (!d.isAfter(today)) {
+                val v = byDay[d] ?: 0
+                if (v < 0) run = 0 else if (v > 0) run++
+                best = maxOf(best, run)
+                d = d.plusDays(1)
+            }
+            return best
+        }
+
         private const val KEYGUARD_HIDDEN = 18
+        private const val SCREEN_INTERACTIVE = 15
     }
 }

@@ -30,6 +30,7 @@ data class HaEntity(val id: String, val name: String, val state: String, val are
     }
 }
 
+
 /**
  * Home Assistant minimo: solo REST, solo quando serve. Nessuna connessione aperta in background.
  * Gli allarmi passano dall'app ufficiale di Home Assistant con il livello "Sempre".
@@ -38,7 +39,18 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
     @Volatile private var cache: List<HaEntity> = emptyList()
     @Volatile private var cacheAt = 0L
 
-    val configured: Boolean get() = prefs.haUrl.isNotBlank() && prefs.haTokenEnc.isNotBlank()
+    val configured: Boolean get() = prefs.haEnabled && prefs.haMode == "token" && prefs.haUrl.isNotBlank() && prefs.haTokenEnc.isNotBlank()
+
+    /** L'app ufficiale di Home Assistant: senza token, Assist si apre lì (con il suo collegamento, anche fuori casa). */
+    val appInstalled: Boolean get() = runCatching { context.packageManager.getPackageInfo(COMPANION_PKG, 0) }.isSuccess
+
+    /** Si può parlare con casa: col token da qui, senza token passando dall'app. */
+    val canAssist: Boolean get() = prefs.haEnabled && (configured || appInstalled)
+
+    /** Apre Assist nell'app di Home Assistant (microfono e tastiera). */
+    fun openAssist(): Boolean = runCatching {
+        context.startActivity(android.content.Intent(android.content.Intent.ACTION_ASSIST).setPackage(COMPANION_PKG).putExtra("start_listening", false).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+    }.isSuccess
 
     fun setToken(token: String) {
         prefs.haTokenEnc = if (token.isBlank()) "" else encrypt(token.trim())
@@ -94,6 +106,14 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
         cacheAt = System.currentTimeMillis()
         return out
     }
+
+    /** I nomi di entità e aree già scaricati (senza rete): parole di casa per riconoscere le frasi. */
+    fun names(): Set<String> {
+        val at = cacheAt
+        namesMemo.takeIf { it.first == at }?.let { return it.second }
+        return cache.flatMap { HomeTalk.learn(it.name + " " + (it.area ?: "")) }.toSet().also { namesMemo = at to it }
+    }
+    @Volatile private var namesMemo: Pair<Long, Set<String>> = -1L to emptySet()
 
     /** Passa la frase ad Assist: HA conosce stanze, alias ed entità esposte. Restituisce la risposta di HA, o null. */
     fun assist(text: String): String? {

@@ -20,7 +20,6 @@ sealed interface Act {
     data class Media(val keyCode: Int) : Act
     data class Navigate(val place: String) : Act
     data class Music(val query: String) : Act
-    data class Ha(val entity: HaEntity, val op: HaOp, val value: Int? = null) : Act
     /** Frase passata ad Assist di Home Assistant */
     data class Assist(val text: String) : Act
     data class Setting(val action: String) : Act
@@ -157,7 +156,9 @@ class Intents(
         val top = ranked.firstOrNull()
         val second = ranked.getOrNull(1)
         val confident = top != null && top.score >= 85 &&
-            (second == null || top.score - second.score >= 10 || top.id == learned || brain.learnedFor(raw, top) >= 0.7)
+            (second == null || top.score - second.score >= 10 || top.id == learned || brain.learnedFor(raw, top) >= 0.7 ||
+                // Una frase di casa: va ad Assist anche se un'app o una persona somigliano, a meno che sia un'impostazione del telefono
+                (top.kind == Kind.HOME && !(second.kind == Kind.SETTING && top.score - second.score < 10)))
         // Sicurezza bassa: "Cerca sul web" in cima
         val list = if (top == null || top.score < 45) listOf(web) + ranked else ranked + web
         return Understanding(list, confident)
@@ -396,9 +397,9 @@ class Intents(
         haVerbs[first]?.let { op0 ->
             val level = Regex("(?:al|a|su) (\\d{1,3}) ?(%|percento|per cento|gradi)?").find(restN)?.groupValues?.get(1)?.toIntOrNull()
             val target = restN.replace(Regex("(?:al|a|su) \\d{1,3} ?(%|percento|per cento|gradi)?"), "").trim()
-            if (ha.configured && target.isNotBlank()) {
+            if (ha.canAssist && target.isNotBlank()) {
                 // Casa: la frase va ad Assist, che conosce stanze, alias ed entità esposte
-                out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, tr(R.string.home_kind), Kind.HOME, if (first == "apri") 80 else 90, false, Act.Assist(ow.joinToString(" ")))
+                out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, if (first == "apri") 80 else 90, false, Act.Assist(ow.joinToString(" ")))
             }
             if (first == "apri") {
                 Search.apps(restN, apps, emptyMap(), 2).forEach { a ->
@@ -411,6 +412,15 @@ class Intents(
                 }
             }
             return
+        }
+        // Un canale TV ("metti Rai 1", "guarda il 5"): a casa, non nella musica
+        if (ha.canAssist && HomeTalk.channel(nw, prefs.homeWords + ha.names())) {
+            out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, 93, false, Act.Assist(ow.joinToString(" ")))
+            return
+        }
+        // Casa senza comando: domande e stati ("che luci sono accese", "quanti gradi in salotto") vanno ad Assist, non sul web
+        if (ha.canAssist) HomeTalk.score(nw, prefs.homeWords + ha.names())?.let { s ->
+            out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, s, false, Act.Assist(ow.joinToString(" ")))
         }
         // Musica
         if (first in setOf("metti", "ascolta", "riproduci", "suona") && restN.isNotBlank()) {
@@ -444,17 +454,6 @@ class Intents(
         return Candidate("quiet", tr(R.string.quiet_until, at), tr(R.string.quiet_hint), Kind.ACTION, 96, false, Act.Quiet(until))
     }
 
-    private fun haCandidate(e: HaEntity, op: HaOp, level: Int?, score: Int): Candidate {
-        val run = e.domain in setOf("script", "scene")
-        val res = when (op) {
-            HaOp.ON -> if (e.domain == "cover") R.string.ha_open else if (run) R.string.ha_run else R.string.ha_on
-            HaOp.OFF -> if (e.domain == "cover") R.string.ha_close else R.string.ha_off
-            HaOp.TOGGLE -> if (e.domain == "cover") (if (e.isOn) R.string.ha_close else R.string.ha_open) else if (run) R.string.ha_run else if (e.isOn) R.string.ha_off else R.string.ha_on
-            HaOp.LEVEL -> R.string.ha_set
-        }
-        val title = if (op == HaOp.LEVEL && level != null) tr(res, e.name, "$level" + (if (e.domain == "climate") "°" else "%")) else tr(if (op == HaOp.LEVEL) R.string.ha_on else res, e.name)
-        return Candidate("ha:${e.id}:$op", title, tr(R.string.home_state_x, e.state), Kind.HOME, score, false, Act.Ha(e, op, level))
-    }
 
     /** La persona più lunga che corrisponde all'inizio delle parole. (contatto, punteggio, parole usate) */
     private fun personIn(words: List<String>): Triple<Contact, Int, Int>? {

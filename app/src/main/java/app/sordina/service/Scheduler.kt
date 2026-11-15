@@ -13,36 +13,48 @@ import app.sordina.data.Moments
 import java.time.LocalDateTime
 
 /**
- * Un solo promemoria di sistema alla volta: la fine della sordina a tempo, o un giro ogni 6 ore
- * per rinnovare le notifiche in sordina e aggiornare la scheda.
+ * Un solo promemoria di sistema alla volta, e solo se serve: la fine della sordina a tempo, la fine di una
+ * conversazione in auto, o poco prima che scada la sospensione della prima notifica in sordina (di solito
+ * la rinnova prima lo sblocco del telefono, e il promemoria non suona mai). Niente in sordina, niente promemoria.
  */
 object Scheduler {
     const val ACTION_TICK = "app.sordina.TICK"
+    /** Il rinnovo di riserva: due ore prima che Android restituisca la notifica */
+    private const val RENEW_MARGIN = 2 * 3_600_000L
+    /** Il promemoria impostato adesso (0 = nessuno), per non chiederlo di nuovo ad Android se non cambia */
+    @Volatile private var scheduledAt = 0L
 
     fun refresh(context: Context) {
         val app = SordinaApp.of(context)
         app.silence.check()
         // Rinnova le notifiche in sordina (se il servizio è collegato)
         SordinaListener.sync()
-        app.status.update()
-        scheduleNext(context)
+        plan(context)
     }
 
-    private fun scheduleNext(context: Context) {
+    /** Rimette il promemoria al momento giusto; non tocca Android se è già lì. */
+    fun plan(context: Context) {
         val app = SordinaApp.of(context)
-        val now = LocalDateTime.now()
-        // Fine della sordina a tempo, se c'è; comunque un giro ogni 6 ore (rinnovo delle posticipate, Casa)
-        val focusEnd = app.moments.focusUntil()?.let { java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime() }
+        val now = System.currentTimeMillis()
+        val focusEnd = app.moments.focusUntil()
         // In auto: quando finisce la conversazione in corso, Non disturbare torna ai soli preferiti
-        val talkEnd = if (app.prefs.quietCar) Talking.lastUntil()?.let { java.time.Instant.ofEpochMilli(it + 1_000).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime() } else null
-        val next = listOfNotNull(focusEnd, talkEnd, now.plusHours(6)).min()
+        val talkEnd = if (app.prefs.quietCar) Talking.lastUntil()?.let { it + 1_000 } else null
+        val renew = app.store.held.value.values.filter { it.releaseAt > now }.minOfOrNull { it.releaseAt }
+            ?.let { maxOf(now + 60_000, it - RENEW_MARGIN) }
+        val next = listOfNotNull(focusEnd, talkEnd, renew).filter { it > now }.minOrNull()
         val am = context.getSystemService(AlarmManager::class.java)
         val pi = PendingIntent.getBroadcast(
             context, 0, Intent(context, TickReceiver::class.java).setAction(ACTION_TICK),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
+        if (next == null) {
+            if (scheduledAt != 0L) { runCatching { am.cancel(pi) }; scheduledAt = 0L }
+            return
+        }
         // Non serve la precisione al secondo: le notifiche tornano comunque all'ora giusta
-        val at = Moments.millis(next) + 5_000
+        val at = next + 5_000
+        if (at == scheduledAt) return
+        scheduledAt = at
         runCatching { am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi) }
     }
 }

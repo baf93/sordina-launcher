@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Onda smorzata: un suono che si attenua, e un punto d'accento dove si ferma -->
+<!-- La sordina d'ottone, la mascotte di Sordina: gli stessi tratti del disegno nell'app (ui/Mascot.kt) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <group android:translateX="-2.5">
-        <!-- L'eco, più leggera -->
-        <path android:strokeColor="#2B2722" android:strokeAlpha="0.35" android:strokeWidth="4"
-            android:strokeLineCap="round" android:fillColor="#00000000"
-            android:pathData="M34,46 Q44,40 54,46 T74,46" />
-        <path android:strokeColor="#2B2722" android:strokeWidth="5.5"
-            android:strokeLineCap="round" android:fillColor="#00000000"
-            android:pathData="M28,60 Q40,44 54,60 T80,60" />
-        <path android:fillColor="#B4523A"
-            android:pathData="M80,60 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0" />
+    <group android:translateX="54" android:translateY="58.2" android:scaleX="0.6" android:scaleY="0.6">
+        <path android:fillColor="#9A6A16" android:pathData="M-3,-54 L3,-54 Q9,-54 9,-48 L9,-46 Q9,-40 3,-40 L-3,-40 Q-9,-40 -9,-46 L-9,-48 Q-9,-54 -3,-54 Z" />
+        <path android:fillColor="#E8A93A" android:pathData="M-12,-42 Q0,-46 12,-42 L33,26 Q34,40 0,40 Q-34,40 -33,26 Z" />
+        <path android:fillColor="#B07A1E" android:pathData="M-30,24 Q0,34 30,24 L32,30 Q0,40 -32,30 Z" />
+        <path android:fillColor="#66D85A30" android:pathData="M-22,12 a5,3 0 1,0 10,0 a5,3 0 1,0 -10,0 M12,12 a5,3 0 1,0 10,0 a5,3 0 1,0 -10,0" />
+        <path android:fillColor="#3A2A0E" android:pathData="M-11.2,2 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0 M4.8,2 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0" />
+        <path android:strokeColor="#3A2A0E" android:strokeWidth="2.5" android:strokeLineCap="round"
+            android:fillColor="#00000000" android:pathData="M-6,12 Q0,18 6,12" />
     </group>
 </vector>

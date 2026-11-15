@@ -22,7 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
+import app.sordina.ui.imeJump
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -191,14 +191,14 @@ fun IntentScreen(
                 )
             }
             .systemBarsPadding()
-            .imePadding()
+            .imeJump()
             .padding(bottom = 12.dp),
     ) {
         OnBackdrop(topDark) {
             // Tutte le app: un'icona sola, in alto a destra, lontana dal pollice
             Row(Modifier.fillMaxWidth().padding(start = 28.dp, top = 6.dp, end = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                 // Il titolo: la domanda della barra di Casa, qui scritta in grande
-                if (query.isBlank()) Text(tr(R.string.home_search), style = TextStyle(fontSize = 30.sp, lineHeight = 36.sp, color = S.c.ink))
+                Text(tr(R.string.home_search), style = TextStyle(fontSize = 30.sp, lineHeight = 36.sp, color = S.c.ink))
                 Spacer(Modifier.weight(1f))
                 Box(
                     Modifier.size(44.dp).clip(CircleShape).background(surface())
@@ -505,7 +505,7 @@ private fun ActionProposal(cand: Candidate, actions: ProposalActions, modifier: 
     val glyph = when (val a = cand.act) {
         is Act.Call -> Icons.Rounded.Call
         is Act.Message -> Icons.AutoMirrored.Rounded.Chat
-        is Act.Ha, is Act.Assist -> Icons.Rounded.Home
+        is Act.Assist -> Icons.Rounded.Home
         is Act.Setting, Act.SordinaSettings -> Icons.Rounded.Settings
         else -> if (a is Act.Timer) Icons.Rounded.Timer else Icons.Rounded.Bolt
     }

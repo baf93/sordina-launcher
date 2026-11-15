@@ -43,6 +43,8 @@ class SordinaApp : Application() {
     override fun onCreate() {
         super.onCreate()
         Lang.init(this)
+        app.sordina.data.Tally.init(this)
+        app.sordina.data.Backup.onStart(this, prefs.onboarded)
         Lang.applyLegacy(this)
         status.createChannels()
         Scheduler.refresh(this)

@@ -82,7 +82,10 @@ data class Decision(val time: Long, val pkg: String, val appLabel: String, val l
 class NotifStore(context: Context) {
     private val file = File(context.filesDir, "held.json")
     private val learnFile = File(context.filesDir, "person_apps.json")
-    private val io = Executors.newSingleThreadExecutor()
+    private val io = Executors.newSingleThreadScheduledExecutor()
+    /** Una raffica di messaggi diventa una scrittura sola: si salva un attimo dopo l'ultima modifica */
+    private val heldDirty = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val learnDirty = java.util.concurrent.atomic.AtomicBoolean(false)
 
     private val _held = MutableStateFlow<Map<String, Held>>(emptyMap())
     val held: StateFlow<Map<String, Held>> = _held
@@ -93,35 +96,54 @@ class NotifStore(context: Context) {
 
     private val intents = HashMap<String, PendingIntent>()
     private val dismissedFile = File(context.filesDir, "dismissed.txt")
-    /** Notifiche segnate come lette mentre erano posticipate: quando tornano, si chiudono subito. */
-    private val dismissed = LinkedHashSet<String>()
+    /**
+     * Le notifiche segnate come lette, con il loro testo (un'impronta): se tornano uguali (Android che le restituisce
+     * dopo la sospensione, o l'app che le ripubblica il giorno dopo) si chiudono subito, ogni volta.
+     * Se sulla stessa notifica arriva un testo nuovo, è una notifica nuova e passa dalle regole.
+     */
+    private val read = LinkedHashMap<String, Int>()
     /** Persona normalizzata → (pacchetto → quante notifiche) */
     private val personApps = HashMap<String, HashMap<String, Int>>()
 
     init {
         runCatching { load() }
         runCatching { loadLearn() }
-        runCatching { dismissed += KeyList.read(dismissedFile) }
+        runCatching {
+            // "impronta<TAB>chiave"; le voci vecchie, senza impronta, valgono per il primo ritorno qualunque sia il testo
+            KeyList.read(dismissedFile).forEach { line ->
+                val tab = line.indexOf('\t')
+                val hash = if (tab > 0) line.substring(0, tab).toIntOrNull() else null
+                if (hash != null) read[line.substring(tab + 1)] = hash else read[line] = ANY
+            }
+        }
     }
 
     fun get(key: String): Held? = _held.value[key]
 
+    /** Segnata come letta: [text] è il testo che avevi davanti. */
     @Synchronized
-    fun markDismissed(key: String) {
-        dismissed += key
-        while (dismissed.size > 500) dismissed.remove(dismissed.first())
-        saveDismissed()
+    fun markRead(key: String, text: String) {
+        read.remove(key)
+        read[key] = text.hashCode()
+        while (read.size > 1000) read.remove(read.keys.first())
+        saveRead()
     }
 
+    /**
+     * La notifica [key] con questo [text] l'hai già letta? Se sì va chiusa. Un testo diverso è una notifica nuova:
+     * si dimentica la lettura e passa.
+     */
     @Synchronized
-    fun takeDismissed(key: String): Boolean {
-        if (!dismissed.remove(key)) return false
-        saveDismissed()
-        return true
+    fun alreadyRead(key: String, text: () -> String): Boolean {
+        val hash = read[key] ?: return false
+        if (hash == ANY) { read.remove(key); saveRead(); return true }
+        if (hash == text().hashCode()) return true
+        read.remove(key); saveRead()
+        return false
     }
 
-    private fun saveDismissed() {
-        val snap = dismissed.toList()
+    private fun saveRead() {
+        val snap = read.map { (k, h) -> "$h\t$k" }
         io.execute { runCatching { KeyList.write(dismissedFile, snap) } }
     }
 
@@ -197,7 +219,16 @@ class NotifStore(context: Context) {
         val p = Search.normalize(person)
         val m = personApps.getOrPut(p) { HashMap() }
         m[pkg] = (m[pkg] ?: 0) + 1
+        // Limitato: chi ti ha scritto una volta sola tanto tempo fa non serve tenerlo per sempre
+        if (personApps.size > MAX_PEOPLE) personApps.entries.minByOrNull { e -> e.value.values.sum() }?.let { personApps.remove(it.key) }
         saveLearn()
+    }
+
+    private companion object {
+        const val SAVE_DELAY = 1_500L
+        const val MAX_PEOPLE = 400
+        /** Lettura senza impronta (salvata dalle versioni vecchie): vale per il primo ritorno */
+        const val ANY = Int.MIN_VALUE
     }
 
     /** Le app con cui questa persona ti scrive, la più usata per prima. */
@@ -213,8 +244,12 @@ class NotifStore(context: Context) {
 
     // Persistenza
     private fun save() {
+        if (heldDirty.compareAndSet(false, true)) io.schedule({ heldDirty.set(false); writeHeld() }, SAVE_DELAY, java.util.concurrent.TimeUnit.MILLISECONDS)
+    }
+
+    private fun writeHeld() {
         val snapshot = _held.value.values.toList()
-        io.execute {
+        run {
             val arr = JSONArray()
             snapshot.forEach { h ->
                 arr.put(JSONObject().apply {
@@ -254,8 +289,12 @@ class NotifStore(context: Context) {
     }
 
     private fun saveLearn() {
-        val snapshot = personApps.mapValues { HashMap(it.value) }
-        io.execute {
+        if (learnDirty.compareAndSet(false, true)) io.schedule({ learnDirty.set(false); writeLearn() }, SAVE_DELAY, java.util.concurrent.TimeUnit.MILLISECONDS)
+    }
+
+    private fun writeLearn() {
+        val snapshot = synchronized(this) { personApps.mapValues { HashMap(it.value) } }
+        run {
             val o = JSONObject()
             snapshot.forEach { (p, apps) -> o.put(p, JSONObject(apps as Map<*, *>)) }
             runCatching { learnFile.writeText(o.toString()) }
@@ -275,7 +314,7 @@ class NotifStore(context: Context) {
 
     fun wipe() {
         clear()
-        synchronized(this) { dismissed.clear(); _today.value = emptyList() }
+        synchronized(this) { read.clear(); _today.value = emptyList() }
         io.execute { runCatching { dismissedFile.delete() } }
         synchronized(this) { personApps.clear() }
         io.execute { runCatching { learnFile.delete() } }

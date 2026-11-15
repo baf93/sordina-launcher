@@ -94,7 +94,7 @@ class Routines(private val context: Context) {
             val counts = HashMap<String, Int>()
             for ((_, t) in before) {
                 val seen = HashSet<String>()
-                opened(usm, t, t + 10 * 60_000).filter { it !in skip && it in labels }.forEach { seen += "app:$it" }
+                openedPast(usm, t, t + 10 * 60_000).filter { it !in skip && it in labels }.forEach { seen += "app:$it" }
                 cmds.filter { it.third in t..(t + 10 * 60_000) }.forEach { seen += "cmd:${it.second}" }
                 seen.forEach { counts[it] = (counts[it] ?: 0) + 1 }
             }
@@ -124,11 +124,38 @@ class Routines(private val context: Context) {
      * mentre gli episodi restano 45). Senza questo limite, con la storia lunga nessuna abitudine
      * arriva più alla metà degli episodi e le schede smettono di comparire.
      */
-    private fun usageHorizon(usm: UsageStatsManager, now: Long): Long = runCatching {
-        val ev = usm.queryEvents(now - 45L * 86_400_000, now)
-        val e = UsageEvents.Event()
-        if (ev.hasNextEvent()) { ev.getNextEvent(e); e.timeStamp } else now
-    }.getOrDefault(now)
+    private fun usageHorizon(usm: UsageStatsManager, now: Long): Long {
+        // Cambia una volta al giorno: si chiede ad Android una volta ogni 12 ore, non a ogni ritorno a Casa.
+        // Basta la prima ora di 45 giorni fa in avanti, a passi: Android restituisce tutti gli eventi della finestra
+        horizon?.let { (at, h) -> if (now - at in 0 until 12 * 3_600_000L) return h }
+        val h = runCatching {
+            val e = UsageEvents.Event()
+            var from = now - 45L * 86_400_000
+            var found = now
+            while (from < now) {
+                val ev = usm.queryEvents(from, minOf(now, from + 86_400_000))
+                if (ev.hasNextEvent()) { ev.getNextEvent(e); found = e.timeStamp; break }
+                from += 86_400_000
+            }
+            found
+        }.getOrDefault(now)
+        horizon = now to h
+        return h
+    }
+    @Volatile private var horizon: Pair<Long, Long>? = null
+
+    /** Le app aperte nei 10 minuti dopo un episodio passato non cambiano più: si leggono una volta sola. */
+    private val pastOpened = HashMap<Long, List<String>>()
+
+    private fun openedPast(usm: UsageStatsManager, from: Long, to: Long): List<String> {
+        synchronized(pastOpened) { pastOpened[from]?.let { return it } }
+        val v = opened(usm, from, to)
+        synchronized(pastOpened) {
+            if (pastOpened.size > 300) pastOpened.clear()
+            pastOpened[from] = v
+        }
+        return v
+    }
 
     private fun opened(usm: UsageStatsManager, from: Long, to: Long): List<String> = runCatching {
         val ev = usm.queryEvents(from, to)

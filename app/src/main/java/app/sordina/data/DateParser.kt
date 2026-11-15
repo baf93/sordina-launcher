@@ -148,7 +148,7 @@ object DateParser {
         // Ora
         cut(Regex(" a mezzogiorno "))?.let { time = LocalTime.NOON }
         cut(Regex(" a mezzanotte "))?.let { time = LocalTime.MIDNIGHT }
-        if (time == null) cut(Regex(" (alle|all|per le|verso le|dalle|ore|h) ?(\\d{1,2})(?:[:.](\\d{2}))?( e mezza| e mezzo| e un quarto| meno un quarto)?( di sera| del pomeriggio| di pomeriggio| di mattina| del mattino| di notte)? "))?.let { m ->
+        if (time == null) cut(Regex(" (alle|all|per le|verso le|dalle|ore|h) ?(\\d{1,2})(?:(?:[:.]| e | )(\\d{2}))?( e mezza| e mezzo| e un quarto| meno un quarto)?( di sera| del pomeriggio| di pomeriggio| di mattina| del mattino| di notte)? "))?.let { m ->
             time = buildTime(m.groupValues[2].toInt(), m.groupValues[3], m.groupValues[4], m.groupValues[5], eveningBias)
         }
         if (time == null) cut(Regex(" (all una|alle una)( e mezza)? "))?.let { m ->

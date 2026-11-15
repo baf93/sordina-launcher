@@ -175,11 +175,11 @@ private fun Track(parts: List<Float>) {
     }
 }
 
-/** L'ora che avanza, ogni 10 secondi, solo se la barra ne ha bisogno. */
+/** L'ora che avanza, ogni 10 secondi, solo se la barra ne ha bisogno e solo mentre Casa si vede. */
 @Composable
 private fun ticking(on: Boolean): Long {
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    if (on) LaunchedEffect(Unit) { while (true) { delay(10_000); now = System.currentTimeMillis() } }
+    if (on) app.sordina.ui.WhileVisible(10_000) { now = System.currentTimeMillis() }
     return now
 }
 

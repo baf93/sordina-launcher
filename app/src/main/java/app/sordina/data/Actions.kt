@@ -49,7 +49,6 @@ class Actions(
         is Act.Media -> media(act.keyCode)
         is Act.Navigate -> navigate(act.place)
         is Act.Music -> music(act.query)
-        is Act.Ha -> home(act)
         is Act.Assist -> assist(act.text)
         is Act.Setting -> start(Intent(act.action)).let { Outcome(null, it) }
         Act.SordinaSettings -> Outcome(null)
@@ -100,17 +99,16 @@ class Actions(
                 val pkg = m.via.pkgs.firstOrNull { installed(it) }
                 start(Intent(Intent.ACTION_VIEW, Uri.parse("https://api.whatsapp.com/send?phone=$num&text=$enc")).apply { pkg?.let { setPackage(it) } })
             }
-            Via.TELEGRAM -> {
-                if (m.text.isNotBlank()) copy(m.text)
-                start(Intent(Intent.ACTION_VIEW, Uri.parse("tg://resolve?phone=$num")))
-            }
+            // Telegram mette il testo nella casella da solo (parametro "text" dei link per numero)
+            Via.TELEGRAM -> start(Intent(Intent.ACTION_VIEW, Uri.parse("tg://resolve?phone=$num" + if (m.text.isNotBlank()) "&text=$enc" else "")))
             Via.SIGNAL -> {
-                if (m.text.isNotBlank()) copy(m.text)
+                // Signal non accetta il testo da fuori: con l'accessibilità lo scrive Sordina nella casella (senza inviare), se no si incolla
+                if (m.text.isNotBlank() && !app.sordina.service.SordinaAccess.fill("org.thoughtcrime.securesms", m.text, send = false)) copy(m.text)
                 start(Intent(Intent.ACTION_VIEW, Uri.parse("https://signal.me/#p/+$num")).setPackage("org.thoughtcrime.securesms"))
             }
             Via.SMS -> start(Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + Uri.encode(m.contact.number))).putExtra("sms_body", m.text))
         }
-        val note = if ((m.via == Via.TELEGRAM || m.via == Via.SIGNAL) && m.text.isNotBlank()) tr(R.string.text_copied_paste) else null
+        val note = if (m.via == Via.SIGNAL && m.text.isNotBlank() && !app.sordina.service.SordinaAccess.active()) tr(R.string.text_copied_paste) else null
         return Outcome(note, ok)
     }
 
@@ -189,22 +187,29 @@ class Actions(
         return Outcome(null, ok)
     }
 
-    private suspend fun assist(text: String): Outcome = withContext(Dispatchers.IO) {
+    private suspend fun assist(text: String): Outcome {
+        // I nomi della frase (dispositivi, stanze) diventano parole di casa: la prossima domanda che li nomina va ad Assist
+        prefs.homeWords = (prefs.homeWords + HomeTalk.learn(text)).let { if (it.size > 150) it.toList().takeLast(150).toSet() else it }
+        // Senza token: la frase va negli appunti e Assist si apre nell'app di Home Assistant, dove basta incollarla o ridirla
+        if (!ha.configured) {
+            // Con l'accessibilità Sordina la scrive e la invia da sola; senza, resta da incollare
+            val typed = app.sordina.service.SordinaAccess.fill(HomeAssistant.COMPANION_PKG, text, send = true)
+            if (!typed) copy(text)
+            // La tastiera della ricerca sta ancora scendendo: aperto subito, Assist se la prenderebbe. Un attimo e non si vede mai.
+            else kotlinx.coroutines.delay(250)
+            val ok = ha.openAssist()
+            return Outcome(if (ok && !typed) tr(R.string.ha_text_copied) else null, ok)
+        }
+        return assistHere(text)
+    }
+
+    private suspend fun assistHere(text: String): Outcome = withContext(Dispatchers.IO) {
         val r = ha.assist(text)
+        // I nomi dei dispositivi per riconoscere le prossime frasi (una volta al minuto al massimo, solo dopo che hai usato Assist)
+        runCatching { ha.entities() }
         Outcome(r ?: tr(R.string.home_no_answer), r != null)
     }
 
-    private suspend fun home(a: Act.Ha): Outcome = withContext(Dispatchers.IO) {
-        val e = a.entity
-        val ok = when (a.op) {
-            HaOp.ON -> ha.turn(e, true)
-            HaOp.OFF -> ha.turn(e, false)
-            HaOp.TOGGLE -> ha.toggle(e)
-            HaOp.LEVEL -> a.value?.let { ha.setLevel(e, it) } ?: ha.turn(e, true)
-        }
-        ha.entities(force = true)
-        Outcome(if (ok) tr(R.string.done_x, e.name) else tr(R.string.ha_no_answer), ok)
-    }
 
     private fun web(q: String): Outcome {
         val ok = start(Intent(Intent.ACTION_WEB_SEARCH).putExtra(SearchManager.QUERY, q)) ||

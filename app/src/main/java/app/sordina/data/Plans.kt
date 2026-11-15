@@ -85,6 +85,10 @@ class Plans(context: Context) {
         }
         val params = EntityExtractionParams.Builder(text.take(2000))
             .setReferenceTime(postTime).setReferenceTimeZone(TimeZone.getDefault()).build()
+        // Un'ora precisa scritta all'italiana ("alle 13 30", "stasera alle 9"): valgono le regole di Sordina, il modello
+        // generico sbaglia (13:00 del giorno dopo). Il modello serve per tutto il resto: indirizzi, voli, spedizioni, date in altre lingue.
+        val mine = DateParser.parse(text, Instant.ofEpochMilli(postTime).atZone(ZoneId.systemDefault()).toLocalDateTime()).whenAt
+            ?.takeIf { !it.allDay }?.start?.atZone(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
         ex.annotate(params).addOnSuccessListener { found ->
             var at: Long? = null; var dayOnly = false; var place: String? = null; var tracking: String? = null; var flight: String? = null
             for (a in found) for (e in a.entities) when (e.type) {
@@ -100,6 +104,7 @@ class Plans(context: Context) {
             }
             // Nelle mail le date sono ovunque (offerte, scadenze): conta solo un volo, una spedizione o un appuntamento con l'indirizzo
             if (mail && flight == null && tracking == null && (place == null || at == null || dayOnly)) return@addOnSuccessListener
+            if (mine != null && flight == null) { at = mine; dayOnly = false }
             plan(id, appLabel, who, text, postTime, at, dayOnly, place, tracking, flight)?.let(::keep)
         }.addOnFailureListener { if (!mail) fallback(id, appLabel, who, text, postTime)?.let(::keep) }
     }
@@ -115,6 +120,9 @@ class Plans(context: Context) {
         key: String, appLabel: String, who: String?, text: String, postTime: Long,
         at: Long?, dayOnly: Boolean, place: String?, tracking: String?, flight: String?,
     ): Plan? {
+        // Un'ora da sola ("alle 13 30") è una risposta, non un invito: senza un indirizzo, un volo o una spedizione serve una
+        // parola da appuntamento (ci vediamo, cena, riunione, dentista…)
+        if (place == null && flight == null && tracking == null && !isInvite(text)) return null
         val now = System.currentTimeMillis()
         val future = at != null && at > now && at - now < 30 * 86_400_000L
         val usable = (future && (!dayOnly || place != null || flight != null)) || tracking != null || (flight != null && (at == null || future))
@@ -208,6 +216,8 @@ class Plans(context: Context) {
             fun s(n: String) = if (!o.has(n) || o.isNull(n)) null else o.optString(n).ifEmpty { null }
             val p = Plan(o.getString("k"), o.optString("l"), s("w"), o.optString("s"), o.optLong("at").takeIf { it > 0 },
                 o.optBoolean("d"), s("pl"), s("tr"), s("fl"), o.optLong("p"))
+            // Quelli letti con la regola vecchia (un'ora sola, senza invito) non tornano
+            if (p.place == null && p.flight == null && p.tracking == null && !isInvite(p.snippet)) continue
             m[p.key] = p
         }
         synchronized(this) { _plans.value = prune(m + _plans.value) }
@@ -220,3 +230,17 @@ class Plans(context: Context) {
         private val MAIL_WORTH = Regex("volo|flight|imbarco|boarding|prenotazion|booking|reservation|check-in|spedizion|tracking|consegna|delivery|appuntamento|appointment|biglietto|ticket")
     }
 }
+
+/** Le parole da appuntamento, in più lingue (testo normalizzato: minuscolo, senza accenti). */
+private val INVITE = Regex(
+    "\\b(ci vediamo|vediamoci|ci becchiamo|ci sentiamo|appuntamento|incontr\\w*|cena|cenare|pranzo|pranzare|colazione|aperitiv\\w*|apericena|caffe|" +
+    "riunione|call|meeting|festa|compleanno|visita|dentista|medico|dottore|parrucchiere|partita|calcetto|palestra|cinema|concerto|teatro|" +
+    "prenotat\\w*|prenotazione|passo a prender\\w*|ti passo a|vieni|venite|veniamo|andiamo|usciamo|sei liber\\w|siete liberi|ti va|vi va|ritrovo|" +
+    "meet|meeting|see you|dinner|lunch|breakfast|brunch|drinks|coffee|party|appointment|booked|booking|reservation|pick you up|let s|are you free|" +
+    "quedamos|nos vemos|cena|comida|almuerzo|cita|reunion|fiesta|reserva|" +
+    "rendez vous|rdv|on se voit|diner|dejeuner|reunion|soiree|reservation|" +
+    "treffen|termin|abendessen|mittagessen|fruhstuck|besprechung|party|reserviert)\\b"
+)
+
+/** Il messaggio parla di vedersi o di un impegno? */
+internal fun isInvite(text: String): Boolean = INVITE.containsMatchIn(Search.normalize(text))

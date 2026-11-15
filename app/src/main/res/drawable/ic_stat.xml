@@ -1,17 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Icona della barra di stato: l'onda smorzata e il punto, monocromatica -->
+<!-- Icona della barra di stato: la sagoma della sordina, con gli occhi ritagliati -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="2.2"
-        android:strokeLineCap="round"
-        android:pathData="M2.5,13 Q6,7.5 9.5,13 T16.5,13" />
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M19.5,13m-2.2,0a2.2,2.2 0,1 1,4.4 0a2.2,2.2 0,1 1,-4.4 0" />
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <group android:translateX="12" android:translateY="13.7" android:scaleX="0.225" android:scaleY="0.225">
+        <path android:fillColor="#FFFFFFFF" android:pathData="M-3,-54 L3,-54 Q9,-54 9,-48 L9,-46 Q9,-40 3,-40 L-3,-40 Q-9,-40 -9,-46 L-9,-48 Q-9,-54 -3,-54 Z" />
+        <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd"
+            android:pathData="M-12,-42 Q0,-46 12,-42 L33,26 Q34,40 0,40 Q-34,40 -33,26 Z M-13,2 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 Z M3,2 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 Z" />
+    </group>
 </vector>

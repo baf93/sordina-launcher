@@ -218,6 +218,10 @@ class Prefs(context: Context) {
     var carHidden: Set<String>
         get() = sp.getStringSet("carHidden", emptySet())!!.toSet()
         set(v) = put { putStringSet("carHidden", v) }
+    /** Le parole di casa imparate dalle frasi mandate ad Assist (nomi di dispositivi e stanze), normalizzate */
+    var homeWords: Set<String>
+        get() = sp.getStringSet("homeWords", emptySet())!!.toSet()
+        set(v) = put { putStringSet("homeWords", v) }
 
     /** Sordina a tempo: fino a quando (millisecondi), 0 = spenta */
     var quietUntil: Long
@@ -296,6 +300,14 @@ class Prefs(context: Context) {
     var brakeGuard: Boolean
         get() = sp.getBoolean("brakeGuard", true)
         set(v) = put { putBoolean("brakeGuard", v) }
+    /** Freno istantaneo con l'accessibilità: acceso da solo quando l'accessibilità c'è, si può spegnere */
+    var instantBrake: Boolean
+        get() = sp.getBoolean("instantBrake", true)
+        set(v) = put { putBoolean("instantBrake", v) }
+    /** Doppio tocco sul fondo di Casa: spegne lo schermo (serve l'accessibilità di Sordina) */
+    var doubleTapLock: Boolean
+        get() = sp.getBoolean("doubleTapLock", false)
+        set(v) = put { putBoolean("doubleTapLock", v) }
 
     var brakeGrow: Boolean
         get() = sp.getBoolean("brakeGrow", true)
@@ -306,7 +318,7 @@ class Prefs(context: Context) {
         set(v) = put { putBoolean("brakeSuggested", v) }
     var braked: Set<String>
         get() = sp.getStringSet("braked", emptySet())!!.toSet()
-        set(v) = put { putStringSet("braked", v) }
+        set(v) = put { putStringSet("braked", v) }.also { Tally.onBraked(v.isNotEmpty()) }
     /** Le notifiche di sistema (auricolari, Bluetooth, Play Services…) passano senza sordina */
     var systemPass: Boolean
         get() = sp.getBoolean("systemPass", true)
@@ -333,6 +345,14 @@ class Prefs(context: Context) {
         set(v) = put { putLong("calendarId", v) }
 
     // Home Assistant
+    /** Home Assistant in Sordina: spento, le frasi di casa e i calendari di casa spariscono */
+    var haEnabled: Boolean
+        get() = sp.getBoolean("haEnabled", true)
+        set(v) = put { putBoolean("haEnabled", v) }
+    /** Come parla con casa: "app" (Assist nell'app Home Assistant, senza token) o "token" (direttamente) */
+    var haMode: String
+        get() = sp.getString("haMode", null) ?: if (haTokenEnc.isBlank()) "app" else "token"
+        set(v) = put { putString("haMode", v) }
     var haUrl: String
         get() = str("haUrl", "")
         set(v) = put { putString("haUrl", v.trim().trimEnd('/')) }
@@ -387,7 +407,7 @@ class Prefs(context: Context) {
     fun export(): String {
         val o = JSONObject()
         for ((k, v) in sp.all) {
-            if (k == "haToken") continue
+            if (k == "haToken" || k == "haTokenEnc") continue
             when (v) {
                 is Set<*> -> o.put(k, org.json.JSONArray(v.toList()))
                 else -> o.put(k, v)
@@ -400,7 +420,7 @@ class Prefs(context: Context) {
         val o = JSONObject(json)
         put {
             for (k in o.keys()) {
-                if (k == "haToken") continue
+                if (k == "haToken" || k == "haTokenEnc") continue
                 when (val v = o.get(k)) {
                     is org.json.JSONArray -> putStringSet(k, (0 until v.length()).map { v.getString(it) }.toSet())
                     is Boolean -> putBoolean(k, v)

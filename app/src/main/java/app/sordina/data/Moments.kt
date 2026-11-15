@@ -87,13 +87,22 @@ class Moments(private val context: Context, private val prefs: Prefs) {
     }
 
     /** La prossima sveglia di un'app orologio, se suona oggi prima di mezzogiorno. */
-    private fun morningAlarm(t: LocalDateTime): Long? = runCatching {
+    private fun morningAlarm(t: LocalDateTime): Long? = clockAlarm()?.takeIf {
+        val at = java.time.Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDateTime()
+        at.toLocalDate() == t.toLocalDate() && at.hour < 12
+    }
+
+    /**
+     * La prossima sveglia vera, o null. Android dà la prossima "sveglia" di qualunque app: anche i promemoria
+     * del Calendario e, con Orologio Samsung, l'avviso di risveglio della Modalità sonno (alle 8:00:03).
+     * Vale solo quella di un'app orologio, e le sveglie vere suonano allo scoccare del minuto.
+     */
+    fun clockAlarm(): Long? = runCatching {
         val info = context.getSystemService(android.app.AlarmManager::class.java)?.nextAlarmClock ?: return@runCatching null
         val owner = info.showIntent?.creatorPackage
         val clock = context.packageManager.resolveActivity(android.content.Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS), 0)?.activityInfo?.packageName
         if (owner != null && owner !in CardDetector.CLOCK_PKGS && owner != clock) return@runCatching null
-        val at = java.time.Instant.ofEpochMilli(info.triggerTime).atZone(ZoneId.systemDefault()).toLocalDateTime()
-        info.triggerTime.takeIf { at.toLocalDate() == t.toLocalDate() && at.hour < 12 }
+        info.triggerTime.takeIf { it % 60_000L == 0L }
     }.getOrNull()
 
     /** Sordina a tempo, accesa da te: fino a quando, o null. */

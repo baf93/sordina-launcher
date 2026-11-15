@@ -15,6 +15,8 @@ data class PermState(
     val location: Boolean = false,
     /** Android non limita Sordina in batteria. */
     val battery: Boolean = false,
+    /** L'accessibilità di Sordina (facoltativa): freno istantaneo e doppio tocco. */
+    val access: Boolean = false,
 )
 
 /** Le operazioni di sistema che le schermate chiedono all'attività. */

@@ -1,5 +1,8 @@
 package app.sordina
+import app.sordina.ui.Celebration
 
+import app.sordina.data.Backup
+import app.sordina.data.Tally
 import app.sordina.ui.theme.autoAccent
 import app.sordina.data.AppIcons
 import app.sordina.ui.Motion
@@ -88,6 +91,7 @@ import app.sordina.data.Understanding
 import app.sordina.service.Scheduler
 import app.sordina.service.SordinaListener
 import app.sordina.service.BrakeGuard
+import app.sordina.service.SordinaAccess
 import app.sordina.service.Health
 import app.sordina.service.StatusNotification
 import app.sordina.ui.BrakeScreen
@@ -162,6 +166,10 @@ class MainActivity : ComponentActivity(), Ops {
     private var tomorrowWeather by mutableStateOf<String?>(null)
     private var recap by mutableStateOf<String?>(null)
     private var carPeople by mutableStateOf<List<Pair<String, String>>>(emptyList())
+    /** Gli adesivi appena vinti, da far vedere in cima a Casa */
+    private var celebrate by mutableStateOf<List<app.sordina.data.Medal>>(emptyList())
+    private var medalsAt = 0L
+    private var openStickers = false
     private var recognizer: SpeechRecognizer? = null
 
     private val permLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -207,7 +215,11 @@ class MainActivity : ComponentActivity(), Ops {
         handleIntent(intent)
         backdropChanged()
 
-        appsCallback = catalog.registerChanges { reloadApps(forceProposals = true) }
+        appsCallback = catalog.registerChanges {
+            // Dieci app aggiornate di fila: un ricaricamento solo, dopo l'ultima
+            appsReload?.cancel()
+            appsReload = lifecycleScope.launch { kotlinx.coroutines.delay(APPS_SETTLE); reloadApps(forceProposals = true) }
+        }
         reloadApps(forceProposals = true)
 
         setContent {
@@ -233,6 +245,7 @@ class MainActivity : ComponentActivity(), Ops {
     override fun onDestroy() {
         appsCallback?.let { catalog.unregister(it) }
         recognizer?.destroy()
+        calendarObserver?.let { runCatching { contentResolver.unregisterContentObserver(it) } }
         super.onDestroy()
     }
 
@@ -277,16 +290,21 @@ class MainActivity : ComponentActivity(), Ops {
         refreshPerms()
         SordinaListener.rebind(this)
         BrakeGuard.atHome(this, prefs)
+        // Le app frenate possono essere cambiate: l'accessibilità ascolta solo quelle
+        SordinaAccess.refresh()
         SordinaListener.sync()
         moment = app.moments.current()
         scene = app.moments.scene()
-        // Tornando da un'app la situazione è cambiata (l'app di prima, il luogo): si ricalcola, mai mentre guardi
-        refreshProposals(force = true)
+        // Tornando da un'app la situazione è cambiata (l'app di prima, il luogo): si ricalcola, mai mentre guardi.
+        // Un'occhiata a un'app e subito di nuovo Casa: le proposte di pochi secondi fa vanno ancora bene
+        refreshProposals(force = System.currentTimeMillis() - proposalsAt > PROPOSALS_GAP)
         refreshExtras()
     }
 
     override fun onStop() {
         super.onStop()
+        // Fuori da Casa: il freno guarda quale app va davanti (solo adesso, non mentre sei in Casa)
+        BrakeGuard.leftHome(this, prefs)
         // Dopo aver aperto un'app, al ritorno si trova Casa (le impostazioni restano dove erano)
         if (screen != Screen.SETTINGS && screen != Screen.ONBOARDING) screen = Screen.HOME
         query = ""
@@ -311,6 +329,7 @@ class MainActivity : ComponentActivity(), Ops {
         if (!force && slot == proposals.slot && !permissionChanged) return
         val current = apps
         if (current.isEmpty()) return
+        proposalsAt = System.currentTimeMillis()
         lifecycleScope.launch {
             val r = withContext(Dispatchers.Default) { proposalsEngine.compute(current, prefs) }
             proposals = r.copy(slot = slot)
@@ -319,6 +338,11 @@ class MainActivity : ComponentActivity(), Ops {
 
     /** Casa: eventi vicini e schede "di solito". */
     private var extrasAt = 0L
+    /** L'ultima lettura del calendario: si rilegge quando cambia (osservatore) o al massimo ogni [CALENDAR_GAP] */
+    @Volatile private var calendarAt = 0L
+    private var calendarObserver: android.database.ContentObserver? = null
+    private var proposalsAt = 0L
+    private var appsReload: kotlinx.coroutines.Job? = null
     private var birthdaysDay: java.time.LocalDate? = null
 
     private fun refreshExtras() {
@@ -327,11 +351,18 @@ class MainActivity : ComponentActivity(), Ops {
         if (t - extrasAt < 2_000) return
         extrasAt = t
         val current = apps
+        watchCalendar()
         lifecycleScope.launch(Dispatchers.IO) {
-            events = app.calendars.upcoming(this@MainActivity)
-            val all = (app.calendars.agenda(this@MainActivity) + app.ha.calendarEvents(prefs.haCalendars)).sortedBy { it.begin }
-            // Sempre i prossimi tre, oggi o nei giorni dopo: mai di più
-            agendaEvents = all.take(3)
+            // La copia di ogni giorno per il backup di Google (una scrittura al giorno al massimo)
+            Backup.daily(this@MainActivity, prefs.onboarded)
+            // Il calendario cambia di rado: si rilegge se Android dice che è cambiato, o ogni qualche minuto (gli eventi passano)
+            if (t - calendarAt > CALENDAR_GAP) {
+                calendarAt = t
+                events = app.calendars.upcoming(this@MainActivity)
+                val all = (app.calendars.agenda(this@MainActivity) + app.ha.calendarEvents(prefs.haCalendars)).sortedBy { it.begin }
+                // Sempre i prossimi tre, oggi o nei giorni dopo: mai di più
+                agendaEvents = all.take(3)
+            }
             weatherNow = app.weather.now()
             rainAt = app.weather.rain
             // I compleanni cambiano col giorno: la rubrica si rilegge una volta al giorno, non a ogni ritorno a Casa
@@ -342,6 +373,11 @@ class MainActivity : ComponentActivity(), Ops {
                 if (checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) birthdaysDay = today
             }
             if (current.isNotEmpty()) habitCards = (app.routines.suggestions(current) + brainHabit(current)).distinctBy { it.key }
+            // Le imprese: al massimo ogni dieci minuti, e quelle nuove saltano fuori in Casa
+            if (t - medalsAt > 10 * 60_000L) {
+                medalsAt = t
+                runCatching { app.habits.newMedals(fresh = true) }.getOrNull()?.takeIf { it.isNotEmpty() }?.let { celebrate = it }
+            }
             sceneExtras(app.moments.scene())
         }
     }
@@ -373,7 +409,7 @@ class MainActivity : ComponentActivity(), Ops {
     private fun sceneExtras(s: Scene) {
         if (s == Scene.EVENING || s == Scene.NIGHT) {
             tomorrowEvents = app.calendars.tomorrow(this)
-            tomorrowWeather = app.weather.tomorrow()
+            tomorrowWeather = if (prefs.homeWeather) app.weather.tomorrow() else null
         }
         recap = if (s == Scene.EVENING) runCatching {
             val d = app.habits.today()
@@ -422,21 +458,14 @@ class MainActivity : ComponentActivity(), Ops {
         .format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
 
     /**
-     * La prossima sveglia di domani, se suona entro un giorno. Android dà la prossima "sveglia" di qualunque app:
-     * anche i promemoria del Calendario Samsung. Vale solo quella di un'app orologio.
+     * La prossima sveglia di domani, se suona entro un giorno (quali valgono: [app.sordina.data.Moments.clockAlarm]).
      */
     private fun nextAlarm(): String? = nextAlarmAt()?.let {
         java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
     }
 
     private fun nextAlarmAt(): Long? {
-        val info = runCatching { getSystemService(android.app.AlarmManager::class.java)?.nextAlarmClock }.getOrNull() ?: return null
-        val owner = info.showIntent?.creatorPackage
-        val clocks = CardDetector.CLOCK_PKGS + listOfNotNull(
-            runCatching { packageManager.resolveActivity(Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS), 0)?.activityInfo?.packageName }.getOrNull(),
-        )
-        if (owner != null && owner !in clocks) return null
-        val t = info.triggerTime
+        val t = app.moments.clockAlarm() ?: return null
         if (t - System.currentTimeMillis() > 24 * 3_600_000L) return null
         val at = java.time.Instant.ofEpochMilli(t).atZone(java.time.ZoneId.systemDefault())
         // Sta sotto "Domani": una sveglia di stasera non è di domani (dopo mezzanotte invece sì)
@@ -514,6 +543,7 @@ class MainActivity : ComponentActivity(), Ops {
             call = g(Manifest.permission.CALL_PHONE),
             location = g(Manifest.permission.ACCESS_COARSE_LOCATION),
             battery = SordinaListener.batteryFree(this),
+            access = SordinaAccess.isEnabled(this),
         )
         if (perms.contacts && !was.contacts) app.people.invalidate()
         checkHealth()
@@ -562,9 +592,11 @@ class MainActivity : ComponentActivity(), Ops {
             is Act.OpenApp -> launch(act.app)
             Act.SordinaSettings -> { query = ""; screen = Screen.SETTINGS }
             else -> lifecycleScope.launch {
+                // Si apre Assist: la tastiera della ricerca si chiude prima, così sopra non si vede mai una tastiera
+                if (act is Act.Assist) runCatching { androidx.core.view.WindowCompat.getInsetsController(window, window.decorView).hide(androidx.core.view.WindowInsetsCompat.Type.ime()) }
                 val out = actions.run(act)
                 val stays = act is Act.Timer || act is Act.Alarm || act is Act.Event || act is Act.Torch ||
-                    act is Act.Media || act is Act.Ha || act is Act.Calc
+                    act is Act.Media || act is Act.Calc
                 if (stays && out.ok) query = ""
                 val undo = out.undo
                 if (out.message != null) notice = Notice(out.message, undo?.let { u -> { lifecycleScope.launch { u(); notice = Notice(tr(R.string.undone)) } } })
@@ -576,6 +608,10 @@ class MainActivity : ComponentActivity(), Ops {
                     val k = "p:" + Search.normalize(talkTo.name)
                     prefs.passUntil = prefs.passUntil + (k to System.currentTimeMillis() + 15 * 60_000L)
                 }
+                // Si è aperta un'altra app: sotto torna Casa, anche se quella app sta sopra a metà schermo (Assist) e Sordina non si ferma
+                val leaves = act is Act.Assist || act is Act.Message || act is Act.Call || act is Act.Navigate || act is Act.Music ||
+                    act is Act.Web || act is Act.Setting
+                if (leaves && out.ok && screen != Screen.SETTINGS) { screen = Screen.HOME; query = "" }
             }
         }
     }
@@ -1044,6 +1080,7 @@ class MainActivity : ComponentActivity(), Ops {
     override fun openHidden(a: AppEntry) { catalog.launch(a) }
 
     override fun changed() {
+        calendarAt = 0L
         // Le nascoste si cambiano anche dalle Impostazioni
         hidden = prefs.hidden
         prefsVersion++
@@ -1217,7 +1254,7 @@ class MainActivity : ComponentActivity(), Ops {
                         if ((applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) LaunchedEffect(cards) {
                             cards.forEach { k -> android.util.Log.d("SordinaCards", "${k.kind} | ${k.label} | ${k.title} | ${k.subtitle} | ${k.actions.joinToString { it.label }}") }
                         }
-                        HomeScreen(
+                        androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) { HomeScreen(
                             state = HomeState(
                                 waiting = waiting,
                                 until = null,
@@ -1263,7 +1300,12 @@ class MainActivity : ComponentActivity(), Ops {
                             onOpenHeld = { h -> SordinaListener.open(this@MainActivity, h.key) },
                             onReadAll = { SordinaListener.readAll(this@MainActivity) },
                             onReadGroup = { k -> SordinaListener.readGroup(this@MainActivity, k) },
+                            onDoubleTap = if (remember(prefsVersion) { prefs.doubleTapLock }) ({
+                                // Senza l'accessibilità di Sordina non si può spegnere: si dice come accenderla
+                                if (!SordinaAccess.lock()) notice = Notice(tr(R.string.double_tap_needs))
+                            }) else null,
                         )
+                        Celebration(celebrate, onOpen = { celebrate = emptyList(); openStickers = true; screen = Screen.SETTINGS }) { celebrate = emptyList() } }
                     }
                     Screen.INTENT -> IntentScreen(
                         showIcons = remember(prefsVersion) { prefs.appIcons },
@@ -1333,6 +1375,7 @@ class MainActivity : ComponentActivity(), Ops {
                         onWipe = ::wipe,
                         ops = this@MainActivity,
                         onBack = { screen = Screen.HOME },
+                        stickers = openStickers.also { androidx.compose.runtime.SideEffect { openStickers = false } },
                         hiddenApps = {
                             AllAppsScreen(
                                 showHidden = true,
@@ -1359,20 +1402,25 @@ class MainActivity : ComponentActivity(), Ops {
                         },
                     )
                     Screen.BRAKE -> brakeTarget?.let { a ->
+                        // Quanto vale lasciare stare e quanto costa aprire: fissati all'arrivo, uguali a quelli mostrati
+                        val gain = remember(a.key) { app.habits.minutesPerVisit(a.packageName) }
+                        val cost = remember(a.key) { app.habits.openCost(a.packageName, gain) }
                         BrakeScreen(
                             app = a,
                             icon = remember(a.key) { catalog.icon(a) },
                             today = remember(a.key) { app.habits.appToday(a.packageName) },
                             seconds = remember(a.key) { brakeWait(a.packageName) },
                             streak = remember(a.key) { app.habits.streak() },
-                            gain = remember(a.key) { app.habits.minutesPerVisit(a.packageName) },
+                            gain = gain,
+                            cost = cost,
                             onOpen = { habit ->
+                                // Prima il costo (conta le aperture precedenti), poi si registra questa
+                                app.habits.logOpen(a.packageName, cost)
                                 app.habits.logBrake(a.packageName, habit)
                                 BrakeGuard.passed(a.packageName)
-                                app.habits.logOpen(a.packageName, Habits.penalty(app.habits.streak(), app.habits.minutesPerVisit(a.packageName)))
                                 catalog.launch(a)
                             },
-                            onSkip = { app.habits.logSkip(a.packageName, app.habits.minutesPerVisit(a.packageName)) },
+                            onSkip = { app.habits.logSkip(a.packageName, gain); app.habits.streak() to app.habits.newMedals() },
                             onDone = { screen = Screen.HOME },
                         )
                     } ?: run { screen = Screen.HOME }
@@ -1420,5 +1468,20 @@ class MainActivity : ComponentActivity(), Ops {
         const val ACTION_WAITING = "app.sordina.WAITING"
         /** La scheda "di solito" del cervello compare solo da questa probabilità (misurata sulla memoria vera). */
         const val BRAIN_HABIT_P = 0.5
+        /** Tornando a Casa entro così poco, le proposte di prima restano */
+        private const val PROPOSALS_GAP = 20_000L
+        /** Il calendario si rilegge al massimo così spesso (prima, se cambia) */
+        private const val CALENDAR_GAP = 5 * 60_000L
+        /** Le app che cambiano tutte insieme (aggiornamenti dal Play Store): un ricaricamento solo, dopo l'ultima */
+        private const val APPS_SETTLE = 3_000L
+    }
+
+    /** Android avvisa quando il calendario cambia: la prossima volta in Casa si rilegge. */
+    private fun watchCalendar() {
+        if (calendarObserver != null || checkSelfPermission(Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) return
+        val o = object : android.database.ContentObserver(null) {
+            override fun onChange(selfChange: Boolean) { calendarAt = 0L }
+        }
+        if (runCatching { contentResolver.registerContentObserver(android.provider.CalendarContract.Events.CONTENT_URI, true, o) }.isSuccess) calendarObserver = o
     }
 }

@@ -300,7 +300,7 @@ class Brain(
         is Act.Message -> "msg:${a.contact.normalized}:${a.via.name}"
         Act.SordinaSettings -> "set:sordina"
         is Act.Setting -> "set:${a.action}"
-        is Act.Timer, is Act.Alarm, Act.Torch, is Act.Media, is Act.Navigate, is Act.Music, is Act.Ha, is Act.Assist ->
+        is Act.Timer, is Act.Alarm, Act.Torch, is Act.Media, is Act.Navigate, is Act.Music, is Act.Assist ->
             Search.normalize(query).takeIf { it.isNotEmpty() }?.let { "cmd:$it" }
         else -> null
     }
@@ -356,14 +356,17 @@ class Brain(
     fun onNotified(pkg: String) {
         val now = System.currentTimeMillis()
         val item = "app:$pkg"
-        synchronized(this) {
-            ensure()
-            model.notified(item, now)
-            // Nella memoria al massimo una ogni 5 minuti per app
-            if (now - (notifiedLog[item] ?: 0L) < 5 * 60_000) return
-            notifiedLog[item] = now
+        // Fuori dal filo delle notifiche: la prima volta il cervello si carica dal file, e non deve rallentarle
+        io.execute {
+            synchronized(this) {
+                ensure()
+                model.notified(item, now)
+                // Nella memoria al massimo una ogni 5 minuti per app
+                if (now - (notifiedLog[item] ?: 0L) < 5 * 60_000) return@execute
+                notifiedLog[item] = now
+            }
+            runCatching { file.appendText("N\t$now\t${item.enc()}\n") }
         }
-        append("N\t$now\t${item.enc()}")
     }
 
     /**

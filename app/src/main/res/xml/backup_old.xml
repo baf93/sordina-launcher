@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fino ad Android 11: le stesse regole di backup_rules.xml -->
+<full-backup-content>
+    <include domain="file" path="backup/sordina.json" />
+</full-backup-content>
