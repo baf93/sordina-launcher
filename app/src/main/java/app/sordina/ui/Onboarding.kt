@@ -1,6 +1,7 @@
 package app.sordina.ui
 
 import app.sordina.data.Backup
+import app.sordina.ui.home.BubbleShape
 import app.sordina.tr
 
 import app.sordina.R
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.ui.text.drawText
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.rememberScrollState
@@ -123,16 +125,17 @@ fun Onboarding(
     // Una copia ritrovata dal backup di Google (telefono nuovo o app reinstallata): si può rimettere tutto com'era
     val ctx = androidx.compose.ui.platform.LocalContext.current
     var found by remember { mutableStateOf(Backup.found(ctx)) }
-    // 0 notifiche · 1 persone · 2 app · 3 distrazioni · 4 la Home · 5 chiedimi · 6 come si usa · 7 tutto pronto
+    // 0 ciao · 1 notifiche · 2 persone · 3 app · 4 distrazioni · 5 Home Assistant · 6 la Home · 7 chiedimi · 8 come si usa · 9 tutto pronto
     // Ogni permesso si chiede dove serve, mai tutti insieme
-    val last = 7
+    val last = 9
     val c = S.c
     fun next() { if (step < last) step++ else onDone() }
     androidx.activity.compose.BackHandler(enabled = step > 0) { step-- }
     val (label, action) = when {
         step == 0 && found != null -> tr(R.string.ob_restore) to { if (Backup.restore(ctx)) Backup.restart(ctx) }
-        step == 0 && !perms.listener -> tr(R.string.ob_allow) to { ops.openListenerSettings() }
-        step == 3 && !perms.usage -> tr(R.string.ob_allow) to { ops.openUsageSettings() }
+        step == 0 -> tr(R.string.ob_hi_go) to { next() }
+        step == 1 && !perms.listener -> tr(R.string.ob_allow) to { ops.openListenerSettings() }
+        step == 4 && !perms.usage -> tr(R.string.ob_allow) to { ops.openUsageSettings() }
         step == last && !perms.home -> tr(R.string.ob_set_home) to { ops.openHomeSettings() }
         step == last -> tr(R.string.onb_go_home) to { onDone() }
         else -> tr(R.string.next) to { next() }
@@ -147,13 +150,16 @@ fun Onboarding(
         }
         AnimatedContent(step, transitionSpec = { Motion.forward(targetState > initialState) }, label = "step", modifier = Modifier.weight(1f)) { s ->
             when (s) {
-                0 -> Waiting(app, perms)
-                1 -> Faces(app, perms, ops)
-                2 -> AlwaysApps(app, apps, ops)
-                3 -> Distracting(app, apps, usage, perms, ops)
-                4 -> HomeChoices(app, perms, ops)
-                5 -> AskMe(app)
-                6 -> MiniHome(app, perms) {}
+                0 -> Welcome(found)
+                1 -> Waiting(app, perms)
+                2 -> Faces(app, perms, ops)
+                3 -> AlwaysApps(app, apps, ops)
+                4 -> Distracting(app, apps, usage, perms, ops)
+                // Prima della Home: con Home Assistant collegato, nella scelta dei calendari c'è già anche il suo
+                5 -> HaStep(app, ops)
+                6 -> HomeChoices(app, perms, ops)
+                7 -> AskMe(app)
+                8 -> MiniHome(app, perms) {}
                 else -> AllSet(perms, ops, label, { action() }, onLater = onDone)
             }
         }
@@ -161,18 +167,16 @@ fun Onboarding(
         androidx.compose.animation.AnimatedVisibility(!ending, enter = fadeIn(), exit = fadeOut(tween(250))) {
             Column {
                 Spacer(Modifier.height(14.dp))
-                found?.takeIf { step == 0 }?.let { d ->
-                    androidx.compose.material3.Text(tr(R.string.ob_restore_found, d.format(java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.LONG))),
-                        Modifier.fillMaxWidth().padding(bottom = 14.dp), style = androidx.compose.ui.text.TextStyle(fontSize = 15.sp, lineHeight = 21.sp, color = c.ink, textAlign = androidx.compose.ui.text.style.TextAlign.Center))
-                }
                 Pill(label) { action() }
                 // "Più tardi" solo dove serve: altrove il pulsante sta in fondo e il contenuto ha più posto
                 // Ai permessi sempre, finché ne manca uno: un "no" ad Android non deve bloccare l'avvio
-                val later = label == tr(R.string.ob_allow) || (step == 0 && found != null)
+                val restore = step == 0 && found != null
+                val ha = step == 5 && !app.ha.configured
+                val later = label == tr(R.string.ob_allow) || restore || ha
                 if (later) androidx.compose.foundation.layout.Box(
-                    Modifier.fillMaxWidth().clickableNoRipple { if (step == 0 && found != null) { Backup.forget(ctx); found = null } else next() }.padding(top = 14.dp, bottom = 4.dp),
+                    Modifier.fillMaxWidth().clickableNoRipple { if (restore) { Backup.forget(ctx); found = null } else next() }.padding(top = 14.dp, bottom = 4.dp),
                     contentAlignment = Alignment.Center,
-                ) { Serif(tr(if (step == 0 && found != null) R.string.ob_restore_no else R.string.later), size = 14.sp, color = c.soft) }
+                ) { Serif(tr(when { restore -> R.string.ob_restore_no; ha -> R.string.ob_ha_skip; else -> R.string.later }), size = 14.sp, color = c.soft) }
             }
         }
     }
@@ -292,6 +296,47 @@ private fun appIcon(pkg: String, px: Int = 144): androidx.compose.ui.graphics.Im
     val pm = androidx.compose.ui.platform.LocalContext.current.packageManager
     return remember(pkg) {
         app.sordina.data.AppIcons.forPackage(pm, pkg, px)
+    }
+}
+
+// 0 · La sordina ti accoglie: dice lei cosa succede adesso. Se c'è una copia nel backup di Google, lo dice lei.
+
+@Composable
+private fun Welcome(found: java.time.LocalDate?) {
+    val c = S.c
+    val anim = LocalFeel.current.animations
+    val text = found?.let { tr(R.string.ob_restore_found, it.format(java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.LONG))) }
+        ?: tr(R.string.ob_hi_text)
+    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
+        // Il fumetto, con la punta verso di lei
+        Column(
+            Modifier.fillMaxWidth().clip(androidx.compose.foundation.shape.RoundedCornerShape(26.dp)).background(surface())
+                .padding(horizontal = 22.dp, vertical = 20.dp),
+        ) {
+            androidx.compose.material3.Text(tr(R.string.ob_hi_title), style = androidx.compose.ui.text.TextStyle(fontSize = 28.sp, lineHeight = 34.sp, color = c.ink))
+            Spacer(Modifier.height(10.dp))
+            Typed(text, text.hashCode().toLong(), anim, androidx.compose.ui.text.style.TextAlign.Start)
+        }
+        androidx.compose.foundation.layout.Box(Modifier.size(width = 24.dp, height = 12.dp).background(surface(), DownTail))
+        Spacer(Modifier.height(6.dp))
+        Mascot(Mood.HELLO, Modifier.size(150.dp))
+    }
+}
+
+/** La punta di un fumetto, verso il basso. */
+private val DownTail = androidx.compose.foundation.shape.GenericShape { size, _ ->
+    moveTo(0f, 0f); lineTo(size.width, 0f); lineTo(size.width / 2f, size.height); close()
+}
+
+// 5 · Home Assistant, se ce l'hai: la stessa pagina delle impostazioni. Prima della Home, così i suoi calendari si vedono già lì.
+
+@Composable
+private fun HaStep(app: SordinaApp, ops: Ops) {
+    Screen(tr(R.string.ob_lha), tr(R.string.obha_title), tr(R.string.obha_sub)) {
+        Column(Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState())) {
+            HaSettings(app, ops) {}
+            Spacer(Modifier.height(8.dp))
+        }
     }
 }
 
@@ -531,27 +576,8 @@ private fun AskMe(app: SordinaApp) {
         }
     }
     val a = asks[i]
-    Screen(tr(R.string.ob_ltalk), tr(R.string.obt_title), tr(R.string.obt_sub), mascot = Mood.HELLO) {
+    Screen(tr(R.string.ob_ltalk), tr(R.string.obt_title), tr(R.string.obt_sub)) {
         Column(Modifier.fillMaxSize(), verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
-            // La risposta, sopra la barra come in Casa
-            androidx.compose.animation.AnimatedVisibility(shown,
-                enter = fadeIn(tween(250)) + androidx.compose.animation.slideInVertically(tween(300)) { it / 3 },
-                exit = fadeOut(tween(150))) {
-                Row(
-                    Modifier.fillMaxWidth().padding(bottom = 10.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(22.dp)).background(surface())
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    androidx.compose.foundation.layout.Box(Modifier.size(40.dp).clip(androidx.compose.foundation.shape.CircleShape).background(c.accent.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
-                        androidx.compose.material3.Icon(a.icon, null, Modifier.size(20.dp), tint = c.accent)
-                    }
-                    Spacer(Modifier.width(14.dp))
-                    Column {
-                        androidx.compose.material3.Text(tr(a.title), style = androidx.compose.ui.text.TextStyle(fontSize = 17.sp, color = c.ink))
-                        androidx.compose.material3.Text(tr(a.sub), style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = c.soft))
-                    }
-                }
-            }
             // La barra, con il testo che si scrive
             Row(
                 Modifier.fillMaxWidth().height(56.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(28.dp)).background(surface()).padding(start = 20.dp, end = 16.dp),
@@ -562,9 +588,31 @@ private fun AskMe(app: SordinaApp) {
                     style = androidx.compose.ui.text.TextStyle(fontSize = 17.sp, color = if (typed == 0) c.soft else c.ink))
                 androidx.compose.material3.Icon(Icons.Rounded.Mic, null, Modifier.size(22.dp), tint = c.accent)
             }
-            Spacer(Modifier.height(22.dp))
-            androidx.compose.material3.Text(tr(R.string.obt_ha), Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                style = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = c.soft, textAlign = androidx.compose.ui.text.style.TextAlign.Center))
+            // Sotto la barra, come in Casa: la sordina, e quando ha capito scivola a sinistra e risponde nel suo fumetto
+            Spacer(Modifier.height(16.dp))
+            val talk by androidx.compose.animation.core.animateFloatAsState(if (shown) 1f else 0f, tween(320), label = "talk")
+            androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().height(96.dp)) {
+                if (talk > 0f) Row(
+                    Modifier.align(Alignment.CenterStart).padding(start = 52.dp).fillMaxWidth()
+                        .graphicsLayer { alpha = talk; translationX = (1f - talk) * -24.dp.toPx() }
+                        .clip(BubbleShape).background(surface())
+                        .padding(start = 7.dp + 16.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        androidx.compose.material3.Text(tr(a.sub), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = c.soft))
+                        androidx.compose.material3.Text(tr(a.title), maxLines = 2, style = androidx.compose.ui.text.TextStyle(fontSize = 18.sp, lineHeight = 23.sp, color = c.ink))
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    androidx.compose.foundation.layout.Box(Modifier.size(44.dp).clip(androidx.compose.foundation.shape.CircleShape).background(c.accent), contentAlignment = Alignment.Center) {
+                        androidx.compose.material3.Icon(a.icon, null, Modifier.size(22.dp), tint = c.bg)
+                    }
+                }
+                androidx.compose.foundation.layout.Box(Modifier.align(androidx.compose.ui.BiasAlignment(-talk, 0f))) {
+                    MascotGlyph(Pose.AWAKE, if (talk > 0.5f) c.accent else c.soft, Modifier.size(40.dp))
+                }
+            }
         }
     }
 }
@@ -606,12 +654,12 @@ private fun MiniHome(app: SordinaApp, perms: PermState, onFinished: () -> Unit) 
     val now = remember { java.time.LocalDate.now() }
     // Un giro solo: alla fine lascia il posto a "Tutto pronto"
     val anim = remember { androidx.compose.animation.core.Animatable(0f) }
-    LaunchedEffect(Unit) { while (true) { anim.snapTo(0f); anim.animateTo(1f, tween(22000, easing = androidx.compose.animation.core.LinearEasing)); onFinished() } }
+    LaunchedEffect(Unit) { while (true) { anim.snapTo(0f); anim.animateTo(1f, tween(28000, easing = androidx.compose.animation.core.LinearEasing)); onFinished() } }
     val t = anim.value.coerceAtMost(0.9999f)
-    val scenes = 4
+    val scenes = 5
     val scene = (t * scenes).toInt().coerceAtMost(scenes - 1)
     val u = t * scenes - scene
-    val captions = listOf(R.string.ob6_c1, R.string.ob6_c4, R.string.ob6_c2, R.string.ob6_c3)
+    val captions = listOf(R.string.ob6_c1, R.string.ob6_c4, R.string.ob6_c2, R.string.ob6_c3, R.string.ob6_c5)
     Screen(tr(R.string.ob_l6), tr(R.string.ob6_title), if (perms.home) tr(R.string.onb_home_done) else tr(R.string.ob6_sub)) {
         Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
             androidx.compose.foundation.layout.BoxWithConstraints(
@@ -620,33 +668,74 @@ private fun MiniHome(app: SordinaApp, perms: PermState, onFinished: () -> Unit) 
                     .clip(androidx.compose.foundation.shape.RoundedCornerShape(30.dp)).background(c.bg),
             ) {
                 val W = maxWidth; val H = maxHeight
-                val counterY = H - 28.dp
+                // Dove cade la notifica: la sordina in fondo
+                val counterY = H - 38.dp
 
-                // ── La Casa ──
+                // ── La Casa, come quella vera: il giorno, un impegno, la barra e sotto la sordina ──
                 Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 22.dp)) {
                     val loc = java.util.Locale.getDefault()
                     androidx.compose.material3.Text(now.format(java.time.format.DateTimeFormatter.ofPattern("EEEE", loc)).replaceFirstChar { it.uppercase() },
                         style = androidx.compose.ui.text.TextStyle(fontSize = 21.sp, color = c.ink))
                     androidx.compose.material3.Text(now.format(java.time.format.DateTimeFormatter.ofPattern("d MMMM", loc)),
                         style = androidx.compose.ui.text.TextStyle(fontSize = 21.sp, color = c.soft))
+                    Spacer(Modifier.height(14.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        androidx.compose.material3.Text(hm(22 * 60), Modifier.padding(end = 8.dp), style = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, color = c.accent))
+                        androidx.compose.material3.Text(tr(R.string.obt_r1), style = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, color = c.ink))
+                    }
                 }
+                // Scena 5: il microfono tenuto premuto, poi lasciato
+                val hold = if (scene == 4) seg(u, 0.12f, 0.17f) * (1f - seg(u, 0.56f, 0.6f)) else 0f
                 Row(
-                    Modifier.align(Alignment.BottomCenter).padding(start = 12.dp, end = 12.dp, bottom = 50.dp).fillMaxWidth().height(34.dp)
+                    Modifier.align(Alignment.BottomCenter).padding(start = 12.dp, end = 12.dp, bottom = 66.dp).fillMaxWidth().height(34.dp)
                         .clip(androidx.compose.foundation.shape.RoundedCornerShape(17.dp)).background(surface()).padding(start = 12.dp, end = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    androidx.compose.material3.Text(tr(R.string.home_search), Modifier.weight(1f), maxLines = 1, style = androidx.compose.ui.text.TextStyle(fontSize = 11.sp, color = c.soft))
+                    androidx.compose.material3.Text(tr(if (hold > 0f) R.string.home_listening else R.string.home_search), Modifier.weight(1f), maxLines = 1,
+                        style = androidx.compose.ui.text.TextStyle(fontSize = 11.sp, color = if (hold > 0f) c.ink else c.soft))
                     androidx.compose.material3.Icon(Icons.Rounded.Mic, null, Modifier.size(14.dp), tint = c.accent)
                 }
-                // In basso quante aspettano: nell'ultima scena ne arriva una
-                val fall = if (scene == 3) seg(u, 0.2f, 0.55f) else 0f
+                // Il cerchio grande sul microfono (centro a 29 dp da destra e 83 dp dal fondo)
+                if (hold > 0f) androidx.compose.foundation.layout.Box(
+                    Modifier.align(Alignment.BottomEnd).offset(x = (-5).dp, y = (-59).dp).size(48.dp)
+                        .graphicsLayer { scaleX = hold; scaleY = hold }.clip(androidx.compose.foundation.shape.CircleShape).background(c.accent),
+                    contentAlignment = Alignment.Center,
+                ) { androidx.compose.material3.Icon(Icons.Rounded.Mic, null, Modifier.size(20.dp), tint = c.bg) }
+
+                // In fondo la sordina: le notifiche aspettano lì. Quando ha qualcosa da dire scivola a sinistra e apre il fumetto
+                val fall = if (scene == 3) seg(u, 0.08f, 0.32f) else 0f
                 val n = if (scene == 3 && fall >= 1f) 3 else 2
-                val bump = if (scene == 3) seg(u, 0.55f, 0.6f) * (1f - seg(u, 0.6f, 0.75f)) else 0f
-                Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 18.dp).height(20.dp).graphicsLayer { scaleX = 1f + 0.12f * bump; scaleY = scaleX },
-                    verticalAlignment = Alignment.CenterVertically) {
-                    androidx.compose.material3.Icon(Icons.Rounded.NotificationsOff, null, Modifier.size(11.dp), tint = if (bump > 0f) c.accent else c.soft)
-                    Spacer(Modifier.width(4.dp))
-                    androidx.compose.material3.Text(trn(R.plurals.n_waiting, n), style = androidx.compose.ui.text.TextStyle(fontSize = 11.sp, color = if (bump > 0f) c.accent else c.soft))
+                val bump = if (scene == 3) seg(u, 0.32f, 0.37f) * (1f - seg(u, 0.37f, 0.5f)) else 0f
+                // Scena 4, poi: "di solito adesso" · scena 5: ascolta (i puntini), poi risponde
+                val usualB = if (scene == 3) seg(u, 0.52f, 0.62f) * (1f - seg(u, 0.92f, 1f)) else 0f
+                val voiceB = if (scene == 4) seg(u, 0.14f, 0.22f) * (1f - seg(u, 0.93f, 1f)) else 0f
+                val talk = maxOf(usualB, voiceB)
+                androidx.compose.foundation.layout.Box(Modifier.align(Alignment.BottomCenter).padding(start = 12.dp, end = 12.dp, bottom = 8.dp).fillMaxWidth().height(52.dp)) {
+                    if (talk > 0f) Row(
+                        Modifier.align(Alignment.CenterStart).padding(start = 30.dp).fillMaxWidth()
+                            .graphicsLayer { alpha = talk; translationX = (1f - talk) * -12.dp.toPx() }
+                            .clip(BubbleShape).background(surface()).padding(start = 13.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            if (usualB > 0f) {
+                                androidx.compose.material3.Text(tr(R.string.usually_now), maxLines = 1, style = androidx.compose.ui.text.TextStyle(fontSize = 8.sp, color = c.soft))
+                                androidx.compose.material3.Text(tr(R.string.ob6_a3), maxLines = 1, style = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, color = c.ink))
+                            } else if (u < 0.62f) androidx.compose.material3.Text("•••", style = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, letterSpacing = 2.sp, color = c.soft))
+                            else androidx.compose.material3.Text(tr(R.string.obt_r4), maxLines = 2, style = androidx.compose.ui.text.TextStyle(fontSize = 11.sp, lineHeight = 14.sp, color = c.ink))
+                        }
+                        if (usualB > 0f) androidx.compose.foundation.layout.Box(Modifier.size(26.dp).clip(androidx.compose.foundation.shape.CircleShape).background(c.accent), contentAlignment = Alignment.Center) {
+                            androidx.compose.material3.Icon(Icons.Rounded.MusicNote, null, Modifier.size(14.dp), tint = c.bg)
+                        }
+                    }
+                    Row(Modifier.align(androidx.compose.ui.BiasAlignment(-talk, 0f)).graphicsLayer { scaleX = 1f + 0.15f * bump; scaleY = scaleX },
+                        verticalAlignment = Alignment.CenterVertically) {
+                        MascotGlyph(Pose.AWAKE, if (bump > 0f || talk > 0.5f) c.accent else c.soft, Modifier.size(22.dp))
+                        if (talk < 0.5f) {
+                            Spacer(Modifier.width(5.dp))
+                            androidx.compose.material3.Text("$n", style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = if (bump > 0f) c.accent else c.soft))
+                        }
+                    }
                 }
 
                 // 1 · In su: le app. Restano su: la seconda scena parte da qui e il respiro le copre
@@ -749,6 +838,8 @@ private fun MiniHome(app: SordinaApp, perms: PermState, onFinished: () -> Unit) 
                     1 -> if (u < 0.5f) Finger(70.dp, 88.dp, seg(u, 0.04f, 0.12f) * (1f - seg(u, 0.24f, 0.3f)), 1f - 0.2f * seg(u, 0.16f, 0.2f))
                         else Finger(cx, H - 63.dp - 12.dp, seg(u, 0.66f, 0.72f) * (1f - seg(u, 0.84f, 0.9f)), 1f - 0.2f * seg(u, 0.76f, 0.79f))
                     2 -> { val m = seg(u, 0.15f, 0.42f); Finger(cx, H * lerp(0.06f, 0.46f, m), seg(u, 0.04f, 0.14f) * (1f - seg(u, 0.44f, 0.52f)), 1f) }
+                    // Tiene premuto il microfono mentre parla, poi lascia
+                    4 -> Finger(W - 29.dp, H - 83.dp, seg(u, 0.04f, 0.1f) * (1f - seg(u, 0.56f, 0.62f)), 1f - 0.2f * seg(u, 0.1f, 0.14f))
                     else -> null
                 }
                 if (f != null && f.alpha > 0f) androidx.compose.foundation.layout.Box(

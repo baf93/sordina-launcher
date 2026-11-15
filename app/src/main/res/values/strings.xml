@@ -450,7 +450,7 @@
     <string name="ob6_a3">Music</string>
     <string name="ob6_c1">Swipe up: your apps.</string>
     <string name="ob6_c2">Swipe down: the shade, as always.</string>
-    <string name="ob6_c3">Everything else waits for you down here.</string>
+    <string name="ob6_c3">Notifications wait down here; Sordina tells you what you need.</string>
     <string name="ob6_c4">Apps that distract you make you take a breath before they open.</string>
     <string name="ob6_a5">Video</string>
     <string name="ob_done_title">All set</string>
@@ -760,6 +760,14 @@
     <string name="ob_restore">Restore my settings</string>
     <string name="ob_restore_found">I found your settings from %1$s in Google backup.</string>
     <string name="ob_restore_no">Start fresh</string>
+    <string name="ob_hi_title">Hi, I\'m Sordina</string>
+    <string name="ob_hi_text">I\'ll help you set up your phone: a few questions, about a minute. You can change everything later.</string>
+    <string name="ob_hi_go">Let\'s start</string>
+    <string name="ob_lha">Home</string>
+    <string name="obha_title">Do you have Home Assistant?</string>
+    <string name="obha_sub">Connect it and ask your home from here: lights, shutters, questions. Its calendars show up on your Home.</string>
+    <string name="ob_ha_skip">I don\'t have it</string>
+    <string name="ob6_c5">Hold the mic and ask: Sordina answers right here.</string>
     <string name="ob_backup">Every day I save a copy in Google backup: check that it\'s on</string>
     <string name="ob1_why">To do this I need to read your notifications. They stay on your phone; nobody else sees them.</string>
     <string name="ob4_why">If you let me see app usage, I\'ll pick the ones you use most.</string>

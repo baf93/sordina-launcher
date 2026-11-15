@@ -449,7 +449,7 @@
     <string name="ob6_a3">Musica</string>
     <string name="ob6_c1">Scorri in su: le tue app.</string>
     <string name="ob6_c2">Scorri in giù: la tendina, come sempre.</string>
-    <string name="ob6_c3">Il resto ti aspetta qui sotto.</string>
+    <string name="ob6_c3">Le notifiche aspettano qui sotto; la sordina ti dice cosa serve.</string>
     <string name="ob6_c4">Le app distraenti ti danno il tempo di respirare.</string>
     <string name="ob6_a5">Video</string>
     <string name="ob_done_title">Tutto pronto</string>
@@ -759,6 +759,14 @@
     <string name="ob_restore">Rimetti le mie impostazioni</string>
     <string name="ob_restore_found">Ho ritrovato le tue impostazioni del %1$s nel backup di Google.</string>
     <string name="ob_restore_no">Ricomincia da capo</string>
+    <string name="ob_hi_title">Ciao, sono Sordina</string>
+    <string name="ob_hi_text">Ti aiuto a preparare il telefono: poche domande, un minuto. Ogni cosa la cambi quando vuoi.</string>
+    <string name="ob_hi_go">Iniziamo</string>
+    <string name="ob_lha">Casa</string>
+    <string name="obha_title">Hai Home Assistant?</string>
+    <string name="obha_sub">Collegalo e chiedi alla casa da qui: luci, tapparelle, domande. I suoi calendari arrivano nella Home.</string>
+    <string name="ob_ha_skip">Non ce l\'ho</string>
+    <string name="ob6_c5">Tieni premuto il microfono e chiedi: risponde la sordina, qui.</string>
     <string name="ob_backup">Ogni giorno salvo una copia nel backup di Google: controlla che sia attivo</string>
     <string name="ob1_why">Per farlo devo poter leggere le notifiche. Restano sul telefono, non le vede nessun altro.</string>
     <string name="ob4_why">Se mi fai vedere l\'utilizzo delle app, scelgo io quelle che usi di più.</string>

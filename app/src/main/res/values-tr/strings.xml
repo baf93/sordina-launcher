@@ -445,7 +445,7 @@
     <string name="ob6_a5">Video</string>
     <string name="ob6_c1">Yukarı kaydır: uygulamaların.</string>
     <string name="ob6_c2">Aşağı kaydır: bildirim paneli, her zamanki gibi.</string>
-    <string name="ob6_c3">Gerisi burada aşağıda, bekletilerek durur.</string>
+    <string name="ob6_c3">Bildirimler burada aşağıda bekler; Sordina neye ihtiyacın olduğunu söyler.</string>
     <string name="ob6_c4">Dikkat dağıtan uygulamalar açılmadan önce bir nefes ister.</string>
     <string name="ob6_sub">Aramak için yukarı, bildirimler için aşağı. Ayarlar için basılı tut.</string>
     <string name="ob6_title">Ana ekran olarak Sordina</string>
@@ -754,6 +754,14 @@
     <string name="ob_restore">Ayarlarımı geri yükle</string>
     <string name="ob_restore_found">Google yedeğinde %1$s tarihli ayarlarını buldum.</string>
     <string name="ob_restore_no">Baştan başla</string>
+    <string name="ob_hi_title">Merhaba, ben Sordina</string>
+    <string name="ob_hi_text">Telefonunu kurmana yardım edeceğim: birkaç soru, yaklaşık bir dakika. Her şeyi sonra değiştirebilirsin.</string>
+    <string name="ob_hi_go">Başlayalım</string>
+    <string name="ob_lha">Ev</string>
+    <string name="obha_title">Home Assistant\'ın var mı?</string>
+    <string name="obha_sub">Bağla ve evine buradan sor: ışıklar, panjurlar, sorular. Takvimleri ana ekranında görünür.</string>
+    <string name="ob_ha_skip">Yok</string>
+    <string name="ob6_c5">Mikrofonu basılı tut ve sor: Sordina burada yanıtlar.</string>
     <string name="ob_backup">Her gün Google yedeğine bir kopya kaydediyorum: açık olduğunu kontrol et</string>
     <string name="ob1_why">Bunun için bildirimlerini okuyabilmem gerekiyor. Telefonda kalırlar; başka kimse görmez.</string>
     <string name="ob4_why">Uygulama kullanımını görmeme izin verirsen, en çok kullandığın uygulamaları ben seçerim.</string>

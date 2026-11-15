@@ -489,7 +489,7 @@
     <string name="ob6_a5">فيديو</string>
     <string name="ob6_c1">اسحب لأعلى: تطبيقاتك.</string>
     <string name="ob6_c2">اسحب لأسفل: لوحة الإشعارات، كالمعتاد.</string>
-    <string name="ob6_c3">الباقي ينتظر هنا في الأسفل، محتجزًا.</string>
+    <string name="ob6_c3">الإشعارات تنتظر هنا في الأسفل، وسوردينا تخبرك بما تحتاجه.</string>
     <string name="ob6_c4">التطبيقات المشتتة تطلب نفَسًا قبل أن تُفتح.</string>
     <string name="ob6_sub">لأعلى للبحث، لأسفل للإشعارات. المس مطولًا للإعدادات.</string>
     <string name="ob6_title">Sordina كشاشة رئيسية</string>
@@ -798,6 +798,14 @@
     <string name="ob_restore">استعادة إعداداتي</string>
     <string name="ob_restore_found">وجدت إعداداتك من %1$s في النسخ الاحتياطي من Google.</string>
     <string name="ob_restore_no">البدء من جديد</string>
+    <string name="ob_hi_title">مرحبًا، أنا سوردينا</string>
+    <string name="ob_hi_text">سأساعدك في إعداد هاتفك: بضعة أسئلة، دقيقة تقريبًا. يمكنك تغيير كل شيء لاحقًا.</string>
+    <string name="ob_hi_go">لنبدأ</string>
+    <string name="ob_lha">المنزل</string>
+    <string name="obha_title">هل لديك Home Assistant؟</string>
+    <string name="obha_sub">اربطه واسأل منزلك من هنا: الأضواء، الستائر، الأسئلة. تظهر تقويماته في الشاشة الرئيسية.</string>
+    <string name="ob_ha_skip">ليس لدي</string>
+    <string name="ob6_c5">اضغط مطولًا على الميكروفون واسأل: تجيبك سوردينا هنا.</string>
     <string name="ob_backup">أحفظ كل يوم نسخة في النسخ الاحتياطي من Google: تأكّد من أنه مفعّل</string>
     <string name="ob1_why">لهذا أحتاج إلى قراءة إشعاراتك. تبقى على الهاتف ولا يراها أحد غيرك.</string>
     <string name="ob4_why">إذا سمحت لي برؤية استخدام التطبيقات، سأختار التطبيقات التي تستخدمها أكثر.</string>

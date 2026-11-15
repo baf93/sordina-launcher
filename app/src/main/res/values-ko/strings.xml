@@ -434,7 +434,7 @@
     <string name="ob6_a5">동영상</string>
     <string name="ob6_c1">위로 스와이프: 내 앱.</string>
     <string name="ob6_c2">아래로 스와이프: 늘 쓰던 알림창.</string>
-    <string name="ob6_c3">나머지는 여기 아래에서 보류 중이에요.</string>
+    <string name="ob6_c3">알림은 여기 아래에서 기다려요. Sordina가 지금 필요한 걸 알려줘요.</string>
     <string name="ob6_c4">방해되는 앱은 열리기 전에 한숨 쉬어 가요.</string>
     <string name="ob6_sub">위로 검색, 아래로 알림. 길게 누르면 설정.</string>
     <string name="ob6_title">Sordina를 홈으로</string>
@@ -743,6 +743,14 @@
     <string name="ob_restore">내 설정 복원</string>
     <string name="ob_restore_found">Google 백업에서 %1$s의 설정을 찾았어요.</string>
     <string name="ob_restore_no">처음부터 시작</string>
+    <string name="ob_hi_title">안녕하세요, Sordina예요</string>
+    <string name="ob_hi_text">휴대폰 설정을 도와드릴게요. 몇 가지 질문, 1분 정도면 돼요. 나중에 언제든 바꿀 수 있어요.</string>
+    <string name="ob_hi_go">시작하기</string>
+    <string name="ob_lha">집</string>
+    <string name="obha_title">Home Assistant를 쓰시나요?</string>
+    <string name="obha_sub">연결하면 여기서 집에 물어볼 수 있어요: 조명, 블라인드, 질문. 캘린더도 홈에 표시돼요.</string>
+    <string name="ob_ha_skip">없어요</string>
+    <string name="ob6_c5">마이크를 길게 누르고 물어보세요. Sordina가 바로 여기서 답해요.</string>
     <string name="ob_backup">매일 Google 백업에 백업을 저장해요: 켜져 있는지 확인하세요</string>
     <string name="ob1_why">그러려면 알림을 읽을 수 있어야 해요. 알림은 휴대전화에 남고, 아무도 보지 않아요.</string>
     <string name="ob4_why">앱 사용 기록을 볼 수 있게 해 주면, 가장 많이 쓰는 앱을 제가 골라 드려요.</string>

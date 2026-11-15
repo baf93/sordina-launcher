@@ -434,7 +434,7 @@
     <string name="ob6_a5">Video</string>
     <string name="ob6_c1">Vuốt lên: ứng dụng của bạn.</string>
     <string name="ob6_c2">Vuốt xuống: ngăn thông báo, như mọi khi.</string>
-    <string name="ob6_c3">Phần còn lại chờ ở dưới này, được giữ lại.</string>
+    <string name="ob6_c3">Thông báo chờ ở dưới đây; Sordina cho bạn biết điều bạn cần.</string>
     <string name="ob6_c4">Ứng dụng gây xao nhãng xin một hơi thở trước khi mở.</string>
     <string name="ob6_sub">Lên để tìm, xuống để xem thông báo. Nhấn giữ để vào cài đặt.</string>
     <string name="ob6_title">Sordina làm màn hình chính</string>
@@ -743,6 +743,14 @@
     <string name="ob_restore">Khôi phục cài đặt của tôi</string>
     <string name="ob_restore_found">Tôi đã tìm thấy cài đặt của bạn từ %1$s trong bản sao lưu Google.</string>
     <string name="ob_restore_no">Bắt đầu lại</string>
+    <string name="ob_hi_title">Chào, mình là Sordina</string>
+    <string name="ob_hi_text">Mình giúp bạn thiết lập điện thoại: vài câu hỏi, khoảng một phút. Bạn có thể đổi mọi thứ sau.</string>
+    <string name="ob_hi_go">Bắt đầu nào</string>
+    <string name="ob_lha">Nhà</string>
+    <string name="obha_title">Bạn có Home Assistant không?</string>
+    <string name="obha_sub">Kết nối và hỏi ngôi nhà ngay tại đây: đèn, rèm, câu hỏi. Lịch của nó hiện trên màn hình chính.</string>
+    <string name="ob_ha_skip">Mình không có</string>
+    <string name="ob6_c5">Giữ micro và hỏi: Sordina trả lời ngay tại đây.</string>
     <string name="ob_backup">Mỗi ngày tôi lưu một bản sao trong bản sao lưu Google: hãy kiểm tra xem nó đã bật chưa</string>
     <string name="ob1_why">Để làm vậy tôi cần đọc được thông báo của bạn. Chúng ở lại trên điện thoại; không ai khác thấy được.</string>
     <string name="ob4_why">Nếu bạn cho tôi xem mức sử dụng ứng dụng, tôi sẽ chọn những ứng dụng bạn dùng nhiều nhất.</string>

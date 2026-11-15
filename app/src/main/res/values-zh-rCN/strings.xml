@@ -434,7 +434,7 @@
     <string name="ob6_a5">视频</string>
     <string name="ob6_c1">上滑：你的应用。</string>
     <string name="ob6_c2">下滑：通知栏，和往常一样。</string>
-    <string name="ob6_c3">其余的在下面暂留等待。</string>
+    <string name="ob6_c3">通知在下面等着；Sordina 会告诉你现在需要什么。</string>
     <string name="ob6_c4">让人分心的应用在打开前会请你先深呼吸。</string>
     <string name="ob6_sub">上滑搜索，下滑看通知。长按进入设置。</string>
     <string name="ob6_title">将 Sordina 设为主屏幕</string>
@@ -743,6 +743,14 @@
     <string name="ob_restore">恢复我的设置</string>
     <string name="ob_restore_found">我在 Google 备份中找到了你 %1$s 的设置。</string>
     <string name="ob_restore_no">重新开始</string>
+    <string name="ob_hi_title">你好，我是 Sordina</string>
+    <string name="ob_hi_text">我来帮你设置手机：几个问题，大约一分钟。之后随时可以修改。</string>
+    <string name="ob_hi_go">开始吧</string>
+    <string name="ob_lha">家</string>
+    <string name="obha_title">你有 Home Assistant 吗？</string>
+    <string name="obha_sub">连接后就能在这里问你的家：灯光、百叶窗、问题。它的日历会显示在主屏幕上。</string>
+    <string name="ob_ha_skip">我没有</string>
+    <string name="ob6_c5">按住麦克风提问：Sordina 就在这里回答。</string>
     <string name="ob_backup">我每天都会在 Google 备份中保存一份副本：请确认它已开启</string>
     <string name="ob1_why">为此我需要读取你的通知。它们只留在手机上，其他人都看不到。</string>
     <string name="ob4_why">如果你允许我查看应用使用情况，我会帮你挑出用得最多的应用。</string>

@@ -98,7 +98,7 @@ class Model(private val halfLifeDays: Double = 21.0, now: Long = System.currentT
     @Synchronized
     fun forget(item: String) {
         val m = itemMass.remove(item) ?: return
-        uses.remove(item); notifiedAt.remove(item); seen.remove(item)
+        uses.remove(item); notifiedAt.remove(item); seen.remove(item); refusals.remove(item)
         total -= m
         itemFeature.remove(item)?.forEach { (k, v) -> featureMass.merge(k, -v, Double::plus) }
         lastTime.remove(item)
@@ -199,17 +199,18 @@ class Model(private val halfLifeDays: Double = 21.0, now: Long = System.currentT
     private val uses = HashMap<String, ArrayList<Long>>()
     /** Le occhiate non ancora decise (si decide dopo 10 minuti: l'hai presa o no). */
     private val pending = ArrayDeque<Pair<Long, List<String>>>()
-    private var lastShown: Pair<Long, List<String>>? = null
+    /** L'ultima volta che si è vista ogni schermata (le proposte della ricerca, il fumetto): la stessa rivista entro 10 minuti è la stessa occhiata */
+    private val lastShown = HashMap<List<String>, Long>()
     /** Per ogni cosa: [viste, lasciate lì]. Si contano una volta sola, poi basta guardarle. */
     private val seen = HashMap<String, DoubleArray>()
 
     /** Le proposte che hai visto in Casa a [t]. */
     @Synchronized
     fun shown(t: Long, items: List<String>) {
-        val last = lastShown
         // Lo stesso schermo rivisto entro 10 minuti è la stessa occhiata
-        if (last != null && last.second == items && t - last.first < 10 * 60_000) return
-        lastShown = t to items
+        if (t - (lastShown[items] ?: Long.MIN_VALUE / 2) in 0 until 10 * 60_000L) return
+        lastShown[items] = t
+        if (lastShown.size > 30) lastShown.entries.removeAll { t - it.value > 10 * 60_000L }
         pending.addLast(t to items)
         if (pending.size > 500) pending.removeFirst()
     }
@@ -248,6 +249,42 @@ class Model(private val halfLifeDays: Double = 21.0, now: Long = System.currentT
         return -tune.ignore * c[1] / (c[0] + 2.0)
     }
 
+    // Scorsa via dal fumetto: un "no" detto apposta
+
+    /** Per ogni cosa: quando l'hai scorsa via e com'era la situazione (le ultime 30). */
+    private val refusals = HashMap<String, ArrayList<Pair<Long, Set<String>>>>()
+
+    @Synchronized
+    fun refused(item: String, t: Long, situation: List<Feature>) {
+        val l = refusals.getOrPut(item) { ArrayList() }
+        l += t to situation.mapTo(HashSet()) { it.key }
+        if (l.size > 30) l.removeAt(0)
+    }
+
+    /**
+     * Scorsa via in una situazione come questa: qui scende, altrove no (in auto sì, a casa la sera no).
+     * Quanto somiglia la situazione pesa come i segnali del modello; il "no" sbiadisce come le abitudini.
+     */
+    @Synchronized
+    fun refusedPenalty(item: String, situation: List<Feature>, now: Long): Double {
+        val l = refusals[item] ?: return 0.0
+        val all = situation.sumOf { GROUP_WEIGHT[it.group].orZero() }
+        if (all <= 0) return 0.0
+        var sum = 0.0
+        for ((t, keys) in l) {
+            val sim = situation.filter { it.key in keys }.sumOf { GROUP_WEIGHT[it.group].orZero() } / all
+            sum += sim * sim * exp(-LN2 * (now - t).coerceAtLeast(0L) / (halfLifeDays * DAY))
+        }
+        return -(REFUSE_GAIN * sum).coerceAtMost(MAX_REFUSE)
+    }
+
+    /**
+     * L'abitudine e basta: la situazione, le proposte lasciate lì e quelle scorse via.
+     * Senza "usata da poco" e senza notifiche: è quello che serve al fumetto "di solito".
+     */
+    fun habit(item: String, situation: List<Feature>, now: Long): Double =
+        score(item, situation) + ignoredPenalty(item, now) + refusedPenalty(item, situation, now)
+
     /** Volte (sbiadite) che hai fatto questa cosa: per decidere quando fidarsi. */
     fun times(item: String, now: Long = System.currentTimeMillis()): Double = (itemMass[item] ?: 0.0) / w(now)
 
@@ -265,6 +302,9 @@ class Model(private val halfLifeDays: Double = 21.0, now: Long = System.currentT
         const val NOTIFY_GAIN = 1.5
         const val NOTIFY_MINUTES = 40.0
         const val IGNORE_GAIN = 1.5
+        /** Un "no" nella stessa identica situazione: circa tre volte meno probabile. Al massimo [MAX_REFUSE]. */
+        const val REFUSE_GAIN = 1.2
+        const val MAX_REFUSE = 4.0
 
         /** Quanto conta ogni tipo di situazione. L'ora e il luogo dicono molto; il giorno della settimana meno. */
         val GROUP_WEIGHT = mapOf(

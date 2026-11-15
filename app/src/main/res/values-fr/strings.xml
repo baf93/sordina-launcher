@@ -445,7 +445,7 @@
     <string name="ob6_a5">Vidéo</string>
     <string name="ob6_c1">Balaie vers le haut : tes apps.</string>
     <string name="ob6_c2">Balaie vers le bas : le volet, comme toujours.</string>
-    <string name="ob6_c3">Le reste attend ici en bas, retenu.</string>
+    <string name="ob6_c3">Les notifications attendent ici en bas ; Sordina te dit ce dont tu as besoin.</string>
     <string name="ob6_c4">Les apps qui distraient demandent une respiration avant de s\'ouvrir.</string>
     <string name="ob6_sub">Vers le haut pour chercher, vers le bas pour les notifications. Appui long pour les réglages.</string>
     <string name="ob6_title">Sordina comme écran d\'accueil</string>
@@ -754,6 +754,14 @@
     <string name="ob_restore">Remettre mes réglages</string>
     <string name="ob_restore_found">J\'ai retrouvé tes réglages du %1$s dans la sauvegarde Google.</string>
     <string name="ob_restore_no">Repartir de zéro</string>
+    <string name="ob_hi_title">Salut, je suis Sordina</string>
+    <string name="ob_hi_text">Je t’aide à préparer ton téléphone : quelques questions, une minute. Tu pourras tout changer plus tard.</string>
+    <string name="ob_hi_go">C’est parti</string>
+    <string name="ob_lha">Maison</string>
+    <string name="obha_title">Tu as Home Assistant ?</string>
+    <string name="obha_sub">Connecte-le et parle à ta maison d’ici : lumières, volets, questions. Ses agendas apparaissent sur ton accueil.</string>
+    <string name="ob_ha_skip">Je ne l’ai pas</string>
+    <string name="ob6_c5">Maintiens le micro et demande : Sordina répond ici même.</string>
     <string name="ob_backup">Chaque jour j\'enregistre une copie dans la sauvegarde Google : vérifie qu\'elle est activée</string>
     <string name="ob1_why">Pour cela, je dois pouvoir lire tes notifications. Elles restent sur ton téléphone, personne d\'autre ne les voit.</string>
     <string name="ob4_why">Si tu me laisses voir l\'utilisation des applis, je choisis celles que tu utilises le plus.</string>

@@ -115,7 +115,7 @@ data class ProposalActions(
 data class Notice(val text: String, val undo: (() -> Unit)? = null, val id: Long = System.nanoTime())
 
 /** Stato della voce. */
-data class VoiceState(val available: Boolean, val listening: Boolean, val partial: String)
+data class VoiceState(val available: Boolean, val listening: Boolean, val partial: String, val level: Float = 0f)
 
 /**
  * Ricerca: solo parole, niente icone (le icone invitano ad aprire).

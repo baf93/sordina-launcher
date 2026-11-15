@@ -445,7 +445,7 @@
     <string name="ob6_a5">Vídeo</string>
     <string name="ob6_c1">Desliza hacia arriba: tus apps.</string>
     <string name="ob6_c2">Desliza hacia abajo: el panel, como siempre.</string>
-    <string name="ob6_c3">Lo demás espera aquí abajo, retenido.</string>
+    <string name="ob6_c3">Las notificaciones esperan aquí abajo; Sordina te dice lo que necesitas.</string>
     <string name="ob6_c4">Las apps que distraen piden un respiro antes de abrirse.</string>
     <string name="ob6_sub">Arriba para buscar, abajo para las notificaciones. Mantén pulsado para los ajustes.</string>
     <string name="ob6_title">Sordina como pantalla de inicio</string>
@@ -754,6 +754,14 @@
     <string name="ob_restore">Recuperar mis ajustes</string>
     <string name="ob_restore_found">He encontrado tus ajustes del %1$s en la copia de seguridad de Google.</string>
     <string name="ob_restore_no">Empezar de cero</string>
+    <string name="ob_hi_title">Hola, soy Sordina</string>
+    <string name="ob_hi_text">Te ayudo a preparar el teléfono: unas pocas preguntas, un minuto. Puedes cambiarlo todo después.</string>
+    <string name="ob_hi_go">Empecemos</string>
+    <string name="ob_lha">Casa</string>
+    <string name="obha_title">¿Tienes Home Assistant?</string>
+    <string name="obha_sub">Conéctalo y pregunta a tu casa desde aquí: luces, persianas, preguntas. Sus calendarios aparecen en tu inicio.</string>
+    <string name="ob_ha_skip">No lo tengo</string>
+    <string name="ob6_c5">Mantén pulsado el micrófono y pregunta: Sordina responde aquí mismo.</string>
     <string name="ob_backup">Cada día guardo una copia en la copia de seguridad de Google: comprueba que esté activada</string>
     <string name="ob1_why">Para eso necesito leer tus notificaciones. Se quedan en tu móvil; nadie más las ve.</string>
     <string name="ob4_why">Si me dejas ver el uso de las apps, elijo yo las que más usas.</string>

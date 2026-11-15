@@ -83,6 +83,9 @@ class Brain(
                     "P" -> hits += t
                     "N" -> if (p.size >= 3) m.notified(p[2], t)
                     "I" -> if (p.size >= 3) m.shown(t, p[2].split(',').filter { it.isNotEmpty() })
+                    // Il fumetto "di solito": visto (U) e scorso via (X)
+                    "U" -> if (p.size >= 3) m.shown(t, listOf(p[2]))
+                    "X" -> if (p.size >= 9) m.refused(p[2], t, situationOf(t, p).features(false))
                     "C" -> if (p.size >= 4) m.addChoice(t, p[2], p[3])
                     "T" -> if (p.size >= 4) timeline += Triple(t, p[2], p[3])
                 }
@@ -467,22 +470,73 @@ class Brain(
     }
 
     /**
-     * La cosa che il cervello è sicuro ti serva adesso (probabilità almeno [minP] fra tutte),
-     * se non l'hai già fatta da [since]. Per la scheda "di solito": compare solo quando è quasi certo.
+     * Il fumetto "di solito adesso": solo le cose di cui il cervello è davvero sicuro, e solo per un motivo
+     * che viene dalla situazione (l'ora, il posto, l'auto, l'app di prima), mai "la usi spesso".
+     * Niente di quello che hai fatto negli ultimi 30 minuti, niente di quello che ti ha appena scritto
+     * (è già nel numero accanto alla sordina). Meglio una sordina zitta che un fumetto a caso.
      */
-    fun best(minP: Double, since: Long, skip: (String) -> Boolean, realize: (String) -> Candidate?): Suggestion? {
+    fun usual(count: Int, skip: (String) -> Boolean, minP: Double = USUAL_P, realize: (String) -> Candidate?): List<Suggestion> {
         ensure()
         val m = model
         val s = now()
         val f = s.features(learning = false)
-        val scored = m.items.filterNot(skip).map { it to m.predict(it, f, s.time) }.filter { it.second.isFinite() }
-        if (scored.size < 2) return null
-        val (item, top) = scored.maxBy { it.second }
-        val p = 1.0 / scored.sumOf { kotlin.math.exp(it.second - top) }
-        if (p < minP || m.times(item) < 3 || (m.lastUsed(item) ?: 0L) >= since) return null
-        val c = realize(item) ?: return null
-        return Suggestion(c, item, p, why(m, item, f, pending(), s))
+        val t = s.time
+        val waiting = pending().keys
+        val scored = m.items.filterNot(skip).map { it to m.habit(it, f, t) }.filter { it.second.isFinite() }
+        if (scored.size < 3) return emptyList()
+        val top = scored.maxOf { it.second }
+        val z = scored.sumOf { kotlin.math.exp(it.second - top) }
+        return scored.sortedByDescending { it.second }.asSequence()
+            .map { (item, sc) -> item to kotlin.math.exp(sc - top) / z }
+            .takeWhile { it.second >= minP }
+            .filter { (item, _) ->
+                item !in waiting && m.times(item, t) >= 3 && (m.lastUsed(item) ?: 0L) < t - 30 * 60_000L &&
+                    m.notifiedBoost(item, t) < 0.3
+            }
+            .mapNotNull { (item, p) ->
+                val r = m.reason(item, f)?.takeIf { it.group in SITUATIONAL || (it.value != "-" && it.value != "0") } ?: return@mapNotNull null
+                realize(item)?.let { Suggestion(it, item, p, reasonText(r)) }
+            }
+            .distinctBy { it.candidate.id }
+            .take(count)
+            .toList()
     }
+
+    /** Il fumetto ti sta mostrando [item]: se non lo prendi, conta come proposta lasciata lì. */
+    fun shownUsual(item: String) {
+        val now = System.currentTimeMillis()
+        synchronized(this) { ensure(); model.shown(now, listOf(item)) }
+        append("U\t$now\t${item.enc()}")
+    }
+
+    /** L'hai scorsa via dal fumetto: in una situazione come questa scende. */
+    fun refusedUsual(item: String) {
+        val s = now()
+        synchronized(this) { ensure(); model.refused(item, s.time, s.features(learning = false)) }
+        append(listOf("X", s.time, item.enc(), s.wifi.enc(), s.car.enc(), s.headset.enc(), s.charging.enc(), s.previous.enc(), s.fresh.enc(), s.device.enc()).joinToString("\t"))
+    }
+
+    /** Come va il fumetto negli ultimi [days] giorni: (visto, preso, scorso via). Per regolare [USUAL_P]. */
+    fun usualStats(days: Int = 7): Triple<Int, Int, Int> {
+        val from = System.currentTimeMillis() - days * Model.DAY
+        var seen = 0; var refused = 0
+        val shownAt = ArrayList<Pair<Long, String>>()
+        val taken = HashSet<Pair<Long, String>>()
+        runCatching {
+            if (file.exists()) file.forEachLine { l ->
+                val p = l.split('\t')
+                val t = p.getOrNull(1)?.toLongOrNull() ?: return@forEachLine
+                if (t < from) return@forEachLine
+                when (p[0]) {
+                    "U" -> { seen++; shownAt += t to p.getOrElse(2) { "" } }
+                    "X" -> refused++
+                    "P" -> shownAt.lastOrNull { it.second == p.getOrNull(2) && t - it.first in 0..10 * 60_000L }?.let { taken += it }
+                }
+            }
+        }
+        return Triple(seen, taken.size, refused)
+    }
+
 
     private fun why(m: Model, item: String, f: List<Feature>, waiting: Map<String, String>, s: Situation): String {
         if (item.startsWith("msg:")) waiting[item]?.let { return tr(R.string.why_wrote, it) }
@@ -490,6 +544,10 @@ class Brain(
         // Usata pochi minuti fa: è questo che la porta su, non l'abitudine
         if (m.recency(item, s.time) >= 1.5 && (m.reason(item, f) == null || m.times(item) < 3)) return tr(R.string.why_recent)
         val r = m.reason(item, f) ?: return if (m.times(item) >= 5) tr(R.string.why_used) else tr(R.string.why_recent)
+        return reasonText(r)
+    }
+
+    private fun reasonText(r: Reason): String {
         return when (r.group) {
             "h" -> tr(R.string.why_time)
             "pl" -> when { r.value == "-" -> tr(R.string.why_out); r.value.startsWith("@") -> tr(R.string.why_spot); else -> tr(R.string.why_place, r.value) }
@@ -563,6 +621,12 @@ class Brain(
         /** Una cella di circa 280 × 200 metri (alle nostre latitudini): abbastanza per un posto, mai un indirizzo. */
         fun cellOf(lat: Double, lon: Double) = "@" + kotlin.math.round(lat * 400).toLong() + "_" + kotlin.math.round(lon * 400).toLong()
         const val MISS_WEIGHT = 1.0
+        /** Il fumetto "di solito" parla solo da questa probabilità in su (fra tutte le cose che fai).
+         * Misurata sulla memoria vera (UsualReplayTest, 15/11/2026): a 0.25 parla nel 6% dei momenti e quello che dice
+         * lo apri entro mezz'ora quasi una volta su due; senza soglia, meno di una su cinque. */
+        const val USUAL_P = 0.25
+        /** Motivi che valgono anche col valore "no": l'ora e il giorno sono sempre un motivo. */
+        private val SITUATIONAL = setOf("h", "dw", "we")
         private const val KEYGUARD_HIDDEN = 18
         /** MOVE_TO_FOREGROUND / ACTIVITY_RESUMED */
         private const val FOREGROUND = 1

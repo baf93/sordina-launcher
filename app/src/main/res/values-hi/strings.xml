@@ -445,7 +445,7 @@
     <string name="ob6_a5">वीडियो</string>
     <string name="ob6_c1">ऊपर स्वाइप करें: आपके ऐप।</string>
     <string name="ob6_c2">नीचे स्वाइप करें: सूचना पैनल, हमेशा की तरह।</string>
-    <string name="ob6_c3">बाक़ी सब यहाँ नीचे रुका हुआ इंतज़ार करता है।</string>
+    <string name="ob6_c3">सूचनाएँ यहाँ नीचे इंतज़ार करती हैं; सोर्डिना बताती है कि आपको क्या चाहिए।</string>
     <string name="ob6_c4">ध्यान भटकाने वाले ऐप खुलने से पहले एक साँस माँगते हैं।</string>
     <string name="ob6_sub">खोजने के लिए ऊपर, सूचनाओं के लिए नीचे। सेटिंग के लिए दबाकर रखें।</string>
     <string name="ob6_title">Sordina होम स्क्रीन के रूप में</string>
@@ -754,6 +754,14 @@
     <string name="ob_restore">मेरी सेटिंग वापस लाएँ</string>
     <string name="ob_restore_found">मुझे Google बैकअप में %1$s की आपकी सेटिंग मिलीं।</string>
     <string name="ob_restore_no">नए सिरे से शुरू करें</string>
+    <string name="ob_hi_title">नमस्ते, मैं सोर्डिना हूँ</string>
+    <string name="ob_hi_text">मैं फ़ोन सेट करने में आपकी मदद करूँगी: कुछ सवाल, लगभग एक मिनट। सब कुछ बाद में बदल सकते हैं।</string>
+    <string name="ob_hi_go">शुरू करें</string>
+    <string name="ob_lha">घर</string>
+    <string name="obha_title">क्या आपके पास Home Assistant है?</string>
+    <string name="obha_sub">इसे जोड़ें और यहीं से अपने घर से पूछें: लाइट, शटर, सवाल। इसके कैलेंडर होम पर दिखेंगे।</string>
+    <string name="ob_ha_skip">मेरे पास नहीं है</string>
+    <string name="ob6_c5">माइक दबाकर रखें और पूछें: सोर्डिना यहीं जवाब देगी।</string>
     <string name="ob_backup">हर दिन मैं Google बैकअप में एक कॉपी सेव करती हूँ: जाँच लें कि यह चालू है</string>
     <string name="ob1_why">इसके लिए मुझे आपकी सूचनाएँ पढ़नी होंगी। वे फ़ोन पर ही रहती हैं; कोई और उन्हें नहीं देखता।</string>
     <string name="ob4_why">अगर आप मुझे ऐप का इस्तेमाल देखने दें, तो मैं आपके सबसे ज़्यादा इस्तेमाल होने वाले ऐप चुन लूँगी।</string>

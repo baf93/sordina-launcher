@@ -434,7 +434,7 @@
     <string name="ob6_a5">วิดีโอ</string>
     <string name="ob6_c1">ปัดขึ้น: แอปของคุณ</string>
     <string name="ob6_c2">ปัดลง: แถบการแจ้งเตือน เหมือนเดิม</string>
-    <string name="ob6_c3">ที่เหลือรออยู่ข้างล่างนี้ ถูกพักไว้</string>
+    <string name="ob6_c3">การแจ้งเตือนรออยู่ตรงนี้ด้านล่าง Sordina บอกสิ่งที่คุณต้องการ</string>
     <string name="ob6_c4">แอปที่ทำให้เสียสมาธิจะขอให้หายใจสักครั้งก่อนเปิด</string>
     <string name="ob6_sub">ปัดขึ้นเพื่อค้นหา ปัดลงเพื่อดูการแจ้งเตือน กดค้างเพื่อเข้าการตั้งค่า</string>
     <string name="ob6_title">Sordina เป็นหน้าจอหลัก</string>
@@ -743,6 +743,14 @@
     <string name="ob_restore">กู้คืนการตั้งค่าของฉัน</string>
     <string name="ob_restore_found">ฉันพบการตั้งค่าของคุณจาก %1$s ในข้อมูลสำรองของ Google</string>
     <string name="ob_restore_no">เริ่มใหม่</string>
+    <string name="ob_hi_title">สวัสดี ฉันคือ Sordina</string>
+    <string name="ob_hi_text">ฉันจะช่วยตั้งค่าโทรศัพท์ของคุณ: ไม่กี่คำถาม ประมาณหนึ่งนาที เปลี่ยนทุกอย่างได้ภายหลัง</string>
+    <string name="ob_hi_go">เริ่มกันเลย</string>
+    <string name="ob_lha">บ้าน</string>
+    <string name="obha_title">คุณมี Home Assistant ไหม</string>
+    <string name="obha_sub">เชื่อมต่อแล้วถามบ้านได้จากที่นี่: ไฟ ม่าน คำถาม ปฏิทินของมันจะแสดงในหน้าหลัก</string>
+    <string name="ob_ha_skip">ฉันไม่มี</string>
+    <string name="ob6_c5">กดไมค์ค้างไว้แล้วถาม: Sordina จะตอบตรงนี้</string>
     <string name="ob_backup">ทุกวันฉันจะบันทึกสำเนาไว้ในข้อมูลสำรองของ Google: ตรวจดูว่าเปิดอยู่</string>
     <string name="ob1_why">เพื่อการนี้ฉันต้องอ่านการแจ้งเตือนของคุณได้ การแจ้งเตือนจะอยู่ในโทรศัพท์ ไม่มีใครเห็น</string>
     <string name="ob4_why">ถ้าคุณให้ฉันดูการใช้งานแอป ฉันจะเลือกแอปที่คุณใช้มากที่สุดให้</string>

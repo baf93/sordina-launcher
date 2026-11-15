@@ -445,7 +445,7 @@
     <string name="ob6_a5">Video</string>
     <string name="ob6_c1">Pyyhkäise ylös: sovelluksesi.</string>
     <string name="ob6_c2">Pyyhkäise alas: ilmoituspaneeli, kuten aina.</string>
-    <string name="ob6_c3">Muu odottaa täällä alhaalla, pidätettynä.</string>
+    <string name="ob6_c3">Ilmoitukset odottavat tässä alhaalla; Sordina kertoo, mitä tarvitset.</string>
     <string name="ob6_c4">Häiritsevät sovellukset pyytävät hengähdystauon ennen avautumista.</string>
     <string name="ob6_sub">Ylös hakuun, alas ilmoituksiin. Pidä painettuna asetuksia varten.</string>
     <string name="ob6_title">Sordina aloitusnäyttönä</string>
@@ -754,6 +754,14 @@
     <string name="ob_restore">Palauta asetukseni</string>
     <string name="ob_restore_found">Löysin asetuksesi ajalta %1$s Googlen varmuuskopiosta.</string>
     <string name="ob_restore_no">Aloita alusta</string>
+    <string name="ob_hi_title">Hei, olen Sordina</string>
+    <string name="ob_hi_text">Autan sinua ottamaan puhelimen käyttöön: muutama kysymys, noin minuutti. Voit muuttaa kaiken myöhemmin.</string>
+    <string name="ob_hi_go">Aloitetaan</string>
+    <string name="ob_lha">Koti</string>
+    <string name="obha_title">Onko sinulla Home Assistant?</string>
+    <string name="obha_sub">Yhdistä se ja kysy kodiltasi täältä: valot, kaihtimet, kysymykset. Sen kalenterit näkyvät aloitusnäytöllä.</string>
+    <string name="ob_ha_skip">Ei ole</string>
+    <string name="ob6_c5">Pidä mikrofonia painettuna ja kysy: Sordina vastaa tässä.</string>
     <string name="ob_backup">Tallennan joka päivä kopion Googlen varmuuskopioon: tarkista, että se on päällä</string>
     <string name="ob1_why">Sitä varten minun täytyy voida lukea ilmoituksesi. Ne pysyvät puhelimessa; kukaan muu ei näe niitä.</string>
     <string name="ob4_why">Jos annat minun nähdä sovellusten käytön, valitsen eniten käyttämäsi sovellukset.</string>

@@ -1,5 +1,7 @@
 package app.sordina.ui.home
 
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import app.sordina.R
@@ -210,11 +212,11 @@ internal fun CarHome(
     Column(Modifier.fillMaxSize().background(c.bg).then(gestures).systemBarsPadding().padding(top = 20.dp, bottom = 12.dp)) {
         Column(Modifier.padding(horizontal = 24.dp)) {
             Text(now.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)), style = TextStyle(fontSize = 56.sp, fontWeight = FontWeight.Light, color = c.ink))
-            val line = if (state.listening) state.partial.ifBlank { "…" } else state.sceneLine
-            line?.let { Text(it, maxLines = 3, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = if (state.listening) 22.sp else 16.sp, color = if (state.listening) c.ink else c.soft)) }
+            // Quello che dici va nel fumetto della sordina in basso, come nella Casa di sempre: qui non si sposta niente
+            state.sceneLine?.let { Text(it, maxLines = 3, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 16.sp, color = c.soft)) }
         }
         // Il prossimo impegno, solo quello: com'è nella Casa di sempre (il giorno sopra, l'ora in accento, il titolo)
-        state.next?.takeIf { !state.listening }?.let { e ->
+        state.next?.let { e ->
             Column(Modifier.padding(start = 24.dp, end = 24.dp, top = 24.dp)) {
                 e.day?.let { Text(it, Modifier.padding(bottom = 2.dp), style = TextStyle(fontSize = 13.sp, color = c.soft)) }
                 AgendaLine(e.copy(accent = true)) { feel.tick(); onScene(e.key) }
@@ -241,7 +243,9 @@ internal fun CarHome(
                 .background(if (state.listening) c.ink else c.accent).clickableNoRipple { feel.tick(); onScene("mic") },
             horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(Icons.Rounded.Mic, null, Modifier.size(30.dp), tint = c.bg)
+            // Il microfono respira con la tua voce mentre ascolta
+            val level by androidx.compose.animation.core.animateFloatAsState(if (state.listening) state.level else 0f, androidx.compose.animation.core.tween(90), label = "level")
+            Icon(Icons.Rounded.Mic, null, Modifier.size(30.dp).graphicsLayer { scaleX = 1f + 0.35f * level; scaleY = 1f + 0.35f * level }, tint = c.bg)
             Spacer(Modifier.width(10.dp))
             Text(tr(if (state.listening) R.string.car_listening else R.string.car_hold), maxLines = 1, style = TextStyle(fontSize = 18.sp, color = c.bg))
         }

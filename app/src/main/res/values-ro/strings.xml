@@ -456,7 +456,7 @@
     <string name="ob6_a5">Video</string>
     <string name="ob6_c1">Glisează în sus: aplicațiile tale.</string>
     <string name="ob6_c2">Glisează în jos: panoul, ca de obicei.</string>
-    <string name="ob6_c3">Restul așteaptă aici jos, reținut.</string>
+    <string name="ob6_c3">Notificările așteaptă aici jos; Sordina îți spune ce îți trebuie.</string>
     <string name="ob6_c4">Aplicațiile care distrag cer o respirație înainte să se deschidă.</string>
     <string name="ob6_sub">În sus pentru căutare, în jos pentru notificări. Ține apăsat pentru setări.</string>
     <string name="ob6_title">Sordina ca ecran de pornire</string>
@@ -765,6 +765,14 @@
     <string name="ob_restore">Restaurează setările mele</string>
     <string name="ob_restore_found">Am găsit setările tale din %1$s în backupul Google.</string>
     <string name="ob_restore_no">Începe de la zero</string>
+    <string name="ob_hi_title">Salut, sunt Sordina</string>
+    <string name="ob_hi_text">Te ajut să configurezi telefonul: câteva întrebări, cam un minut. Poți schimba totul mai târziu.</string>
+    <string name="ob_hi_go">Să începem</string>
+    <string name="ob_lha">Acasă</string>
+    <string name="obha_title">Ai Home Assistant?</string>
+    <string name="obha_sub">Conectează-l și întreabă-ți casa de aici: lumini, jaluzele, întrebări. Calendarele lui apar pe ecranul principal.</string>
+    <string name="ob_ha_skip">Nu am</string>
+    <string name="ob6_c5">Ține apăsat microfonul și întreabă: Sordina răspunde chiar aici.</string>
     <string name="ob_backup">În fiecare zi salvez o copie în backupul Google: verifică dacă e activat</string>
     <string name="ob1_why">Pentru asta trebuie să pot citi notificările tale. Rămân pe telefon; nimeni altcineva nu le vede.</string>
     <string name="ob4_why">Dacă mă lași să văd utilizarea aplicațiilor, aleg eu aplicațiile pe care le folosești cel mai mult.</string>

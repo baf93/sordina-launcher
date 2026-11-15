@@ -467,7 +467,7 @@
     <string name="ob6_a5">Відео</string>
     <string name="ob6_c1">Проведи вгору: твої застосунки.</string>
     <string name="ob6_c2">Проведи вниз: шторка, як завжди.</string>
-    <string name="ob6_c3">Решта чекає тут унизу, затримана.</string>
+    <string name="ob6_c3">Сповіщення чекають тут унизу; Сордина підкаже, що потрібно.</string>
     <string name="ob6_c4">Застосунки, що відволікають, просять зробити вдих перед відкриттям.</string>
     <string name="ob6_sub">Угору — пошук, униз — сповіщення. Утримуй для налаштувань.</string>
     <string name="ob6_title">Sordina як головний екран</string>
@@ -776,6 +776,14 @@
     <string name="ob_restore">Відновити мої налаштування</string>
     <string name="ob_restore_found">Я знайшла твої налаштування від %1$s у резервній копії Google.</string>
     <string name="ob_restore_no">Почати заново</string>
+    <string name="ob_hi_title">Привіт, я Сордина</string>
+    <string name="ob_hi_text">Допоможу налаштувати телефон: кілька запитань, близько хвилини. Усе можна змінити пізніше.</string>
+    <string name="ob_hi_go">Почнімо</string>
+    <string name="ob_lha">Дім</string>
+    <string name="obha_title">У вас є Home Assistant?</string>
+    <string name="obha_sub">Під\'єднайте його й питайте дім звідси: світло, жалюзі, запитання. Його календарі з\'являться на головному екрані.</string>
+    <string name="ob_ha_skip">У мене його немає</string>
+    <string name="ob6_c5">Утримуйте мікрофон і запитайте: Сордина відповість просто тут.</string>
     <string name="ob_backup">Щодня я зберігаю копію в резервній копії Google: перевір, що вона увімкнена</string>
     <string name="ob1_why">Для цього мені потрібно читати твої сповіщення. Вони залишаються на телефоні; ніхто інший їх не бачить.</string>
     <string name="ob4_why">Якщо дозволиш мені бачити використання застосунків, я виберу ті, якими ти користуєшся найбільше.</string>

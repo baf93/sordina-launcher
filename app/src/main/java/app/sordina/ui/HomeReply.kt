@@ -57,74 +57,22 @@ import kotlinx.coroutines.delay
 data class HomeReply(val text: String?, val ok: Boolean = true, val id: Long = System.nanoTime())
 
 /**
- * La sordina che risponde per la casa: sale a colori da dove sta quella piccola in fondo,
- * concentrata mentre aspetta (fumetto con i puntini), poi salta contenta e scrive la risposta, o sospira se non è andata.
- * Resta il tempo di leggerla, poi torna giù; un tocco la manda via prima.
- *
- * Batteria: si muove solo nei pochi secondi in cui è sullo schermo, poi non resta niente acceso.
+ * La sordina che risponde per la casa, nel suo fumetto in fondo a Casa (lo disegna [app.sordina.ui.home.SordinaZone]):
+ * qui solo quanto resta. Mentre aspetta al massimo 20 secondi; una risposta il tempo di leggerla, da 1,8 a 5 secondi.
+ * Un tocco la manda via prima (lo ferma l'attività).
  */
 @Composable
-fun BoxScope.HomeReplyView(reply: HomeReply?, onGone: () -> Unit) {
-    val c = S.c
-    val anim = LocalFeel.current.animations
-    // Quella mostrata resta anche mentre esce, così il fumetto non si svuota durante la discesa
-    var shown by remember { mutableStateOf(reply) }
-    if (reply != null) shown = reply
-    val r = shown ?: return
-
+fun HomeReplyTimer(reply: HomeReply?, onGone: () -> Unit) {
     LaunchedEffect(reply?.id) {
         val now = reply ?: return@LaunchedEffect
-        // Mentre aspetta al massimo 20 secondi; una risposta resta giusto il tempo di leggerla: da 1,8 a 5 secondi
         delay(if (now.text == null) 20_000L else (1800L + now.text.length * 30L).coerceAtMost(5_000L))
         onGone()
     }
-
-    AnimatedVisibility(
-        reply != null,
-        Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 196.dp, start = 24.dp, end = 24.dp),
-        enter = if (anim) fadeIn(tween(160)) + slideInVertically(spring(dampingRatio = 0.62f, stiffness = 380f)) { it / 2 } else fadeIn(tween(0)),
-        // Esce in fretta: se l'hai toccata vuoi fare altro, non guardarla andare via
-        exit = if (anim) fadeOut(tween(120)) + slideOutVertically(tween(160)) { it / 4 } else fadeOut(tween(0)),
-    ) {
-        // Il tocco che la manda via lo ferma l'attività (dispatchTouchEvent): qui niente, così non ruba i tocchi dopo mentre esce
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            // Il fumetto spunta dalla sordina, con la punta verso di lei
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(
-                    Modifier
-                        .graphicsLayer { transformOrigin = TransformOrigin(0.5f, 1f) }
-                        .widthIn(min = 72.dp, max = 320.dp)
-                        .clip(RoundedCornerShape(22.dp)).background(c.card)
-                        .animateContentSize(spring(dampingRatio = 0.8f, stiffness = 500f))
-                        .padding(horizontal = 18.dp, vertical = 12.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (r.text == null) Dots(anim) else Typed(r.text, r.id, anim)
-                }
-                Box(Modifier.size(width = 18.dp, height = 9.dp).background(c.card, Tail))
-            }
-            Spacer(Modifier.size(2.dp))
-            // Concentrata e respira finché aspetta; poi salta tra le stelline, o un sospiro
-            val mood = when {
-                r.text == null -> Mood.WAIT
-                r.ok -> Mood.DONE
-                else -> Mood.SIGH
-            }
-            Mascot(mood, Modifier.size(104.dp))
-        }
-    }
-}
-
-/** La punta del fumetto, verso il basso. */
-private val Tail = GenericShape { size, _ ->
-    moveTo(0f, 0f); lineTo(size.width, 0f); lineTo(size.width / 2f, size.height); close()
 }
 
 /** Tre puntini che salgono e scendono a turno: la casa sta pensando. */
 @Composable
-private fun Dots(anim: Boolean) {
+internal fun Dots(anim: Boolean) {
     val c = S.c
     val t = if (anim) rememberInfiniteTransition(label = "dots").animateFloat(
         0f, 3f, infiniteRepeatable(tween(1100), RepeatMode.Restart), label = "t",
@@ -144,7 +92,7 @@ private fun Dots(anim: Boolean) {
 
 /** La risposta scritta lettera per lettera, come se la sordina la stesse dicendo (al massimo un secondo). */
 @Composable
-private fun Typed(text: String, id: Long, anim: Boolean) {
+internal fun Typed(text: String, id: Long, anim: Boolean, align: TextAlign = TextAlign.Center, maxLines: Int = Int.MAX_VALUE) {
     val c = S.c
     var n by remember(id) { mutableIntStateOf(if (anim) 0 else text.length) }
     LaunchedEffect(id) {
@@ -157,5 +105,5 @@ private fun Typed(text: String, id: Long, anim: Boolean) {
         append(text.take(n))
         withStyle(SpanStyle(color = c.ink.copy(alpha = 0f))) { append(text.drop(n)) }
     }
-    Text(shownText, style = TextStyle(fontSize = 16.sp, lineHeight = 22.sp, color = c.ink, textAlign = TextAlign.Center))
+    Text(shownText, maxLines = maxLines, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, style = TextStyle(fontSize = 16.sp, lineHeight = 22.sp, color = c.ink, textAlign = align))
 }

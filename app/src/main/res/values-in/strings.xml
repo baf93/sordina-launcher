@@ -434,7 +434,7 @@
     <string name="ob6_a5">Video</string>
     <string name="ob6_c1">Geser ke atas: aplikasimu.</string>
     <string name="ob6_c2">Geser ke bawah: panel notifikasi, seperti biasa.</string>
-    <string name="ob6_c3">Sisanya menunggu di bawah sini, ditahan.</string>
+    <string name="ob6_c3">Notifikasi menunggu di bawah sini; Sordina memberi tahu yang kamu perlukan.</string>
     <string name="ob6_c4">Aplikasi yang mengganggu meminta satu tarikan napas sebelum terbuka.</string>
     <string name="ob6_sub">Ke atas untuk mencari, ke bawah untuk notifikasi. Tekan lama untuk setelan.</string>
     <string name="ob6_title">Sordina sebagai layar utama</string>
@@ -743,6 +743,14 @@
     <string name="ob_restore">Pulihkan setelanku</string>
     <string name="ob_restore_found">Aku menemukan setelanmu dari %1$s di cadangan Google.</string>
     <string name="ob_restore_no">Mulai dari awal</string>
+    <string name="ob_hi_title">Hai, aku Sordina</string>
+    <string name="ob_hi_text">Aku bantu menyiapkan ponselmu: beberapa pertanyaan, sekitar satu menit. Semuanya bisa diubah nanti.</string>
+    <string name="ob_hi_go">Ayo mulai</string>
+    <string name="ob_lha">Rumah</string>
+    <string name="obha_title">Punya Home Assistant?</string>
+    <string name="obha_sub">Hubungkan dan tanya rumahmu dari sini: lampu, tirai, pertanyaan. Kalendernya muncul di Beranda.</string>
+    <string name="ob_ha_skip">Aku tidak punya</string>
+    <string name="ob6_c5">Tahan mikrofon dan tanya: Sordina menjawab di sini.</string>
     <string name="ob_backup">Setiap hari aku menyimpan salinan di cadangan Google: pastikan cadangannya aktif</string>
     <string name="ob1_why">Untuk itu aku perlu bisa membaca notifikasimu. Notifikasi tetap di ponsel; tidak ada orang lain yang melihatnya.</string>
     <string name="ob4_why">Jika kamu mengizinkanku melihat penggunaan aplikasi, aku akan memilih aplikasi yang paling sering kamu pakai.</string>

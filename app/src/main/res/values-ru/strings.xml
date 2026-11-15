@@ -467,7 +467,7 @@
     <string name="ob6_a5">Видео</string>
     <string name="ob6_c1">Свайп вверх: твои приложения.</string>
     <string name="ob6_c2">Свайп вниз: шторка, как обычно.</string>
-    <string name="ob6_c3">Остальное ждёт здесь внизу, задержанное.</string>
+    <string name="ob6_c3">Уведомления ждут здесь внизу; Сордина подскажет, что нужно.</string>
     <string name="ob6_c4">Отвлекающие приложения просят сделать вдох перед открытием.</string>
     <string name="ob6_sub">Вверх — поиск, вниз — уведомления. Удерживай для настроек.</string>
     <string name="ob6_title">Sordina как главный экран</string>
@@ -776,6 +776,14 @@
     <string name="ob_restore">Восстановить мои настройки</string>
     <string name="ob_restore_found">Я нашла твои настройки от %1$s в резервной копии Google.</string>
     <string name="ob_restore_no">Начать заново</string>
+    <string name="ob_hi_title">Привет, я Сордина</string>
+    <string name="ob_hi_text">Помогу настроить телефон: несколько вопросов, около минуты. Всё можно изменить позже.</string>
+    <string name="ob_hi_go">Начнём</string>
+    <string name="ob_lha">Дом</string>
+    <string name="obha_title">У вас есть Home Assistant?</string>
+    <string name="obha_sub">Подключите его и спрашивайте дом отсюда: свет, жалюзи, вопросы. Его календари появятся на главном экране.</string>
+    <string name="ob_ha_skip">У меня его нет</string>
+    <string name="ob6_c5">Удерживайте микрофон и спросите: Сордина ответит прямо здесь.</string>
     <string name="ob_backup">Каждый день я сохраняю копию в резервную копию Google: проверь, что она включена</string>
     <string name="ob1_why">Для этого мне нужно читать твои уведомления. Они остаются на телефоне; никто другой их не видит.</string>
     <string name="ob4_why">Если ты разрешишь мне видеть использование приложений, я выберу те, которыми ты пользуешься чаще всего.</string>

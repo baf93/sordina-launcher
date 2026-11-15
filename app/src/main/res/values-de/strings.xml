@@ -445,7 +445,7 @@
     <string name="ob6_a5">Video</string>
     <string name="ob6_c1">Nach oben wischen: deine Apps.</string>
     <string name="ob6_c2">Nach unten wischen: die Leiste, wie immer.</string>
-    <string name="ob6_c3">Der Rest wartet hier unten, gehalten.</string>
+    <string name="ob6_c3">Benachrichtigungen warten hier unten; Sordina sagt dir, was du brauchst.</string>
     <string name="ob6_c4">Ablenkende Apps bitten vor dem Öffnen um einen Atemzug.</string>
     <string name="ob6_sub">Nach oben zum Suchen, nach unten für Benachrichtigungen. Gedrückt halten für Einstellungen.</string>
     <string name="ob6_title">Sordina als Startbildschirm</string>
@@ -754,6 +754,14 @@
     <string name="ob_restore">Meine Einstellungen wiederherstellen</string>
     <string name="ob_restore_found">Ich habe deine Einstellungen vom %1$s im Google-Backup gefunden.</string>
     <string name="ob_restore_no">Neu beginnen</string>
+    <string name="ob_hi_title">Hallo, ich bin Sordina</string>
+    <string name="ob_hi_text">Ich helfe dir, dein Handy einzurichten: ein paar Fragen, etwa eine Minute. Du kannst alles später ändern.</string>
+    <string name="ob_hi_go">Los geht\'s</string>
+    <string name="ob_lha">Zuhause</string>
+    <string name="obha_title">Hast du Home Assistant?</string>
+    <string name="obha_sub">Verbinde es und frag dein Zuhause von hier: Licht, Rollläden, Fragen. Seine Kalender erscheinen auf deinem Startbildschirm.</string>
+    <string name="ob_ha_skip">Hab ich nicht</string>
+    <string name="ob6_c5">Halte das Mikrofon gedrückt und frag: Sordina antwortet gleich hier.</string>
     <string name="ob_backup">Jeden Tag speichere ich eine Kopie im Google-Backup: Prüf, ob es eingeschaltet ist</string>
     <string name="ob1_why">Dafür muss ich deine Benachrichtigungen lesen können. Sie bleiben auf deinem Handy, niemand sonst sieht sie.</string>
     <string name="ob4_why">Wenn du mich die App-Nutzung sehen lässt, wähle ich die aus, die du am meisten nutzt.</string>

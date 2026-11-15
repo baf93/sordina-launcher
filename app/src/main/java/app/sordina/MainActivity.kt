@@ -23,7 +23,7 @@ import app.sordina.ui.sordina.SordinaScreen
 import app.sordina.ui.Feel
 import app.sordina.ui.LocalFeel
 import app.sordina.ui.HomeReply
-import app.sordina.ui.HomeReplyView
+import app.sordina.ui.HomeReplyTimer
 import app.sordina.ui.LocalGlass
 import app.sordina.ui.theme.Backdrop
 import app.sordina.ui.theme.Backdrops
@@ -244,7 +244,7 @@ class MainActivity : ComponentActivity(), Ops {
                     androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
                         Root()
                         Bubble(bubble) { bubble = null }
-                        HomeReplyView(reply) { reply = null }
+                        HomeReplyTimer(reply) { reply = null }
                     }
                 }
             }
@@ -507,7 +507,10 @@ class MainActivity : ComponentActivity(), Ops {
     private fun onScene(key: String) {
         when {
             // Il fumetto "di solito": tocco fa, pressione lunga non la propone più, scorso via torna alla prossima fascia
-            key.startsWith("usual:") -> proposals.items.firstOrNull { it.id == key.removePrefix("usual:") }?.let { run(it, -1) }
+            key.startsWith("usual:") -> key.removePrefix("usual:").let { id -> proposals.usual.firstOrNull { it.candidate.id == id }?.candidate ?: proposals.items.firstOrNull { it.id == id } }?.let { run(it, -1) }
+            // Il fumetto ti mostra una cosa / l'hai scorsa via: il cervello impara anche da questo
+            key.startsWith("usual-seen:") -> proposals.brainItem[key.removePrefix("usual-seen:")]?.let { item -> lifecycleScope.launch(Dispatchers.Default) { app.brain.shownUsual(item) } }
+            key.startsWith("usual-no:") -> proposals.brainItem[key.removePrefix("usual-no:")]?.let { item -> lifecycleScope.launch(Dispatchers.Default) { app.brain.refusedUsual(item) } }
             key.startsWith("usual-drop:") -> {
                 proposals.brainItem[key.removePrefix("usual-drop:")]?.let { prefs.excluded = prefs.excluded + "brain:$it" }
                 refreshProposals(force = true)
@@ -787,8 +790,8 @@ class MainActivity : ComponentActivity(), Ops {
     }
 
     private fun cardTap(card: Card) {
+        // Le schede imparano da sé (CardSense); il cervello conta solo le sue proposte, così il suo numero resta vero
         app.cardSense.used(card)
-        app.brain.hit("card:${card.kind}")
         when {
             card.kind == CardKind.HEALTH -> onAgenda("health")
             // Un piano letto nei messaggi: il tocco fa la prima cosa (Naviga vicino all'ora, In calendario prima)
@@ -819,7 +822,7 @@ class MainActivity : ComponentActivity(), Ops {
             a.op == CardOp.Hide -> app.cardSense.dropped(card)
             a.op == CardOp.Dismiss -> if (card.kind == CardKind.HABIT || card.kind == CardKind.BIRTHDAY) app.cardSense.dropped(card)
             a.op is CardOp.Later -> {}
-            a.label.isNotEmpty() -> { app.cardSense.used(card); app.brain.hit("card:${card.kind}") }
+            a.label.isNotEmpty() -> app.cardSense.used(card)
         }
         when (val op = a.op) {
             is CardOp.Copy -> {
@@ -905,7 +908,11 @@ class MainActivity : ComponentActivity(), Ops {
         r.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {}
             override fun onBeginningOfSpeech() {}
-            override fun onRmsChanged(rmsdB: Float) {}
+            override fun onRmsChanged(rmsdB: Float) {
+                // Il cerchio del microfono respira con la voce: solo mentre ascolta, a passi visibili (niente ricomposizioni inutili)
+                val l = (((rmsdB + 2f) / 12f).coerceIn(0f, 1f) * 8).toInt() / 8f
+                if (voice.listening && l != voice.level) voice = voice.copy(level = l)
+            }
             override fun onBufferReceived(buffer: ByteArray?) {}
             override fun onEndOfSpeech() {}
             override fun onEvent(eventType: Int, params: Bundle?) {}
@@ -915,8 +922,9 @@ class MainActivity : ComponentActivity(), Ops {
             }
             override fun onResults(results: Bundle?) {
                 val heard = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION).orEmpty().filter { it.isNotBlank() }
-                voice = voice.copy(listening = false, partial = "")
-                if (heard.isEmpty()) { notice = Notice(tr(R.string.not_understood)); return }
+                // Quello che hai detto resta nel fumetto della sordina mentre decide: la ricerca o la risposta prendono il suo posto
+                voice = voice.copy(listening = false, partial = heard.firstOrNull().orEmpty(), level = 0f)
+                if (heard.isEmpty()) { if (screen == Screen.HOME) answer(tr(R.string.not_understood), ok = false) else notice = Notice(tr(R.string.not_understood)); return }
                 // Il riconoscitore propone più trascrizioni ("chiama Elisa" / "chiamala Lisa"): vince quella che Sordina capisce meglio,
                 // a parità la prima (la più probabile per lui)
                 val (t, u) = heard.take(4).mapIndexed { i, h -> Triple(h, understand(h), i) }
@@ -927,9 +935,11 @@ class MainActivity : ComponentActivity(), Ops {
                 // Azioni verso te stesso, con sicurezza alta: fatte subito
                 val top = u.top
                 if (u.confident && top != null && !top.toOthers) run(top, 0) else screen = Screen.INTENT
+                // Dopo che l'azione è partita (la casa che risponde mette già i suoi puntini): niente buco in mezzo
+                lifecycleScope.launch { voice = voice.copy(partial = "") }
             }
             override fun onError(error: Int) {
-                voice = voice.copy(listening = false, partial = "")
+                voice = voice.copy(listening = false, partial = "", level = 0f)
                 notice = when (error) {
                     12, 13 -> Notice(tr(R.string.voice_no_lang))
                     SpeechRecognizer.ERROR_NO_MATCH, SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> Notice(tr(R.string.not_understood))
@@ -1328,19 +1338,15 @@ class MainActivity : ComponentActivity(), Ops {
                         androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) { HomeScreen(
                             state = HomeState(
                                 waiting = waiting,
-                                away = reply != null,
+                                reply = reply,
                                 until = null,
                                 moment = if (moment == Moment.NONE) null else moment.label,
                                 // Senza schede resta solo quella che dice che Sordina non funziona
                                 cards = if (prefs.homeCards) cards else cards.filter { it.kind == CardKind.HEALTH },
-                                // Niente in corso: le proposte del cervello di questa mezz'ora (non le fissate), di giorno e di sera
+                                // Niente in corso: quello di cui il cervello è sicuro in questa mezz'ora (spesso niente), di giorno e di sera
                                 usual = remember(proposals, usualHidden, scene, prefsVersion) {
                                     if (!prefs.homeCards || (scene != Scene.DAY && scene != Scene.EVENING) || usualHidden == proposals.slot) emptyList()
-                                    else {
-                                        val pinned = tr(R.string.why_pinned)
-                                        proposals.items.filter { proposals.brainItem[it.id] != null && proposals.why[it.id] != pinned }.take(3)
-                                            .map { k -> Usual(k.id, k.title, k.kind, k.app?.takeIf { prefs.appIcons }?.let { catalog.cachedIcon(it) }, proposals.why[k.id]?.takeIf { w -> k.kind == Kind.APP || (w != tr(R.string.why_time) && w != tr(R.string.why_used)) }) }
-                                    }
+                                    else proposals.usual.map { s -> val k = s.candidate; Usual(k.id, k.title, k.kind, k.app?.takeIf { prefs.appIcons }?.let { catalog.cachedIcon(it) }, s.why) }
                                 },
                                 agenda = remember(agendaEvents, moment, now, scene, health) { agendaRows(waiting) }
                                     // Senza impegni in Casa resta solo l'avviso che Sordina è ferma
@@ -1348,6 +1354,7 @@ class MainActivity : ComponentActivity(), Ops {
                                 weather = if (prefs.homeWeather) weatherNow else null,
                                 listening = voice.listening,
                                 partial = voice.partial,
+                                level = voice.level,
                                 topDark = backdrop.topDark,
                                 bottomDark = backdrop.bottomDark,
                                 translucent = backdrop.active,

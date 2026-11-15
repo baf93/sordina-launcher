@@ -24,6 +24,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -133,6 +135,8 @@ data class HomeState(
     /** Il microfono sta ascoltando; cosa ha capito finora */
     val listening: Boolean = false,
     val partial: String = "",
+    /** Quanto forte stai parlando, 0..1 (solo mentre ascolta) */
+    val level: Float = 0f,
     /** Con uno sfondo: testo scuro (true) o chiaro (false) in alto e in basso; null = tema */
     val topDark: Boolean? = null,
     val bottomDark: Boolean? = null,
@@ -157,8 +161,8 @@ data class HomeState(
     val alarmAt: Long? = null,
     /** Auto: solo il prossimo impegno; [AgendaRow.key] è "nav:luogo" se ha un indirizzo */
     val next: AgendaRow? = null,
-    /** La sordina è salita a rispondere (frasi di casa): quella piccola in fondo si fa da parte */
-    val away: Boolean = false,
+    /** La sordina risponde per la casa: il suo fumetto in fondo dice "…" e poi la risposta */
+    val reply: app.sordina.ui.HomeReply? = null,
     /** Niente in corso: quello che di solito fai adesso, per il fumetto (al massimo tre) */
     val usual: List<Usual> = emptyList(),
 )
@@ -292,21 +296,36 @@ internal fun AgendaLine(r: AgendaRow, onClick: () -> Unit) {
 internal fun SearchBar(state: HomeState, onSearch: () -> Unit, onMicDown: () -> Unit, onMicUp: () -> Unit) {
     val c = S.c
     val feel = LocalFeel.current
-    Row(
-        Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(56.dp).clip(RoundedCornerShape(28.dp))
-            .background(surface()).clickable(onClick = onSearch).padding(start = 22.dp, end = 7.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        val text = if (state.listening) state.partial.ifBlank { tr(R.string.home_listening) } else tr(R.string.home_search)
-        Text(text, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
-            style = TextStyle(fontSize = 16.sp, color = if (state.listening) c.ink else c.soft))
-        Box(
-            Modifier.size(42.dp).clip(CircleShape).background(if (state.listening) c.accent else androidx.compose.ui.graphics.Color.Transparent)
-                // Il tocco resta al microfono: se arrivasse anche alla barra, al rilascio si aprirebbe la ricerca
-                .pointerInput(Unit) { awaitEachGesture { awaitFirstDown().consume(); feel.tick(); onMicDown(); waitForUpOrCancellation()?.consume(); onMicUp() } },
+    // Mentre tieni premuto il microfono cresce oltre la barra (il dito non lo copre) e respira con la tua voce
+    val grow by animateFloatAsState(if (state.listening) 1f else 0f, spring(dampingRatio = 0.6f, stiffness = 500f), label = "mic")
+    val level by animateFloatAsState(if (state.listening) state.level else 0f, tween(90), label = "level")
+    Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(56.dp)) {
+        Row(
+            Modifier.fillMaxSize().clip(RoundedCornerShape(28.dp))
+                .background(surface()).clickable(onClick = onSearch).padding(start = 22.dp, end = 7.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(tr(if (state.listening) R.string.home_listening else R.string.home_search), Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                style = TextStyle(fontSize = 16.sp, color = if (state.listening) c.ink else c.soft))
+            Box(
+                Modifier.size(42.dp)
+                    // Il tocco resta al microfono: se arrivasse anche alla barra, al rilascio si aprirebbe la ricerca
+                    .pointerInput(Unit) { awaitEachGesture { awaitFirstDown().consume(); feel.tick(); onMicDown(); waitForUpOrCancellation()?.consume(); onMicUp() } },
+                contentAlignment = Alignment.Center,
+            ) {
+                if (grow < 0.5f) Icon(Icons.Rounded.Mic, tr(R.string.speak), Modifier.size(22.dp), tint = c.accent)
+            }
+        }
+        if (grow > 0.01f) Box(
+            // Sul microfono, appena spostato verso l'interno così resta tutto nello schermo: un cerchio pieno da 88 dp, con un alone che segue la voce
+            Modifier.align(Alignment.CenterEnd).offset(x = 28.dp).requiredSize(88.dp + 36.dp)
+                .graphicsLayer { scaleX = grow; scaleY = grow; alpha = grow },
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Rounded.Mic, tr(R.string.speak), Modifier.size(22.dp), tint = if (state.listening) c.bg else c.accent)
+            Box(Modifier.requiredSize(88.dp + 36.dp * level).clip(CircleShape).background(c.accent.copy(alpha = 0.25f)))
+            Box(Modifier.requiredSize(88.dp).clip(CircleShape).background(c.accent), contentAlignment = Alignment.Center) {
+                Icon(Icons.Rounded.Mic, null, Modifier.size(34.dp), tint = c.bg)
+            }
         }
     }
 }

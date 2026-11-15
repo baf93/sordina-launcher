@@ -445,7 +445,7 @@
     <string name="ob6_a5">Video</string>
     <string name="ob6_c1">Stryg op: dine apps.</string>
     <string name="ob6_c2">Stryg ned: notifikationspanelet, som altid.</string>
-    <string name="ob6_c3">Resten venter hernede, holdt tilbage.</string>
+    <string name="ob6_c3">Notifikationer venter hernede; Sordina fortæller dig, hvad du har brug for.</string>
     <string name="ob6_c4">Apps, der distraherer, beder om et åndedrag, før de åbner.</string>
     <string name="ob6_sub">Op for at søge, ned for notifikationer. Hold nede for indstillinger.</string>
     <string name="ob6_title">Sordina som startskærm</string>
@@ -754,6 +754,14 @@
     <string name="ob_restore">Gendan mine indstillinger</string>
     <string name="ob_restore_found">Jeg fandt dine indstillinger fra %1$s i Google-backup.</string>
     <string name="ob_restore_no">Start forfra</string>
+    <string name="ob_hi_title">Hej, jeg er Sordina</string>
+    <string name="ob_hi_text">Jeg hjælper dig med at sætte telefonen op: et par spørgsmål, cirka et minut. Du kan ændre alt senere.</string>
+    <string name="ob_hi_go">Lad os starte</string>
+    <string name="ob_lha">Hjem</string>
+    <string name="obha_title">Har du Home Assistant?</string>
+    <string name="obha_sub">Forbind det og spørg dit hjem herfra: lys, persienner, spørgsmål. Dets kalendere vises på din startskærm.</string>
+    <string name="ob_ha_skip">Jeg har det ikke</string>
+    <string name="ob6_c5">Hold mikrofonen nede og spørg: Sordina svarer lige her.</string>
     <string name="ob_backup">Hver dag gemmer jeg en kopi i Google-backup: tjek at den er slået til</string>
     <string name="ob1_why">Til det skal jeg kunne læse dine notifikationer. De bliver på telefonen; ingen andre ser dem.</string>
     <string name="ob4_why">Hvis du lader mig se appbrugen, vælger jeg de apps, du bruger mest.</string>

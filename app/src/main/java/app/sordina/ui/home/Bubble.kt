@@ -45,6 +45,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.animation.animateContentSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -122,26 +124,70 @@ internal fun SordinaZone(
     val live = state.cards.filter { liveKey(it) !in swiped }
     val card = live.firstOrNull()
     val usual = if (card == null) state.usual else emptyList()
-    val talking = (card != null || usual.isNotEmpty()) && !state.away
+    // La casa che risponde passa davanti a tutto: è la risposta a quello che hai appena chiesto
+    // Mentre parli la sordina è già lì che ascolta, col fumetto di quello che dici; poi la ricerca o la risposta prendono il suo posto
+    val heard = if (state.listening || state.partial.isNotEmpty()) state.partial else null
+    val reply = if (heard != null) null else state.reply
+    val talking = heard != null || reply != null || card != null || usual.isNotEmpty()
+    val mood = when {
+        heard != null -> if (state.listening) app.sordina.ui.Mood.READY else app.sordina.ui.Mood.WAIT
+        reply != null -> if (reply.text == null) app.sordina.ui.Mood.WAIT else if (reply.ok) app.sordina.ui.Mood.DONE else app.sordina.ui.Mood.SIGH
+        else -> null
+    }
     val bias by animateFloatAsState(if (talking) -1f else 0f, Motion.enter(320), label = "mascot")
     val shown by animateFloatAsState(if (talking) 1f else 0f, Motion.enter(260), label = "bubble")
     // Mentre il fumetto se ne va si continua a vedere quello che diceva
-    val last = remember { mutableStateOf<Pair<Card?, List<Usual>>>(null to emptyList()) }
-    if (talking) last.value = card to usual
+    val last = remember { mutableStateOf(Said(null, null, null, emptyList())) }
+    if (talking) last.value = Said(heard, reply, card, usual)
 
     Box(Modifier.fillMaxWidth().height(ZONE).padding(horizontal = 16.dp)) {
         if (shown > 0f) {
-            val (k, u) = last.value
+            val (hd, rp, k, u) = last.value
             Box(
                 Modifier.align(Alignment.CenterStart).padding(start = 52.dp).fillMaxWidth()
                     .graphicsLayer { alpha = shown; translationX = (1f - shown) * -24.dp.toPx() },
             ) {
-                if (k != null) androidx.compose.runtime.key(k.key) {
+                if (hd != null) HeardBubble(hd)
+                else if (rp != null) ReplyBubble(rp)
+                else if (k != null) androidx.compose.runtime.key(k.key) {
                     CardBubble(k, more = live.size - 1, onAction, onCard) { if (k.kind == CardKind.MUSIC) swiped = swiped + liveKey(k) else onAction(k, CardAction("", CardOp.Hide)) }
                 } else if (u.isNotEmpty()) UsualBubble(u, onScene)
             }
         }
-        Box(Modifier.align(BiasAlignment(bias, 0f))) { Mascot(state, talking, onSheet) }
+        Box(Modifier.align(BiasAlignment(bias, 0f))) { Mascot(state, talking, mood, onSheet) }
+    }
+}
+
+/** Quello che il fumetto sta dicendo (resta mentre se ne va) */
+private data class Said(val heard: String?, val reply: app.sordina.ui.HomeReply?, val card: Card?, val usual: List<Usual>)
+
+/** Mentre parli: i puntini finché non dici niente, poi le tue parole come le sta capendo. */
+@Composable
+private fun HeardBubble(text: String) {
+    val c = S.c
+    Box(
+        Modifier.clip(BubbleShape).background(surface())
+            .animateContentSize(androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 500f))
+            .heightIn(min = 84.dp).padding(start = TAIL + 16.dp, end = 18.dp, top = 12.dp, bottom = 12.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        if (text.isBlank()) app.sordina.ui.Dots(LocalFeel.current.animations)
+        else Text(text, maxLines = 3, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 18.sp, lineHeight = 24.sp, color = c.ink))
+    }
+}
+
+/** La casa che risponde: i puntini mentre ci pensa, poi la risposta scritta come se la dicesse. */
+@Composable
+private fun ReplyBubble(r: app.sordina.ui.HomeReply) {
+    val anim = LocalFeel.current.animations
+    Box(
+        Modifier.clip(BubbleShape).background(surface())
+            .animateContentSize(androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 500f))
+            .heightIn(min = 84.dp).padding(start = TAIL + 16.dp, end = 18.dp, top = 12.dp, bottom = 12.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        if (r.text == null) app.sordina.ui.Dots(anim)
+        else app.sordina.ui.Typed(r.text, r.id, anim, androidx.compose.ui.text.style.TextAlign.Start, maxLines = 4)
     }
 }
 
@@ -149,7 +195,7 @@ private fun liveKey(c: Card) = if (c.kind == CardKind.MUSIC) "music|${c.title}" 
 
 /** La sordina: al centro col numero accanto; mentre parla, il numero le sta addosso. */
 @Composable
-private fun Mascot(state: HomeState, talking: Boolean, onSheet: () -> Unit) {
+private fun Mascot(state: HomeState, talking: Boolean, mood: app.sordina.ui.Mood?, onSheet: () -> Unit) {
     val c = S.c
     val on = state.waiting > 0
     val said = (listOf(if (on) trn(R.plurals.n_waiting, state.waiting) else tr(R.string.nothing_waiting)) + listOfNotNull(state.moment)).joinToString(" · ")
@@ -159,7 +205,6 @@ private fun Mascot(state: HomeState, talking: Boolean, onSheet: () -> Unit) {
         state.moment != null -> app.sordina.ui.Pose.QUIET
         else -> app.sordina.ui.Pose.AWAKE
     }
-    val gone by animateFloatAsState(if (state.away) 0f else 1f, Motion.enter(220), label = "away")
     Row(
         (if (state.translucent) Modifier.clip(RoundedCornerShape(24.dp)).background(surface()).padding(horizontal = if (talking) 4.dp else 16.dp, vertical = 4.dp) else Modifier)
             .heightIn(min = 48.dp).clickableNoRipple(onSheet)
@@ -167,7 +212,11 @@ private fun Mascot(state: HomeState, talking: Boolean, onSheet: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box {
-            app.sordina.ui.MascotGlyph(pose, c.soft, Modifier.size(40.dp).graphicsLayer { alpha = gone; translationY = (1f - gone) * -24.dp.toPx() })
+            // Quando risponde per la casa è quella a colori: concentrata mentre aspetta, contenta o col sospiro dopo
+            if (mood != null) app.sordina.ui.Mascot(
+                mood,
+                Modifier.size(44.dp),
+            ) else app.sordina.ui.MascotGlyph(pose, c.soft, Modifier.size(40.dp))
             if (talking && on) Box(
                 Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-2).dp).heightIn(min = 18.dp).widthIn(min = 18.dp)
                     .clip(CircleShape).background(c.accent).padding(horizontal = 4.dp),
@@ -176,7 +225,7 @@ private fun Mascot(state: HomeState, talking: Boolean, onSheet: () -> Unit) {
         }
         if (!talking && on) {
             Spacer(Modifier.width(10.dp))
-            Text("${state.waiting}", Modifier.graphicsLayer { alpha = gone }, style = TextStyle(fontSize = 24.sp, color = c.soft))
+            Text("${state.waiting}", style = TextStyle(fontSize = 24.sp, color = c.soft))
         }
     }
 }
@@ -294,7 +343,9 @@ private fun UsualBubble(usual: List<Usual>, onScene: (String) -> Unit) {
     val u = usual.getOrNull(at) ?: return
     var menu by remember { mutableStateOf(false) }
     androidx.compose.runtime.key(u.id) {
-        Swipeable({ if (at + 1 < usual.size) at++ else onScene("usual-hide") }) { swipe ->
+        // Il cervello impara dal fumetto: visto e non preso scende un po', scorso via scende in questa situazione
+        LaunchedEffect(Unit) { onScene("usual-seen:${u.id}") }
+        Swipeable({ onScene("usual-no:${u.id}"); if (at + 1 < usual.size) at++ else onScene("usual-hide") }) { swipe ->
             Box(swipe) {
                 Row(
                     Modifier.fillMaxWidth().clip(BubbleShape).background(surface())
@@ -364,7 +415,7 @@ private fun kindIcon(k: Kind): ImageVector = when (k) {
 }
 
 /** Il fumetto: un rettangolo tondo con la punta verso la sordina (a sinistra, a destra nelle lingue da destra). */
-private object BubbleShape : Shape {
+internal object BubbleShape : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
         val t = with(density) { TAIL.toPx() }
         val r = with(density) { 18.dp.toPx() }

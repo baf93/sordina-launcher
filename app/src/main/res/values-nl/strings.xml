@@ -445,7 +445,7 @@
     <string name="ob6_a5">Video</string>
     <string name="ob6_c1">Veeg omhoog: je apps.</string>
     <string name="ob6_c2">Veeg omlaag: het meldingenpaneel, zoals altijd.</string>
-    <string name="ob6_c3">De rest wacht hier onderaan, vastgehouden.</string>
+    <string name="ob6_c3">Meldingen wachten hier onderin; Sordina vertelt je wat je nodig hebt.</string>
     <string name="ob6_c4">Afleidende apps vragen om een ademhaling voor ze opengaan.</string>
     <string name="ob6_sub">Omhoog om te zoeken, omlaag voor meldingen. Lang indrukken voor instellingen.</string>
     <string name="ob6_title">Sordina als startscherm</string>
@@ -754,6 +754,14 @@
     <string name="ob_restore">Mijn instellingen terugzetten</string>
     <string name="ob_restore_found">Ik heb je instellingen van %1$s gevonden in de Google-back-up.</string>
     <string name="ob_restore_no">Opnieuw beginnen</string>
+    <string name="ob_hi_title">Hoi, ik ben Sordina</string>
+    <string name="ob_hi_text">Ik help je je telefoon in te stellen: een paar vragen, ongeveer een minuut. Je kunt alles later aanpassen.</string>
+    <string name="ob_hi_go">Laten we beginnen</string>
+    <string name="ob_lha">Thuis</string>
+    <string name="obha_title">Heb je Home Assistant?</string>
+    <string name="obha_sub">Koppel het en vraag je huis vanaf hier: lampen, rolluiken, vragen. De agenda\'s verschijnen op je startscherm.</string>
+    <string name="ob_ha_skip">Heb ik niet</string>
+    <string name="ob6_c5">Houd de microfoon ingedrukt en vraag het: Sordina antwoordt hier.</string>
     <string name="ob_backup">Elke dag bewaar ik een kopie in de Google-back-up: controleer of die aanstaat</string>
     <string name="ob1_why">Daarvoor moet ik je meldingen kunnen lezen. Ze blijven op je telefoon; niemand anders ziet ze.</string>
     <string name="ob4_why">Als je me het app-gebruik laat zien, kies ik de apps die je het meest gebruikt.</string>

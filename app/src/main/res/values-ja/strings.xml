@@ -434,7 +434,7 @@
     <string name="ob6_a5">動画</string>
     <string name="ob6_c1">上にスワイプ：あなたのアプリ。</string>
     <string name="ob6_c2">下にスワイプ：いつもの通知シェード。</string>
-    <string name="ob6_c3">残りはこの下で待機しています。</string>
+    <string name="ob6_c3">通知はこの下で待っています。Sordinaが今必要なことを教えてくれます。</string>
     <string name="ob6_c4">気が散るアプリは、開く前にひと呼吸おきます。</string>
     <string name="ob6_sub">上で検索、下で通知。長押しで設定。</string>
     <string name="ob6_title">Sordina をホームに</string>
@@ -743,6 +743,14 @@
     <string name="ob_restore">設定を復元</string>
     <string name="ob_restore_found">Google バックアップに %1$s の設定が見つかりました。</string>
     <string name="ob_restore_no">最初から始める</string>
+    <string name="ob_hi_title">こんにちは、Sordinaです</string>
+    <string name="ob_hi_text">スマホの設定をお手伝いします。いくつかの質問で、1分ほどです。あとからいつでも変更できます。</string>
+    <string name="ob_hi_go">はじめる</string>
+    <string name="ob_lha">ホーム</string>
+    <string name="obha_title">Home Assistantを使っていますか？</string>
+    <string name="obha_sub">接続すると、ここから家に話しかけられます：照明、シャッター、質問。カレンダーもホームに表示されます。</string>
+    <string name="ob_ha_skip">使っていない</string>
+    <string name="ob6_c5">マイクを長押しして話しかけてください。Sordinaがここで答えます。</string>
     <string name="ob_backup">毎日 Google バックアップにコピーを保存します。オンになっているか確認してください</string>
     <string name="ob1_why">そのために通知を読めるようにする必要があります。通知はスマホの中に残り、ほかの誰にも見られません。</string>
     <string name="ob4_why">アプリの使用状況を見せてくれれば、よく使うアプリを私が選びます。</string>

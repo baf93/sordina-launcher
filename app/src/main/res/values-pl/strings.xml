@@ -467,7 +467,7 @@
     <string name="ob6_a5">Wideo</string>
     <string name="ob6_c1">Przesuń w górę: twoje aplikacje.</string>
     <string name="ob6_c2">Przesuń w dół: panel, jak zawsze.</string>
-    <string name="ob6_c3">Reszta czeka tu na dole, wstrzymana.</string>
+    <string name="ob6_c3">Powiadomienia czekają tu na dole; Sordina mówi ci, czego potrzebujesz.</string>
     <string name="ob6_c4">Rozpraszające aplikacje proszą o oddech przed otwarciem.</string>
     <string name="ob6_sub">W górę, by szukać, w dół po powiadomienia. Przytrzymaj, by otworzyć ustawienia.</string>
     <string name="ob6_title">Sordina jako ekran główny</string>
@@ -776,6 +776,14 @@
     <string name="ob_restore">Przywróć moje ustawienia</string>
     <string name="ob_restore_found">Znalazłam twoje ustawienia z %1$s w kopii zapasowej Google.</string>
     <string name="ob_restore_no">Zacznij od nowa</string>
+    <string name="ob_hi_title">Cześć, jestem Sordina</string>
+    <string name="ob_hi_text">Pomogę ci skonfigurować telefon: kilka pytań, około minuty. Wszystko możesz później zmienić.</string>
+    <string name="ob_hi_go">Zaczynamy</string>
+    <string name="ob_lha">Dom</string>
+    <string name="obha_title">Masz Home Assistant?</string>
+    <string name="obha_sub">Połącz go i pytaj dom stąd: światła, rolety, pytania. Jego kalendarze pojawią się na ekranie głównym.</string>
+    <string name="ob_ha_skip">Nie mam</string>
+    <string name="ob6_c5">Przytrzymaj mikrofon i zapytaj: Sordina odpowie tutaj.</string>
     <string name="ob_backup">Codziennie zapisuję kopię w kopii zapasowej Google: sprawdź, czy jest włączona</string>
     <string name="ob1_why">Żeby to robić, muszę czytać twoje powiadomienia. Zostają w telefonie; nikt inny ich nie widzi.</string>
     <string name="ob4_why">Jeśli pozwolisz mi widzieć użycie aplikacji, sama wybiorę te, których używasz najczęściej.</string>

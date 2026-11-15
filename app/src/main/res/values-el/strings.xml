@@ -445,7 +445,7 @@
     <string name="ob6_a5">Βίντεο</string>
     <string name="ob6_c1">Σύρε πάνω: οι εφαρμογές σου.</string>
     <string name="ob6_c2">Σύρε κάτω: το πλαίσιο ειδοποιήσεων, όπως πάντα.</string>
-    <string name="ob6_c3">Τα υπόλοιπα περιμένουν εδώ κάτω, κρατημένα.</string>
+    <string name="ob6_c3">Οι ειδοποιήσεις περιμένουν εδώ κάτω· η Sordina σου λέει τι χρειάζεσαι.</string>
     <string name="ob6_c4">Οι εφαρμογές που αποσπούν ζητούν μια ανάσα πριν ανοίξουν.</string>
     <string name="ob6_sub">Πάνω για αναζήτηση, κάτω για ειδοποιήσεις. Πάτα παρατεταμένα για ρυθμίσεις.</string>
     <string name="ob6_title">Το Sordina ως αρχική οθόνη</string>
@@ -754,6 +754,14 @@
     <string name="ob_restore">Επαναφορά των ρυθμίσεών μου</string>
     <string name="ob_restore_found">Βρήκα τις ρυθμίσεις σου από %1$s στο αντίγραφο ασφαλείας Google.</string>
     <string name="ob_restore_no">Ξεκίνα από την αρχή</string>
+    <string name="ob_hi_title">Γεια, είμαι η Sordina</string>
+    <string name="ob_hi_text">Θα σε βοηθήσω να ρυθμίσεις το τηλέφωνο: λίγες ερωτήσεις, περίπου ένα λεπτό. Μπορείς να αλλάξεις τα πάντα αργότερα.</string>
+    <string name="ob_hi_go">Ας ξεκινήσουμε</string>
+    <string name="ob_lha">Σπίτι</string>
+    <string name="obha_title">Έχεις Home Assistant;</string>
+    <string name="obha_sub">Σύνδεσέ το και ρώτα το σπίτι σου από εδώ: φώτα, ρολά, ερωτήσεις. Τα ημερολόγιά του εμφανίζονται στην αρχική.</string>
+    <string name="ob_ha_skip">Δεν το έχω</string>
+    <string name="ob6_c5">Κράτα πατημένο το μικρόφωνο και ρώτα: η Sordina απαντά εδώ.</string>
     <string name="ob_backup">Κάθε μέρα αποθηκεύω ένα αντίγραφο στο αντίγραφο ασφαλείας Google: έλεγξε ότι είναι ενεργό</string>
     <string name="ob1_why">Γι\' αυτό πρέπει να μπορώ να διαβάζω τις ειδοποιήσεις σου. Μένουν στο κινητό· δεν τις βλέπει κανείς άλλος.</string>
     <string name="ob4_why">Αν με αφήσεις να βλέπω τη χρήση εφαρμογών, θα διαλέξω εγώ αυτές που χρησιμοποιείς περισσότερο.</string>
