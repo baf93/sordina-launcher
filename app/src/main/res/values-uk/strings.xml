@@ -167,7 +167,6 @@
     <string name="yes">так</string>
     <string name="none_m">немає</string>
     <string name="s_events_go">Події йдуть у</string>
-    <string name="s_ha_calendars">Показані календарі</string>
     <string name="loading">Завантаження…</string>
     <string name="s_no_calendar">Немає календарів.</string>
     <string name="s_tap_app">Торкніться застосунку.</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">Знайдіть, хто має проходити завжди.</string>
     <string name="cal_none_writable">Немає календаря для запису.</string>
     <string name="cal_events_go">Події йдуть у:</string>
-    <string name="ha_token_saved">Токен збережено (введіть, щоб змінити)</string>
-    <string name="ha_token">Довготривалий токен доступу</string>
     <string name="ha_hint">Команди через Assist, лише відкриті об\'єкти. Токен зашифровано.</string>
     <string name="trying">Перевірка…</string>
     <string name="save_test">Зберегти й перевірити</string>

@@ -167,7 +167,6 @@
     <string name="yes">có</string>
     <string name="none_m">không có</string>
     <string name="s_events_go">Sự kiện lưu vào</string>
-    <string name="s_ha_calendars">Lịch được hiển thị</string>
     <string name="loading">Đang tải…</string>
     <string name="s_no_calendar">Không có lịch.</string>
     <string name="s_tap_app">Chạm vào ứng dụng để chọn.</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">Tìm người luôn được đi qua.</string>
     <string name="cal_none_writable">Không có lịch ghi được.</string>
     <string name="cal_events_go">Sự kiện lưu vào:</string>
-    <string name="ha_token_saved">Đã lưu token (gõ để đổi)</string>
-    <string name="ha_token">Token truy cập dài hạn</string>
     <string name="ha_hint">Lệnh qua Assist, chỉ thực thể được chia sẻ. Token được mã hóa.</string>
     <string name="trying">Đang thử…</string>
     <string name="save_test">Lưu và thử</string>

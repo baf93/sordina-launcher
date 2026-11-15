@@ -167,7 +167,6 @@
     <string name="yes">是</string>
     <string name="none_m">无</string>
     <string name="s_events_go">日程保存到</string>
-    <string name="s_ha_calendars">显示的日历</string>
     <string name="loading">正在加载…</string>
     <string name="s_no_calendar">没有日历。</string>
     <string name="s_tap_app">轻点一个应用来选择。</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">找出始终要送达的人。</string>
     <string name="cal_none_writable">没有可写入的日历。</string>
     <string name="cal_events_go">日程保存到：</string>
-    <string name="ha_token_saved">令牌已保存（输入即可更改）</string>
-    <string name="ha_token">长期访问令牌</string>
     <string name="ha_hint">通过 Assist 发送命令，仅限公开的实体。令牌已加密。</string>
     <string name="trying">正在测试…</string>
     <string name="save_test">保存并测试</string>

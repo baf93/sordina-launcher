@@ -167,7 +167,6 @@
     <string name="yes">ya</string>
     <string name="none_m">tidak ada</string>
     <string name="s_events_go">Acara masuk ke</string>
-    <string name="s_ha_calendars">Kalender yang ditampilkan</string>
     <string name="loading">Memuat…</string>
     <string name="s_no_calendar">Tidak ada kalender.</string>
     <string name="s_tap_app">Ketuk aplikasi untuk memilih.</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">Cari siapa yang harus selalu sampai.</string>
     <string name="cal_none_writable">Tidak ada kalender yang bisa ditulis.</string>
     <string name="cal_events_go">Acara masuk ke:</string>
-    <string name="ha_token_saved">Token tersimpan (ketik untuk mengganti)</string>
-    <string name="ha_token">Token akses jangka panjang</string>
     <string name="ha_hint">Perintah lewat Assist, hanya entitas yang dibuka. Token dienkripsi.</string>
     <string name="trying">Menguji…</string>
     <string name="save_test">Simpan dan uji</string>

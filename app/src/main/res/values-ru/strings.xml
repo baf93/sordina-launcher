@@ -167,7 +167,6 @@
     <string name="yes">да</string>
     <string name="none_m">нет</string>
     <string name="s_events_go">События идут в</string>
-    <string name="s_ha_calendars">Показываемые календари</string>
     <string name="loading">Загрузка…</string>
     <string name="s_no_calendar">Нет календарей.</string>
     <string name="s_tap_app">Нажмите на приложение.</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">Найдите, кто должен проходить всегда.</string>
     <string name="cal_none_writable">Нет календаря для записи.</string>
     <string name="cal_events_go">События идут в:</string>
-    <string name="ha_token_saved">Токен сохранён (введите, чтобы сменить)</string>
-    <string name="ha_token">Долгосрочный токен доступа</string>
     <string name="ha_hint">Команды через Assist, только открытые объекты. Токен зашифрован.</string>
     <string name="trying">Проверка…</string>
     <string name="save_test">Сохранить и проверить</string>

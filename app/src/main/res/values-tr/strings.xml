@@ -167,7 +167,6 @@
     <string name="yes">evet</string>
     <string name="none_m">yok</string>
     <string name="s_events_go">Etkinlikler şuraya gider</string>
-    <string name="s_ha_calendars">Gösterilen takvimler</string>
     <string name="loading">Yükleniyor…</string>
     <string name="s_no_calendar">Takvim yok.</string>
     <string name="s_tap_app">Seçmek için bir uygulamaya dokun.</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">Her zaman geçmesi gerekenleri bul.</string>
     <string name="cal_none_writable">Yazılabilir takvim yok.</string>
     <string name="cal_events_go">Etkinlikler şuraya gider:</string>
-    <string name="ha_token_saved">Token kaydedildi (değiştirmek için yaz)</string>
-    <string name="ha_token">Uzun ömürlü erişim token\'ı</string>
     <string name="ha_hint">Komutlar Assist ile, sadece açık varlıklar. Token şifreli.</string>
     <string name="trying">Deneniyor…</string>
     <string name="save_test">Kaydet ve dene</string>

@@ -167,7 +167,6 @@
     <string name="yes">ja</string>
     <string name="none_m">ingen</string>
     <string name="s_events_go">Hendelser havner i</string>
-    <string name="s_ha_calendars">Viste kalendere</string>
     <string name="loading">Laster…</string>
     <string name="s_no_calendar">Ingen kalendere.</string>
     <string name="s_tap_app">Trykk på en app for å velge.</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">Finn hvem som alltid skal slippe gjennom.</string>
     <string name="cal_none_writable">Ingen kalender å skrive i.</string>
     <string name="cal_events_go">Hendelser havner i:</string>
-    <string name="ha_token_saved">Token lagret (skriv for å endre)</string>
-    <string name="ha_token">Langvarig tilgangstoken</string>
     <string name="ha_hint">Kommandoer via Assist, bare eksponerte enheter. Token kryptert.</string>
     <string name="trying">Tester…</string>
     <string name="save_test">Lagre og test</string>

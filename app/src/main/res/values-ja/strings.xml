@@ -167,7 +167,6 @@
     <string name="yes">はい</string>
     <string name="none_m">なし</string>
     <string name="s_events_go">予定の追加先</string>
-    <string name="s_ha_calendars">表示するカレンダー</string>
     <string name="loading">読み込み中…</string>
     <string name="s_no_calendar">カレンダーがありません。</string>
     <string name="s_tap_app">アプリをタップして選択。</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">常に届けたい人を探す。</string>
     <string name="cal_none_writable">書き込めるカレンダーがありません。</string>
     <string name="cal_events_go">予定の追加先:</string>
-    <string name="ha_token_saved">トークン保存済み（入力で変更）</string>
-    <string name="ha_token">長期アクセストークン</string>
     <string name="ha_hint">Assist 経由で操作、公開エンティティのみ。トークンは暗号化。</string>
     <string name="trying">テスト中…</string>
     <string name="save_test">保存してテスト</string>

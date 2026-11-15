@@ -167,7 +167,6 @@
     <string name="yes">ใช่</string>
     <string name="none_m">ไม่มี</string>
     <string name="s_events_go">นัดหมายไปที่</string>
-    <string name="s_ha_calendars">ปฏิทินที่แสดง</string>
     <string name="loading">กำลังโหลด…</string>
     <string name="s_no_calendar">ไม่มีปฏิทิน</string>
     <string name="s_tap_app">แตะแอปเพื่อเลือก</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">หาว่าใครต้องผ่านเสมอ</string>
     <string name="cal_none_writable">ไม่มีปฏิทินที่เขียนได้</string>
     <string name="cal_events_go">นัดหมายไปที่:</string>
-    <string name="ha_token_saved">บันทึกโทเค็นแล้ว (พิมพ์เพื่อเปลี่ยน)</string>
-    <string name="ha_token">โทเค็นการเข้าถึงระยะยาว</string>
     <string name="ha_hint">สั่งผ่าน Assist เฉพาะเอนทิตีที่เปิดเผย โทเค็นถูกเข้ารหัส</string>
     <string name="trying">กำลังทดสอบ…</string>
     <string name="save_test">บันทึกและทดสอบ</string>

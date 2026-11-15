@@ -167,7 +167,6 @@
     <string name="yes">हाँ</string>
     <string name="none_m">कोई नहीं</string>
     <string name="s_events_go">इवेंट यहाँ जाते हैं</string>
-    <string name="s_ha_calendars">दिखाए गए कैलेंडर</string>
     <string name="loading">लोड हो रहा है…</string>
     <string name="s_no_calendar">कोई कैलेंडर नहीं।</string>
     <string name="s_tap_app">चुनने के लिए ऐप छुएँ।</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">खोजें कि कौन हमेशा पहुँचे।</string>
     <string name="cal_none_writable">लिखने लायक कोई कैलेंडर नहीं।</string>
     <string name="cal_events_go">इवेंट यहाँ जाते हैं:</string>
-    <string name="ha_token_saved">टोकन सहेजा गया (बदलने के लिए लिखें)</string>
-    <string name="ha_token">लंबे समय का एक्सेस टोकन</string>
     <string name="ha_hint">Assist से कमांड, सिर्फ़ खुली इकाइयाँ। टोकन एन्क्रिप्टेड।</string>
     <string name="trying">जाँच रहे हैं…</string>
     <string name="save_test">सहेजें और जाँचें</string>

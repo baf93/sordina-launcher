@@ -167,7 +167,6 @@
     <string name="yes">ναι</string>
     <string name="none_m">κανένα</string>
     <string name="s_events_go">Τα γεγονότα πάνε στο</string>
-    <string name="s_ha_calendars">Ημερολόγια που εμφανίζονται</string>
     <string name="loading">Φόρτωση…</string>
     <string name="s_no_calendar">Κανένα ημερολόγιο.</string>
     <string name="s_tap_app">Άγγιξε μια εφαρμογή για επιλογή.</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">Βρες ποιοι πρέπει να περνούν πάντα.</string>
     <string name="cal_none_writable">Κανένα επεξεργάσιμο ημερολόγιο.</string>
     <string name="cal_events_go">Τα γεγονότα πάνε στο:</string>
-    <string name="ha_token_saved">Το token αποθηκεύτηκε (γράψε για αλλαγή)</string>
-    <string name="ha_token">Token μακράς διάρκειας</string>
     <string name="ha_hint">Εντολές μέσω Assist, μόνο εκτεθειμένες οντότητες. Token κρυπτογραφημένο.</string>
     <string name="trying">Δοκιμή…</string>
     <string name="save_test">Αποθήκευση και δοκιμή</string>

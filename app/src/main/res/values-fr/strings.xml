@@ -167,7 +167,6 @@
     <string name="yes">oui</string>
     <string name="none_m">aucun</string>
     <string name="s_events_go">Les événements vont dans</string>
-    <string name="s_ha_calendars">Calendriers affichés</string>
     <string name="loading">Chargement…</string>
     <string name="s_no_calendar">Aucun agenda.</string>
     <string name="s_tap_app">Touchez une app pour choisir.</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">Cherchez qui doit toujours passer.</string>
     <string name="cal_none_writable">Aucun agenda modifiable.</string>
     <string name="cal_events_go">Les événements vont dans :</string>
-    <string name="ha_token_saved">Jeton enregistré (tapez pour changer)</string>
-    <string name="ha_token">Jeton d\'accès longue durée</string>
     <string name="ha_hint">Commandes via Assist, entités exposées seulement. Jeton chiffré.</string>
     <string name="trying">Test…</string>
     <string name="save_test">Enregistrer et tester</string>

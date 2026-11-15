@@ -696,7 +696,8 @@ private fun depth(s: Sub): Int = s.parent?.let { 1 + depth(Sub.valueOf(it)) } ?:
 /** Una pagina: la testata uguale al resto dell'app (freccia, titolo grande, la frase che dice a cosa serve) e sotto il contenuto che scorre. */
 @Composable
 private fun Page(title: String, subtitle: String?, onBack: () -> Unit, scroll: ScrollState, content: @Composable ColumnScope.() -> Unit) {
-    Column(Modifier.fillMaxSize().verticalScroll(scroll).padding(horizontal = 16.dp, vertical = 16.dp)) {
+    // La tastiera restringe la pagina: il campo in cui scrivi scorre sopra e non resta coperto
+    Column(Modifier.fillMaxSize().imeJump().verticalScroll(scroll).padding(horizontal = 16.dp, vertical = 16.dp)) {
         Header(title, onBack, subtitle = subtitle)
         content()
         Spacer(Modifier.height(48.dp))
@@ -752,43 +753,41 @@ private fun PermLine(label: String, why: String, ok: Boolean, icon: ImageVector,
     if (ok) Line(label, tr(R.string.yes), why, icon) else Line(label, tr(R.string.grant), why, icon, onClick = onAsk)
 }
 
-/** Il calendario in cui scrivere gli impegni, da un foglio. */
+/**
+ * Il calendario degli impegni, da un foglio: quelli del telefono e, se c'è il token, quelli di Home Assistant.
+ * Uno solo: è quello che si vede in Casa e quello in cui finiscono gli impegni che detti.
+ */
 @Composable
 private fun CalendarPick(app: SordinaApp, ops: Ops) {
-    var cals by remember { mutableStateOf(emptyList<app.sordina.data.Cal>()) }
-    var sel by remember { mutableStateOf(app.prefs.calendarId) }
-    LaunchedEffect(Unit) { cals = withContext(Dispatchers.IO) { app.calendars.list() } }
-    if (cals.isEmpty()) { Line(tr(R.string.s_events_go), tr(R.string.none_m), null, Icons.Rounded.CalendarToday); return }
-    val current = cals.firstOrNull { it.id == sel } ?: cals.first()
-    val dup = { n: String -> cals.count { it.name == n } > 1 }
-    Pick(
-        tr(R.string.s_events_go), current.name,
-        cals.map { Option(it.name, if (dup(it.name)) it.account else null) }, { cals[it].id == current.id },
-        icon = Icons.Rounded.CalendarToday, title = tr(R.string.s_events_go),
-    ) { sel = cals[it].id; app.prefs.calendarId = sel; ops.changed() }
-}
-
-/** I calendari di Home Assistant da mostrare in Casa, insieme a quello del telefono. */
-@Composable
-internal fun HaCalendars(app: SordinaApp, ops: Ops) {
     val prefs = app.prefs
-    var list by remember { mutableStateOf<List<Pair<String, String>>?>(null) }
-    var chosen by remember { mutableStateOf(prefs.haCalendars) }
-    LaunchedEffect(Unit) { list = withContext(Dispatchers.IO) { app.ha.calendars() } }
-    Topic(tr(R.string.s_ha_calendars))
-    when {
-        list == null -> Hint(tr(R.string.loading), Modifier.padding(start = 12.dp))
-        list!!.isEmpty() -> Hint(tr(R.string.s_no_calendar), Modifier.padding(start = 12.dp))
-        else -> Group {
-            list!!.forEach { (id, name) ->
-                Toggle(name, id in chosen, icon = Icons.Rounded.CalendarToday) { v ->
-                    chosen = if (v) chosen + id else chosen - id
-                    prefs.haCalendars = chosen
-                    app.ha.resetCalendarCache()
-                    ops.changed()
-                }
-            }
+    var cals by remember { mutableStateOf(emptyList<app.sordina.data.Cal>()) }
+    var home by remember { mutableStateOf(emptyList<Pair<String, String>>()) }
+    var sel by remember { mutableStateOf(prefs.calendarId) }
+    var selHome by remember { mutableStateOf(if (app.ha.configured) prefs.haCalendar else "") }
+    LaunchedEffect(Unit) {
+        cals = withContext(Dispatchers.IO) { app.calendars.list() }
+        if (app.ha.configured) home = withContext(Dispatchers.IO) { app.ha.calendars() }
+    }
+    if (cals.isEmpty() && home.isEmpty()) { Line(tr(R.string.s_events_go), tr(R.string.none_m), null, Icons.Rounded.CalendarToday); return }
+    val phone = cals.firstOrNull { it.id == sel } ?: cals.firstOrNull()
+    val current = home.firstOrNull { it.first == selHome }?.second ?: phone?.name ?: home.first().second
+    val dup = { n: String -> cals.count { it.name == n } > 1 }
+    val options = cals.map { Option(it.name, if (dup(it.name)) it.account else null) } +
+        home.map { Option(it.second, tr(R.string.s_ha)) }
+    val isOn = { i: Int ->
+        if (i < cals.size) selHome.isBlank() && cals[i].id == phone?.id else home[i - cals.size].first == selHome
+    }
+    Pick(tr(R.string.s_events_go), current, options, isOn, icon = Icons.Rounded.CalendarToday, title = tr(R.string.s_events_go)) { i ->
+        if (i < cals.size) {
+            sel = cals[i].id; selHome = ""
+            prefs.calendarId = sel; prefs.haCalendar = ""; prefs.haCalendarName = ""
+        } else {
+            val (id, name) = home[i - cals.size]
+            selHome = id
+            prefs.haCalendar = id; prefs.haCalendarName = name
         }
+        app.ha.resetCalendarCache()
+        ops.changed()
     }
 }
 

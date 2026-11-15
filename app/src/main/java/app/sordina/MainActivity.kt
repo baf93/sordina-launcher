@@ -22,6 +22,8 @@ import app.sordina.ui.Bubble
 import app.sordina.ui.sordina.SordinaScreen
 import app.sordina.ui.Feel
 import app.sordina.ui.LocalFeel
+import app.sordina.ui.HomeReply
+import app.sordina.ui.HomeReplyView
 import app.sordina.ui.LocalGlass
 import app.sordina.ui.theme.Backdrop
 import app.sordina.ui.theme.Backdrops
@@ -236,10 +238,30 @@ class MainActivity : ComponentActivity(), Ops {
                     androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
                         Root()
                         Bubble(bubble) { bubble = null }
+                        HomeReplyView(reply) { reply = null }
                     }
                 }
             }
         }
+    }
+
+    /** Il gesto in corso è quello che ha mandato via la sordina: non arriva a nessuno */
+    private var swallow = false
+
+    /** Un tocco mentre la sordina risponde per la casa: la manda via e si ferma lì. Il tocco dopo arriva a quello che volevi toccare. */
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        if (ev.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
+            // Anche il fumetto con una risposta da leggere (o in attesa) conta come la sordina
+            val up = reply != null || bubble?.let { it.long || it.wait } == true
+            swallow = up
+            if (up) { reply = null; bubble = null }
+        }
+        // Il primo tocco la manda via e basta, fino al rilascio: dietro non si preme niente per sbaglio. Dal secondo, tutto normale
+        if (swallow) {
+            if (ev.actionMasked == android.view.MotionEvent.ACTION_UP || ev.actionMasked == android.view.MotionEvent.ACTION_CANCEL) swallow = false
+            return true
+        }
+        return super.dispatchTouchEvent(ev)
     }
 
     override fun onDestroy() {
@@ -264,6 +286,14 @@ class MainActivity : ComponentActivity(), Ops {
         // Solo nella versione di prova: "sordinaEmpty" = la pagina Sordina come se non ci fosse niente
         if (intent?.hasExtra("sordinaEmpty") == true && (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
             emptyPreview = intent.getBooleanExtra("sordinaEmpty", false)
+        }
+        // Solo nella versione di prova: "homeReply" = la sordina che risponde per la casa, con questa risposta ("!" davanti: andata male)
+        if (intent?.hasExtra("homeReply") == true && (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            val text = intent.getStringExtra("homeReply").orEmpty()
+            intent.removeExtra("homeReply")
+            screen = Screen.HOME; reply = HomeReply(null)
+            lifecycleScope.launch { kotlinx.coroutines.delay(1800); reply = HomeReply(text.removePrefix("!"), !text.startsWith("!")) }
+            return
         }
         // Solo nella versione di prova: "scene" = CAR, EVENING, NIGHT o DAY per vedere quella Casa ("" per tornare normale)
         if (intent?.hasExtra("scene") == true && (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
@@ -358,8 +388,10 @@ class MainActivity : ComponentActivity(), Ops {
             // Il calendario cambia di rado: si rilegge se Android dice che è cambiato, o ogni qualche minuto (gli eventi passano)
             if (t - calendarAt > CALENDAR_GAP) {
                 calendarAt = t
-                events = app.calendars.upcoming(this@MainActivity)
-                val all = (app.calendars.agenda(this@MainActivity) + app.ha.calendarEvents(prefs.haCalendars)).sortedBy { it.begin }
+                // Un solo calendario: quello di casa se l'hai scelto in Home Assistant, se no quelli del telefono
+                val home = if (app.ha.calendar != null) app.ha.calendarEvents() else null
+                events = home?.filter { it.end > t && it.begin - t <= 2 * 3600_000L } ?: app.calendars.upcoming(this@MainActivity)
+                val all = (home ?: app.calendars.agenda(this@MainActivity)).sortedBy { it.begin }
                 // Sempre i prossimi tre, oggi o nei giorni dopo: mai di più
                 agendaEvents = all.take(3)
             }
@@ -594,13 +626,25 @@ class MainActivity : ComponentActivity(), Ops {
             else -> lifecycleScope.launch {
                 // Si apre Assist: la tastiera della ricerca si chiude prima, così sopra non si vede mai una tastiera
                 if (act is Act.Assist) runCatching { androidx.core.view.WindowCompat.getInsetsController(window, window.decorView).hide(androidx.core.view.WindowInsetsCompat.Type.ime()) }
+                // Col token la casa risponde qui: si torna subito a Casa e la sordina dice "Chiedo a casa…", poi la risposta
+                val here = act is Act.Assist && app.ha.configured
+                // Con le animazioni spente niente sordina che sale: basta il fumetto
+                val asked = if (here && prefs.animations) HomeReply(null) else null
+                if (here) { screen = Screen.HOME; query = ""; if (asked != null) reply = asked else bubble = Said(tr(R.string.ha_asking), wait = true) }
                 val out = actions.run(act)
+                if (here) {
+                    val answer = out.message ?: tr(R.string.ha_no_answer)
+                    // Se nel frattempo l'hai mandata via con un tocco, la risposta arriva nel fumetto piccolo
+                    if (asked != null && reply?.id == asked.id) reply = HomeReply(answer, out.ok) else bubble = Said(answer, long = true)
+                    if (out.ok) Feel(true, prefs.haptics, window.decorView).confirm()
+                }
+                if (act is Act.Event && out.ok) calendarAt = 0L
                 val stays = act is Act.Timer || act is Act.Alarm || act is Act.Event || act is Act.Torch ||
                     act is Act.Media || act is Act.Calc
                 if (stays && out.ok) query = ""
                 val undo = out.undo
-                if (out.message != null) notice = Notice(out.message, undo?.let { u -> { lifecycleScope.launch { u(); notice = Notice(tr(R.string.undone)) } } })
-                if (out.message != null && screen == Screen.HOME) say(out.message)
+                if (out.message != null && !here) notice = Notice(out.message, undo?.let { u -> { lifecycleScope.launch { u(); notice = Notice(tr(R.string.undone)) } } })
+                if (out.message != null && screen == Screen.HOME && !here) say(out.message)
                 if (out.ok) app.routines.onCommand(c.title, query.ifBlank { c.title })
                 // Hai appena scritto o chiamato qualcuno: la sua risposta passa per i prossimi 15 minuti
                 val talkTo = (act as? Act.Message)?.contact ?: (act as? Act.Call)?.contact
@@ -611,7 +655,7 @@ class MainActivity : ComponentActivity(), Ops {
                 // Si è aperta un'altra app: sotto torna Casa, anche se quella app sta sopra a metà schermo (Assist) e Sordina non si ferma
                 val leaves = act is Act.Assist || act is Act.Message || act is Act.Call || act is Act.Navigate || act is Act.Music ||
                     act is Act.Web || act is Act.Setting
-                if (leaves && out.ok && screen != Screen.SETTINGS) { screen = Screen.HOME; query = "" }
+                if (leaves && !here && out.ok && screen != Screen.SETTINGS) { screen = Screen.HOME; query = "" }
             }
         }
     }
@@ -935,6 +979,8 @@ class MainActivity : ComponentActivity(), Ops {
 
     // I messaggi brevi ("Copiato", "Aggiunto"…): una pillola nel tema, non il toast di Android
     private var bubble by mutableStateOf<Said?>(null)
+    /** La sordina che risponde per la casa (frasi mandate ad Assist col token) */
+    private var reply by mutableStateOf<HomeReply?>(null)
     private fun say(text: String) { bubble = Said(text) }
 
     private fun hint(text: String) {
@@ -1257,6 +1303,7 @@ class MainActivity : ComponentActivity(), Ops {
                         androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) { HomeScreen(
                             state = HomeState(
                                 waiting = waiting,
+                                away = reply != null,
                                 until = null,
                                 moment = if (moment == Moment.NONE) null else moment.label,
                                 // Senza schede resta solo quella che dice che Sordina non funziona

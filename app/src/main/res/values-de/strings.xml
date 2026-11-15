@@ -167,7 +167,6 @@
     <string name="yes">ja</string>
     <string name="none_m">keiner</string>
     <string name="s_events_go">Termine gehen in</string>
-    <string name="s_ha_calendars">Angezeigte Kalender</string>
     <string name="loading">Lädt…</string>
     <string name="s_no_calendar">Keine Kalender.</string>
     <string name="s_tap_app">Tippe auf eine App.</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">Suche, wer immer durchkommen soll.</string>
     <string name="cal_none_writable">Kein beschreibbarer Kalender.</string>
     <string name="cal_events_go">Termine gehen in:</string>
-    <string name="ha_token_saved">Token gespeichert (tippen zum Ändern)</string>
-    <string name="ha_token">Langlebiges Zugriffstoken</string>
     <string name="ha_hint">Befehle über Assist, nur freigegebene Entitäten. Token verschlüsselt.</string>
     <string name="trying">Teste…</string>
     <string name="save_test">Speichern und testen</string>

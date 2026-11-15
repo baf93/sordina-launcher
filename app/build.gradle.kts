@@ -48,5 +48,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.15.0")
     // Date, indirizzi e codici di spedizione nei messaggi: un modello piccolo, sul telefono (niente testo esce)
     implementation("com.google.mlkit:entity-extraction:16.0.0-beta5")
+    // Lettore QR di Play Services: niente permesso fotocamera, si apre solo quando lo tocchi
+    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
     testImplementation("junit:junit:4.13.2")
 }

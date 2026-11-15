@@ -167,7 +167,6 @@
     <string name="yes">da</string>
     <string name="none_m">niciunul</string>
     <string name="s_events_go">Evenimentele merg în</string>
-    <string name="s_ha_calendars">Calendare afișate</string>
     <string name="loading">Se încarcă…</string>
     <string name="s_no_calendar">Niciun calendar.</string>
     <string name="s_tap_app">Atinge o aplicație ca s-o alegi.</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">Caută cine trebuie să treacă mereu.</string>
     <string name="cal_none_writable">Niciun calendar editabil.</string>
     <string name="cal_events_go">Evenimentele merg în:</string>
-    <string name="ha_token_saved">Token salvat (scrie ca să-l schimbi)</string>
-    <string name="ha_token">Token de acces de lungă durată</string>
     <string name="ha_hint">Comenzi prin Assist, doar entități expuse. Token criptat.</string>
     <string name="trying">Se testează…</string>
     <string name="save_test">Salvează și testează</string>

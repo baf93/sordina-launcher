@@ -524,8 +524,11 @@ fun SheetRow(label: String, icon: androidx.compose.ui.graphics.vector.ImageVecto
     }
 }
 
-/** Un messaggio breve da mostrare (l'id distingue due messaggi uguali di fila). */
-data class Said(val text: String, val id: Long = System.nanoTime())
+/**
+ * Un messaggio breve da mostrare (l'id distingue due messaggi uguali di fila).
+ * [wait]: si aspetta una risposta, resta finché non arriva. [long]: una risposta da leggere, resta il tempo di leggerla.
+ */
+data class Said(val text: String, val wait: Boolean = false, val long: Boolean = false, val id: Long = System.nanoTime())
 
 /** La pillola dei messaggi brevi: compare sopra la barra, sparisce da sola. */
 @Composable
@@ -533,7 +536,12 @@ fun androidx.compose.foundation.layout.BoxScope.Bubble(said: Said?, onGone: () -
     val c = S.c
     var shown by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(said) }
     if (said != null) shown = said
-    androidx.compose.runtime.LaunchedEffect(said?.id) { if (said != null) { kotlinx.coroutines.delay(2200); onGone() } }
+    androidx.compose.runtime.LaunchedEffect(said?.id) {
+        if (said == null) return@LaunchedEffect
+        // In attesa al massimo 20 secondi; una risposta lunga circa una parola ogni quarto di secondo, fino a 10
+        kotlinx.coroutines.delay(if (said.wait) 20_000L else if (said.long) (2500L + said.text.length * 50L).coerceAtMost(10_000L) else 2200L)
+        onGone()
+    }
     androidx.compose.animation.AnimatedVisibility(
         said != null,
         Modifier.align(androidx.compose.ui.Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 170.dp, start = 28.dp, end = 28.dp),

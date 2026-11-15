@@ -349,20 +349,23 @@ class Prefs(context: Context) {
     var haEnabled: Boolean
         get() = sp.getBoolean("haEnabled", true)
         set(v) = put { putBoolean("haEnabled", v) }
-    /** Come parla con casa: "app" (Assist nell'app Home Assistant, senza token) o "token" (direttamente) */
-    var haMode: String
-        get() = sp.getString("haMode", null) ?: if (haTokenEnc.isBlank()) "app" else "token"
-        set(v) = put { putString("haMode", v) }
     var haUrl: String
         get() = str("haUrl", "")
         set(v) = put { putString("haUrl", v.trim().trimEnd('/')) }
+    /** L'indirizzo di Home Assistant in casa (es. http://192.168.1.10:8123): su Wi-Fi si prova prima questo */
+    var haLocalUrl: String
+        get() = str("haLocalUrl", "")
+        set(v) = put { putString("haLocalUrl", v.trim().trimEnd('/')) }
     var haTokenEnc: String
         get() = str("haToken", "")
         set(v) = put { putString("haToken", v) }
-    /** Calendari di Home Assistant da mostrare in Casa (entity_id) */
-    var haCalendars: Set<String>
-        get() = sp.getStringSet("haCalendars", emptySet())!!.toSet()
-        set(v) = put { putStringSet("haCalendars", v) }
+    /** Il calendario di Home Assistant scelto per gli impegni (entity_id e nome); vuoto: quello del telefono */
+    var haCalendar: String
+        get() = str("haCalendar", "")
+        set(v) = put { putString("haCalendar", v) }
+    var haCalendarName: String
+        get() = str("haCalendarName", "")
+        set(v) = put { putString("haCalendarName", v) }
     var haStatusEntity: String
         get() = str("haStatusEntity", "")
         set(v) = put { putString("haStatusEntity", v.trim()) }

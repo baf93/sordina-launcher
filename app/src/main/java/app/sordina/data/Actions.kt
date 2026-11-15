@@ -133,6 +133,12 @@ class Actions(
     }
 
     private suspend fun event(e: Act.Event): Outcome {
+        // Il calendario di casa, se l'hai scelto: l'impegno va lì (Home Assistant non lo lascia cancellare da qui, niente Annulla)
+        if (ha.calendar != null) {
+            val ok = withContext(Dispatchers.IO) { ha.createEvent(e.title, e.whenAt) }
+            return if (ok) Outcome("«${e.title}» ${DateParser.describe(e.whenAt)} · ${prefs.haCalendarName}", true)
+            else Outcome(tr(R.string.calendar_write_failed), false)
+        }
         val cals = Calendars(context, prefs)
         val cal = withContext(Dispatchers.IO) { cals.default() }
         if (cal == null) {

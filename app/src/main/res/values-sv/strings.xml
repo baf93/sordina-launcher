@@ -167,7 +167,6 @@
     <string name="yes">ja</string>
     <string name="none_m">ingen</string>
     <string name="s_events_go">Händelser hamnar i</string>
-    <string name="s_ha_calendars">Visade kalendrar</string>
     <string name="loading">Laddar…</string>
     <string name="s_no_calendar">Inga kalendrar.</string>
     <string name="s_tap_app">Tryck på en app för att välja.</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">Sök vem som alltid ska komma fram.</string>
     <string name="cal_none_writable">Ingen kalender att skriva i.</string>
     <string name="cal_events_go">Händelser hamnar i:</string>
-    <string name="ha_token_saved">Token sparad (skriv för att ändra)</string>
-    <string name="ha_token">Långlivad åtkomsttoken</string>
     <string name="ha_hint">Kommandon via Assist, bara exponerade enheter. Token krypterad.</string>
     <string name="trying">Testar…</string>
     <string name="save_test">Spara och testa</string>

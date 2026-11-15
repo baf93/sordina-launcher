@@ -167,7 +167,6 @@
     <string name="yes">sí</string>
     <string name="none_m">ninguno</string>
     <string name="s_events_go">Los eventos van a</string>
-    <string name="s_ha_calendars">Calendarios mostrados</string>
     <string name="loading">Cargando…</string>
     <string name="s_no_calendar">Sin calendarios.</string>
     <string name="s_tap_app">Toca una app para elegir.</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">Busca quién debe pasar siempre.</string>
     <string name="cal_none_writable">Ningún calendario editable.</string>
     <string name="cal_events_go">Los eventos van a:</string>
-    <string name="ha_token_saved">Token guardado (escribe para cambiarlo)</string>
-    <string name="ha_token">Token de acceso de larga duración</string>
     <string name="ha_hint">Órdenes vía Assist, solo entidades expuestas. Token cifrado.</string>
     <string name="trying">Probando…</string>
     <string name="save_test">Guardar y probar</string>

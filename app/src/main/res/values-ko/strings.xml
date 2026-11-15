@@ -167,7 +167,6 @@
     <string name="yes">예</string>
     <string name="none_m">없음</string>
     <string name="s_events_go">일정 저장 위치</string>
-    <string name="s_ha_calendars">표시할 캘린더</string>
     <string name="loading">불러오는 중…</string>
     <string name="s_no_calendar">캘린더가 없어요.</string>
     <string name="s_tap_app">앱을 눌러 선택하세요.</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">항상 도착해야 할 사람을 찾으세요.</string>
     <string name="cal_none_writable">쓸 수 있는 캘린더가 없어요.</string>
     <string name="cal_events_go">일정 저장 위치:</string>
-    <string name="ha_token_saved">토큰 저장됨 (입력하면 변경)</string>
-    <string name="ha_token">장기 액세스 토큰</string>
     <string name="ha_hint">Assist로 명령, 공개된 엔티티만. 토큰은 암호화돼요.</string>
     <string name="trying">테스트 중…</string>
     <string name="save_test">저장하고 테스트</string>

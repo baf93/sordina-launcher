@@ -154,6 +154,8 @@ data class HomeState(
     val alarmAt: Long? = null,
     /** Auto: solo il prossimo impegno; [AgendaRow.key] è "nav:luogo" se ha un indirizzo */
     val next: AgendaRow? = null,
+    /** La sordina è salita a rispondere (frasi di casa): quella piccola in fondo si fa da parte */
+    val away: Boolean = false,
 )
 
 /** Casa: ora, data, meteo, evento; la pila; la barra; in fondo cosa è in sordina. */
@@ -342,7 +344,8 @@ internal fun SordinaRow(state: HomeState, pill: Boolean = false, onClick: () -> 
             state.moment != null -> app.sordina.ui.Pose.QUIET
             else -> app.sordina.ui.Pose.AWAKE
         }
-        app.sordina.ui.MascotGlyph(pose, c.soft, Modifier.size(40.dp))
+        val gone by androidx.compose.animation.core.animateFloatAsState(if (state.away) 0f else 1f, app.sordina.ui.Motion.enter(220), label = "away")
+        app.sordina.ui.MascotGlyph(pose, c.soft, Modifier.size(40.dp).graphicsLayer { alpha = gone; translationY = (1f - gone) * -24.dp.toPx() })
         if (on) {
             Spacer(Modifier.width(10.dp))
             Text("${state.waiting}", style = TextStyle(fontSize = 24.sp, color = c.soft))

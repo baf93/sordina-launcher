@@ -167,7 +167,6 @@
     <string name="yes">是</string>
     <string name="none_m">無</string>
     <string name="s_events_go">活動儲存到</string>
-    <string name="s_ha_calendars">顯示的日曆</string>
     <string name="loading">載入中…</string>
     <string name="s_no_calendar">沒有日曆。</string>
     <string name="s_tap_app">輕觸一個應用程式來選擇。</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">找出一律要送達的人。</string>
     <string name="cal_none_writable">沒有可寫入的日曆。</string>
     <string name="cal_events_go">活動儲存到：</string>
-    <string name="ha_token_saved">權杖已儲存（輸入即可變更）</string>
-    <string name="ha_token">長期存取權杖</string>
     <string name="ha_hint">透過 Assist 下指令，僅限公開的實體。權杖已加密。</string>
     <string name="trying">測試中…</string>
     <string name="save_test">儲存並測試</string>

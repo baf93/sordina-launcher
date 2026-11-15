@@ -39,7 +39,8 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
     @Volatile private var cache: List<HaEntity> = emptyList()
     @Volatile private var cacheAt = 0L
 
-    val configured: Boolean get() = prefs.haEnabled && prefs.haMode == "token" && prefs.haUrl.isNotBlank() && prefs.haTokenEnc.isNotBlank()
+    /** Livello 2: col token Sordina parla con casa da sola. Senza, resta il livello 1 (l'app). */
+    val configured: Boolean get() = prefs.haEnabled && prefs.haUrl.isNotBlank() && prefs.haTokenEnc.isNotBlank()
 
     /** L'app ufficiale di Home Assistant: senza token, Assist si apre lì (con il suo collegamento, anche fuori casa). */
     val appInstalled: Boolean get() = runCatching { context.packageManager.getPackageInfo(COMPANION_PKG, 0) }.isSuccess
@@ -59,32 +60,81 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
 
     private fun token(): String? = prefs.haTokenEnc.takeIf { it.isNotBlank() }?.let { runCatching { decrypt(it) }.getOrNull() }
 
+    /**
+     * Quale indirizzo usare, come fa l'app di Home Assistant: su Wi-Fi prima quello di casa, se no quello di fuori.
+     * Si ricorda quale ha funzionato su questa rete, così non riprova ogni volta quello che non risponde.
+     */
+    @Volatile private var route: Pair<android.net.Network?, String>? = null
+
+    /** L'ultima strada usata: true in casa, false da fuori, null se non si è ancora parlato con casa. */
+    val local: Boolean? get() = route?.second?.let { it == prefs.haLocalUrl && it != prefs.haUrl }
+
+    private fun bases(): List<Pair<String, Int>> {
+        val out = prefs.haUrl
+        val home = prefs.haLocalUrl
+        if (home.isBlank() || home == out) return listOfNotNull(out.takeIf { it.isNotBlank() }?.let { it to 4000 })
+        val cm = context.getSystemService(android.net.ConnectivityManager::class.java)
+        val net = cm?.activeNetwork
+        val caps = net?.let { cm.getNetworkCapabilities(it) }
+        val lan = caps?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) == true ||
+            caps?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET) == true
+        // Sulla rete mobile casa non si raggiunge: dritti fuori
+        if (!lan) return listOfNotNull(out.takeIf { it.isNotBlank() }?.let { it to 4000 })
+        // Quello di casa ha un'attesa breve: se non risponde in un attimo non siamo a casa
+        val both = listOf(home to 1500, out to 4000).filter { it.first.isNotBlank() }
+        val known = route?.takeIf { it.first == net }?.second ?: return both
+        return both.sortedBy { if (it.first == known) 0 else 1 }
+    }
+
     /** Chiamata HTTP sincrona: da usare solo fuori dal thread principale. */
     private fun request(path: String, body: JSONObject? = null): String? {
         val t = token() ?: return null
-        val url = prefs.haUrl.takeIf { it.isNotBlank() } ?: return null
-        return runCatching {
-            val c = URL(url + path).openConnection() as HttpURLConnection
-            c.connectTimeout = 4000
-            c.readTimeout = 6000
-            c.setRequestProperty("Authorization", "Bearer $t")
-            c.setRequestProperty("Content-Type", "application/json")
-            if (body != null) {
-                c.requestMethod = "POST"
-                c.doOutput = true
-                c.outputStream.use { it.write(body.toString().toByteArray()) }
+        val net = context.getSystemService(android.net.ConnectivityManager::class.java)?.activeNetwork
+        for ((base, wait) in bases()) {
+            val c = runCatching { URL(base + path).openConnection() as HttpURLConnection }.getOrNull() ?: continue
+            val code = try {
+                c.connectTimeout = wait
+                c.readTimeout = 6000
+                c.setRequestProperty("Authorization", "Bearer $t")
+                c.setRequestProperty("Content-Type", "application/json")
+                if (body != null) {
+                    c.requestMethod = "POST"
+                    c.doOutput = true
+                    c.outputStream.use { it.write(body.toString().toByteArray()) }
+                }
+                c.responseCode
+            } catch (_: java.io.IOException) {
+                // Non raggiungibile da qui: si prova l'altro indirizzo
+                c.disconnect(); continue
             }
-            val code = c.responseCode
-            val text = (if (code in 200..299) c.inputStream else c.errorStream)?.bufferedReader()?.use { it.readText() }
+            // Ha risposto: questa è la strada giusta su questa rete, anche se la risposta è un errore
+            route = net to base
+            val text = runCatching { (if (code in 200..299) c.inputStream else c.errorStream)?.bufferedReader()?.use { it.readText() } }.getOrNull()
             c.disconnect()
-            if (code in 200..299) text else null
-        }.getOrNull()
+            return if (code in 200..299) text else null
+        }
+        return null
     }
 
-    /** Verifica la connessione. Restituisce il messaggio da mostrare. */
+    /** Verifica la connessione e impara da Home Assistant i suoi due indirizzi. Restituisce il messaggio da mostrare. */
     fun test(): String {
         if (!configured) return tr(R.string.ha_missing)
+        route = null
         val r = request("/api/") ?: return tr(R.string.ha_unreachable)
+        // Gli indirizzi che Home Assistant conosce (Impostazioni › Sistema › Rete): quello di casa, e quello di fuori se manca
+        runCatching {
+            val cfg = JSONObject(request("/api/config") ?: return@runCatching)
+            val inside = cfg.optString("internal_url").takeIf { it.startsWith("http") && cfg.isNull("internal_url").not() }
+            val outside = cfg.optString("external_url").takeIf { it.startsWith("http") && cfg.isNull("external_url").not() }
+            // Hai scritto quello di casa: fuori si passa da quello esterno, se c'è
+            if (inside != null && prefs.haUrl.trimEnd('/') == inside.trimEnd('/') && outside != null) prefs.haUrl = outside
+            if (inside != null && prefs.haLocalUrl.isBlank()) {
+                prefs.haLocalUrl = inside
+                // Appena imparato: si riprova, così la strada di adesso è già quella giusta (in casa, se ci sei)
+                route = null
+                request("/api/")
+            }
+        }
         return runCatching { JSONObject(r).optString("message", tr(R.string.ha_connected)) }.getOrDefault(tr(R.string.ha_connected))
     }
 
@@ -134,37 +184,54 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
         }.getOrDefault(emptyList())
     }
 
+    /** Il calendario di casa scelto per gli impegni, se c'è (e se c'è il token). */
+    val calendar: String? get() = prefs.haCalendar.takeIf { configured && it.isNotBlank() }
+
     @Volatile private var calCache: Pair<Long, List<Upcoming>> = 0L to emptyList()
 
     fun resetCalendarCache() { calCache = 0L to emptyList() }
 
-    /** Gli eventi con orario dei calendari scelti, da adesso a [days] giorni. In cache 10 minuti. */
-    fun calendarEvents(ids: Set<String>, days: Int = 7): List<Upcoming> {
-        if (!configured || ids.isEmpty()) return emptyList()
+    /** Gli eventi con orario del calendario di casa scelto, da adesso a [days] giorni. In cache 10 minuti. */
+    fun calendarEvents(days: Int = 7): List<Upcoming> {
+        val id = calendar ?: return emptyList()
         val now = System.currentTimeMillis()
         if (now - calCache.first < 600_000) return calCache.second.filter { it.end > now }
-        val zone = java.time.ZoneId.systemDefault()
         val start = java.time.OffsetDateTime.now()
         val end = start.plusDays(days.toLong())
         val out = ArrayList<Upcoming>()
-        for (id in ids) {
-            val r = request("/api/calendars/$id?start=${java.net.URLEncoder.encode(start.toString(), "UTF-8")}&end=${java.net.URLEncoder.encode(end.toString(), "UTF-8")}") ?: continue
-            runCatching {
-                val a = JSONArray(r)
-                for (i in 0 until a.length()) {
-                    val o = a.getJSONObject(i)
-                    val s = o.optJSONObject("start")?.optString("dateTime").orEmpty()
-                    val e = o.optJSONObject("end")?.optString("dateTime").orEmpty()
-                    if (s.isBlank()) continue // giornata intera
-                    val b = java.time.OffsetDateTime.parse(s).toInstant().toEpochMilli()
-                    val f = if (e.isBlank()) b + 3600_000 else java.time.OffsetDateTime.parse(e).toInstant().toEpochMilli()
-                    out += Upcoming((id + s).hashCode().toLong(), o.optString("summary").ifBlank { tr(R.string.event) }, b, f,
-                        o.optString("location").takeIf { it.isNotBlank() }, "ha", false)
-                }
+        val r = request("/api/calendars/$id?start=${java.net.URLEncoder.encode(start.toString(), "UTF-8")}&end=${java.net.URLEncoder.encode(end.toString(), "UTF-8")}")
+            ?: return calCache.second.filter { it.end > now }
+        runCatching {
+            val a = JSONArray(r)
+            for (i in 0 until a.length()) {
+                val o = a.getJSONObject(i)
+                val s = o.optJSONObject("start")?.optString("dateTime").orEmpty()
+                val e = o.optJSONObject("end")?.optString("dateTime").orEmpty()
+                if (s.isBlank()) continue // giornata intera
+                val b = java.time.OffsetDateTime.parse(s).toInstant().toEpochMilli()
+                val f = if (e.isBlank()) b + 3600_000 else java.time.OffsetDateTime.parse(e).toInstant().toEpochMilli()
+                out += Upcoming((id + s).hashCode().toLong(), o.optString("summary").ifBlank { tr(R.string.event) }, b, f,
+                    o.optString("location").takeIf { it.isNotBlank() }, "ha", false)
             }
         }
         calCache = now to out
         return out.filter { it.end > now }
+    }
+
+    /** Scrive un impegno nel calendario di casa scelto. Home Assistant non permette di cancellarlo da qui: niente "Annulla". */
+    fun createEvent(title: String, w: When, minutes: Int = 60): Boolean {
+        val id = calendar ?: return false
+        val body = JSONObject().put("entity_id", id).put("summary", title)
+        if (w.allDay) {
+            val d = w.start.toLocalDate()
+            body.put("start_date", d.toString()).put("end_date", d.plusDays(1).toString())
+        } else {
+            val s = w.start.atZone(java.time.ZoneId.systemDefault()).toOffsetDateTime()
+            body.put("start_date_time", s.toString()).put("end_date_time", s.plusMinutes(minutes.toLong()).toString())
+        }
+        val ok = request("/api/services/calendar/create_event", body) != null
+        if (ok) resetCalendarCache()
+        return ok
     }
 
     fun cached(): List<HaEntity> = cache

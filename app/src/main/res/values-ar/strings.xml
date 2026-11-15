@@ -167,7 +167,6 @@
     <string name="yes">نعم</string>
     <string name="none_m">لا شيء</string>
     <string name="s_events_go">تذهب الأحداث إلى</string>
-    <string name="s_ha_calendars">التقويمات المعروضة</string>
     <string name="loading">جارٍ التحميل…</string>
     <string name="s_no_calendar">لا توجد تقاويم.</string>
     <string name="s_tap_app">المس تطبيقًا لاختياره.</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">ابحث عمّن يجب أن يصل دائمًا.</string>
     <string name="cal_none_writable">لا يوجد تقويم قابل للكتابة.</string>
     <string name="cal_events_go">تذهب الأحداث إلى:</string>
-    <string name="ha_token_saved">تم حفظ الرمز (اكتب لتغييره)</string>
-    <string name="ha_token">رمز وصول طويل الأمد</string>
     <string name="ha_hint">أوامر عبر Assist، للكيانات المكشوفة فقط. الرمز مشفّر.</string>
     <string name="trying">جارٍ الاختبار…</string>
     <string name="save_test">حفظ واختبار</string>

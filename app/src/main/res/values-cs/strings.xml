@@ -167,7 +167,6 @@
     <string name="yes">ano</string>
     <string name="none_m">žádný</string>
     <string name="s_events_go">Události jdou do</string>
-    <string name="s_ha_calendars">Zobrazené kalendáře</string>
     <string name="loading">Načítání…</string>
     <string name="s_no_calendar">Žádné kalendáře.</string>
     <string name="s_tap_app">Klepni na aplikaci.</string>
@@ -209,8 +208,6 @@
     <string name="onb_search_people">Najdi, kdo má vždy projít.</string>
     <string name="cal_none_writable">Žádný zapisovatelný kalendář.</string>
     <string name="cal_events_go">Události jdou do:</string>
-    <string name="ha_token_saved">Token uložen (piš pro změnu)</string>
-    <string name="ha_token">Dlouhodobý přístupový token</string>
     <string name="ha_hint">Příkazy přes Assist, jen sdílené entity. Token šifrován.</string>
     <string name="trying">Zkouším…</string>
     <string name="save_test">Uložit a vyzkoušet</string>
