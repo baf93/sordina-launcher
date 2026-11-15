@@ -985,7 +985,8 @@
     <string name="ach_wa_hint">Won new stickers? Tap WhatsApp again and they show up there too.</string>
     <string name="ach_wa_soon">Once you have %1$d stickers, add them to WhatsApp as a pack.</string>
     <string name="ach_tg">Make a Telegram pack</string>
-    <string name="ach_tg_hint">On Telegram, remove the old pack first, then make a new one.</string>
+    <string name="ach_tg_hint">Complete a category and add it on Telegram.</string>
+    <string name="ach_tg_group">Add “%1$s” on Telegram</string>
     <string name="ach_new">New sticker</string>
     <string name="ach_new_many">%1$d new stickers</string>
     <string name="ach_locked">Still to win</string>

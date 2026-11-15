@@ -969,3 +969,33 @@ fun telegramImportIntent(context: Context, medals: List<Medal>, pkg: String): In
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 }
+
+/**
+ * Le raccolte su Telegram: un pacchetto per categoria, creato una volta sola (dalla versione di prova) e uguale per tutti.
+ * Quando completi una categoria, Sordina ti dà il suo link: niente di tuo viene pubblicato.
+ * [LINKS]: il nome del link scelto in Telegram (t.me/addstickers/<nome>); una categoria senza link non mostra il pulsante.
+ */
+object TelegramPacks {
+    val LINKS: Map<Medal.Group, String> = mapOf(
+        Medal.Group.BRAKE to "SordinaFreno",
+        Medal.Group.CLEAN to "Sordinasenzatentazioni",
+        Medal.Group.TIME to "Sordinatemporipreso",
+        Medal.Group.SERIES to "Sordinaserie",
+        Medal.Group.LEVEL to "Sordinalivello",
+        Medal.Group.PHONE to "Sordinatempo",
+        Medal.Group.DRIVE to "Sordinaguida",
+        Medal.Group.NOTIF to "Sordinanotifiche",
+        Medal.Group.CHOICE to "Sordinascelte",
+        Medal.Group.YEARS to "Sordinaanniversari",
+    )
+
+    fun link(g: Medal.Group): String? = LINKS[g]?.let { "https://t.me/addstickers/$it" }
+
+    /** Apre il pacchetto in Telegram se c'è, se no nel browser (che propone di installarlo). */
+    fun open(context: Context, g: Medal.Group) {
+        val url = link(g) ?: return
+        val i = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        telegramApp(context)?.let { p -> if (runCatching { context.startActivity(Intent(i).setPackage(p)) }.isSuccess) return }
+        runCatching { context.startActivity(i) }
+    }
+}

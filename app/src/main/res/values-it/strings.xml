@@ -984,7 +984,8 @@
     <string name="ach_wa_hint">Hai vinto nuovi adesivi? Tocca di nuovo WhatsApp e arrivano anche lì.</string>
     <string name="ach_wa_soon">Con %1$d adesivi li metti su WhatsApp come pacchetto.</string>
     <string name="ach_tg">Crea il pacchetto su Telegram</string>
-    <string name="ach_tg_hint">Su Telegram togli prima il vecchio pacchetto, poi creane uno nuovo.</string>
+    <string name="ach_tg_hint">Completa una categoria e la aggiungi su Telegram.</string>
+    <string name="ach_tg_group">Aggiungi «%1$s» su Telegram</string>
     <string name="ach_new">Nuovo adesivo</string>
     <string name="ach_new_many">%1$d nuovi adesivi</string>
     <string name="ach_locked">Ancora da vincere</string>
