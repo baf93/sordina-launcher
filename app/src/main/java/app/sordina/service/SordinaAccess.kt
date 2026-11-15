@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 class SordinaAccess : AccessibilityService() {
     /** Le app ascoltate adesso: si chiede ad Android di cambiarle solo se cambiano davvero */
     private var watching: Set<String>? = null
+    private var watchingTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
 
     override fun onServiceConnected() {
         instance = this
@@ -48,10 +49,40 @@ class SordinaAccess : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(e: AccessibilityEvent?) {
-        if (e?.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
-        val pkg = e.packageName?.toString() ?: return
-        if (pkg == pending?.pkg) { tryFill(); return }
-        runCatching { BrakeGuard.onForeground(this, pkg) }
+        val pkg = e?.packageName?.toString() ?: return
+        when (e.eventType) {
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                if (pkg == pending?.pkg) { tryFill(); return }
+                runCatching { BrakeGuard.onForeground(this, pkg) }
+                // Un browser davanti: da qui si guarda che sito mostra; un'altra app: i browser tornano muti
+                val browser = pkg.takeIf { WebBrake.isBrowser(it) && it in watching.orEmpty() }
+                if (browser != front) { front = browser; watch() }
+                if (browser != null) soon(0)
+            }
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> if (pkg == front) soon(WebBrake.EVERY)
+        }
+    }
+
+    /** Il browser davanti adesso, se ce n'è uno da guardare */
+    private var front: String? = null
+    private var checking = false
+    private val web = android.os.Handler(android.os.Looper.getMainLooper())
+
+    /** Si guarda l'indirizzo fra [ms]: al massimo uno sguardo alla volta, così una pagina che si muove non costa niente */
+    private fun soon(ms: Long) {
+        if (checking) return
+        checking = true
+        web.postDelayed({ checking = false; runCatching { checkWeb() } }, ms)
+    }
+
+    private fun checkWeb() {
+        val b = front ?: return
+        val root = rootInActiveWindow ?: return
+        if (root.packageName?.toString() != b) return
+        val url = WebBrake.url(b, root) ?: return
+        val prefs = SordinaApp.of(this).prefs
+        val app = WebBrake.appFor(url, prefs.braked) ?: return
+        BrakeGuard.onWeb(this, app, b)
     }
 
     override fun onInterrupt() {}
@@ -59,13 +90,21 @@ class SordinaAccess : AccessibilityService() {
     /** Ascolta solo le app frenate (o nessuna: solo Sordina stessa, che non manda mai niente di utile qui). */
     private fun watch() {
         val prefs = SordinaApp.of(this).prefs
-        val want = if (prefs.brakeGuard && prefs.instantBrake && prefs.braked.isNotEmpty()) prefs.braked else setOf(packageName)
+        val on = prefs.brakeGuard && prefs.instantBrake && prefs.braked.isNotEmpty()
+        // Sordina sempre: così si sa quando un browser non è più davanti
+        val want = (if (on) prefs.braked + WebBrake.browsers(prefs.braked) + packageName else setOf(packageName))
             .let { w -> pending?.let { w + it.pkg } ?: w }
-        if (want == watching) return
+        if (front != null && front !in want) front = null
+        // Il contenuto delle pagine arriva solo mentre un browser è davanti, e a mazzetti
+        val types = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or (if (front != null) AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED else 0)
+        val timeout = if (front != null) 300L else 0L
+        if (want == watching && types == watchingTypes) return
         val info = serviceInfo ?: return
+        info.eventTypes = types
+        info.notificationTimeout = timeout
         // Un elenco vuoto vorrebbe dire "tutte le app": non succede mai, al minimo c'è Sordina
         info.packageNames = want.toTypedArray()
-        runCatching { serviceInfo = info }.onSuccess { watching = want }
+        runCatching { serviceInfo = info }.onSuccess { watching = want; watchingTypes = types }
     }
 
     /** Una frase da scrivere (e inviare) nella casella di [pkg], entro [until]. */

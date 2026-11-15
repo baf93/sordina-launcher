@@ -11,6 +11,7 @@ import android.content.Intent
 import app.sordina.MainActivity
 import app.sordina.R
 import app.sordina.data.Held
+import androidx.core.graphics.drawable.toBitmap
 
 /**
  * Le notifiche di Sordina: i ri-avvisi del livello Sempre e l'avviso "un'altra Home".
@@ -51,6 +52,8 @@ class StatusNotification(private val context: Context) {
             .setContentTitle(h.person ?: h.appLabel)
             .setContentText(h.text)
             .setSubText(h.appLabel)
+            // La piccola deve essere di Sordina (Android non ne accetta altre): l'icona dell'app, grande, dice da chi viene
+            .apply { appIcon(h.pkg)?.let { setLargeIcon(it) } }
             .setAutoCancel(true)
             .setCategory(Notification.CATEGORY_MESSAGE)
             .setContentIntent(intent ?: openWaiting(context))
@@ -58,6 +61,11 @@ class StatusNotification(private val context: Context) {
         runCatching { nm.notify(h.key.hashCode(), n) }
         alerted += h.key.hashCode()
     }
+
+    private fun appIcon(pkg: String): android.graphics.Bitmap? = runCatching {
+        val px = context.resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width)
+        context.packageManager.getApplicationIcon(pkg).toBitmap(px, px)
+    }.getOrNull()
 
     /** I ri-avvisi ancora in giro: solo questi si cancellano (niente chiamate ad Android per gli altri). */
     private val alerted = java.util.Collections.synchronizedSet(HashSet<Int>())

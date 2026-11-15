@@ -158,8 +158,9 @@ class SordinaListener : NotificationListenerService() {
         // La prima in sordina: il promemoria di rinnovo (se c'è già, non si tocca)
         if (until > 0) Scheduler.plan(this)
         // Il doppione serve solo se Non disturbare sta davvero zittendo l'originale (che resta comunque in tendina)
+        // In auto no: mentre guidi non lo leggeresti, e l'originale lo ritrovi quando ti fermi
         val muted = ranking?.matchesInterruptionFilter() == false
-        if (level == Level.SEMPRE && app.silence.isActive() && muted) app.status.alert(held, sbn.notification.contentIntent)
+        if (level == Level.SEMPRE && app.silence.isActive() && muted && !app.prefs.quietCar) app.status.alert(held, sbn.notification.contentIntent)
         store.log(Decision(now, sbn.packageName, label, level, verdict.reason))
     }
 

@@ -289,7 +289,7 @@ class Intents(
         val restN = nw.drop(1).filter { it.isNotEmpty() }.joinToString(" ")
 
         // Torcia
-        if ("torcia" in nw || nq == "luce telefono") {
+        if ("torcia" in nw || "flashlight" in nw || "torch" in nw || nq == "luce telefono") {
             out += Candidate("torch", tr(R.string.torch), tr(R.string.torch_hint), Kind.ACTION, 97, false, Act.Torch); return
         }
         // Sordina a tempo: "sordina per 45 minuti", "silenzio fino alle 15", "non disturbare un'ora", "basta sordina"
@@ -301,7 +301,7 @@ class Intents(
         if ("timer" in nw || nq.startsWith("conto alla rovescia")) {
             val d = DateParser.duration(nq)
             if (d != null) {
-                val label = d.second.split(' ').filter { it !in setOf("timer", "metti", "un", "imposta", "per", "avvia", "conto", "alla", "rovescia", "di", "da") }.joinToString(" ")
+                val label = d.second.split(' ').filter { it !in setOf("timer", "metti", "un", "imposta", "per", "avvia", "conto", "alla", "rovescia", "di", "da", "set", "start", "a", "an", "for", "tra") }.joinToString(" ")
                 val t = fmtDuration(d.first)
                 out += Candidate("timer", tr(R.string.timer) + " $t" + if (label.isNotBlank()) " · $label" else "", tr(R.string.starts_now), Kind.ACTION, 96, false, Act.Timer(d.first, label))
             } else {
@@ -310,8 +310,9 @@ class Intents(
             return
         }
         // Sveglia
-        if (first == "sveglia" || first == "svegliami") {
-            val r = DateParser.parse(nq.removePrefix(first), eveningBias = false)
+        val alarmEn = nq.startsWith("wake me") || first == "alarm" || Regex("^(set|create|add|new)( an| a| my)? alarm ").containsMatchIn(nq)
+        if (first == "sveglia" || first == "svegliami" || alarmEn) {
+            val r = DateParser.parse(if (alarmEn) nq.replace(Regex("^(wake me( up)?|((set|create|add|new)( an| a| my)? )?alarm)"), "") else nq.removePrefix(first), eveningBias = false)
             val w = r.whenAt
             if (w != null && !w.allDay) {
                 out += Candidate("alarm", tr(R.string.alarm_at, java.time.LocalTime.of(w.start.hour, w.start.minute).format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))), tr(R.string.alarm_hint), Kind.ACTION, 96, false, Act.Alarm(w.start.hour, w.start.minute, ""))
@@ -319,33 +320,33 @@ class Intents(
             }
         }
         // Chiama
-        if (first in setOf("chiama", "telefona", "chiamare", "telefonare")) {
-            val rest = skip(nw.drop(1), setOf("a", "ad"))
+        if (first in setOf("chiama", "telefona", "chiamare", "telefonare", "call", "phone", "ring", "dial")) {
+            val rest = skip(nw.drop(1), setOf("a", "ad", "to"))
             personIn(rest)?.let { (c, s, _) ->
                 out += Candidate("call:${c.id}", tr(R.string.call_x, c.name), c.number, Kind.PERSON, if (s >= 80) 95 else 80, true, Act.Call(c))
             }
             return
         }
         // Scrivi
-        val msgVerbs = setOf("scrivi", "scrivere", "messaggio", "manda", "invia", "whatsapp", "sms", "telegram", "signal")
+        val msgVerbs = setOf("scrivi", "scrivere", "messaggio", "manda", "invia", "whatsapp", "sms", "telegram", "signal", "text", "message", "write", "send", "tell")
         if (first in msgVerbs) {
             var via: Via? = when (first) { "whatsapp" -> Via.WHATSAPP; "sms" -> Via.SMS; "telegram" -> Via.TELEGRAM; "signal" -> Via.SIGNAL; else -> null }
             // "su whatsapp", "via telegram", "con sms" ovunque nella frase
             val idx = ArrayList((1 until nw.size).toList())
             for (i in 1 until nw.size - 1) {
-                if (nw[i] in setOf("su", "via", "con", "per") ) {
+                if (nw[i] in setOf("su", "via", "con", "per", "on", "over", "by")) {
                     val v = when (nw[i + 1]) { "whatsapp" -> Via.WHATSAPP; "telegram" -> Via.TELEGRAM; "signal" -> Via.SIGNAL; "sms", "messaggio" -> Via.SMS; else -> null }
                     if (v != null) { via = v; idx.remove(i); idx.remove(i + 1) }
                 }
             }
             var k = 0
             val restIdx = idx.filter { nw[it].isNotEmpty() }.toMutableList()
-            while (k < restIdx.size && nw[restIdx[k]] in setOf("un", "messaggio", "a", "ad", "al", "alla")) k++
+            while (k < restIdx.size && nw[restIdx[k]] in setOf("un", "messaggio", "a", "ad", "al", "alla", "an", "message", "text", "to")) k++
             val tail = restIdx.drop(k)
             val found = personIn(tail.map { nw[it] }) ?: return
             val (c, s, used) = found
             val textWords = tail.drop(used).map { ow[it] }.toMutableList()
-            while (textWords.isNotEmpty() && Search.normalize(textWords.first()) in setOf("che", "dicendo", "dicendogli", "dicendole", ":")) textWords.removeAt(0)
+            while (textWords.isNotEmpty() && Search.normalize(textWords.first()) in setOf("che", "dicendo", "dicendogli", "dicendole", ":", "saying", "that")) textWords.removeAt(0)
             val text = textWords.joinToString(" ").replaceFirstChar { it.uppercase() }
             val v = viaFor(c, via)
             out += Candidate("msg:${c.id}:${v.name}", tr(R.string.write_to_x, c.name), (if (text.isNotBlank()) "«$text» · " else "") + v.label, Kind.PERSON, if (s >= 80) 95 else 80, true, Act.Message(c, text, v))
@@ -362,28 +363,19 @@ class Intents(
             return
         }
         // Impegni e promemoria
-        val eventVerbs = setOf("aggiungi", "impegno", "evento", "appuntamento", "promemoria", "ricordami", "segna", "calendario", "metti")
+        val eventVerbs = setOf("aggiungi", "crea", "nuovo", "nuova", "fissa", "impegno", "evento", "appuntamento", "promemoria", "ricordami", "segna", "calendario", "metti",
+            "add", "create", "new", "schedule", "event", "appointment", "reminder", "remind", "book", "plan")
         if (first in eventVerbs) {
-            val r = DateParser.parse(nw.drop(1).joinToString(" "))
-            val w = r.whenAt
-            val filler = setOf("di", "un", "una", "uno", "l", "il", "lo", "la", "in", "nel", "al", "calendario", "impegno", "evento", "appuntamento", "promemoria", "che", "ho", "a")
-            val words = r.rest.split(' ').filter { it.isNotBlank() }.toMutableList()
-            while (words.isNotEmpty() && words.first() in filler) words.removeAt(0)
-            while (words.isNotEmpty() && words.last() in filler) words.removeAt(words.size - 1)
-            val title = words.joinToString(" ").replaceFirstChar { it.uppercase() }
-            if (w != null && title.isNotBlank()) {
-                val cal = Calendars(context, prefs).default()
-                val sub = DateParser.describe(w) + (if (w.movedToTomorrow) " (oggi era già passato)" else "") + (cal?.let { " · ${it.name}" } ?: "")
-                out += Candidate("event", title, sub, Kind.ACTION, if (first == "metti") 80 else 94, false, Act.Event(title, w))
-                return
-            }
-            if (first != "metti" && first != "aggiungi" && title.isNotBlank()) {
+            if (event(nw.drop(1), if (first == "metti") 80 else 94, out)) return
+            val title = eventTitle(DateParser.parse(nw.drop(1).joinToString(" ")).rest)
+            if (first !in setOf("metti", "aggiungi", "add", "book", "plan") && title.isNotBlank()) {
                 val t = java.time.LocalDate.now().plusDays(1).atTime(9, 0)
                 out += Candidate("event", title, tr(R.string.event_no_when), Kind.ACTION, 70, false, Act.Event(title, When(t, false, false)))
             }
         }
         // Navigazione
-        val nav = listOf("naviga verso", "naviga a", "portami a", "portami", "indicazioni per", "vai a", "andiamo a", "verso")
+        val nav = listOf("naviga verso", "naviga a", "portami a", "portami", "indicazioni per", "vai a", "andiamo a", "verso",
+            "navigate to", "take me to", "directions to", "drive to", "get me to", "navigate")
         nav.firstOrNull { nq.startsWith("$it ") }?.let { p ->
             val n = p.split(' ').size
             val place = ow.drop(n).joinToString(" ")
@@ -393,20 +385,21 @@ class Intents(
         // Casa
         val haVerbs = mapOf("accendi" to HaOp.ON, "attiva" to HaOp.ON, "apri" to HaOp.ON, "alza" to HaOp.ON,
             "spegni" to HaOp.OFF, "disattiva" to HaOp.OFF, "chiudi" to HaOp.OFF, "abbassa" to HaOp.OFF, "stacca" to HaOp.OFF,
-            "imposta" to HaOp.LEVEL, "regola" to HaOp.LEVEL)
+            "imposta" to HaOp.LEVEL, "regola" to HaOp.LEVEL,
+            "turn" to HaOp.ON, "switch" to HaOp.ON, "open" to HaOp.ON, "close" to HaOp.OFF, "dim" to HaOp.LEVEL, "set" to HaOp.LEVEL, "lock" to HaOp.OFF, "unlock" to HaOp.ON)
         haVerbs[first]?.let { op0 ->
-            val level = Regex("(?:al|a|su) (\\d{1,3}) ?(%|percento|per cento|gradi)?").find(restN)?.groupValues?.get(1)?.toIntOrNull()
-            val target = restN.replace(Regex("(?:al|a|su) \\d{1,3} ?(%|percento|per cento|gradi)?"), "").trim()
+            val level = Regex("(?:al|a|su|to) (\\d{1,3}) ?(%|percento|per cento|gradi|percent|degrees)?").find(restN)?.groupValues?.get(1)?.toIntOrNull()
+            val target = restN.replace(Regex("(?:al|a|su|to) \\d{1,3} ?(%|percento|per cento|gradi|percent|degrees)?"), "").split(' ').filter { it !in setOf("on", "off", "the") }.joinToString(" ").trim()
             if (ha.canAssist && target.isNotBlank()) {
                 // Casa: la frase va ad Assist, che conosce stanze, alias ed entità esposte
-                out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, if (first == "apri") 80 else 90, false, Act.Assist(ow.joinToString(" ")))
+                out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, if (first == "apri" || first == "open") 80 else 90, false, Act.Assist(ow.joinToString(" ")))
             }
-            if (first == "apri") {
+            if (first == "apri" || first == "open") {
                 Search.apps(restN, apps, emptyMap(), 2).forEach { a ->
                     out += Candidate("app:${a.key}", a.label, null, Kind.APP, Search.score(restN, a.normalized).coerceAtMost(92), false, Act.OpenApp(a), a)
                 }
             }
-            if (first == "accendi" || first == "spegni" || first == "attiva" || first == "disattiva") {
+            if (first in setOf("accendi", "spegni", "attiva", "disattiva", "turn", "switch")) {
                 SETTINGS.filter { (w, _, _) -> w.any { Search.score(target, it) >= 80 } }.forEach { (_, title, action) ->
                     out += Candidate("set:$action", title, tr(R.string.settings_kind), Kind.SETTING, 84, false, Act.Setting(action))
                 }
@@ -423,27 +416,52 @@ class Intents(
             out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, s, false, Act.Assist(ow.joinToString(" ")))
         }
         // Musica
-        if (first in setOf("metti", "ascolta", "riproduci", "suona") && restN.isNotBlank()) {
-            if (restN == "musica" || restN == "la musica") {
+        if (first in setOf("metti", "ascolta", "riproduci", "suona", "play", "listen") && restN.isNotBlank()) {
+            if (restN in setOf("musica", "la musica", "music", "some music", "to music")) {
                 out += Candidate("media:${KeyEvent.KEYCODE_MEDIA_PLAY}", tr(R.string.resume_music), null, Kind.ACTION, 92, false, Act.Media(KeyEvent.KEYCODE_MEDIA_PLAY))
             } else {
-                val what = ow.drop(1).joinToString(" ")
+                val what = ow.drop(if (first == "listen" && nw.getOrNull(1) == "to") 2 else 1).joinToString(" ")
                 out += Candidate("music", tr(R.string.play_x, what), tr(R.string.in_music_app), Kind.ACTION, 82, false, Act.Music(what))
             }
         }
+        // Un impegno detto come si parla, senza verbo: "pizza stasera alle 10", "dentista giovedì alle 15".
+        // Solo frasi corte con un quando chiaro, e niente domande ("che tempo fa domani" resta una ricerca)
+        val asks = setOf("che", "cosa", "come", "quando", "dove", "chi", "perche", "quanto", "quanti", "quale", "meteo", "tempo",
+            "what", "whats", "how", "when", "where", "who", "why", "which", "weather", "is", "are", "does", "do", "can", "should")
+        if (nw.size in 2..8 && nw.none { it in asks } && !nq.endsWith("?")) event(nw, 85, out)
+    }
+
+    private val eventFiller = setOf("di", "un", "una", "uno", "nuovo", "nuova", "l", "il", "lo", "la", "in", "nel", "al", "calendario", "impegno", "evento", "appuntamento", "promemoria", "che", "ho", "a", "me", "to", "an", "the", "at", "on", "for", "my", "event", "appointment", "reminder", "about")
+
+    private fun eventTitle(rest: String): String {
+        val words = rest.split(' ').filter { it.isNotBlank() }.toMutableList()
+        while (words.isNotEmpty() && words.first() in eventFiller) words.removeAt(0)
+        while (words.isNotEmpty() && words.last() in eventFiller) words.removeAt(words.size - 1)
+        return words.joinToString(" ").replaceFirstChar { it.uppercase() }
+    }
+
+    /** Un impegno con un quando e un titolo: lo propone e dice true. */
+    private fun event(words: List<String>, score: Int, out: MutableList<Candidate>): Boolean {
+        val r = DateParser.parse(words.joinToString(" "))
+        val w = r.whenAt ?: return false
+        val title = eventTitle(r.rest).takeIf { it.isNotBlank() } ?: return false
+        val cal = if (ha.calendar != null) prefs.haCalendarName else Calendars(context, prefs).default()?.name
+        val sub = DateParser.describe(w) + (if (w.movedToTomorrow) " " + tr(R.string.when_moved) else "") + (cal?.let { " · $it" } ?: "")
+        out += Candidate("event", title, sub, Kind.ACTION, score, false, Act.Event(title, w))
+        return true
     }
 
     private fun quiet(nw: List<String>, nq: String): Candidate? {
-        val words = setOf("sordina", "silenzio", "concentrazione", "focus", "silenzia", "zitto")
-        val dnd = nq.startsWith("non disturbare") || nq.startsWith("modalita silenziosa")
+        val words = setOf("sordina", "silenzio", "concentrazione", "focus", "silenzia", "zitto", "quiet", "silence", "mute")
+        val dnd = nq.startsWith("non disturbare") || nq.startsWith("modalita silenziosa") || nq.startsWith("do not disturb")
         if (nw.none { it in words } && !dnd) return null
-        val stop = nw.any { it in setOf("basta", "fine", "stop", "togli", "spegni", "esci", "finita", "via") }
+        val stop = nw.any { it in setOf("basta", "fine", "stop", "togli", "spegni", "esci", "finita", "via", "end", "off", "exit", "cancel") }
         if (stop) return Candidate("quiet:off", tr(R.string.quiet_off), tr(R.string.quiet_off_hint), Kind.ACTION, 96, false, Act.Quiet(null))
         val now = System.currentTimeMillis()
         val d = DateParser.duration(nq)
         val until = when {
             d != null && d.first >= 60 -> now + d.first * 1000L
-            nw.contains("fino") || nw.contains("alle") -> DateParser.parse(nq, eveningBias = false).whenAt?.takeIf { !it.allDay }
+            nw.contains("fino") || nw.contains("alle") || nw.contains("until") || nw.contains("till") || nw.contains("at") -> DateParser.parse(nq, eveningBias = false).whenAt?.takeIf { !it.allDay }
                 ?.start?.atZone(java.time.ZoneId.systemDefault())?.toInstant()?.toEpochMilli()?.takeIf { it > now }
             else -> null
         }
@@ -567,41 +585,50 @@ class Intents(
         private val CALL_VERBS = listOf("chiama", "telefona", "call")
         private val MSG_VERBS = listOf("scrivi", "messaggio", "manda", "write", "text")
 
-        private val MEDIA = mapOf(
-            "pausa" to ("Pausa" to KeyEvent.KEYCODE_MEDIA_PAUSE),
-            "metti in pausa" to ("Pausa" to KeyEvent.KEYCODE_MEDIA_PAUSE),
-            "stop" to ("Pausa" to KeyEvent.KEYCODE_MEDIA_PAUSE),
-            "ferma la musica" to ("Pausa" to KeyEvent.KEYCODE_MEDIA_PAUSE),
-            "play" to ("Riprendi" to KeyEvent.KEYCODE_MEDIA_PLAY),
-            "riprendi" to ("Riprendi" to KeyEvent.KEYCODE_MEDIA_PLAY),
-            "continua" to ("Riprendi" to KeyEvent.KEYCODE_MEDIA_PLAY),
-            "avanti" to ("Prossima canzone" to KeyEvent.KEYCODE_MEDIA_NEXT),
-            "prossima" to ("Prossima canzone" to KeyEvent.KEYCODE_MEDIA_NEXT),
-            "prossima canzone" to ("Prossima canzone" to KeyEvent.KEYCODE_MEDIA_NEXT),
-            "successiva" to ("Prossima canzone" to KeyEvent.KEYCODE_MEDIA_NEXT),
-            "salta" to ("Prossima canzone" to KeyEvent.KEYCODE_MEDIA_NEXT),
-            "indietro" to ("Canzone precedente" to KeyEvent.KEYCODE_MEDIA_PREVIOUS),
-            "precedente" to ("Canzone precedente" to KeyEvent.KEYCODE_MEDIA_PREVIOUS),
-            "canzone precedente" to ("Canzone precedente" to KeyEvent.KEYCODE_MEDIA_PREVIOUS),
+        private val MEDIA get() = mapOf(
+            "pausa" to (tr(R.string.media_pause) to KeyEvent.KEYCODE_MEDIA_PAUSE),
+            "metti in pausa" to (tr(R.string.media_pause) to KeyEvent.KEYCODE_MEDIA_PAUSE),
+            "stop" to (tr(R.string.media_pause) to KeyEvent.KEYCODE_MEDIA_PAUSE),
+            "ferma la musica" to (tr(R.string.media_pause) to KeyEvent.KEYCODE_MEDIA_PAUSE),
+            "play" to (tr(R.string.media_play) to KeyEvent.KEYCODE_MEDIA_PLAY),
+            "riprendi" to (tr(R.string.media_play) to KeyEvent.KEYCODE_MEDIA_PLAY),
+            "continua" to (tr(R.string.media_play) to KeyEvent.KEYCODE_MEDIA_PLAY),
+            "avanti" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
+            "prossima" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
+            "prossima canzone" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
+            "successiva" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
+            "salta" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
+            "indietro" to (tr(R.string.media_prev) to KeyEvent.KEYCODE_MEDIA_PREVIOUS),
+            "precedente" to (tr(R.string.media_prev) to KeyEvent.KEYCODE_MEDIA_PREVIOUS),
+            "canzone precedente" to (tr(R.string.media_prev) to KeyEvent.KEYCODE_MEDIA_PREVIOUS),
+            "pause" to (tr(R.string.media_pause) to KeyEvent.KEYCODE_MEDIA_PAUSE),
+            "pause music" to (tr(R.string.media_pause) to KeyEvent.KEYCODE_MEDIA_PAUSE),
+            "stop music" to (tr(R.string.media_pause) to KeyEvent.KEYCODE_MEDIA_PAUSE),
+            "resume" to (tr(R.string.media_play) to KeyEvent.KEYCODE_MEDIA_PLAY),
+            "next" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
+            "next song" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
+            "skip" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
+            "previous" to (tr(R.string.media_prev) to KeyEvent.KEYCODE_MEDIA_PREVIOUS),
+            "previous song" to (tr(R.string.media_prev) to KeyEvent.KEYCODE_MEDIA_PREVIOUS),
         )
 
         /** (parole, titolo, azione delle Impostazioni di Android) */
-        private val SETTINGS: List<Triple<List<String>, String, String>> = listOf(
-            Triple(listOf("wifi", "wi fi", "rete"), "Wi-Fi", Settings.ACTION_WIFI_SETTINGS),
+        private val SETTINGS: List<Triple<List<String>, String, String>> get() = listOf(
+            Triple(listOf("wifi", "wi fi", "rete", "network"), "Wi-Fi", Settings.ACTION_WIFI_SETTINGS),
             Triple(listOf("bluetooth"), "Bluetooth", Settings.ACTION_BLUETOOTH_SETTINGS),
-            Triple(listOf("dati mobili", "internet", "dati"), "Internet", Settings.ACTION_WIRELESS_SETTINGS),
-            Triple(listOf("modalita aereo", "aereo"), "Modalità aereo", Settings.ACTION_AIRPLANE_MODE_SETTINGS),
-            Triple(listOf("luminosita", "schermo", "display"), "Schermo e luminosità", Settings.ACTION_DISPLAY_SETTINGS),
-            Triple(listOf("suoni", "volume", "suoneria"), "Suoni e volume", Settings.ACTION_SOUND_SETTINGS),
-            Triple(listOf("batteria", "risparmio energetico"), "Batteria", Settings.ACTION_BATTERY_SAVER_SETTINGS),
-            Triple(listOf("posizione", "gps", "localizzazione"), "Posizione", Settings.ACTION_LOCATION_SOURCE_SETTINGS),
-            Triple(listOf("nfc", "pagamenti contactless"), "NFC", Settings.ACTION_NFC_SETTINGS),
-            Triple(listOf("non disturbare"), "Non disturbare", "android.settings.ZEN_MODE_SETTINGS"),
-            Triple(listOf("impostazioni", "settings"), "Impostazioni di Android", Settings.ACTION_SETTINGS),
-            Triple(listOf("hotspot", "router"), "Hotspot e connessioni", Settings.ACTION_WIRELESS_SETTINGS),
-            Triple(listOf("lingua", "tastiera"), "Lingua e tastiera", Settings.ACTION_LOCALE_SETTINGS),
-            Triple(listOf("data", "ora", "fuso orario"), "Data e ora", Settings.ACTION_DATE_SETTINGS),
-            Triple(listOf("sordina", "impostazioni sordina"), "Impostazioni di Sordina", "sordina"),
+            Triple(listOf("dati mobili", "internet", "dati", "mobile data"), tr(R.string.set_internet), Settings.ACTION_WIRELESS_SETTINGS),
+            Triple(listOf("modalita aereo", "aereo", "airplane mode", "flight mode"), tr(R.string.set_airplane), Settings.ACTION_AIRPLANE_MODE_SETTINGS),
+            Triple(listOf("luminosita", "schermo", "display", "brightness", "screen"), tr(R.string.set_display), Settings.ACTION_DISPLAY_SETTINGS),
+            Triple(listOf("suoni", "volume", "suoneria", "sound", "ringtone"), tr(R.string.set_sound), Settings.ACTION_SOUND_SETTINGS),
+            Triple(listOf("batteria", "risparmio energetico", "battery", "battery saver"), tr(R.string.s_battery), Settings.ACTION_BATTERY_SAVER_SETTINGS),
+            Triple(listOf("posizione", "gps", "localizzazione", "location"), tr(R.string.set_location), Settings.ACTION_LOCATION_SOURCE_SETTINGS),
+            Triple(listOf("nfc", "pagamenti contactless", "contactless"), "NFC", Settings.ACTION_NFC_SETTINGS),
+            Triple(listOf("non disturbare", "do not disturb"), tr(R.string.set_dnd), "android.settings.ZEN_MODE_SETTINGS"),
+            Triple(listOf("impostazioni", "settings"), tr(R.string.set_android), Settings.ACTION_SETTINGS),
+            Triple(listOf("hotspot", "router", "tethering"), tr(R.string.set_hotspot), Settings.ACTION_WIRELESS_SETTINGS),
+            Triple(listOf("lingua", "tastiera", "language", "keyboard"), tr(R.string.set_language), Settings.ACTION_LOCALE_SETTINGS),
+            Triple(listOf("data", "ora", "fuso orario", "date", "time", "time zone"), tr(R.string.set_datetime), Settings.ACTION_DATE_SETTINGS),
+            Triple(listOf("sordina", "impostazioni sordina", "sordina settings"), tr(R.string.set_sordina), "sordina"),
         )
 
         private val UNIT = mapOf(

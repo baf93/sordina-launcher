@@ -187,34 +187,47 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
     /** Il calendario di casa scelto per gli impegni, se c'è (e se c'è il token). */
     val calendar: String? get() = prefs.haCalendar.takeIf { configured && it.isNotBlank() }
 
-    @Volatile private var calCache: Pair<Long, List<Upcoming>> = 0L to emptyList()
+    /** I calendari di casa da mostrare in Casa: quelli scelti, più quello dei nuovi impegni se è di casa. */
+    fun shownCalendars(): Set<String> {
+        if (!configured) return emptySet()
+        return prefs.homeCalendars.filter { it.startsWith("h:") }.map { it.drop(2) }.toSet() + listOfNotNull(calendar)
+    }
 
-    fun resetCalendarCache() { calCache = 0L to emptyList() }
+    @Volatile private var calCache: Triple<Long, Set<String>, List<Upcoming>> = Triple(0L, emptySet(), emptyList())
 
-    /** Gli eventi con orario del calendario di casa scelto, da adesso a [days] giorni. In cache 10 minuti. */
+    fun resetCalendarCache() { calCache = Triple(0L, emptySet(), emptyList()) }
+
+    /** Gli eventi con orario dei calendari di casa da mostrare, da adesso a [days] giorni. In cache 10 minuti. */
     fun calendarEvents(days: Int = 7): List<Upcoming> {
-        val id = calendar ?: return emptyList()
+        val ids = shownCalendars()
+        if (ids.isEmpty()) return emptyList()
         val now = System.currentTimeMillis()
-        if (now - calCache.first < 600_000) return calCache.second.filter { it.end > now }
+        if (now - calCache.first < 600_000 && calCache.second == ids) return calCache.third.filter { it.end > now }
         val start = java.time.OffsetDateTime.now()
         val end = start.plusDays(days.toLong())
+        val range = "start=${java.net.URLEncoder.encode(start.toString(), "UTF-8")}&end=${java.net.URLEncoder.encode(end.toString(), "UTF-8")}"
         val out = ArrayList<Upcoming>()
-        val r = request("/api/calendars/$id?start=${java.net.URLEncoder.encode(start.toString(), "UTF-8")}&end=${java.net.URLEncoder.encode(end.toString(), "UTF-8")}")
-            ?: return calCache.second.filter { it.end > now }
-        runCatching {
-            val a = JSONArray(r)
-            for (i in 0 until a.length()) {
-                val o = a.getJSONObject(i)
-                val s = o.optJSONObject("start")?.optString("dateTime").orEmpty()
-                val e = o.optJSONObject("end")?.optString("dateTime").orEmpty()
-                if (s.isBlank()) continue // giornata intera
-                val b = java.time.OffsetDateTime.parse(s).toInstant().toEpochMilli()
-                val f = if (e.isBlank()) b + 3600_000 else java.time.OffsetDateTime.parse(e).toInstant().toEpochMilli()
-                out += Upcoming((id + s).hashCode().toLong(), o.optString("summary").ifBlank { tr(R.string.event) }, b, f,
-                    o.optString("location").takeIf { it.isNotBlank() }, "ha", false)
+        var reached = false
+        for (id in ids) {
+            val r = request("/api/calendars/$id?$range") ?: continue
+            reached = true
+            runCatching {
+                val a = JSONArray(r)
+                for (i in 0 until a.length()) {
+                    val o = a.getJSONObject(i)
+                    val s = o.optJSONObject("start")?.optString("dateTime").orEmpty()
+                    val e = o.optJSONObject("end")?.optString("dateTime").orEmpty()
+                    if (s.isBlank()) continue // giornata intera
+                    val b = java.time.OffsetDateTime.parse(s).toInstant().toEpochMilli()
+                    val f = if (e.isBlank()) b + 3600_000 else java.time.OffsetDateTime.parse(e).toInstant().toEpochMilli()
+                    out += Upcoming((id + s).hashCode().toLong(), o.optString("summary").ifBlank { tr(R.string.event) }, b, f,
+                        o.optString("location").takeIf { it.isNotBlank() }, "ha", false)
+                }
             }
         }
-        calCache = now to out
+        // Casa irraggiungibile: restano quelli di prima, meglio di niente
+        if (!reached) return calCache.third.filter { it.end > now }
+        calCache = Triple(now, ids, out)
         return out.filter { it.end > now }
     }
 

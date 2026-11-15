@@ -52,7 +52,7 @@ object DateParser {
 
     /** Durata in secondi: "10 minuti", "mezz ora", "1 ora e 20", "90 secondi". */
     fun duration(text: String): Pair<Int, String>? {
-        var s = " " + clean(text) + " "
+        var s = " " + english(clean(text)) + " "
         var total = 0
         var found = false
         if (Regex(" (un )?mezz ?ora ").containsMatchIn(s)) {
@@ -80,7 +80,7 @@ object DateParser {
     }
 
     fun parse(text: String, now: LocalDateTime = LocalDateTime.now(), eveningBias: Boolean = true): Result {
-        var s = " " + clean(text) + " "
+        var s = " " + english(clean(text)).split(' ').joinToString(" ") { typo(it) } + " "
         var date: LocalDate? = null
         var time: LocalTime? = null
         var relative: LocalDateTime? = null
@@ -171,6 +171,98 @@ object DateParser {
         return Result(When(start, false, moved), rest)
     }
 
+    /**
+     * L'inglese riportato alla forma che le regole capiscono già: "tonight at 10" → "stasera alle 10",
+     * "7pm" → "alle 7 di sera", "in 10 minutes" → "tra 10 minuti", "next friday" → "venerdi prossimo".
+     * Solo forme che non si confondono con l'italiano: "in" diventa "tra" solo davanti a una durata,
+     * i mesi solo accanto a un numero ("may" da solo resta "may").
+     */
+    fun english(s0: String): String {
+        var s = " $s0 "
+        fun r(from: String, to: String) { s = s.replace(Regex(from), to) }
+        // Numeri a parole
+        for ((w, n) in EN_NUMBERS) r(" $w (?=(minutes?|mins?|hours?|hrs?|seconds?|secs?|days?|weeks?|am|pm|o clock|oclock)\\b)", " $n ")
+        // Durate
+        r(" half (an|a) hour ", " mezz ora ")
+        r(" (a )?quarter of an hour ", " quarto d ora ")
+        r(" (a|an|one) (?=(minute|hour|second|day|week)\\b)", " un ")
+        r(" (\\d+) ?(minutes|minute|mins|min) ", " $1 minuti ")
+        r(" (\\d+|un) ?(hours|hour|hrs|hr) ", " $1 ore ")
+        r(" (\\d+) ?(seconds|second|secs|sec) ", " $1 secondi ")
+        r(" (\\d+|un) (days|day) ", " $1 giorni ")
+        r(" (\\d+|un) (weeks|week) ", " $1 settimane ")
+        r(" un minuti ", " un minuto ")
+        r(" in (?=(mezz ora|quarto d ora|\\d+ (minuti|ore|secondi|giorni|settimane)|un (minuto|ore|giorni|settimane)) )", " tra ")
+        r(" and (?=\\d+ (minuti|secondi) )", " e ")
+        // Giorni
+        r(" (the )?day after tomorrow ", " dopodomani ")
+        r(" tomorrow (morning) ", " domani mattina ")
+        r(" tomorrow (afternoon) ", " domani pomeriggio ")
+        r(" tomorrow (evening|night) ", " domani sera ")
+        r(" tomorrow ", " domani ")
+        r(" (tonight|this evening) ", " stasera ")
+        r(" this morning ", " stamattina ")
+        r(" this afternoon ", " oggi pomeriggio ")
+        r(" today ", " oggi ")
+        for ((en, it) in EN_DAYS) {
+            r(" (next|this coming) $en ", " $it prossimo ")
+            r(" (on |this )?$en ", " $it ")
+        }
+        // "november 20th", "20th of november", "the 15th"
+        for ((i, en) in EN_MONTHS.withIndex()) {
+            r(" (on )?$en (\\d{1,2})(st|nd|rd|th)? ", " $2 ${MONTHS[i]} ")
+            r(" (on )?(the )?(\\d{1,2})(st|nd|rd|th)? (of )?$en ", " $3 ${MONTHS[i]} ")
+        }
+        r(" (on )?the (\\d{1,2})(st|nd|rd|th) ", " il $2 ")
+        // Ore: "at noon", "7pm", "at 7:30 am", "at 10", "10 o clock"
+        r(" (at )?(noon|midday) ", " a mezzogiorno ")
+        r(" (at )?midnight ", " a mezzanotte ")
+        r(" (at )?12 ?am ", " a mezzanotte ")
+        r(" (at |by |around )?(\\d{1,2})(?::(\\d{2}))? ?pm ", " alle $2:$3 di sera ")
+        r(" (at |by |around )?(\\d{1,2})(?::(\\d{2}))? ?am ", " alle $2:$3 di mattina ")
+        r(" alle (\\d{1,2}): di ", " alle $1 di ")
+        r(" (\\d{1,2}) ?(o clock|oclock) ", " alle $1 ")
+        r(" (at|by|around) (?=\\d{1,2}([:.]\\d{2})? )", " alle ")
+        r(" in the (morning) ", " di mattina ")
+        r(" in the (afternoon|evening) ", " di sera ")
+        r(" at night ", " di notte ")
+        return s.replace(Regex("\\s+"), " ").trim()
+    }
+
+    private val EN_NUMBERS = listOf(
+        "one" to 1, "two" to 2, "three" to 3, "four" to 4, "five" to 5, "six" to 6, "seven" to 7, "eight" to 8, "nine" to 9,
+        "ten" to 10, "eleven" to 11, "twelve" to 12, "fifteen" to 15, "twenty" to 20, "thirty" to 30, "forty" to 40,
+        "forty five" to 45, "fifty" to 50, "sixty" to 60, "ninety" to 90,
+    ).sortedByDescending { it.first.length }
+    private val EN_DAYS = listOf(
+        "monday" to "lunedi", "tuesday" to "martedi", "wednesday" to "mercoledi", "thursday" to "giovedi",
+        "friday" to "venerdi", "saturday" to "sabato", "sunday" to "domenica",
+    )
+    private val EN_MONTHS = listOf(
+        "january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december",
+    )
+
+    /** Le parole del quando, anche con un errore di battitura ("staswera", "domnai"). Solo parole lunghe e con la stessa iniziale. */
+    private val DAY_WORDS = listOf("stasera", "stamattina", "stamani", "stanotte", "domani", "dopodomani", "pomeriggio", "mattina",
+        "mezzogiorno", "mezzanotte") + WEEKDAYS.keys + MONTHS.filter { it.length >= 6 && it != "aprile" }
+
+    private fun typo(w: String): String {
+        if (w.length < 6 || w in DAY_WORDS) return w
+        return DAY_WORDS.firstOrNull { it[0] == w[0] && kotlin.math.abs(it.length - w.length) <= 1 && near(it, w) } ?: w
+    }
+
+    /** Distanza di una sola modifica: una lettera in più, in meno, cambiata o due scambiate. */
+    private fun near(a: String, b: String): Boolean {
+        var i = 0
+        while (i < minOf(a.length, b.length) && a[i] == b[i]) i++
+        return when {
+            a.length == b.length -> a.substring(i + 1) == b.substring(i + 1) ||
+                (i + 1 < a.length && a[i] == b[i + 1] && a[i + 1] == b[i] && a.substring(i + 2) == b.substring(i + 2))
+            a.length > b.length -> a.substring(i + 1) == b.substring(i)
+            else -> a.substring(i) == b.substring(i + 1)
+        }
+    }
+
     private fun buildTime(h0: Int, min: String, frac: String, part: String, eveningBias: Boolean): LocalTime? {
         var h = h0
         var m = min.toIntOrNull() ?: 0
@@ -192,14 +284,15 @@ object DateParser {
         val d = w.start.toLocalDate()
         val today = now.toLocalDate()
         val day = when (d) {
-            today -> "oggi"
-            today.plusDays(1) -> "domani"
-            today.plusDays(2) -> "dopodomani"
+            today -> app.sordina.tr(app.sordina.R.string.when_today)
+            today.plusDays(1) -> app.sordina.tr(app.sordina.R.string.when_tomorrow)
+            today.plusDays(2) -> app.sordina.tr(app.sordina.R.string.when_after)
             else -> {
                 val wd = d.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault())
                 "$wd ${d.dayOfMonth}" + if (d.monthValue != today.monthValue) " " + d.month.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault()) else ""
             }
         }
-        return if (w.allDay) "$day, tutto il giorno" else "$day alle %d:%02d".format(w.start.hour, w.start.minute)
+        val time = w.start.toLocalTime().format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
+        return if (w.allDay) app.sordina.tr(app.sordina.R.string.when_all_day, day) else app.sordina.tr(app.sordina.R.string.when_at, day, time)
     }
 }

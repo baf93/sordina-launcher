@@ -22,8 +22,8 @@ class Calendars(private val context: Context, private val prefs: Prefs) {
         context.checkSelfPermission(Manifest.permission.WRITE_CALENDAR) == PackageManager.PERMISSION_GRANTED &&
             context.checkSelfPermission(Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
 
-    /** Calendari visibili in cui si può scrivere. */
-    fun list(): List<Cal> {
+    /** Calendari visibili in cui si può scrivere; con [writable] false anche quelli in sola lettura (da mostrare). */
+    fun list(writable: Boolean = true): List<Cal> {
         if (!hasPermission()) return emptyList()
         val out = ArrayList<Cal>()
         runCatching {
@@ -36,7 +36,7 @@ class Calendars(private val context: Context, private val prefs: Prefs) {
                     CalendarContract.Calendars.IS_PRIMARY,
                 ),
                 "${CalendarContract.Calendars.VISIBLE}=1 AND ${CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL}>=?",
-                arrayOf(CalendarContract.Calendars.CAL_ACCESS_CONTRIBUTOR.toString()),
+                arrayOf((if (writable) CalendarContract.Calendars.CAL_ACCESS_CONTRIBUTOR else CalendarContract.Calendars.CAL_ACCESS_READ).toString()),
                 null,
             )?.use { c ->
                 while (c.moveToNext()) {
@@ -45,6 +45,20 @@ class Calendars(private val context: Context, private val prefs: Prefs) {
             }
         }
         return out.sortedWith(compareByDescending<Cal> { it.primary }.thenBy { it.name })
+    }
+
+    /**
+     * I calendari del telefono da mostrare, come condizione per le query: tutti i visibili finché non scegli,
+     * poi solo quelli scelti, più quello dei nuovi impegni (non ha senso crearne di invisibili).
+     */
+    fun shown(): String {
+        val visible = "${CalendarContract.Instances.VISIBLE}=1"
+        val chosen = prefs.homeCalendars
+        if (chosen.isEmpty()) return visible
+        val ids = chosen.filter { it.startsWith("p:") }.mapNotNull { it.drop(2).toLongOrNull() } +
+            listOfNotNull(prefs.calendarId.takeIf { it >= 0 && prefs.haCalendar.isBlank() })
+        if (ids.isEmpty()) return "0"
+        return "$visible AND ${CalendarContract.Instances.CALENDAR_ID} IN (${ids.distinct().joinToString(",")})"
     }
 
     fun default(): Cal? {
@@ -108,7 +122,7 @@ fun Calendars.upcoming(context: Context, now: Long = System.currentTimeMillis())
                 CalendarContract.Instances.EVENT_LOCATION, CalendarContract.Instances.DESCRIPTION,
                 CalendarContract.Instances.ALL_DAY,
             ),
-            "${CalendarContract.Instances.VISIBLE}=1", null, "${CalendarContract.Instances.BEGIN} ASC",
+            "${shown()}", null, "${CalendarContract.Instances.BEGIN} ASC",
         )?.use { c ->
             val link = Regex("https://(meet\\.google\\.com|[\\w.-]*zoom\\.us|teams\\.microsoft\\.com|teams\\.live\\.com)/\\S+")
             while (c.moveToNext()) {
@@ -137,7 +151,7 @@ fun Calendars.next(context: Context, now: Long = System.currentTimeMillis()): Up
             b.build(),
             arrayOf(CalendarContract.Instances.EVENT_ID, CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN,
                 CalendarContract.Instances.END, CalendarContract.Instances.EVENT_LOCATION, CalendarContract.Instances.ALL_DAY),
-            "${CalendarContract.Instances.VISIBLE}=1 AND ${CalendarContract.Instances.ALL_DAY}=0", null,
+            "${shown()} AND ${CalendarContract.Instances.ALL_DAY}=0", null,
             "${CalendarContract.Instances.BEGIN} ASC",
         )?.use { c ->
             while (c.moveToNext()) {
@@ -163,7 +177,7 @@ fun Calendars.agenda(context: Context, now: Long = System.currentTimeMillis()): 
             b.build(),
             arrayOf(CalendarContract.Instances.EVENT_ID, CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN,
                 CalendarContract.Instances.END, CalendarContract.Instances.EVENT_LOCATION),
-            "${CalendarContract.Instances.VISIBLE}=1 AND ${CalendarContract.Instances.ALL_DAY}=0", null,
+            "${shown()} AND ${CalendarContract.Instances.ALL_DAY}=0", null,
             "${CalendarContract.Instances.BEGIN} ASC",
         )?.use { c ->
             while (c.moveToNext() && out.size < 3) {
@@ -191,7 +205,7 @@ fun Calendars.tomorrow(context: Context, limit: Int = 3): List<Upcoming> {
             b.build(),
             arrayOf(CalendarContract.Instances.EVENT_ID, CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN,
                 CalendarContract.Instances.END, CalendarContract.Instances.EVENT_LOCATION),
-            "${CalendarContract.Instances.VISIBLE}=1 AND ${CalendarContract.Instances.ALL_DAY}=0", null,
+            "${shown()} AND ${CalendarContract.Instances.ALL_DAY}=0", null,
             "${CalendarContract.Instances.BEGIN} ASC",
         )?.use { c ->
             while (c.moveToNext() && out.size < limit) {

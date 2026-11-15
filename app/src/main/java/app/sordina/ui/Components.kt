@@ -438,11 +438,14 @@ fun Pick(
     hint: String? = null,
     title: String = label,
     multi: Boolean = false,
+    /** Solo una freccia, senza il valore: come una riga che porta altrove */
+    arrow: Boolean = false,
     onSelect: (Int) -> Unit,
 ) {
     val c = S.c
     var open by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-    Line(label, value, hint, icon, trailing = {
+    if (arrow) Line(label, hint = hint, icon = icon) { open = true }
+    else Line(label, value, hint, icon, trailing = {
         androidx.compose.material3.Icon(
             androidx.compose.material.icons.Icons.Rounded.UnfoldMore, null, Modifier.size(18.dp), tint = c.soft,
         )

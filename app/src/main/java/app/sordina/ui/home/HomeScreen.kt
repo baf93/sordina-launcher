@@ -114,6 +114,9 @@ data class AgendaRow(val label: String, val text: String, val key: String, val a
 /** Una scorciatoia in auto: l'app, il suo nome (per il lettore dello schermo), la sua icona */
 data class CarShortcut(val pkg: String, val label: String, val icon: androidx.compose.ui.graphics.ImageBitmap?)
 
+/** Una persona in auto: il nome corto sotto la faccia, quello intero per chiamare, la foto della rubrica se c'è */
+data class CarPerson(val short: String, val full: String, val photo: androidx.compose.ui.graphics.ImageBitmap?)
+
 data class HomeState(
     /** Quante notifiche sono in sordina */
     val waiting: Int,
@@ -146,8 +149,8 @@ data class HomeState(
     val sceneLine: String? = null,
     /** Sera: com'è andata oggi */
     val recap: String? = null,
-    /** Auto: chi chiami di solito adesso (nome breve, nome completo) */
-    val people: List<Pair<String, String>> = emptyList(),
+    /** Auto: le quattro persone, scelte da te o quelle che chiami di più */
+    val people: List<CarPerson> = emptyList(),
     /** Auto: fino a tre app scelte da te, con la loro icona */
     val carApps: List<CarShortcut> = emptyList(),
     /** Notte: quando suona la sveglia, per dire quanto manca */
@@ -156,9 +159,11 @@ data class HomeState(
     val next: AgendaRow? = null,
     /** La sordina è salita a rispondere (frasi di casa): quella piccola in fondo si fa da parte */
     val away: Boolean = false,
+    /** Niente in corso: quello che di solito fai adesso, per il fumetto (al massimo tre) */
+    val usual: List<Usual> = emptyList(),
 )
 
-/** Casa: ora, data, meteo, evento; la pila; la barra; in fondo cosa è in sordina. */
+/** Casa: ora, data, meteo, evento; la barra; in fondo la sordina col suo fumetto. */
 @Composable
 fun HomeScreen(
     state: HomeState,
@@ -264,17 +269,11 @@ private fun DayHome(
             }
         } }
         Spacer(Modifier.weight(1f))
-        if (state.cards.isNotEmpty()) {
-            Stack(state.cards, state.glass, onAction, onCard)
-            Spacer(Modifier.height(18.dp))
-        }
         SearchBar(state, onSearch, onMicDown, onMicUp)
-        // La barra sta sempre allo stesso posto, in ogni momento
-        Spacer(Modifier.height(36.dp))
-        // Sopra una foto la riga sta su una pillola: si legge su qualsiasi fondo
-        if (state.translucent) SordinaRow(state, pill = true) { onSheet(true) }
-        else SordinaRow(state) { onSheet(true) }
-        Spacer(Modifier.height(20.dp))
+        // La barra sta sempre allo stesso posto, in ogni momento: sotto, la zona della sordina è alta uguale con o senza fumetto
+        Spacer(Modifier.height(12.dp))
+        SordinaZone(state, onAction, onCard, onScene) { onSheet(true) }
+        Spacer(Modifier.height(16.dp))
     }
 }
 
@@ -319,80 +318,3 @@ internal fun weatherIcon(w: String): ImageVector = when {
     tr(R.string.wx_storm) in w -> Icons.Rounded.Thunderstorm
     else -> Icons.Rounded.Cloud
 }
-
-/**
- * In fondo: la sordina grande, che con la faccia dice com'è Casa, e accanto quante notifiche aspettano.
- * Niente frasi: il numero e la faccia bastano. Il testo intero resta per chi usa il lettore dello schermo.
- */
-@Composable
-internal fun SordinaRow(state: HomeState, pill: Boolean = false, onClick: () -> Unit) {
-    val c = S.c
-    val on = state.waiting > 0
-    val said = (listOf(if (on) trn(R.plurals.n_waiting, state.waiting) else tr(R.string.nothing_waiting)) +
-        listOfNotNull(state.moment, if (on) state.until else null)).joinToString(" · ")
-    Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp), contentAlignment = Alignment.Center) { Row(
-        (if (pill) Modifier.clip(RoundedCornerShape(24.dp)).background(surface()).padding(horizontal = 16.dp, vertical = 4.dp) else Modifier)
-            .heightIn(min = 48.dp).clickableNoRipple(onClick)
-            .semantics(mergeDescendants = true) { contentDescription = said },
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // La sordina a contorno dice com'è Casa: occhi aperti, chiusi con una modalità di Android, cappellino di notte
-        val pose = when {
-            state.scene == app.sordina.data.Scene.CAR -> app.sordina.ui.Pose.DRIVE
-            state.scene == app.sordina.data.Scene.NIGHT -> app.sordina.ui.Pose.NIGHT
-            state.moment != null -> app.sordina.ui.Pose.QUIET
-            else -> app.sordina.ui.Pose.AWAKE
-        }
-        val gone by androidx.compose.animation.core.animateFloatAsState(if (state.away) 0f else 1f, app.sordina.ui.Motion.enter(220), label = "away")
-        app.sordina.ui.MascotGlyph(pose, c.soft, Modifier.size(40.dp).graphicsLayer { alpha = gone; translationY = (1f - gone) * -24.dp.toPx() })
-        if (on) {
-            Spacer(Modifier.width(10.dp))
-            Text("${state.waiting}", style = TextStyle(fontSize = 24.sp, color = c.soft))
-        }
-    } }
-}
-
-/**
- * La pila, come lo Smart Stack di iOS: una sola cornice ferma, il contenuto scorre in su o in giù dentro.
- * Con più di una scheda, i puntini a destra dicono dove sei.
- */
-@Composable
-internal fun Stack(cards: List<Card>, glass: Boolean, onAction: (Card, CardAction) -> Unit, onCard: (Card) -> Unit) {
-    val c = S.c
-    val feel = LocalFeel.current
-    val pager = rememberPagerState { cards.size }
-    val first = cards.first().key
-    LaunchedEffect(first) { if (pager.currentPage != 0) pager.scrollToPage(0) }
-    LaunchedEffect(pager) { snapshotFlow { pager.settledPage }.drop(1).collect { feel.tick() } }
-    Box(
-        Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(160.dp).clip(RoundedCornerShape(24.dp))
-            .background(surface()),
-    ) {
-        VerticalPager(
-            state = pager,
-            modifier = Modifier.fillMaxSize(),
-            key = { cards[it].key },
-            flingBehavior = PagerDefaults.flingBehavior(state = pager, snapAnimationSpec = feel.spec(spring(dampingRatio = 0.86f, stiffness = 360f))),
-        ) { i ->
-            Box(
-                Modifier.fillMaxSize().graphicsLayer {
-                    // Chi esce rimpicciolisce e sfuma; chi entra cresce fino al suo posto
-                    val off = kotlin.math.abs((pager.currentPage - i) + pager.currentPageOffsetFraction).coerceIn(0f, 1f)
-                    alpha = 1f - off * 0.9f
-                    scaleX = 1f - off * 0.08f; scaleY = scaleX
-                },
-            ) { CardView(cards[i], onAction, onCard) }
-        }
-        // Con più di una scheda i puntini restano sempre visibili
-        if (cards.size > 1) Column(
-            Modifier.align(Alignment.CenterEnd).padding(end = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(5.dp),
-        ) {
-            repeat(cards.size) { i ->
-                Box(Modifier.size(5.dp).clip(CircleShape).background(if (i == pager.currentPage) c.ink else c.dot))
-            }
-        }
-    }
-}
-

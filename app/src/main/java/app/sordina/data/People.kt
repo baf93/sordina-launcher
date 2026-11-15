@@ -27,6 +27,15 @@ class People(private val context: Context, private val prefs: Prefs) {
 
     fun invalidate() { cache = null }
 
+    /** La foto piccola del contatto (quella della rubrica), già ridotta a [px]; null se non ce l'ha. */
+    fun photo(id: Long, px: Int): android.graphics.Bitmap? = runCatching {
+        if (!hasPermission()) return null
+        val uri = android.content.ContentUris.withAppendedId(android.provider.ContactsContract.Contacts.CONTENT_URI, id)
+        android.provider.ContactsContract.Contacts.openContactPhotoInputStream(context.contentResolver, uri, false)?.use { s ->
+            android.graphics.BitmapFactory.decodeStream(s)?.let { b -> android.graphics.Bitmap.createScaledBitmap(b, px, px, true) }
+        }
+    }.getOrNull()
+
     fun all(): List<Contact> {
         cache?.let { return it }
         if (!hasPermission()) return emptyList()

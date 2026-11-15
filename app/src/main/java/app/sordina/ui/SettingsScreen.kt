@@ -112,7 +112,7 @@ private enum class Sub(val parent: String?) {
     MAIN(null),
     NOTIF("MAIN"), HOME("MAIN"), BRAKE("MAIN"), SEARCH("MAIN"), THEMES("MAIN"), GENERAL("MAIN"), PROGRESS("MAIN"),
     PEOPLE("NOTIF"), ALWAYS("NOTIF"), RULES("NOTIF"), ORDER("HOME"), LEVELS("RULES"),
-    BRAKED("BRAKE"), HIDDEN("BRAKE"), MASCOTS("HOME"), PINNED("SEARCH"), EXCLUDED("SEARCH"), HA("MAIN"), CAR_APPS("HOME"), PERMS("GENERAL"), CREDITS("GENERAL"), LANG("GENERAL"),
+    BRAKED("BRAKE"), HIDDEN("BRAKE"), MASCOTS("HOME"), PINNED("SEARCH"), EXCLUDED("SEARCH"), HA("MAIN"), CAR_APPS("HOME"), CAR_PEOPLE("HOME"), PERMS("GENERAL"), CREDITS("GENERAL"), LANG("GENERAL"),
 }
 
 private fun hm(min: Int) = Moments.fmt(min)
@@ -228,7 +228,7 @@ fun SettingsScreen(
                             change { prefs.homeAgenda = v }
                             if (v && !perms.calendar) ops.request(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
                         }
-                        if (prefs.homeAgenda && perms.calendar) CalendarPick(app, ops)
+                        if (prefs.homeAgenda && perms.calendar) { HomeCalendarsPick(app, ops); CalendarPick(app, ops) }
                         Toggle(tr(R.string.n_cards), prefs.homeCards, null, Icons.Rounded.AutoAwesome) { v -> change { prefs.homeCards = v } }
                         // Solo nella versione di prova: tutti i disegni, uno sotto l'altro
                         if ((ctx.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) Line("Tutte le sordine", "", null, Icons.Rounded.Collections) { sub = Sub.MASCOTS }
@@ -269,6 +269,12 @@ fun SettingsScreen(
                         AppKeys(car, apps, byPackage = true, sorted = false, onRemove = { k -> change { prefs.carApps = car - k } },
                             onMove = { i, j -> change { val l = car.toMutableList(); l[i] = l[j].also { l[j] = l[i] }; prefs.carApps = l } },
                             add = if (car.size < 3) tr(R.string.n_add_app) else null) { sub = Sub.CAR_APPS }
+                        // Le quattro facce in auto: scelte da te, o quelle che chiami di più
+                        Topic(tr(R.string.n_car_people), tr(R.string.n_car_people_hint))
+                        Group {
+                            val mine = prefs.carPeople
+                            Line(tr(R.string.n_car_people_choose), hint = if (mine == null) tr(R.string.n_car_people_auto) else tr(R.string.n_car_people_some, mine.size), icon = Icons.Rounded.People) { sub = Sub.CAR_PEOPLE }
+                        }
                     }
                     // La pagina Sordina si apre da Casa: il suo ordine si sceglie qui
                     Topic(tr(R.string.sec_page))
@@ -458,6 +464,10 @@ fun SettingsScreen(
                 }
                 Sub.BRAKED -> AppChooser(tr(R.string.s_braked_apps), null, apps, selected = { prefs.braked }, back) { pkg, on ->
                     prefs.braked = if (on) prefs.braked + pkg else prefs.braked - pkg; ops.changed()
+                }
+                Sub.CAR_PEOPLE -> Page(tr(R.string.n_car_people), tr(R.string.n_car_people_hint), back, scrollOf(page)) {
+                    Spacer(Modifier.height(8.dp))
+                    CarPeoplePicker(app, perms, ops)
                 }
                 Sub.CAR_APPS -> AppChooser(tr(R.string.n_car_shortcuts), tr(R.string.n_car_shortcuts_hint), apps, selected = { ops.carApps().toSet() }, back) { pkg, on ->
                     val now = ops.carApps()
@@ -754,11 +764,44 @@ private fun PermLine(label: String, why: String, ok: Boolean, icon: ImageVector,
 }
 
 /**
- * Il calendario degli impegni, da un foglio: quelli del telefono e, se c'è il token, quelli di Home Assistant.
- * Uno solo: è quello che si vede in Casa e quello in cui finiscono gli impegni che detti.
+ * I calendari che si vedono in Casa, quanti vuoi: quelli del telefono (anche in sola lettura) e, se c'è il token, quelli di Home Assistant.
+ * Quello dei nuovi impegni c'è sempre: non avrebbe senso creare impegni che poi non vedi.
+ * Niente unioni: se un impegno è in due calendari, si vede due volte.
  */
 @Composable
-private fun CalendarPick(app: SordinaApp, ops: Ops) {
+internal fun HomeCalendarsPick(app: SordinaApp, ops: Ops) {
+    val prefs = app.prefs
+    var cals by remember { mutableStateOf(emptyList<app.sordina.data.Cal>()) }
+    var home by remember { mutableStateOf(emptyList<Pair<String, String>>()) }
+    var chosen by remember { mutableStateOf(prefs.homeCalendars) }
+    LaunchedEffect(Unit) {
+        cals = withContext(Dispatchers.IO) { app.calendars.list(writable = false) }
+        if (app.ha.configured) home = withContext(Dispatchers.IO) { app.ha.calendars() }
+    }
+    if (cals.isEmpty() && home.isEmpty()) return
+    val keys = cals.map { "p:${it.id}" } + home.map { "h:${it.first}" }
+    // Quello dei nuovi impegni: sempre acceso
+    val fixed = if (app.ha.calendar != null) "h:${prefs.haCalendar}" else "p:${prefs.calendarId.takeIf { id -> cals.any { it.id == id } } ?: cals.firstOrNull { it.primary }?.id ?: cals.firstOrNull()?.id}"
+    // Finché non scegli: tutti quelli del telefono, come prima
+    val on = (chosen.ifEmpty { cals.map { "p:${it.id}" }.toSet() } + fixed).filter { it in keys }.toSet()
+    val dup = { n: String -> cals.count { it.name == n } > 1 }
+    val options = cals.map { Option(it.name, if (dup(it.name)) it.account else null) } + home.map { Option(it.second, tr(R.string.s_ha)) }
+    Pick(tr(R.string.s_home_cals), "", options, { keys[it] in on }, icon = Icons.Rounded.CalendarMonth, title = tr(R.string.s_home_cals), multi = true, arrow = true) { i ->
+        val k = keys[i]
+        if (k == fixed) return@Pick
+        chosen = if (k in on) on - k else on + k
+        prefs.homeCalendars = chosen
+        app.ha.resetCalendarCache()
+        ops.changed()
+    }
+}
+
+/**
+ * Il calendario dei nuovi impegni, da un foglio: quelli del telefono e, se c'è il token, quelli di Home Assistant.
+ * Uno solo: è quello in cui finiscono gli impegni che detti.
+ */
+@Composable
+internal fun CalendarPick(app: SordinaApp, ops: Ops) {
     val prefs = app.prefs
     var cals by remember { mutableStateOf(emptyList<app.sordina.data.Cal>()) }
     var home by remember { mutableStateOf(emptyList<Pair<String, String>>()) }
@@ -777,7 +820,7 @@ private fun CalendarPick(app: SordinaApp, ops: Ops) {
     val isOn = { i: Int ->
         if (i < cals.size) selHome.isBlank() && cals[i].id == phone?.id else home[i - cals.size].first == selHome
     }
-    Pick(tr(R.string.s_events_go), current, options, isOn, icon = Icons.Rounded.CalendarToday, title = tr(R.string.s_events_go)) { i ->
+    Pick(tr(R.string.s_events_go), current, options, isOn, icon = Icons.Rounded.CalendarToday, title = tr(R.string.s_events_go), arrow = true) { i ->
         if (i < cals.size) {
             sel = cals[i].id; selHome = ""
             prefs.calendarId = sel; prefs.haCalendar = ""; prefs.haCalendarName = ""

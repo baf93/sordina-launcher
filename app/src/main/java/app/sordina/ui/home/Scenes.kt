@@ -173,15 +173,11 @@ internal fun NightHome(
             }
             Spacer(Modifier.height(18.dp))
         }
-        if (state.cards.isNotEmpty()) {
-            Stack(state.cards, false, onAction, onCard)
-            Spacer(Modifier.height(18.dp))
-        }
         SearchBar(state, onSearch, onMicDown, onMicUp)
         // La barra sta nello stesso punto di giorno e di sera
-        Spacer(Modifier.height(36.dp))
-        SordinaRow(state) { onSheet() }
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(12.dp))
+        SordinaZone(state, onAction, onCard, onScene) { onSheet() }
+        Spacer(Modifier.height(16.dp))
     }
 }
 
@@ -225,30 +221,14 @@ internal fun CarHome(
             }
         }
         Spacer(Modifier.weight(1f))
-        if (state.cards.isNotEmpty()) {
-            Stack(state.cards, false, onAction, onCard)
-            Spacer(Modifier.height(12.dp))
-        }
         if (roomy && state.people.isNotEmpty()) {
-            // Una fila di nomi interi: un tocco chiama, una pressione lunga la toglie da qui
-            androidx.compose.foundation.lazy.LazyRow(
-                Modifier.fillMaxWidth(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                items(state.people.size, key = { state.people[it].second }) { i ->
-                    val name = state.people[i].second
-                    Row(
-                        Modifier.height(64.dp).clip(RoundedCornerShape(32.dp)).background(surface())
-                            .pointerInput(name) { detectTapGestures(onTap = { feel.tick(); onScene("call:$name") }, onLongPress = { feel.tick(); onScene("hide:$name") }) }
-                            .padding(horizontal = 24.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(name, maxLines = 1, softWrap = false, style = TextStyle(fontSize = 18.sp, color = c.ink))
-                    }
-                }
+            // Quattro facce, sempre al loro posto: un tocco chiama, una pressione lunga la toglie da qui
+            Row(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                state.people.forEach { p -> CarFace(p, { feel.tick(); onScene("call:${p.full}") }) { feel.tick(); onScene("hide:${p.full}") } }
+                // Con meno di quattro persone le facce restano al loro posto, non si allargano
+                repeat(4 - state.people.size) { Spacer(Modifier.weight(1f)) }
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(14.dp))
         }
         Row(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             // Una sola riga: con meno app i pulsanti si allargano fino a coprire tutta la larghezza
@@ -265,8 +245,9 @@ internal fun CarHome(
             Spacer(Modifier.width(10.dp))
             Text(tr(if (state.listening) R.string.car_listening else R.string.car_hold), maxLines = 1, style = TextStyle(fontSize = 18.sp, color = c.bg))
         }
-        Spacer(Modifier.height(14.dp))
-        SordinaRow(state) { onSheet() }
+        // Sotto il microfono la sordina col fumetto, come nella Casa di sempre: alta sempre uguale, così microfono, app e persone non si spostano mai
+        Spacer(Modifier.height(8.dp))
+        SordinaZone(state, onAction, onCard, onScene) { onSheet() }
         Spacer(Modifier.height(8.dp))
     }
     }
@@ -282,5 +263,29 @@ private fun RowScope.CarTile(s: CarShortcut, onClick: () -> Unit) {
     ) {
         s.icon?.let { androidx.compose.foundation.Image(it, null, Modifier.size(44.dp)) }
             ?: Text(s.label.take(1).uppercase(), style = TextStyle(fontSize = 24.sp, color = S.c.accent))
+    }
+}
+
+/** I colori caldi di Sordina, per chi non ha la foto: sempre lo stesso per la stessa persona. */
+private val FACE_COLORS = listOf(0xFFE8A93A, 0xFF9FD3BE, 0xFFA8C5DA, 0xFFF2A7A0, 0xFFCFB194, 0xFFB8A9D9).map { androidx.compose.ui.graphics.Color(it) }
+
+/** Una persona in auto: la foto (o l'iniziale su un colore), il nome corto sotto. */
+@Composable
+private fun RowScope.CarFace(p: CarPerson, onTap: () -> Unit, onLong: () -> Unit) {
+    val c = S.c
+    Column(
+        Modifier.weight(1f).clip(RoundedCornerShape(16.dp))
+            .pointerInput(p.full) { detectTapGestures(onTap = { onTap() }, onLongPress = { onLong() }) }
+            .padding(vertical = 4.dp)
+            .semantics(mergeDescendants = true) { contentDescription = p.full },
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(Modifier.size(64.dp).clip(androidx.compose.foundation.shape.CircleShape)
+            .background(FACE_COLORS[(p.full.hashCode() and 0x7fffffff) % FACE_COLORS.size]), contentAlignment = Alignment.Center) {
+            if (p.photo != null) androidx.compose.foundation.Image(p.photo, null, Modifier.size(64.dp), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+            else Text(p.short.take(1).uppercase(), style = TextStyle(fontSize = 26.sp, color = androidx.compose.ui.graphics.Color(0xFF1F1D1A)))
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(p.short, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 15.sp, color = c.ink))
     }
 }

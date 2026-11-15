@@ -33,6 +33,14 @@ object HomeTalk {
         "cucina", "salotto", "soggiorno", "sala", "camera", "camere", "camerette", "cameretta", "bagno", "bagni", "studio", "corridoio",
         "ingresso", "giardino", "terrazzo", "terrazza", "balcone", "cantina", "taverna", "mansarda", "lavanderia", "scale", "esterno",
         "piano", "sopra", "sotto",
+        // In inglese
+        "light", "lights", "lamp", "lamps", "bulb", "bulbs", "strip", "blind", "blinds", "shutter", "shutters", "curtain", "curtains",
+        "thermostat", "heating", "heater", "boiler", "radiator", "radiators", "ac", "aircon", "fan", "fans", "temperature", "degrees", "humidity",
+        "door", "doors", "gate", "window", "windows", "lock", "alarm", "camera", "cameras", "doorbell", "sensor", "sensors", "smoke",
+        "vacuum", "washer", "dishwasher", "dryer", "oven", "fridge", "plug", "socket", "sprinkler", "sprinklers", "pool", "solar",
+        "power", "energy", "television", "speakers",
+        "kitchen", "living", "lounge", "bedroom", "bedrooms", "bathroom", "office", "hallway", "hall", "entrance", "garden", "patio",
+        "balcony", "basement", "attic", "laundry", "stairs", "outside", "upstairs", "downstairs",
     )
 
     /** I comandi su qualcosa di casa (quelli che iniziano la frase li conosce già Sordina, questi possono stare ovunque). */
@@ -41,6 +49,8 @@ object HomeTalk {
         "aumenta", "diminuisci", "riduci", "alzare", "abbassare", "ferma", "fermare", "avvia", "avviare", "fai", "partire",
         "blocca", "sblocca", "inserisci", "disinserisci", "arma", "disarma", "pulisci", "aspira", "lava", "accendere", "spegnere",
         "aprire", "chiudere", "attivare", "disattivare", "scalda", "rinfresca", "raffredda", "dimmi", "controlla",
+        "turn", "switch", "open", "close", "raise", "lower", "set", "dim", "brighten", "increase", "decrease", "start", "stop",
+        "lock", "unlock", "arm", "disarm", "clean", "heat", "cool", "check", "tell",
     )
 
     /** Domande e stati: con una cosa di casa, la frase è per Assist. */
@@ -50,18 +60,21 @@ object HomeTalk {
         "aperto", "aperta", "aperti", "aperte", "chiuso", "chiusa", "chiusi", "chiuse",
         "attivo", "attiva", "attivi", "attive", "inserito", "inserita", "finito", "finita", "pronto", "pronta",
         "sono", "ci", "c", "e", "ha", "hanno", "fa", "consuma", "consumato", "prodotto", "produce",
+        "what", "which", "how", "many", "much", "where", "is", "are", "on", "off", "open", "closed", "locked", "unlocked", "running",
+        "done", "finished", "status", "using",
     )
 
     /** Le liste di Home Assistant: spesa e cose da fare. */
-    private val LIST = setOf("lista", "spesa", "liste", "todo")
-    private val LIST_DO = setOf("aggiungi", "aggiungere", "metti", "togli", "rimuovi", "cancella", "segna", "cosa", "che", "leggi", "dimmi")
+    private val LIST = setOf("lista", "spesa", "liste", "todo", "list", "shopping", "groceries")
+    private val LIST_DO = setOf("aggiungi", "aggiungere", "metti", "togli", "rimuovi", "cancella", "segna", "cosa", "che", "leggi", "dimmi", "add", "remove", "delete", "what", "read")
 
     /** Le routine di casa: frasi intere (normalizzate) o parole che le annunciano. */
     private val ROUTINES = setOf(
         "buonanotte", "buona notte", "buongiorno", "sto uscendo", "esco", "sono uscito", "sono uscita", "usciamo", "sono a casa",
         "sono tornato", "sono tornata", "sto arrivando", "arrivo a casa", "vado a letto", "vado a dormire", "sveglia casa",
+        "good night", "goodnight", "good morning", "i m leaving", "leaving home", "i m home", "i m back", "going to bed", "bedtime",
     )
-    private val MODES = setOf("modalita", "scena", "scenario", "routine", "automazione", "script")
+    private val MODES = setOf("modalita", "scena", "scenario", "routine", "automazione", "script", "mode", "scene", "automation")
 
     /** Parole che non dicono niente da imparare. */
     private val STOP = ASK + DO + LIST + LIST_DO + MODES + setOf(
@@ -69,6 +82,7 @@ object HomeTalk {
         "allo", "alle", "agli", "dalla", "dalle", "questa", "questo", "quella", "quello", "tutte", "tutti", "tutto", "tutta",
         "anche", "ancora", "adesso", "subito", "casa", "percento", "cento", "minuti", "favore", "puoi", "potresti", "vorrei",
         "voglio", "grazie", "sempre", "fino", "dopo", "prima", "oggi", "domani", "stasera", "stanotte", "mattina", "sera",
+        "the", "in", "of", "to", "please", "now", "all", "my", "a", "an", "and", "at", "it", "home", "percent", "minutes", "today", "tomorrow", "tonight",
     )
 
     /**

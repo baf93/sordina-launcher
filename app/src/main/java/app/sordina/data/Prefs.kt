@@ -215,6 +215,11 @@ class Prefs(context: Context) {
         get() = sp.getString("carMusicApp", null)
         set(v) = put { putString("carMusicApp", v) }
     /** In auto: persone da non mostrare (nomi normalizzati), tolte con una pressione lunga */
+    /** In auto: le quattro persone scelte da te (id della rubrica), in ordine; null = quelle che chiami di più */
+    var carPeople: List<Long>?
+        get() = sp.getString("carPeople", null)?.split('|')?.mapNotNull { it.toLongOrNull() }?.takeIf { it.isNotEmpty() }
+        set(v) = put { if (v.isNullOrEmpty()) remove("carPeople") else putString("carPeople", v.take(4).joinToString("|")) }
+
     var carHidden: Set<String>
         get() = sp.getStringSet("carHidden", emptySet())!!.toSet()
         set(v) = put { putStringSet("carHidden", v) }
@@ -340,6 +345,13 @@ class Prefs(context: Context) {
         set(v) = put { putBoolean("mirrorEnabled", v) }
 
     // Calendario
+    /**
+     * I calendari che si vedono in Casa: "p:<id>" del telefono, "h:<entity_id>" di Home Assistant.
+     * Vuoto: non hai ancora scelto, si vedono tutti quelli del telefono (e quello di casa per i nuovi impegni).
+     */
+    var homeCalendars: Set<String>
+        get() = sp.getStringSet("homeCalendars", emptySet())!!.toSet()
+        set(v) = put { putStringSet("homeCalendars", v) }
     var calendarId: Long
         get() = sp.getLong("calendarId", -1)
         set(v) = put { putLong("calendarId", v) }

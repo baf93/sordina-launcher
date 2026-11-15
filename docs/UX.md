@@ -10,43 +10,48 @@ Principio: **KISS & Smart**. Poche cose sullo schermo, frasi di 3–4 parole, ne
 
 | Dove | Cosa c'è |
 |---|---|
-| **Casa** | Ora, data, una frase ("tutto calmo", "3 in attesa") e la **pila di schede** |
+| **Casa** | Ora, data, una frase ("tutto calmo", "3 in attesa") e la **sordina col suo fumetto** |
 | **Su** | Barra (scrivi o parli) e sei app proposte. Ancora su: tutte le app |
 | **Giù** | La tendina di Android, intatta |
 
 Tasto Home o Indietro: sempre Casa. Pressione lunga sul vuoto: impostazioni.
 
-## 2. Casa e la pila di schede
+## 2. Casa e il fumetto della sordina
 
-Casa mostra solo l'ora, finché non succede qualcosa. Allora compare una scheda con la cosa utile adesso e al massimo due pulsanti.
+Sotto la barra di ricerca c'è una zona alta sempre uguale, così la barra non si sposta mai. Lì sta la sordina: al centro quando non ha niente da dire, a sinistra quando parla. Il tocco sulla sordina apre sempre le notifiche in attesa (il numero le sta addosso mentre parla).
 
-- **Più schede:** la più urgente davanti, le altre dietro; si scorrono in orizzontale, i puntini dicono quante sono.
-- **Una sola:** niente pila, niente puntini. **Nessuna:** solo l'ora.
-- Una scheda sparisce da sola quando non serve più.
+Il fumetto dice **una cosa sola**: la più importante in corso, oppure, se non c'è niente in corso, quello che di solito fai adesso.
 
-### Schede del momento
+- **Tocco sul fumetto:** apre la cosa (l'app, la chiamata, la riunione).
+- **Il tondo:** l'azione principale, senza aprire niente (copia, richiama, pausa, partecipa, naviga). La musica ha anche il brano dopo.
+- **Scorri di lato:** via. Le altre cose in corso, se ci sono ("· +1"), vengono avanti.
+- **Tieni premuto:** le altre azioni e "nascondi per oggi".
+- Titolo e riga sotto vanno su due righe quando serve: il testo non si taglia.
 
-| Scheda | Pulsanti | Da dove lo sa |
+### Cose in corso
+
+| Fumetto | Tondo | Da dove lo sa |
 |---|---|---|
-| Codice OTP | Copia | Testo della notifica |
-| Chiamata persa (persona importante) | Richiama | Notifica |
-| Evento tra poco | Naviga · Partecipa | Calendario |
-| Musica in riproduzione | ⏮ ⏯ ⏭ | Riproduzione di Android |
-| Timer o sveglia in corso | Ferma | Notifica dell'orologio |
-| Biglietto aereo o treno | Aggiungi al calendario | Anteprima della mail nella notifica |
-| Pacco in consegna | Apri | Notifica del corriere |
+| Sordina ferma | Sistema | Sordina stessa |
+| Codice OTP (barra che si svuota) | Copia | Testo della notifica |
+| La casa chiede | Le risposte di Home Assistant, fino a tre, larghe quanto il fumetto | Notifica di Home Assistant |
+| Chiamata persa | Richiama | Notifica |
+| Corsa o consegna (barra di avanzamento) | — (tocco: apre) | Notifica in corso dell'app |
+| Timer in corso | — (tocco: apre) | Notifica dell'orologio |
+| Musica in riproduzione | ⏯ e ⏭ | Riproduzione di Android |
+| Riunione o impegno con indirizzo, da 15 minuti prima | Partecipa · Naviga | Calendario, messaggi |
 
-Priorità: OTP > chiamata > evento imminente > timer > musica > il resto.
+Gli avvisi (pagamenti, pacchi, biglietti, promemoria) restano nelle notifiche; gli impegni nell'agenda finché non mancano 15 minuti.
 
-### Schede "di solito"
+### "Di solito adesso"
 
-Sordina riconosce un momento e ricorda cosa fai subito dopo. Dopo qualche volta lo propone:
+Se non c'è niente in corso, il fumetto propone una cosa che di solito fai a quest'ora, scritta per intero ("Spegni luce bagno"), col suo perché sopra.
 
-> A casa · di solito: luci sala — **[Fallo]**
-
-- Momenti: arrivo a casa (Wi-Fi), in auto (Bluetooth), sveglia spenta, cuffie collegate, in carica la sera.
-- Cosa impara: app aperte (accesso all'utilizzo), comandi dati dalla barra, azioni di Home Assistant (dal suo registro).
+- Sono le proposte della ricerca (senza le fissate): cambiano ogni mezz'ora, mai mentre le guardi.
+- Tocco o tondo: la fa. Scorri via: la prossima; dopo la terza il fumetto tace fino alla prossima mezz'ora. Tieni premuto: non suggerire più.
 - **Sordina non fa niente da sola.** Propone, tu tocchi. Le automazioni si creano nelle routine del telefono o in Home Assistant.
+
+In auto il fumetto è lo stesso, sotto "Tocca e parla"; il "di solito" non c'è, perché persone e app sono già lì.
 
 ## 3. Su: fai
 
@@ -69,7 +74,7 @@ Notte (orario) e auto (Android Auto): passano solo le persone importanti, da sol
 ## 5. Aspetto
 
 - Un tema sobrio, chiaro o scuro automatico. Sfondo pieno, un carattere, un accento.
-- L'ora grande e leggera; la scheda è l'unico elemento in rilievo.
+- L'ora grande e leggera; il fumetto è l'unico elemento in rilievo.
 - Frasi corte. Nessuna etichetta maiuscola, nessun riquadro dentro un riquadro.
 
 ## 6. Primo avvio

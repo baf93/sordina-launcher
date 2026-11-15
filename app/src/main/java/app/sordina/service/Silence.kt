@@ -57,7 +57,9 @@ class Silence(private val context: Context, private val prefs: Prefs) {
         val categories = Policy.PRIORITY_CATEGORY_CALLS or Policy.PRIORITY_CATEGORY_REPEAT_CALLERS or Policy.PRIORITY_CATEGORY_MESSAGES or
             Policy.PRIORITY_CATEGORY_CONVERSATIONS or Policy.PRIORITY_CATEGORY_ALARMS or Policy.PRIORITY_CATEGORY_MEDIA
         val conversations = if (car) Policy.CONVERSATION_SENDERS_ANYONE else Policy.CONVERSATION_SENDERS_IMPORTANT
-        val wanted = Policy(categories, Policy.PRIORITY_SENDERS_STARRED, messages, 0, conversations)
+        // Chiamate in auto: anche tutti i tuoi contatti (con le mani libere una chiamata si prende); zitti solo i numeri sconosciuti
+        val calls = if (car) Policy.PRIORITY_SENDERS_CONTACTS else Policy.PRIORITY_SENDERS_STARRED
+        val wanted = Policy(categories, calls, messages, 0, conversations)
         val now = nm.notificationPolicy
         if (now.priorityCategories != wanted.priorityCategories || now.priorityMessageSenders != wanted.priorityMessageSenders ||
             now.priorityCallSenders != wanted.priorityCallSenders || now.priorityConversationSenders != wanted.priorityConversationSenders) nm.notificationPolicy = wanted

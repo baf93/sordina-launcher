@@ -70,6 +70,11 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
@@ -150,8 +155,9 @@ fun SordinaScreen(
     var passFor by remember { mutableStateOf<Held?>(null) }
     var moveFor by remember { mutableStateOf<Held?>(null) }
 
+    val list = rememberLazyListState()
     Box(Modifier.fillMaxSize()) {
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 110.dp)) {
+        LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = 110.dp)) {
             item(key = "top") {
                 Header(
                     "Sordina", onBack, modifier = Modifier.statusBarsPadding().padding(horizontal = 16.dp),
@@ -186,6 +192,7 @@ fun SordinaScreen(
                         Block(
                             g, open = key in expanded, dim = s.braked, icon = icon,
                             onToggle = { feel.tick(); expanded = if (key in expanded) expanded - key else expanded + key },
+                            onPullOpen = { if (key !in expanded) { feel.tick(); expanded = expanded + key } }, atTop = { !list.canScrollBackward },
                             onOpen = onOpen, onRead = onRead, onReadOne = onReadOne,
                             onPass = { passFor = g.first() }, onMove = { moveFor = g.first() },
                         )
@@ -237,7 +244,7 @@ private fun untilLabel(at: Long): String {
 @Composable
 private fun Block(
     g: List<Held>, open: Boolean, dim: Boolean, icon: (String) -> ImageBitmap?,
-    onToggle: () -> Unit, onOpen: (Held) -> Unit, onRead: (String) -> Unit, onReadOne: (Held) -> Unit,
+    onToggle: () -> Unit, onPullOpen: () -> Unit, atTop: () -> Boolean, onOpen: (Held) -> Unit, onRead: (String) -> Unit, onReadOne: (Held) -> Unit,
     onPass: () -> Unit, onMove: () -> Unit,
 ) {
     val c = S.c
@@ -253,6 +260,7 @@ private fun Block(
     Swipeable(h.groupKey, enabled = true, shape = shape, onSwiped = { if (single) onReadOne(h) else onRead(h.groupKey) }) {
         Column(
             Modifier.fillMaxWidth().clip(shape).background(c.card)
+                .pullToOpen(!open, atTop, onPullOpen)
                 .clickable(onClick = onToggle).padding(horizontal = 14.dp, vertical = 12.dp),
         ) {
             Row(Modifier.alpha(if (dim) 0.6f else 1f), verticalAlignment = Alignment.CenterVertically) {
@@ -423,6 +431,47 @@ private fun Held.target(): RuleTarget {
 }
 
 
+
+/**
+ * Tirando giù un gruppo chiuso si apre, come nella tendina di Android: solo con la lista in cima,
+ * così quando la lista è scorsa lo stesso gesto la riporta su e i due non si pestano i piedi.
+ * Di lato resta a [Swipeable] (letta), in su resta allo scorrimento.
+ */
+private fun Modifier.pullToOpen(enabled: Boolean, atTop: () -> Boolean, onOpen: () -> Unit): Modifier =
+    if (!enabled) this else pointerInput(Unit) {
+        val slop = viewConfiguration.touchSlop
+        val need = 32.dp.toPx()
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            if (!atTop()) return@awaitEachGesture
+            var dx = 0f; var dy = 0f; var mine = false
+            while (true) {
+                val e = awaitPointerEvent(PointerEventPass.Initial)
+                val ch = e.changes.firstOrNull { it.id == down.id } ?: break
+                if (!ch.pressed) break
+                val d = ch.positionChange(); dx += d.x; dy += d.y
+                if (!mine) {
+                    // Di lato o in su non è roba nostra
+                    if (kotlin.math.abs(dx) > slop && kotlin.math.abs(dx) > kotlin.math.abs(dy)) break
+                    if (dy < -slop) break
+                    if (dy > slop && dy > kotlin.math.abs(dx)) mine = true
+                }
+                if (mine) {
+                    // Il gesto è nostro: la lista non si stira e il tocco non diventa un clic
+                    e.changes.forEach { it.consume() }
+                    if (dy > need) {
+                        onOpen()
+                        while (true) {
+                            val rest = awaitPointerEvent(PointerEventPass.Initial)
+                            rest.changes.forEach { it.consume() }
+                            if (rest.changes.none { it.pressed }) break
+                        }
+                        break
+                    }
+                }
+            }
+        }
+    }
 
 /** Scorrendo di lato oltre il 40% parte [onSwiped]; sotto compare "Letta". Se [enabled] è falso è un contenitore e basta. */
 @Composable

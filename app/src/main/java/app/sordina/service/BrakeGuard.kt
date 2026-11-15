@@ -113,12 +113,26 @@ object BrakeGuard {
         brake(context, prefs, pkg)
     }
 
-    private fun brake(context: Context, prefs: Prefs, pkg: String) {
-        if (pkg == context.packageName || pkg == allowed || pkg !in prefs.braked || !brakeNow(prefs)) return
+    /** Dall'accessibilità: il browser [browser] mostra il sito dell'app frenata [pkg] (youtube.com per YouTube). */
+    fun onWeb(context: Context, pkg: String, browser: String) {
+        val prefs = app.sordina.SordinaApp.of(context).prefs
+        if (!prefs.brakeGuard || !prefs.instantBrake) return
+        // Una volta sola: mentre il freno sale la pagina si muove ancora
+        val now = System.currentTimeMillis()
+        if (pkg == lastWeb && now - lastWebAt < 3_000) return
+        if (brake(context, prefs, pkg, browser)) { lastWeb = pkg; lastWebAt = now }
+    }
+     private var lastWeb: String? = null
+     private var lastWebAt = 0L
+
+    /** [via]: il browser dove si è aperto il sito; passato il freno si torna lì, non nell'app. */
+    private fun brake(context: Context, prefs: Prefs, pkg: String, via: String? = null): Boolean {
+        if (pkg == context.packageName || pkg == allowed || pkg !in prefs.braked || !brakeNow(prefs)) return false
         context.startActivity(
-            Intent(context, MainActivity::class.java).putExtra(EXTRA, pkg)
+            Intent(context, MainActivity::class.java).putExtra(EXTRA, pkg).putExtra(VIA, via)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT),
         )
+        return true
     }
 
     private fun check(context: Context, prefs: Prefs, now: Long) {
@@ -136,4 +150,5 @@ object BrakeGuard {
     }
 
     const val EXTRA = "brake"
+    const val VIA = "brakeVia"
 }

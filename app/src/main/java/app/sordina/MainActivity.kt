@@ -70,10 +70,10 @@ import app.sordina.data.Actions
 import app.sordina.data.AppEntry
 import app.sordina.data.Candidate
 import app.sordina.data.Kind
+import app.sordina.data.CardLook
 import app.sordina.data.Card
 import app.sordina.data.Bar
 import app.sordina.data.Birthday
-import app.sordina.data.birthdaysToday
 import app.sordina.data.CardAction
 import app.sordina.data.CardKind
 import app.sordina.data.CardOp
@@ -85,6 +85,7 @@ import app.sordina.data.Moment
 import app.sordina.data.Moments
 import app.sordina.data.Scene
 import app.sordina.data.CardDetector
+import app.sordina.data.HomeAssistant
 import app.sordina.data.Search
 import app.sordina.data.CarApps
 import app.sordina.data.tomorrow
@@ -105,6 +106,8 @@ import app.sordina.ui.apps.AllAppsScreen
 import app.sordina.ui.home.HomeScreen
 import app.sordina.ui.home.HomeState
 import app.sordina.ui.home.CarShortcut
+import app.sordina.ui.home.CarPerson
+import app.sordina.ui.home.Usual
 import app.sordina.ui.home.AgendaRow
 import app.sordina.ui.intent.IntentScreen
 import app.sordina.ui.intent.Notice
@@ -148,8 +151,11 @@ class MainActivity : ComponentActivity(), Ops {
     private var notice by mutableStateOf<Notice?>(null)
     private var voice by mutableStateOf(VoiceState(Build.VERSION.SDK_INT >= 31, false, ""))
     private var brakeTarget by mutableStateOf<AppEntry?>(null)
+    /** Il browser dove si è aperto il sito dell'app frenata: passato il freno si torna lì */
+    private var brakeVia: String? = null
     private var events by mutableStateOf<List<Upcoming>>(emptyList())
-    private var habitCards by mutableStateOf<List<Card>>(emptyList())
+    /** Il fumetto "di solito" scorso via: non torna fino alla prossima fascia di proposte */
+    private var usualHidden by mutableStateOf(-1L)
     private var onbStep by mutableIntStateOf(0)
     private var doneHabits by mutableStateOf<Set<String>>(emptySet())
     private var backdrop by mutableStateOf(Backdrop())
@@ -158,8 +164,6 @@ class MainActivity : ComponentActivity(), Ops {
     private var blackPref by mutableStateOf(false)
     private var agendaEvents by mutableStateOf<List<Upcoming>>(emptyList())
     private var weatherNow by mutableStateOf<String?>(null)
-    private var rainAt by mutableStateOf<Pair<Long, Int>?>(null)
-    private var birthdays by mutableStateOf<List<Birthday>>(emptyList())
     private var moment by mutableStateOf(Moment.NONE)
     private var scene by mutableStateOf(Scene.DAY)
     /** Cosa impedisce al motore di lavorare (null = tutto bene) */
@@ -167,7 +171,9 @@ class MainActivity : ComponentActivity(), Ops {
     private var tomorrowEvents by mutableStateOf<List<Upcoming>>(emptyList())
     private var tomorrowWeather by mutableStateOf<String?>(null)
     private var recap by mutableStateOf<String?>(null)
-    private var carPeople by mutableStateOf<List<Pair<String, String>>>(emptyList())
+    private var carPeople by mutableStateOf<List<CarPerson>>(emptyList())
+    /** Le foto delle persone in auto: si leggono dalla rubrica una volta sola */
+    private val carPhotos = java.util.concurrent.ConcurrentHashMap<Long, java.util.Optional<androidx.compose.ui.graphics.ImageBitmap>>()
     /** Gli adesivi appena vinti, da far vedere in cima a Casa */
     private var celebrate by mutableStateOf<List<app.sordina.data.Medal>>(emptyList())
     private var medalsAt = 0L
@@ -283,6 +289,15 @@ class MainActivity : ComponentActivity(), Ops {
             screen = Screen.ONBOARDING; return
         }
         if (screen == Screen.ONBOARDING) return
+        // Solo nella versione di prova: "bubble" = un fumetto finto in Casa (otp, ask, call, ride, timer, music, event, eventnow, plan, health); "off" lo toglie
+        if (intent?.hasExtra("bubble") == true && (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            val k = intent.getStringExtra("bubble").orEmpty()
+            intent.removeExtra("bubble")
+            app.signals.cards.value.keys.filter { it.startsWith("demo:") }.forEach { app.signals.remove(it) }
+            demoCard(k)?.let { app.signals.put(it) }
+            screen = Screen.HOME
+            return
+        }
         // Solo nella versione di prova: "sordinaEmpty" = la pagina Sordina come se non ci fosse niente
         if (intent?.hasExtra("sordinaEmpty") == true && (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
             emptyPreview = intent.getBooleanExtra("sordinaEmpty", false)
@@ -307,6 +322,7 @@ class MainActivity : ComponentActivity(), Ops {
         // Un'app frenata è tornata davanti senza passare dal freno
         intent?.getStringExtra(BrakeGuard.EXTRA)?.let { pkg ->
             intent.removeExtra(BrakeGuard.EXTRA)
+            brakeVia = intent.getStringExtra(BrakeGuard.VIA); intent.removeExtra(BrakeGuard.VIA)
             (apps.firstOrNull { it.packageName == pkg } ?: catalog.load().firstOrNull { it.packageName == pkg })?.let { brakeTarget = it; screen = Screen.BRAKE; return }
         }
         when {
@@ -373,7 +389,6 @@ class MainActivity : ComponentActivity(), Ops {
     private var calendarObserver: android.database.ContentObserver? = null
     private var proposalsAt = 0L
     private var appsReload: kotlinx.coroutines.Job? = null
-    private var birthdaysDay: java.time.LocalDate? = null
 
     private fun refreshExtras() {
         // Tornando a Casa arrivano insieme onResume e il cambio di schermata: basta un giro solo
@@ -388,23 +403,14 @@ class MainActivity : ComponentActivity(), Ops {
             // Il calendario cambia di rado: si rilegge se Android dice che è cambiato, o ogni qualche minuto (gli eventi passano)
             if (t - calendarAt > CALENDAR_GAP) {
                 calendarAt = t
-                // Un solo calendario: quello di casa se l'hai scelto in Home Assistant, se no quelli del telefono
-                val home = if (app.ha.calendar != null) app.ha.calendarEvents() else null
-                events = home?.filter { it.end > t && it.begin - t <= 2 * 3600_000L } ?: app.calendars.upcoming(this@MainActivity)
-                val all = (home ?: app.calendars.agenda(this@MainActivity)).sortedBy { it.begin }
+                // I calendari scelti per Casa, del telefono e di casa, tutti insieme: niente unioni, se un impegno è in due calendari si vede due volte
+                val home = app.ha.calendarEvents()
+                events = (app.calendars.upcoming(this@MainActivity) + home.filter { it.end > t && it.begin - t <= 2 * 3600_000L }).sortedBy { it.begin }
+                val all = (app.calendars.agenda(this@MainActivity) + home).sortedBy { it.begin }
                 // Sempre i prossimi tre, oggi o nei giorni dopo: mai di più
                 agendaEvents = all.take(3)
             }
             weatherNow = app.weather.now()
-            rainAt = app.weather.rain
-            // I compleanni cambiano col giorno: la rubrica si rilegge una volta al giorno, non a ogni ritorno a Casa
-            val today = java.time.LocalDate.now()
-            if (birthdaysDay != today) {
-                birthdays = birthdaysToday(this@MainActivity)
-                // Senza permesso della rubrica non si fissa il giorno: appena lo concedi, i compleanni compaiono
-                if (checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) birthdaysDay = today
-            }
-            if (current.isNotEmpty()) habitCards = (app.routines.suggestions(current) + brainHabit(current)).distinctBy { it.key }
             // Le imprese: al massimo ogni dieci minuti, e quelle nuove saltano fuori in Casa
             if (t - medalsAt > 10 * 60_000L) {
                 medalsAt = t
@@ -414,33 +420,14 @@ class MainActivity : ComponentActivity(), Ops {
         }
     }
 
-    /**
-     * "Di solito adesso": appena comincia un momento (sali in auto, arrivi a casa, cuffie, in carica la sera),
-     * se il cervello è quasi sicuro di cosa ti serve e non l'hai ancora fatto, te lo porge in una scheda.
-     */
-    private fun brainHabit(current: List<AppEntry>): List<Card> = runCatching {
-        val (ctx, start) = app.routines.active().maxByOrNull { it.value } ?: return emptyList()
-        val braked = prefs.braked
-        val best = app.brain.best(BRAIN_HABIT_P, start, { it.startsWith("app:") && it.removePrefix("app:") in braked || "brain:$it" in prefs.excluded }) {
-            // Le nascoste non si propongono, nemmeno qui
-            app.intents.realize(it, current.filter { a -> a.key !in hidden }, proposals.usage)
-        } ?: return emptyList()
-        val c = best.candidate
-        val op = when (val a = c.act) {
-            is Act.OpenApp -> CardOp.OpenPackage(a.app.packageName)
-            is Act.Call -> CardOp.Query("chiama ${a.contact.name}")
-            is Act.Message -> CardOp.Query("scrivi a ${a.contact.name} su ${a.via.label}")
-            else -> best.item.takeIf { it.startsWith("cmd:") }?.let { CardOp.Query(it.removePrefix("cmd:")) } ?: return emptyList()
-        }
-        val verb = if (op is CardOp.OpenPackage) tr(R.string.open) else tr(R.string.do_it)
-        listOf(Card("habit:$ctx:${best.item}", CardKind.HABIT, tr(R.string.habit_usual, app.routines.label(ctx)), c.title, best.why,
-            actions = listOf(CardAction(verb, op), CardAction(tr(R.string.not_now), CardOp.Dismiss)), time = start))
-    }.getOrDefault(emptyList())
-
     /** Quello che serve solo alle altre Case: domani per sera e notte, la giornata per la sera, le persone in auto. */
     private fun sceneExtras(s: Scene) {
         if (s == Scene.EVENING || s == Scene.NIGHT) {
-            tomorrowEvents = app.calendars.tomorrow(this)
+            // Domani: anche dai calendari di casa (sono già in memoria per i prossimi 7 giorni)
+            val z = java.time.ZoneId.systemDefault()
+            val from = java.time.LocalDate.now().plusDays(1).atStartOfDay(z).toInstant().toEpochMilli()
+            val to = java.time.LocalDate.now().plusDays(2).atStartOfDay(z).toInstant().toEpochMilli()
+            tomorrowEvents = (app.calendars.tomorrow(this) + app.ha.calendarEvents().filter { it.begin in from until to }).sortedBy { it.begin }.take(3)
             tomorrowWeather = if (prefs.homeWeather) app.weather.tomorrow() else null
         }
         recap = if (s == Scene.EVENING) runCatching {
@@ -458,15 +445,19 @@ class MainActivity : ComponentActivity(), Ops {
             // Tra gli importanti ci sono anche parole ("allarme"): valgono solo i contatti veri, con un numero
             val important = app.people.importantList().mapNotNull { n -> all.firstOrNull { it.normalized == n } ?: all.firstOrNull { it.normalized.startsWith("$n ") } }
             val hidden = prefs.carHidden
-            // Solo le persone importanti (quelle che passano sempre): prima chi chiami di solito in auto, poi le altre
+            // Le quattro scelte da te nelle impostazioni; se non le hai scelte, fra le importanti prima chi chiami di solito in auto
             val importantIds = important.map { it.id }.toSet()
-            val chosen = (learned.filter { it.id in importantIds } + important.sortedBy { it.normalized }).filter { it.number.isNotBlank() && it.normalized !in hidden }.distinctBy { it.id }.take(16)
+            val mine = prefs.carPeople?.mapNotNull { id -> all.firstOrNull { it.id == id } }.orEmpty()
+            val chosen = (mine.ifEmpty { learned.filter { it.id in importantIds } + important.sortedBy { it.normalized } })
+                .filter { it.number.isNotBlank() && it.normalized !in hidden }.distinctBy { it.id }.take(4)
+            val px = (64 * resources.displayMetrics.density).toInt()
             // Due con lo stesso nome: "Francesco R." e "Francesco B."
             val first = chosen.groupingBy { it.name.substringBefore(' ') }.eachCount()
             chosen.map { k ->
                 val f = k.name.substringBefore(' ')
                 val rest = k.name.substringAfter(' ', "").trim()
-                (if ((first[f] ?: 0) > 1 && rest.isNotEmpty()) "$f ${rest.first()}." else f) to k.name
+                val photo = carPhotos.getOrPut(k.id) { java.util.Optional.ofNullable(app.people.photo(k.id, px)?.asImageBitmap()) }.orElse(null)
+                CarPerson(if ((first[f] ?: 0) > 1 && rest.isNotEmpty()) "$f ${rest.first()}." else f, k.name, photo)
             }
         }.getOrDefault(emptyList())
     }
@@ -515,6 +506,13 @@ class MainActivity : ComponentActivity(), Ops {
 
     private fun onScene(key: String) {
         when {
+            // Il fumetto "di solito": tocco fa, pressione lunga non la propone più, scorso via torna alla prossima fascia
+            key.startsWith("usual:") -> proposals.items.firstOrNull { it.id == key.removePrefix("usual:") }?.let { run(it, -1) }
+            key.startsWith("usual-drop:") -> {
+                proposals.brainItem[key.removePrefix("usual-drop:")]?.let { prefs.excluded = prefs.excluded + "brain:$it" }
+                refreshProposals(force = true)
+            }
+            key == "usual-hide" -> usualHidden = proposals.slot
             // Benessere digitale: Samsung, poi Google, se no le Impostazioni
             key == "usage" -> listOf(
                 Intent().setClassName("com.samsung.android.forest", "com.samsung.android.forest.home.DefaultActivity"),
@@ -532,7 +530,7 @@ class MainActivity : ComponentActivity(), Ops {
                 if (app.signals.controller?.packageName == pkg) openMusic()
                 else packageManager.getLaunchIntentForPackage(pkg)?.let { start(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             }
-            key == "ha" -> CardDetector.HA_PKGS.firstNotNullOfOrNull { packageManager.getLaunchIntentForPackage(it) }?.let { start(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            key == "ha" -> openHaCalendar()
             key == "nav" -> {
                 // L'app scelta da te; se non l'hai scelta, Maps o Waze
                 val i = listOfNotNull(prefs.carNavApp ?: favourite(CarApps.navigation(this, apps)), "com.google.android.apps.maps", "com.waze").firstNotNullOfOrNull { packageManager.getLaunchIntentForPackage(it) }
@@ -599,6 +597,7 @@ class MainActivity : ComponentActivity(), Ops {
         if (!perms.usage) app.brain.chosen("", Candidate("app:${a.key}", a.label, null, Kind.APP, 0, false, Act.OpenApp(a), a), false)
         if (a.packageName in prefs.braked && brakeNow()) {
             brakeTarget = a
+            brakeVia = null
             screen = Screen.BRAKE
         } else catalog.launch(a)
     }
@@ -644,7 +643,7 @@ class MainActivity : ComponentActivity(), Ops {
                 if (stays && out.ok) query = ""
                 val undo = out.undo
                 if (out.message != null && !here) notice = Notice(out.message, undo?.let { u -> { lifecycleScope.launch { u(); notice = Notice(tr(R.string.undone)) } } })
-                if (out.message != null && screen == Screen.HOME && !here) say(out.message)
+                if (out.message != null && screen == Screen.HOME && !here) answer(out.message, out.ok)
                 if (out.ok) app.routines.onCommand(c.title, query.ifBlank { c.title })
                 // Hai appena scritto o chiamato qualcuno: la sua risposta passa per i prossimi 15 minuti
                 val talkTo = (act as? Act.Message)?.contact ?: (act as? Act.Call)?.contact
@@ -684,26 +683,6 @@ class MainActivity : ComponentActivity(), Ops {
             bar = if (e.begin <= now) Bar(e.begin, e.end) else null)
     }
 
-    /** Pioggia in arrivo: una scheda finché non comincia. */
-    private fun rainCard(now: Long): Card? {
-        val (at, p) = rainAt ?: return null
-        val min = ((at - now) / 60_000).toInt()
-        val title = when {
-            min < 10 -> tr(R.string.rain_soon)
-            min < 60 -> tr(R.string.rain_in, min)
-            else -> tr(R.string.rain_around, java.time.Instant.ofEpochMilli(at).atZone(java.time.ZoneId.systemDefault())
-                .format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)))
-        }
-        return Card("rain:$at", CardKind.RAIN, tr(R.string.weather), title, tr(R.string.rain_chance, p),
-            actions = listOf(CardAction(tr(R.string.open), CardOp.Weather)), time = now, expiresAt = at + 30 * 60_000)
-    }
-
-    private fun birthdayCards(): List<Card> = birthdays.map { b ->
-        Card("birthday:${b.name}", CardKind.BIRTHDAY, b.age?.let { tr(R.string.birthday_age, it) } ?: tr(R.string.birthday), b.name,
-            actions = listOf(CardAction(tr(R.string.write), CardOp.Query("scrivi a ${b.name}")), CardAction(tr(R.string.call), CardOp.Query("chiama ${b.name}"))),
-            avatar = true)
-    }
-
     /** Apre il lettore: prima la sua schermata "in riproduzione", altrimenti l'app. */
     private fun openMusic() {
         val c = app.signals.controller ?: return
@@ -737,7 +716,9 @@ class MainActivity : ComponentActivity(), Ops {
     private fun nextEvent(): AgendaRow? {
         val ms = System.currentTimeMillis()
         val e = agendaEvents.filter { it.end > ms && !it.allDay }.minByOrNull { it.begin } ?: return null
-        val row = agendaRows(0).firstOrNull { it.key == "event:${e.id}" } ?: return null
+        // Gli impegni del calendario di casa hanno tutti la chiave "ha": si riconoscono anche dal titolo
+        val k = if (e.link == "ha") "ha" else "event:${e.id}"
+        val row = agendaRows(0).firstOrNull { it.key == k && it.text == e.title } ?: return null
         return row.copy(key = e.location?.takeIf { it.isNotBlank() }?.let { "nav:$it" } ?: row.key)
     }
 
@@ -767,6 +748,14 @@ class MainActivity : ComponentActivity(), Ops {
         return out + timed.sortedBy { it.first }.mapIndexed { i, p -> if (i == 0) p.second.copy(accent = true) else p.second }
     }
 
+    /** Un impegno di casa: il calendario di Home Assistant, nell'app se c'è, altrimenti nel browser */
+    private fun openHaCalendar() {
+        val inApp = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("homeassistant://navigate/calendar"))
+            .setPackage(HomeAssistant.COMPANION_PKG).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (runCatching { startActivity(inApp) }.isSuccess) return
+        prefs.haUrl.takeIf { it.isNotBlank() }?.let { start(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(it.trimEnd('/') + "/calendar"))) }
+    }
+
     private fun onAgenda(key: String) {
         when {
             key == "health" -> when (health) {
@@ -779,11 +768,11 @@ class MainActivity : ComponentActivity(), Ops {
             key == "moment" && app.moments.focusUntil() != null -> lifecycleScope.launch {
                 val out = actions.run(Act.Quiet(null))
                 changed()
-                out.message?.let { say(it) }
+                out.message?.let { answer(it, out.ok) }
             }
             key == "weather" -> openWeather()
             key == "sordina" -> screen = Screen.SORDINA
-            key == "ha" -> packageManager.getLaunchIntentForPackage("io.homeassistant.companion.android")?.let { start(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            key == "ha" -> openHaCalendar()
             key.startsWith("event:") -> key.removePrefix("event:").toLongOrNull()?.let {
                 start(Intent(Intent.ACTION_VIEW, android.content.ContentUris.withAppendedId(android.provider.CalendarContract.Events.CONTENT_URI, it)))
             }
@@ -947,7 +936,7 @@ class MainActivity : ComponentActivity(), Ops {
                     SpeechRecognizer.ERROR_CLIENT -> null
                     else -> Notice(tr(R.string.mic_unavailable))
                 }
-                if (screen == Screen.HOME) notice?.let { say(it.text) }
+                if (screen == Screen.HOME) notice?.let { answer(it.text, ok = false) }
             }
         })
         val i = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
@@ -982,6 +971,10 @@ class MainActivity : ComponentActivity(), Ops {
     /** La sordina che risponde per la casa (frasi mandate ad Assist col token) */
     private var reply by mutableStateOf<HomeReply?>(null)
     private fun say(text: String) { bubble = Said(text) }
+    /** Una risposta della sordina a quello che le hai chiesto: in Casa, con le animazioni, sale lei a dirla; se no il fumetto piccolo */
+    private fun answer(text: String, ok: Boolean = true) {
+        if (screen == Screen.HOME && prefs.animations) { bubble = null; reply = HomeReply(text, ok) } else say(text)
+    }
 
     private fun hint(text: String) {
         if (screen == Screen.HOME || screen == Screen.SORDINA) say(text)
@@ -1044,6 +1037,34 @@ class MainActivity : ComponentActivity(), Ops {
     }
 
     /** Sordina non funziona (o rischia): una scheda in cima, gentile, con un tasto solo che porta dove si sistema. */
+    /** Solo nella versione di prova: un fumetto finto per vedere com'è, senza aspettare che succeda davvero. */
+    private fun demoCard(k: String): Card? {
+        val t = System.currentTimeMillis()
+        val open = CardAction(tr(R.string.open), CardOp.Dismiss)
+        return when (k) {
+            "otp" -> Card("demo:otp", CardKind.OTP, tr(R.string.code_x, "Intesa"), "482 913", actions = listOf(CardAction(tr(R.string.copy), CardOp.Copy("482913"))),
+                expiresAt = t + 8 * 60_000, look = CardLook.CODE, bar = Bar(t - 2 * 60_000, t + 8 * 60_000, drain = true))
+            "ask" -> Card("demo:ask", CardKind.ASK, "Home Assistant", "Hai lasciato la finestra aperta. Accendo comunque il riscaldamento?",
+                actions = listOf(CardAction("Sì", CardOp.Dismiss), CardAction("No", CardOp.Dismiss)))
+            "ask3" -> Card("demo:ask3", CardKind.ASK, "Home Assistant", "La lavatrice ha finito. Cosa faccio?",
+                actions = listOf(CardAction("Asciugatrice", CardOp.Dismiss), CardAction("Ricordamelo", CardOp.Dismiss), CardAction("Niente", CardOp.Dismiss)))
+            "call" -> Card("demo:call", CardKind.CALL, tr(R.string.missed_call), "Marta",
+                actions = listOf(CardAction(tr(R.string.call_back), CardOp.Query("chiama Marta")), CardAction(tr(R.string.write), CardOp.Query("scrivi a Marta"))), avatar = true)
+            "ride" -> Card("demo:ride", CardKind.RIDE, "Glovo", "Il rider arriva tra 8 min", "Sushi Zen · 2 articoli", listOf(open), bar = Bar(value = 0.65f))
+            "timer" -> Card("demo:timer", CardKind.TIMER, "Orologio", "Timer · 4:32", "Pasta", listOf(open))
+            "music" -> Card("demo:music", CardKind.MUSIC, "Spotify", "Tutto bene", "Cosmo", listOf(
+                CardAction(tr(R.string.prev), CardOp.MusicPrev, "prev"), CardAction(tr(R.string.pause), CardOp.MusicToggle, "pause"), CardAction(tr(R.string.next_track), CardOp.MusicNext, "next")))
+            "event" -> Card("demo:event", CardKind.EVENT, "Teams", "Riunione di progetto", "Microsoft Teams", listOf(CardAction(tr(R.string.join), CardOp.OpenUrl("https://teams.microsoft.com"))),
+                time = t + 10 * 60_000, expiresAt = t + 70 * 60_000, startsAt = t + 10 * 60_000)
+            "eventnow" -> Card("demo:eventnow", CardKind.EVENT, "Teams", "Riunione di progetto", "Microsoft Teams", listOf(CardAction(tr(R.string.join), CardOp.OpenUrl("https://teams.microsoft.com"))),
+                time = t - 20 * 60_000, expiresAt = t + 40 * 60_000, startsAt = t - 20 * 60_000, bar = Bar(t - 20 * 60_000, t + 40 * 60_000))
+            "plan" -> Card("demo:plan", CardKind.PLAN, "WhatsApp", "Cena da Luca", "Via Roma 12, Torino", listOf(CardAction(tr(R.string.navigate), CardOp.Navigate("Via Roma 12, Torino"))),
+                time = t, expiresAt = t + 3 * 3_600_000, startsAt = t + 14 * 60_000)
+            "health" -> healthCard(Health.STOPPED).copy(key = "demo:health")
+            else -> null
+        }
+    }
+
     private fun healthCard(h: Health): Card = when (h) {
         Health.NO_ACCESS -> Card("health:access", CardKind.HEALTH, tr(R.string.health_card_label), tr(R.string.health_access_title), tr(R.string.health_access_sub),
             listOf(CardAction(tr(R.string.health_access_fix), CardOp.Fix)))
@@ -1266,7 +1287,7 @@ class MainActivity : ComponentActivity(), Ops {
                     Screen.HOME -> {
                         val waiting = groups.sumOf { g -> g.sumOf { it.count } }
                         val ms = now.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
-                        val cards = remember(health, signalCards, planMap, music, events, habitCards, doneHabits, now, rainAt, birthdays, scene, dismissedCards) {
+                        val cards = remember(health, signalCards, planMap, music, events, now, scene, dismissedCards) {
                             val calendar = events.map { eventCard(it, ms) }
                             val calendarTitles = calendar.map { Search.normalize(it.title) }.toSet()
                             // Riunioni avvisate da un'app: l'etichetta "Tra 10 min" si aggiorna; se il calendario ce l'ha già, basta quella
@@ -1277,8 +1298,7 @@ class MainActivity : ComponentActivity(), Ops {
                                 // Lo stesso piano letto due volte (dal modello e dalle regole, o da due notifiche): una scheda, la più ricca
                                 .filter { it.key !in dismissedCards }
                                 .sortedByDescending { it.actions.size }.distinctBy { if (it.kind == CardKind.PLAN) "plan|${it.label}|${it.title}" else it.key }
-                            (listOfNotNull(health?.let(::healthCard)) + fromNotifs + listOfNotNull(music, rainCard(ms)) + calendar +
-                                (habitCards + birthdayCards()).filter { it.key !in doneHabits })
+                            (listOfNotNull(health?.let(::healthCard)) + fromNotifs + listOfNotNull(music) + calendar)
                                 // Una scheda senza titolo non dice niente: mai in Casa
                                 .filter { it.expiresAt > ms && it.key !in dismissedCards && it.title.isNotBlank() }
                                 // Ogni Casa tiene solo le schede che le servono: in auto e di notte quasi nulla
@@ -1291,6 +1311,11 @@ class MainActivity : ComponentActivity(), Ops {
                                     Scene.EVENING -> k.kind != CardKind.HABIT
                                     Scene.DAY -> true
                                 } }
+                                // Il fumetto dice solo cose in corso o che non aspettano: gli avvisi restano nelle notifiche,
+                                // gli impegni nell'agenda finché non mancano 15 minuti
+                                .filter { k -> scene == Scene.CAR || k.kind in BUBBLE_KINDS ||
+                                    (k.kind == CardKind.EVENT && (k.startsAt ?: k.time) - ms <= 15 * 60_000L) ||
+                                    (k.kind == CardKind.PLAN && k.startsAt?.let { s -> s - ms <= 15 * 60_000L } == true) }
                                 // Quelle che scarti sempre spariscono; l'ordine segue l'urgenza e quello che usi davvero
                                 .filterNot { app.cardSense.muted(it, ms) }
                                 .sortedWith(compareBy<Card> { app.cardSense.rank(it, ms) }.thenByDescending { it.time })
@@ -1308,6 +1333,15 @@ class MainActivity : ComponentActivity(), Ops {
                                 moment = if (moment == Moment.NONE) null else moment.label,
                                 // Senza schede resta solo quella che dice che Sordina non funziona
                                 cards = if (prefs.homeCards) cards else cards.filter { it.kind == CardKind.HEALTH },
+                                // Niente in corso: le proposte del cervello di questa mezz'ora (non le fissate), di giorno e di sera
+                                usual = remember(proposals, usualHidden, scene, prefsVersion) {
+                                    if (!prefs.homeCards || (scene != Scene.DAY && scene != Scene.EVENING) || usualHidden == proposals.slot) emptyList()
+                                    else {
+                                        val pinned = tr(R.string.why_pinned)
+                                        proposals.items.filter { proposals.brainItem[it.id] != null && proposals.why[it.id] != pinned }.take(3)
+                                            .map { k -> Usual(k.id, k.title, k.kind, k.app?.takeIf { prefs.appIcons }?.let { catalog.cachedIcon(it) }, proposals.why[k.id]?.takeIf { w -> k.kind == Kind.APP || (w != tr(R.string.why_time) && w != tr(R.string.why_used)) }) }
+                                    }
+                                },
                                 agenda = remember(agendaEvents, moment, now, scene, health) { agendaRows(waiting) }
                                     // Senza impegni in Casa resta solo l'avviso che Sordina è ferma
                                     .let { r -> if (prefs.homeAgenda) r else r.filter { it.key == "moment" } },
@@ -1465,7 +1499,8 @@ class MainActivity : ComponentActivity(), Ops {
                                 app.habits.logOpen(a.packageName, cost)
                                 app.habits.logBrake(a.packageName, habit)
                                 BrakeGuard.passed(a.packageName)
-                                catalog.launch(a)
+                                val via = brakeVia?.let { packageManager.getLaunchIntentForPackage(it) }
+                                if (via != null) runCatching { startActivity(via.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.onFailure { catalog.launch(a) } else catalog.launch(a)
                             },
                             onSkip = { app.habits.logSkip(a.packageName, gain); app.habits.streak() to app.habits.newMedals() },
                             onDone = { screen = Screen.HOME },
@@ -1514,7 +1549,8 @@ class MainActivity : ComponentActivity(), Ops {
     companion object {
         const val ACTION_WAITING = "app.sordina.WAITING"
         /** La scheda "di solito" del cervello compare solo da questa probabilità (misurata sulla memoria vera). */
-        const val BRAIN_HABIT_P = 0.5
+        /** Le schede che il fumetto dice sempre: in corso (musica, timer, corsa) o che non aspettano (codice, casa, chiamata) */
+        val BUBBLE_KINDS = setOf(CardKind.HEALTH, CardKind.OTP, CardKind.ASK, CardKind.CALL, CardKind.RIDE, CardKind.TIMER, CardKind.MUSIC)
         /** Tornando a Casa entro così poco, le proposte di prima restano */
         private const val PROPOSALS_GAP = 20_000L
         /** Il calendario si rilegge al massimo così spesso (prima, se cambia) */

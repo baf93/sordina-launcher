@@ -28,8 +28,9 @@ object Phrase {
         "ehi sordina", "hey sordina", "ok sordina", "ehi", "hey", "ok", "allora", "senti",
         "per favore", "per piacere", "puoi", "potresti", "riesci a", "mi puoi", "mi potresti", "vorrei", "voglio", "devo",
         "ho bisogno di", "fammi", "mi fai", "fai",
+        "please", "can you", "could you", "would you", "will you", "i want to", "i need to", "i d like to", "i would like to", "let s",
     )
-    private val TAIL = listOf("per favore", "per piacere", "grazie", "please")
+    private val TAIL = listOf("per favore", "per piacere", "grazie", "please", "thanks", "thank you")
 
     private val CALL = setOf("chiama", "chiamare", "chiami", "telefona", "telefonare", "telefoni", "chiamata", "telefonata", "videochiama", "squilla")
     private val SAY = setOf("di", "dire", "dica", "dici", "rispondi", "rispondere", "scrivi", "scrivere", "scrivigli", "scrivile")
@@ -46,6 +47,11 @@ object Phrase {
         "attivare" to "attiva", "disattivare" to "disattiva", "ricordarmi" to "ricordami", "svegliarmi" to "svegliami",
         "navigare" to "naviga", "portarmi" to "portami",
     )
+
+    /** I comandi in inglese: non sono verbi italiani sbagliati ("call" non è "chiama" scritto male) */
+    val ENGLISH = setOf("call", "phone", "ring", "text", "message", "write", "send", "tell", "reply", "answer", "remind", "wake",
+        "alarm", "set", "add", "create", "schedule", "new", "turn", "switch", "open", "close", "play", "listen", "navigate", "take",
+        "directions", "drive", "start", "pause", "stop", "resume", "next", "skip", "torch", "flashlight", "mute", "silence", "quiet")
 
     /** I verbi che si possono sbagliare a scrivere, per la prima parola. */
     private val VERBS = listOf(
@@ -75,7 +81,7 @@ object Phrase {
         if (w.size > 2 && w[0].n == "mi") w = w.drop(1)
 
         // Il verbo scritto male, solo se non è un nome che conosci ("Chiara" resta Chiara)
-        if (w.size >= 2 && w[0].n !in VERBS && w[0].n !in CALL_HER && w[0].n !in WRITE_HER && w[0].n !in FORMS && w[0].n !in SAY && w[0].n !in SEND && !hints.isName(w[0].n)) {
+        if (w.size >= 2 && w[0].n !in VERBS && w[0].n !in ENGLISH && w[0].n !in CALL_HER && w[0].n !in WRITE_HER && w[0].n !in FORMS && w[0].n !in SAY && w[0].n !in SEND && !hints.isName(w[0].n)) {
             val fix = closestVerb(w[0].n)
             if (fix != null) w = listOf(W(fix)) + w.drop(1)
         }

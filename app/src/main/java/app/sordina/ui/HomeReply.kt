@@ -74,8 +74,8 @@ fun BoxScope.HomeReplyView(reply: HomeReply?, onGone: () -> Unit) {
 
     LaunchedEffect(reply?.id) {
         val now = reply ?: return@LaunchedEffect
-        // Mentre aspetta al massimo 20 secondi; una risposta resta circa una parola ogni quarto di secondo, da 3 a 10
-        delay(if (now.text == null) 20_000L else (3000L + now.text.length * 50L).coerceAtMost(10_000L))
+        // Mentre aspetta al massimo 20 secondi; una risposta resta giusto il tempo di leggerla: da 1,8 a 5 secondi
+        delay(if (now.text == null) 20_000L else (1800L + now.text.length * 30L).coerceAtMost(5_000L))
         onGone()
     }
 
