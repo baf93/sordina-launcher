@@ -139,7 +139,7 @@ fun ColumnScope.ProgressPage(habits: Habits, jump: Boolean = false) {
     val here = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
     LaunchedEffect(jump, medals.isNotEmpty()) { if (jump && medals.isNotEmpty()) here.bringIntoView(androidx.compose.ui.geometry.Rect(0f, 0f, 1f, 1800f)) }
     Box(Modifier.bringIntoViewRequester(here)) {
-        Column { Topic(tr(R.string.p_medals, medals.size, Medal.entries.size), tr(R.string.p_medals_hint)) }
+        Column { Topic(tr(R.string.p_medals, medals.size, Medal.entries.size)) }
     }
     StickerPacks(medals)
     var open by remember { mutableStateOf<Medal?>(null) }
@@ -150,8 +150,8 @@ fun ColumnScope.ProgressPage(habits: Habits, jump: Boolean = false) {
             Text(groupName(g), Modifier.weight(1f), style = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Medium, color = c.accent))
             Text(tr(R.string.ach_progress, have, inGroup.size), style = TextStyle(fontSize = 13.sp, color = if (have == inGroup.size) c.accent else c.soft))
         }
+        val ctx = androidx.compose.ui.platform.LocalContext.current
         if (have == inGroup.size && TelegramPacks.link(g) != null) {
-            val ctx = androidx.compose.ui.platform.LocalContext.current
             Secondary(tr(R.string.ach_tg_group, groupName(g)), Modifier.fillMaxWidth().padding(bottom = 10.dp)) { TelegramPacks.open(ctx, g) }
         }
         inGroup.chunked(3).forEach { row ->
@@ -247,7 +247,7 @@ private fun achRes(key: String): Int {
 
 /**
  * Gli adesivi vinti come pacchetti veri. WhatsApp: un pacchetto che cresce (dal terzo adesivo), si tocca di nuovo per
- * aggiungere i nuovi. Telegram: l'importazione crea ogni volta un pacchetto nuovo con quelli vinti fin lì.
+ * aggiungere i nuovi. Telegram: una raccolta per categoria, già pronta; il pulsante compare sotto la categoria quando la completi.
  */
 @Composable
 private fun StickerPacks(medals: Map<Medal, LocalDate>) {
@@ -258,8 +258,6 @@ private fun StickerPacks(medals: Map<Medal, LocalDate>) {
     if (!wa && tg == null) return
     val packs = remember(medals.size) { if (wa) WhatsAppStickers.packs(ctx) else emptyList() }
     val launcher = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) {}
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
-    var busy by remember { mutableStateOf(false) }
     Column(Modifier.padding(top = 4.dp, bottom = 4.dp)) {
         if (wa && packs.isEmpty()) {
             Text(tr(R.string.ach_wa_soon, WhatsAppStickers.MIN), Modifier.padding(horizontal = 4.dp, vertical = 6.dp), style = TextStyle(fontSize = 14.sp, color = c.soft))
@@ -269,22 +267,6 @@ private fun StickerPacks(medals: Map<Medal, LocalDate>) {
                 if (packs.size == 1) tr(R.string.ach_wa) else tr(R.string.ach_wa_n, WhatsAppStickers.name(i)),
                 Modifier.fillMaxWidth().padding(bottom = 8.dp),
             ) { runCatching { launcher.launch(WhatsAppStickers.addIntent(ctx, i)) } }
-        }
-        // Solo nella versione di prova: crea su Telegram la raccolta di ogni categoria (una volta sola, poi i link vanno in TelegramPacks)
-        val debug = (ctx.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
-        if (debug && tg != null) {
-            Text("Prova: crea le raccolte su Telegram", Modifier.padding(horizontal = 4.dp, vertical = 6.dp), style = TextStyle(fontSize = 14.sp, color = c.soft))
-            Medal.Group.entries.forEach { g ->
-                Secondary("Crea «" + groupName(g) + "»" + (TelegramPacks.LINKS[g]?.let { " · " } ?: ""), Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                    if (!busy) scope.launch {
-                        busy = true
-                        val all = Medal.entries.filter { it.group == g }
-                        val intent = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { telegramImportIntent(ctx, all, tg) }.getOrNull() }
-                        intent?.let { runCatching { ctx.startActivity(it) } }
-                        busy = false
-                    }
-                }
-            }
         }
         val hint = listOfNotNull(tr(R.string.ach_wa_hint).takeIf { packs.isNotEmpty() }, tr(R.string.ach_tg_hint).takeIf { TelegramPacks.LINKS.isNotEmpty() })
         if (hint.isNotEmpty()) Text(hint.joinToString(" "), Modifier.padding(horizontal = 4.dp), style = TextStyle(fontSize = 13.sp, color = c.soft))
