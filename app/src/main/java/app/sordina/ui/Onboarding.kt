@@ -416,7 +416,7 @@ private fun Faces(app: SordinaApp, perms: PermState, ops: Ops) {
     LaunchedEffect(perms.contacts) { if (perms.contacts) all = withContext(Dispatchers.IO) { app.people.invalidate(); app.people.all() } }
     fun toggle(ct: Contact) {
         // Togliere qui non tocca i preferiti di Android: erano tuoi prima di Sordina
-        if (ct.normalized in chosen) app.prefs.importantNames = app.prefs.importantNames - ct.normalized
+        if (ct.normalized in chosen) app.people.removeImportantName(ct.normalized, unstar = false)
         else app.people.setImportant(ct, true)
         chosen = app.prefs.importantNames
         ops.changed()

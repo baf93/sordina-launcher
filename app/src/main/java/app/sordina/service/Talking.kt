@@ -27,6 +27,17 @@ object Talking {
     @Synchronized
     fun lastUntil(now: Long = System.currentTimeMillis()): Long? = until.values.filter { it > now }.maxOrNull()
 
+    /**
+     * Dimentica le conversazioni in corso con [name] (nome normalizzato, anche solo il nome: "anna" vale per "anna rossi").
+     * Serve quando togli una persona dalle importanti: i messaggi che aveva fatto passare non tengono aperta la porta.
+     */
+    @Synchronized
+    fun forget(name: String) {
+        val n = Search.normalize(name)
+        if (n.isBlank()) return
+        until.keys.removeAll { k -> val who = k.substringAfter('|'); who == n || n.startsWith("$who ") || who.startsWith("$n ") }
+    }
+
     @Synchronized
     fun clear() = until.clear()
 }

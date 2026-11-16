@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.provider.ContactsContract
 import android.telephony.TelephonyManager
+import app.sordina.service.SordinaListener
+import app.sordina.service.Talking
 
 /** Un contatto con almeno un numero. */
 data class Contact(
@@ -103,10 +105,18 @@ class People(private val context: Context, private val prefs: Prefs) {
         setStarred(contact.id, important)
     }
 
-    fun removeImportantName(n: String) {
+    /**
+     * Toglie una persona dalle importanti: anche dai gruppi, da "lascia passare" e dalle conversazioni in corso
+     * (i messaggi che passavano perché era importante, letti, la facevano passare ancora per un quarto d'ora alla volta).
+     * [unstar]: toglie anche la stella di Android (non dall'onboarding: lì le stelle erano tue da prima).
+     */
+    fun removeImportantName(n: String, unstar: Boolean = true) {
         prefs.importantNames = prefs.importantNames - n
         prefs.importantInGroups = prefs.importantInGroups - n
-        all().firstOrNull { it.normalized == n }?.let { setStarred(it.id, false) }
+        prefs.passUntil = prefs.passUntil - "p:$n"
+        Talking.forget(n)
+        if (unstar) all().firstOrNull { it.normalized == n }?.let { setStarred(it.id, false) }
+        SordinaListener.reapply(context)
     }
 
     private fun setStarred(id: Long, starred: Boolean) {
