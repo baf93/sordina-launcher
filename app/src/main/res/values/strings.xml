@@ -726,7 +726,7 @@
     <string name="hidden_apps_hint">Not in the list or in search. Opens with your fingerprint or phone PIN.</string>
     <string name="hidden_none">No hidden apps. Hold an app in the list and choose Hide from list.</string>
     <string name="access_summary">Instant brake and double-tap to lock</string>
-    <string name="access_desc">Sordina uses accessibility for three things only: stopping a braked app the moment it comes to the front (its website in the browser too, like youtube.com if you brake YouTube), locking the screen with a double tap, and typing a phrase for you where apps don\'t accept it from outside (Home Assistant Assist, Signal). It only listens to the apps you braked and, if they have a website, to browsers: of those it reads only the address bar, while they\'re in front. It looks at the screen only for a few seconds, only in that app. Nothing leaves the phone.</string>
+    <string name="access_desc">Sordina uses accessibility for three things only: stopping a braked app the moment it comes to the front (and its website in the browser too), locking the screen with a double tap, and typing a phrase for you where apps don\'t accept it from outside (Home Assistant Assist, Signal). It only listens to the apps you braked and, if they have a website, to browsers: of those it reads only the address bar, while they\'re in front. It looks at the screen only for a few seconds, only in that app. Nothing leaves the phone.</string>
     <string name="access_consent_title">Use accessibility?</string>
     <string name="access_consent_ok">I agree, open settings</string>
     <string name="n_gestures">Gestures</string>
@@ -734,7 +734,7 @@
     <string name="s_double_tap_hint">Needs Sordina\'s accessibility</string>
     <string name="double_tap_needs">To lock with a double tap, turn on Sordina\'s accessibility</string>
     <string name="s_instant_brake">Instant brake</string>
-    <string name="s_instant_brake_hint">With accessibility the brake arrives at once, also covers the websites of braked apps (youtube.com, instagram.com…), and Sordina stops checking every few seconds. If it can\'t be turned on: App info › ⋮ › Allow restricted settings.</string>
+    <string name="s_instant_brake_hint">With accessibility the brake arrives at once, also covers the websites of braked apps, and Sordina stops checking every few seconds. If it can\'t be turned on: App info › ⋮ › Allow restricted settings.</string>
     <string name="perm_access">Accessibility</string>
     <string name="ob_perm_access">Optional: instant brake and double-tap to lock</string>
     <string name="t_progress">Your progress</string>
