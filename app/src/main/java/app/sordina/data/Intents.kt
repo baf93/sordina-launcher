@@ -289,7 +289,7 @@ class Intents(
         val restN = nw.drop(1).filter { it.isNotEmpty() }.joinToString(" ")
 
         // Torcia
-        if ("torcia" in nw || "flashlight" in nw || "torch" in nw || nq == "luce telefono") {
+        if (nw.any { it in TORCH } || nq == "luce telefono" || nq.contains("lampe torche") || nq.contains("lampe de poche")) {
             out += Candidate("torch", tr(R.string.torch), tr(R.string.torch_hint), Kind.ACTION, 97, false, Act.Torch); return
         }
         // Sordina a tempo: "sordina per 45 minuti", "silenzio fino alle 15", "non disturbare un'ora", "basta sordina"
@@ -301,7 +301,8 @@ class Intents(
         if ("timer" in nw || nq.startsWith("conto alla rovescia")) {
             val d = DateParser.duration(nq)
             if (d != null) {
-                val label = d.second.split(' ').filter { it !in setOf("timer", "metti", "un", "imposta", "per", "avvia", "conto", "alla", "rovescia", "di", "da", "set", "start", "a", "an", "for", "tra") }.joinToString(" ")
+                val label = d.second.split(' ').filter { it !in setOf("timer", "metti", "un", "imposta", "per", "avvia", "conto", "alla", "rovescia", "di", "da", "set", "start", "a", "an", "for", "tra",
+                    "de", "para", "pour", "fur", "auf", "von", "le", "el", "la", "o") }.joinToString(" ")
                 val t = fmtDuration(d.first)
                 out += Candidate("timer", tr(R.string.timer) + " $t" + if (label.isNotBlank()) " · $label" else "", tr(R.string.starts_now), Kind.ACTION, 96, false, Act.Timer(d.first, label))
             } else {
@@ -334,7 +335,7 @@ class Intents(
             // "su whatsapp", "via telegram", "con sms" ovunque nella frase
             val idx = ArrayList((1 until nw.size).toList())
             for (i in 1 until nw.size - 1) {
-                if (nw[i] in setOf("su", "via", "con", "per", "on", "over", "by")) {
+                if (nw[i] in setOf("su", "via", "con", "per", "on", "over", "by", "por", "par", "uber", "pelo", "no", "en")) {
                     val v = when (nw[i + 1]) { "whatsapp" -> Via.WHATSAPP; "telegram" -> Via.TELEGRAM; "signal" -> Via.SIGNAL; "sms", "messaggio" -> Via.SMS; else -> null }
                     if (v != null) { via = v; idx.remove(i); idx.remove(i + 1) }
                 }
@@ -346,7 +347,8 @@ class Intents(
             val found = personIn(tail.map { nw[it] }) ?: return
             val (c, s, used) = found
             val textWords = tail.drop(used).map { ow[it] }.toMutableList()
-            while (textWords.isNotEmpty() && Search.normalize(textWords.first()) in setOf("che", "dicendo", "dicendogli", "dicendole", ":", "saying", "that")) textWords.removeAt(0)
+            while (textWords.isNotEmpty() && Search.normalize(textWords.first()) in setOf("che", "dicendo", "dicendogli", "dicendole", ":", "saying", "that",
+                    "que", "qu", "diciendo", "disant", "dass", "dizendo")) textWords.removeAt(0)
             val text = textWords.joinToString(" ").replaceFirstChar { it.uppercase() }
             val v = viaFor(c, via)
             out += Candidate("msg:${c.id}:${v.name}", tr(R.string.write_to_x, c.name), (if (text.isNotBlank()) "«$text» · " else "") + v.label, Kind.PERSON, if (s >= 80) 95 else 80, true, Act.Message(c, text, v))
@@ -386,20 +388,21 @@ class Intents(
         val haVerbs = mapOf("accendi" to HaOp.ON, "attiva" to HaOp.ON, "apri" to HaOp.ON, "alza" to HaOp.ON,
             "spegni" to HaOp.OFF, "disattiva" to HaOp.OFF, "chiudi" to HaOp.OFF, "abbassa" to HaOp.OFF, "stacca" to HaOp.OFF,
             "imposta" to HaOp.LEVEL, "regola" to HaOp.LEVEL,
-            "turn" to HaOp.ON, "switch" to HaOp.ON, "open" to HaOp.ON, "close" to HaOp.OFF, "dim" to HaOp.LEVEL, "set" to HaOp.LEVEL, "lock" to HaOp.OFF, "unlock" to HaOp.ON)
+            "turn" to HaOp.ON, "switch" to HaOp.ON, "open" to HaOp.ON, "close" to HaOp.OFF, "dim" to HaOp.LEVEL, "set" to HaOp.LEVEL, "lock" to HaOp.OFF, "unlock" to HaOp.ON) + HA_FOREIGN
         haVerbs[first]?.let { op0 ->
-            val level = Regex("(?:al|a|su|to) (\\d{1,3}) ?(%|percento|per cento|gradi|percent|degrees)?").find(restN)?.groupValues?.get(1)?.toIntOrNull()
-            val target = restN.replace(Regex("(?:al|a|su|to) \\d{1,3} ?(%|percento|per cento|gradi|percent|degrees)?"), "").split(' ').filter { it !in setOf("on", "off", "the") }.joinToString(" ").trim()
+            val level = Regex("(?:al|a|su|to|auf|sur|para|em) (\\d{1,3}) ?(%|percento|per cento|gradi|percent|degrees|grados|degres|grad|graus|prozent|por ciento|pour cent)?").find(restN)?.groupValues?.get(1)?.toIntOrNull()
+            val target = restN.replace(Regex("(?:al|a|su|to|auf|sur|para|em) \\d{1,3} ?(%|percento|per cento|gradi|percent|degrees|grados|degres|grad|graus|prozent|por ciento|pour cent)?"), "").split(' ').filter { it !in setOf("on", "off", "the", "an", "aus", "ein") }.joinToString(" ").trim()
             if (ha.canAssist && target.isNotBlank()) {
-                // Casa: la frase va ad Assist, che conosce stanze, alias ed entità esposte
-                out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, if (first == "apri" || first == "open") 80 else 90, false, Act.Assist(ow.joinToString(" ")))
+                // Casa: la frase va ad Assist, che conosce stanze, alias ed entità esposte (e la tua lingua: la frase resta com'è)
+                out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, if (first in OPEN) 80 else 90, false, Act.Assist(ow.joinToString(" ")))
             }
-            if (first == "apri" || first == "open") {
+            if (first in OPEN) {
                 Search.apps(restN, apps, emptyMap(), 2).forEach { a ->
                     out += Candidate("app:${a.key}", a.label, null, Kind.APP, Search.score(restN, a.normalized).coerceAtMost(92), false, Act.OpenApp(a), a)
                 }
             }
-            if (first in setOf("accendi", "spegni", "attiva", "disattiva", "turn", "switch")) {
+            if (first in setOf("accendi", "spegni", "attiva", "disattiva", "turn", "switch",
+                    "enciende", "apaga", "activa", "desactiva", "allume", "eteins", "active", "desactive", "schalte", "schalt", "mach", "liga", "desliga", "acende")) {
                 SETTINGS.filter { (w, _, _) -> w.any { Search.score(target, it) >= 80 } }.forEach { (_, title, action) ->
                     out += Candidate("set:$action", title, tr(R.string.settings_kind), Kind.SETTING, 84, false, Act.Setting(action))
                 }
@@ -416,8 +419,8 @@ class Intents(
             out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, s, false, Act.Assist(ow.joinToString(" ")))
         }
         // Musica
-        if (first in setOf("metti", "ascolta", "riproduci", "suona", "play", "listen") && restN.isNotBlank()) {
-            if (restN in setOf("musica", "la musica", "music", "some music", "to music")) {
+        if (first in PLAY && restN.isNotBlank()) {
+            if (restN in setOf("musica", "la musica", "music", "some music", "to music", "algo de musica", "musique", "de la musique", "musik", "etwas musik", "uma musica")) {
                 out += Candidate("media:${KeyEvent.KEYCODE_MEDIA_PLAY}", tr(R.string.resume_music), null, Kind.ACTION, 92, false, Act.Media(KeyEvent.KEYCODE_MEDIA_PLAY))
             } else {
                 val what = ow.drop(if (first == "listen" && nw.getOrNull(1) == "to") 2 else 1).joinToString(" ")
@@ -427,11 +430,17 @@ class Intents(
         // Un impegno detto come si parla, senza verbo: "pizza stasera alle 10", "dentista giovedì alle 15".
         // Solo frasi corte con un quando chiaro, e niente domande ("che tempo fa domani" resta una ricerca)
         val asks = setOf("che", "cosa", "come", "quando", "dove", "chi", "perche", "quanto", "quanti", "quale", "meteo", "tempo",
-            "what", "whats", "how", "when", "where", "who", "why", "which", "weather", "is", "are", "does", "do", "can", "should")
+            "what", "whats", "how", "when", "where", "who", "why", "which", "weather", "is", "are", "does", "do", "can", "should",
+            "que", "como", "cuando", "donde", "quien", "cual", "cuanto", "tiempo", "clima",
+            "quel", "quelle", "comment", "quand", "ou", "qui", "pourquoi", "combien", "meteo", "est",
+            "was", "wie", "wann", "wo", "wer", "warum", "welche", "welcher", "wetter", "ist",
+            "quando", "onde", "quem", "qual", "porque", "quanto", "tempo")
         if (nw.size in 2..8 && nw.none { it in asks } && !nq.endsWith("?")) event(nw, 85, out)
     }
 
-    private val eventFiller = setOf("di", "un", "una", "uno", "nuovo", "nuova", "l", "il", "lo", "la", "in", "nel", "al", "calendario", "impegno", "evento", "appuntamento", "promemoria", "che", "ho", "a", "me", "to", "an", "the", "at", "on", "for", "my", "event", "appointment", "reminder", "about")
+    private val eventFiller = setOf("di", "un", "una", "uno", "nuovo", "nuova", "l", "il", "lo", "la", "in", "nel", "al", "calendario", "impegno", "evento", "appuntamento", "promemoria", "che", "ho", "a", "me", "to", "an", "the", "at", "on", "for", "my", "event", "appointment", "reminder", "about",
+        "de", "del", "el", "los", "las", "que", "evento", "cita", "du", "des", "le", "les", "d", "pour", "rendez", "vous", "rappel",
+        "der", "die", "das", "dem", "den", "um", "am", "zu", "daran", "dass", "termin", "do", "da", "o", "os", "as", "para", "compromisso", "lembrete")
 
     private fun eventTitle(rest: String): String {
         val words = rest.split(' ').filter { it.isNotBlank() }.toMutableList()
@@ -452,16 +461,19 @@ class Intents(
     }
 
     private fun quiet(nw: List<String>, nq: String): Candidate? {
-        val words = setOf("sordina", "silenzio", "concentrazione", "focus", "silenzia", "zitto", "quiet", "silence", "mute")
-        val dnd = nq.startsWith("non disturbare") || nq.startsWith("modalita silenziosa") || nq.startsWith("do not disturb")
+        val words = setOf("sordina", "silenzio", "concentrazione", "focus", "silenzia", "zitto", "quiet", "silence", "mute",
+            "silencio", "concentracion", "concentration", "ruhe", "konzentration", "stumm", "concentracao")
+        val dnd = listOf("non disturbare", "modalita silenziosa", "do not disturb", "no molestar", "ne pas deranger", "nicht storen", "nao perturbe", "nao incomodar")
+            .any { nq.startsWith(it) }
         if (nw.none { it in words } && !dnd) return null
-        val stop = nw.any { it in setOf("basta", "fine", "stop", "togli", "spegni", "esci", "finita", "via", "end", "off", "exit", "cancel") }
+        val stop = nw.any { it in setOf("basta", "fine", "stop", "togli", "spegni", "esci", "finita", "via", "end", "off", "exit", "cancel",
+            "quita", "desactiva", "apaga", "fin", "arrete", "enleve", "desactive", "beende", "aus", "beenden", "desliga", "tira", "desativa") }
         if (stop) return Candidate("quiet:off", tr(R.string.quiet_off), tr(R.string.quiet_off_hint), Kind.ACTION, 96, false, Act.Quiet(null))
         val now = System.currentTimeMillis()
         val d = DateParser.duration(nq)
         val until = when {
             d != null && d.first >= 60 -> now + d.first * 1000L
-            nw.contains("fino") || nw.contains("alle") || nw.contains("until") || nw.contains("till") || nw.contains("at") -> DateParser.parse(nq, eveningBias = false).whenAt?.takeIf { !it.allDay }
+            nw.any { it in setOf("fino", "alle", "until", "till", "at", "hasta", "jusqu", "bis", "um", "ate", "as", "a") } ->DateParser.parse(nq, eveningBias = false).whenAt?.takeIf { !it.allDay }
                 ?.start?.atZone(java.time.ZoneId.systemDefault())?.toInstant()?.toEpochMilli()?.takeIf { it > now }
             else -> null
         }
@@ -582,6 +594,22 @@ class Intents(
         /** Le parole che reggono una frase verso una persona: possono stare anche dopo il nome. */
         private val LEAD_VERBS = VIA_WORDS + setOf("chiama", "telefona", "chiamare", "telefonare", "scrivi", "scrivere", "messaggio", "manda", "invia")
 
+        private val TORCH = setOf("torcia", "flashlight", "torch", "linterna", "taschenlampe", "lanterna")
+        /** Aprire: un'app o, per casa, una porta (la frase per Assist resta nella tua lingua). */
+        private val OPEN = setOf("apri", "open", "abre", "ouvre", "offne", "oeffne", "öffne", "abra")
+        private val PLAY = setOf("metti", "ascolta", "riproduci", "suona", "play", "listen",
+            "pon", "reproduce", "escucha", "mets", "joue", "ecoute", "spiel", "spiele", "toca", "ouvir", "reproduz", "coloca")
+        /** I verbi di casa nelle altre lingue: non si traducono, Assist parla già la tua lingua. */
+        private val HA_FOREIGN = mapOf(
+            "enciende" to HaOp.ON, "apaga" to HaOp.OFF, "abre" to HaOp.ON, "cierra" to HaOp.OFF, "sube" to HaOp.ON, "baja" to HaOp.OFF,
+            "activa" to HaOp.ON, "desactiva" to HaOp.OFF,
+            "allume" to HaOp.ON, "eteins" to HaOp.OFF, "ouvre" to HaOp.ON, "ferme" to HaOp.OFF, "baisse" to HaOp.OFF,
+            "active" to HaOp.ON, "desactive" to HaOp.OFF, "regle" to HaOp.LEVEL,
+            "schalte" to HaOp.TOGGLE, "schalt" to HaOp.TOGGLE, "offne" to HaOp.ON, "oeffne" to HaOp.ON, "öffne" to HaOp.ON,
+            "schliesse" to HaOp.OFF, "schließe" to HaOp.OFF, "schliess" to HaOp.OFF, "dimme" to HaOp.LEVEL,
+            "liga" to HaOp.ON, "acende" to HaOp.ON, "desliga" to HaOp.OFF, "abra" to HaOp.ON, "fecha" to HaOp.OFF,
+        )
+
         private val CALL_VERBS = listOf("chiama", "telefona", "call")
         private val MSG_VERBS = listOf("scrivi", "messaggio", "manda", "write", "text")
 
@@ -610,6 +638,24 @@ class Intents(
             "skip" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
             "previous" to (tr(R.string.media_prev) to KeyEvent.KEYCODE_MEDIA_PREVIOUS),
             "previous song" to (tr(R.string.media_prev) to KeyEvent.KEYCODE_MEDIA_PREVIOUS),
+            // Spagnolo, francese, tedesco, portoghese
+            "siguiente" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
+            "siguiente cancion" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
+            "anterior" to (tr(R.string.media_prev) to KeyEvent.KEYCODE_MEDIA_PREVIOUS),
+            "reanuda" to (tr(R.string.media_play) to KeyEvent.KEYCODE_MEDIA_PLAY),
+            "para la musica" to (tr(R.string.media_pause) to KeyEvent.KEYCODE_MEDIA_PAUSE),
+            "suivant" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
+            "chanson suivante" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
+            "precedent" to (tr(R.string.media_prev) to KeyEvent.KEYCODE_MEDIA_PREVIOUS),
+            "reprends" to (tr(R.string.media_play) to KeyEvent.KEYCODE_MEDIA_PLAY),
+            "arrete la musique" to (tr(R.string.media_pause) to KeyEvent.KEYCODE_MEDIA_PAUSE),
+            "weiter" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
+            "nachster titel" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
+            "nachstes lied" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
+            "zuruck" to (tr(R.string.media_prev) to KeyEvent.KEYCODE_MEDIA_PREVIOUS),
+            "stopp" to (tr(R.string.media_pause) to KeyEvent.KEYCODE_MEDIA_PAUSE),
+            "proxima musica" to (tr(R.string.media_next) to KeyEvent.KEYCODE_MEDIA_NEXT),
+            "retoma" to (tr(R.string.media_play) to KeyEvent.KEYCODE_MEDIA_PLAY),
         )
 
         /** (parole, titolo, azione delle Impostazioni di Android) */
@@ -617,16 +663,16 @@ class Intents(
             Triple(listOf("wifi", "wi fi", "rete", "network"), "Wi-Fi", Settings.ACTION_WIFI_SETTINGS),
             Triple(listOf("bluetooth"), "Bluetooth", Settings.ACTION_BLUETOOTH_SETTINGS),
             Triple(listOf("dati mobili", "internet", "dati", "mobile data"), tr(R.string.set_internet), Settings.ACTION_WIRELESS_SETTINGS),
-            Triple(listOf("modalita aereo", "aereo", "airplane mode", "flight mode"), tr(R.string.set_airplane), Settings.ACTION_AIRPLANE_MODE_SETTINGS),
-            Triple(listOf("luminosita", "schermo", "display", "brightness", "screen"), tr(R.string.set_display), Settings.ACTION_DISPLAY_SETTINGS),
-            Triple(listOf("suoni", "volume", "suoneria", "sound", "ringtone"), tr(R.string.set_sound), Settings.ACTION_SOUND_SETTINGS),
-            Triple(listOf("batteria", "risparmio energetico", "battery", "battery saver"), tr(R.string.s_battery), Settings.ACTION_BATTERY_SAVER_SETTINGS),
-            Triple(listOf("posizione", "gps", "localizzazione", "location"), tr(R.string.set_location), Settings.ACTION_LOCATION_SOURCE_SETTINGS),
+            Triple(listOf("modalita aereo", "aereo", "airplane mode", "flight mode", "modo avion", "mode avion", "flugmodus", "modo aviao"), tr(R.string.set_airplane), Settings.ACTION_AIRPLANE_MODE_SETTINGS),
+            Triple(listOf("luminosita", "schermo", "display", "brightness", "screen", "brillo", "pantalla", "luminosite", "ecran", "helligkeit", "bildschirm", "brilho", "tela", "ecra"), tr(R.string.set_display), Settings.ACTION_DISPLAY_SETTINGS),
+            Triple(listOf("suoni", "volume", "suoneria", "sound", "ringtone", "sonido", "volumen", "sonnerie", "lautstarke", "klingelton", "som", "toque"), tr(R.string.set_sound), Settings.ACTION_SOUND_SETTINGS),
+            Triple(listOf("batteria", "risparmio energetico", "battery", "battery saver", "bateria", "batterie", "akku"), tr(R.string.s_battery), Settings.ACTION_BATTERY_SAVER_SETTINGS),
+            Triple(listOf("posizione", "gps", "localizzazione", "location", "ubicacion", "localisation", "standort", "localizacao"), tr(R.string.set_location), Settings.ACTION_LOCATION_SOURCE_SETTINGS),
             Triple(listOf("nfc", "pagamenti contactless", "contactless"), "NFC", Settings.ACTION_NFC_SETTINGS),
-            Triple(listOf("non disturbare", "do not disturb"), tr(R.string.set_dnd), "android.settings.ZEN_MODE_SETTINGS"),
-            Triple(listOf("impostazioni", "settings"), tr(R.string.set_android), Settings.ACTION_SETTINGS),
+            Triple(listOf("non disturbare", "do not disturb", "no molestar", "ne pas deranger", "nicht storen", "nao perturbe"), tr(R.string.set_dnd), "android.settings.ZEN_MODE_SETTINGS"),
+            Triple(listOf("impostazioni", "settings", "ajustes", "configuracion", "reglages", "parametres", "einstellungen", "configuracoes", "definicoes"), tr(R.string.set_android), Settings.ACTION_SETTINGS),
             Triple(listOf("hotspot", "router", "tethering"), tr(R.string.set_hotspot), Settings.ACTION_WIRELESS_SETTINGS),
-            Triple(listOf("lingua", "tastiera", "language", "keyboard"), tr(R.string.set_language), Settings.ACTION_LOCALE_SETTINGS),
+            Triple(listOf("lingua", "tastiera", "language", "keyboard", "idioma", "teclado", "langue", "clavier", "sprache", "tastatur"), tr(R.string.set_language), Settings.ACTION_LOCALE_SETTINGS),
             Triple(listOf("data", "ora", "fuso orario", "date", "time", "time zone"), tr(R.string.set_datetime), Settings.ACTION_DATE_SETTINGS),
             Triple(listOf("sordina", "impostazioni sordina", "sordina settings"), tr(R.string.set_sordina), "sordina"),
         )

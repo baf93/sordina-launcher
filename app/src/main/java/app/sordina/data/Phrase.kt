@@ -29,8 +29,14 @@ object Phrase {
         "per favore", "per piacere", "puoi", "potresti", "riesci a", "mi puoi", "mi potresti", "vorrei", "voglio", "devo",
         "ho bisogno di", "fammi", "mi fai", "fai",
         "please", "can you", "could you", "would you", "will you", "i want to", "i need to", "i d like to", "i would like to", "let s",
+        // Spagnolo, francese, tedesco, portoghese
+        "oye", "por favor", "me puedes", "puedes", "podrias", "quiero", "necesito", "quisiera",
+        "s il te plait", "s il vous plait", "peux tu", "pourrais tu", "tu peux", "je veux", "je voudrais", "j aimerais",
+        "bitte", "kannst du", "konntest du", "ich mochte", "ich will",
+        "voce pode", "podes", "pode", "consegues", "quero", "preciso", "gostaria de",
     )
-    private val TAIL = listOf("per favore", "per piacere", "grazie", "please", "thanks", "thank you")
+    private val TAIL = listOf("per favore", "per piacere", "grazie", "please", "thanks", "thank you",
+        "por favor", "gracias", "s il te plait", "s il vous plait", "merci", "bitte", "danke", "obrigado", "obrigada")
 
     private val CALL = setOf("chiama", "chiamare", "chiami", "telefona", "telefonare", "telefoni", "chiamata", "telefonata", "videochiama", "squilla")
     private val SAY = setOf("di", "dire", "dica", "dici", "rispondi", "rispondere", "scrivi", "scrivere", "scrivigli", "scrivile")
@@ -79,9 +85,12 @@ object Phrase {
         }
         // "mi" davanti al verbo: "mi chiami Elisa", "mi metti un timer"
         if (w.size > 2 && w[0].n == "mi") w = w.drop(1)
+        // Spagnolo, francese, tedesco, portoghese: il comando in italiano, il resto com'è ("llama a Elisa" → "chiama Elisa")
+        Lingue.command(w.map { it.o })?.let { t -> w = t.map(::W).filter { it.n.isNotEmpty() } }
+        if (w.isEmpty()) return text.trim()
 
         // Il verbo scritto male, solo se non è un nome che conosci ("Chiara" resta Chiara)
-        if (w.size >= 2 && w[0].n !in VERBS && w[0].n !in ENGLISH && w[0].n !in CALL_HER && w[0].n !in WRITE_HER && w[0].n !in FORMS && w[0].n !in SAY && w[0].n !in SEND && !hints.isName(w[0].n)) {
+        if (w.size >= 2 && w[0].n !in VERBS && w[0].n !in ENGLISH && w[0].n !in Lingue.VERBS && w[0].n !in CALL_HER && w[0].n !in WRITE_HER && w[0].n !in FORMS && w[0].n !in SAY && w[0].n !in SEND && !hints.isName(w[0].n)) {
             val fix = closestVerb(w[0].n)
             if (fix != null) w = listOf(W(fix)) + w.drop(1)
         }

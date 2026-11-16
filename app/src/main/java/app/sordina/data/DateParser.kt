@@ -16,7 +16,7 @@ data class When(
 )
 
 /**
- * Date e ore in italiano, con regole scritte apposta: "alle 17", "domani alle 17:30", "giovedì",
+ * Date e ore in italiano (le altre lingue ci arrivano da [english] e [Lingue.dates]), con regole scritte apposta: "alle 17", "domani alle 17:30", "giovedì",
  * "tra mezz'ora", "tra 10 minuti", "stasera", "il 15", "15/11", "alle 9 e mezza".
  * Restituisce anche il testo rimasto, che diventa il titolo dell'impegno.
  */
@@ -52,7 +52,7 @@ object DateParser {
 
     /** Durata in secondi: "10 minuti", "mezz ora", "1 ora e 20", "90 secondi". */
     fun duration(text: String): Pair<Int, String>? {
-        var s = " " + english(clean(text)) + " "
+        var s = " " + english(Lingue.dates(clean(text))) + " "
         var total = 0
         var found = false
         if (Regex(" (un )?mezz ?ora ").containsMatchIn(s)) {
@@ -80,7 +80,7 @@ object DateParser {
     }
 
     fun parse(text: String, now: LocalDateTime = LocalDateTime.now(), eveningBias: Boolean = true): Result {
-        var s = " " + english(clean(text)).split(' ').joinToString(" ") { typo(it) } + " "
+        var s = " " + english(Lingue.dates(clean(text))).split(' ').joinToString(" ") { typo(it) } + " "
         var date: LocalDate? = null
         var time: LocalTime? = null
         var relative: LocalDateTime? = null

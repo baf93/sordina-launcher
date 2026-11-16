@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AlarmOff
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Snooze
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Build
@@ -335,9 +336,9 @@ private fun CardBubble(card: Card, more: Int, onAction: (Card, CardAction) -> Un
 }
 
 /**
- * "Di solito adesso": una proposta alla volta, scritta per intero, col suo perché sopra.
- * Tocco o tondo: la fa. Scorri via: la prossima; dopo l'ultima il fumetto tace fino alla prossima fascia.
- * Tieni premuto: non propormela più.
+ * "Di solito adesso": una proposta alla volta, scritta per intero. Che è un suggerimento lo dice il simbolino
+ * in alto a sinistra, non una scritta. Tocco o tondo: la fa. Scorri via: la prossima; dopo l'ultima il fumetto
+ * tace fino alla prossima fascia. Tieni premuto: il perché, e non propormela più.
  */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -358,10 +359,7 @@ private fun UsualBubble(usual: List<Usual>, onScene: (String) -> Unit) {
                         .heightIn(min = 84.dp).padding(start = TAIL + 16.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(u.why?.trimEnd('.') ?: tr(R.string.usually_now), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 13.sp, color = c.soft))
-                        Text(u.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 19.sp, lineHeight = 24.sp, color = c.ink))
-                    }
+                    Text(u.title, Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 19.sp, lineHeight = 24.sp, color = c.ink))
                     Spacer(Modifier.width(8.dp))
                     // Il tondo: l'icona dell'app se è un'app, altrimenti che genere di cosa è
                     Box(
@@ -373,7 +371,15 @@ private fun UsualBubble(usual: List<Usual>, onScene: (String) -> Unit) {
                         else Icon(kindIcon(u.kind), null, Modifier.size(24.dp), tint = c.bg)
                     }
                 }
+                // Il simbolino del suggerimento, a cavallo dell'angolo in alto a sinistra
+                Box(
+                    Modifier.align(Alignment.TopStart).offset(x = TAIL - 6.dp, y = (-6).dp).size(22.dp)
+                        .clip(CircleShape).background(c.accent).semantics { contentDescription = tr(R.string.usually_now) },
+                    contentAlignment = Alignment.Center,
+                ) { Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(13.dp), tint = c.bg) }
                 DropdownMenu(menu, onDismissRequest = { menu = false }) {
+                    // Perché te la propone: si legge solo se lo chiedi
+                    DropdownMenuItem(text = { Text(u.why?.trimEnd('.') ?: tr(R.string.usually_now), color = c.soft) }, onClick = { menu = false }, enabled = false)
                     DropdownMenuItem(text = { Text(tr(R.string.dont_suggest)) }, onClick = { menu = false; onScene("usual-drop:${u.id}") })
                 }
             }

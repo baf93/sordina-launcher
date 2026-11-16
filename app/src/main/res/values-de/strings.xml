@@ -775,11 +775,15 @@
     <string name="obt_title">Frag mich einfach</string>
     <string name="obt_sub">Schreib oder sprich, wie du es mit einem Menschen tun würdest: Ich finde heraus, was zu tun ist.</string>
     <string name="obt_ha">Du hast Home Assistant? Verbinde es in den Einstellungen und ich kümmere mich auch ums Haus.</string>
+    <string name="obt_q1">Pizza heute Abend um 10</string>
     <string name="obt_r1">Pizza</string>
     <string name="obt_s1">heute um 22:00 · im Kalender</string>
+    <string name="obt_q2">schreib Mark bin in 5 da</string>
     <string name="obt_r2">Schreib Mark</string>
-    <string name="obt_s2">„Be there in 5“ · WhatsApp</string>
+    <string name="obt_s2">„Bin in 5 da“ · WhatsApp</string>
+    <string name="obt_q3">Timer Pasta 10 Minuten</string>
     <string name="obt_r3">Timer 10 Min. · Pasta</string>
+    <string name="obt_q4">mach das Licht im Wohnzimmer an</string>
     <string name="obt_s3">Startet sofort</string>
     <string name="obt_r4">Licht im Wohnzimmer an</string>
     <string name="obt_s4">Zuhause · Home Assistant</string>

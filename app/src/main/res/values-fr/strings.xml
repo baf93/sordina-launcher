@@ -775,11 +775,15 @@
     <string name="obt_title">Demande-moi tout simplement</string>
     <string name="obt_sub">Écris ou parle comme tu le ferais avec une personne : je comprends ce qu\'il faut faire.</string>
     <string name="obt_ha">Tu as Home Assistant ? Connecte-le dans les réglages et je m\'occupe aussi de la maison.</string>
+    <string name="obt_q1">pizza ce soir à 22h</string>
     <string name="obt_r1">Pizza</string>
     <string name="obt_s1">aujourd\'hui à 22:00 · dans l\'agenda</string>
+    <string name="obt_q2">écris à Mark j\'arrive dans 5</string>
     <string name="obt_r2">Écrire à Mark</string>
-    <string name="obt_s2">« Be there in 5 » · WhatsApp</string>
+    <string name="obt_s2">« J\'arrive dans 5 » · WhatsApp</string>
+    <string name="obt_q3">minuteur pâtes 10 minutes</string>
     <string name="obt_r3">Minuteur 10 min · pâtes</string>
+    <string name="obt_q4">allume la lumière du salon</string>
     <string name="obt_s3">Démarre tout de suite</string>
     <string name="obt_r4">Lumière du salon allumée</string>
     <string name="obt_s4">Maison · Home Assistant</string>

@@ -41,6 +41,28 @@ object HomeTalk {
         "power", "energy", "television", "speakers",
         "kitchen", "living", "lounge", "bedroom", "bedrooms", "bathroom", "office", "hallway", "hall", "entrance", "garden", "patio",
         "balcony", "basement", "attic", "laundry", "stairs", "outside", "upstairs", "downstairs",
+        // Spagnolo
+        "luz", "luces", "lampara", "lamparas", "bombilla", "persiana", "persianas", "cortina", "cortinas", "calefaccion", "termostato",
+        "aire", "acondicionado", "ventilador", "temperatura", "grados", "humedad", "puerta", "puertas", "ventana", "ventanas",
+        "cerradura", "alarma", "camara", "timbre", "aspiradora", "lavadora", "lavavajillas", "horno", "nevera", "enchufe", "riego",
+        "television", "tele", "altavoz", "cocina", "salon", "dormitorio", "habitacion", "bano", "despacho", "pasillo", "entrada",
+        "jardin", "terraza", "garaje", "sotano",
+        // Francese
+        "lumiere", "lumieres", "lampe", "lampes", "ampoule", "volet", "volets", "rideau", "rideaux", "chauffage",
+        "thermostat", "climatisation", "clim", "ventilateur", "degres", "humidite", "porte", "portes", "portail", "fenetre", "fenetres",
+        "serrure", "camera", "sonnette", "aspirateur", "lave", "linge", "vaisselle", "frigo", "prise", "arrosage", "tele",
+        "enceinte", "cuisine", "salon", "chambre", "salle", "bain", "bureau", "couloir", "jardin", "terrasse", "garage",
+        // Tedesco
+        "licht", "lichter", "lampe", "lampen", "birne", "rollladen", "rollladen", "rollo", "rollos", "jalousie", "vorhang", "heizung",
+        "thermostat", "klima", "klimaanlage", "ventilator", "temperatur", "grad", "luftfeuchtigkeit", "tur", "turen", "tor", "fenster",
+        "schloss", "alarmanlage", "kamera", "klingel", "staubsauger", "waschmaschine", "spulmaschine", "trockner", "ofen", "backofen",
+        "kuhlschrank", "steckdose", "fernseher", "lautsprecher", "kuche", "wohnzimmer", "schlafzimmer", "kinderzimmer",
+        "badezimmer", "buro", "flur", "eingang", "garten", "terrasse", "keller", "dachboden", "garage",
+        // Portoghese
+        "luzes", "lampada", "lampadas", "estore", "estores", "cortinas", "aquecimento", "condicionado", "ventoinha", "graus",
+        "umidade", "humidade", "porta", "portao", "janela", "janelas", "fechadura", "campainha", "aspirador", "maquina", "geladeira",
+        "frigorifico", "tomada", "rega", "televisao", "coluna", "cozinha", "sala", "banheiro", "escritorio",
+        "corredor", "varanda", "garagem", "porao",
     )
 
     /** I comandi su qualcosa di casa (quelli che iniziano la frase li conosce già Sordina, questi possono stare ovunque). */
@@ -51,6 +73,10 @@ object HomeTalk {
         "aprire", "chiudere", "attivare", "disattivare", "scalda", "rinfresca", "raffredda", "dimmi", "controlla",
         "turn", "switch", "open", "close", "raise", "lower", "set", "dim", "brighten", "increase", "decrease", "start", "stop",
         "lock", "unlock", "arm", "disarm", "clean", "heat", "cool", "check", "tell",
+        "enciende", "apaga", "abre", "cierra", "sube", "baja", "pon", "activa", "desactiva", "aumenta", "limpia",
+        "allume", "eteins", "ouvre", "ferme", "monte", "baisse", "mets", "active", "desactive", "arrete", "augmente", "diminue", "regle",
+        "schalte", "schalt", "mach", "offne", "oeffne", "schliesse", "schließe", "dimme", "stelle", "stell", "starte", "stoppe", "erhohe", "senke",
+        "liga", "desliga", "acende", "apaga", "fecha", "abre", "sobe", "desce", "coloca", "aumenta", "diminui",
     )
 
     /** Domande e stati: con una cosa di casa, la frase è per Assist. */
@@ -62,19 +88,29 @@ object HomeTalk {
         "sono", "ci", "c", "e", "ha", "hanno", "fa", "consuma", "consumato", "prodotto", "produce",
         "what", "which", "how", "many", "much", "where", "is", "are", "on", "off", "open", "closed", "locked", "unlocked", "running",
         "done", "finished", "status", "using",
+        "que", "cuantos", "cuantas", "cuanto", "esta", "estan", "encendida", "encendido", "encendidas", "apagada", "apagado", "abierta", "cerrada",
+        "quelle", "quelles", "quels", "combien", "allumee", "allumees", "eteinte", "ouverte", "fermee",
+        "welche", "wie", "viel", "viele", "ist", "sind", "an", "aus", "offen", "zu", "geschlossen",
+        "quais", "quantos", "quantas", "esta", "estao", "acesa", "acesas", "apagada", "aberta", "fechada",
     )
 
     /** Le liste di Home Assistant: spesa e cose da fare. */
-    private val LIST = setOf("lista", "spesa", "liste", "todo", "list", "shopping", "groceries")
-    private val LIST_DO = setOf("aggiungi", "aggiungere", "metti", "togli", "rimuovi", "cancella", "segna", "cosa", "che", "leggi", "dimmi", "add", "remove", "delete", "what", "read")
+    private val LIST = setOf("lista", "spesa", "liste", "todo", "list", "shopping", "groceries", "compra", "courses", "einkaufsliste", "einkaufen", "compras")
+    private val LIST_DO = setOf("aggiungi", "aggiungere", "metti", "togli", "rimuovi", "cancella", "segna", "cosa", "che", "leggi", "dimmi", "add", "remove", "delete", "what", "read",
+        "anade", "agrega", "quita", "borra", "que", "ajoute", "enleve", "supprime", "quoi", "fuge", "setze", "entferne", "losche", "was", "adiciona", "remove", "tira", "o")
 
     /** Le routine di casa: frasi intere (normalizzate) o parole che le annunciano. */
     private val ROUTINES = setOf(
         "buonanotte", "buona notte", "buongiorno", "sto uscendo", "esco", "sono uscito", "sono uscita", "usciamo", "sono a casa",
         "sono tornato", "sono tornata", "sto arrivando", "arrivo a casa", "vado a letto", "vado a dormire", "sveglia casa",
         "good night", "goodnight", "good morning", "i m leaving", "leaving home", "i m home", "i m back", "going to bed", "bedtime",
+        "buenas noches", "buenos dias", "me voy", "salgo", "ya estoy en casa", "estoy en casa", "me voy a dormir",
+        "bonne nuit", "bonjour", "je pars", "je sors", "je suis rentre", "je suis rentree", "je vais me coucher",
+        "gute nacht", "guten morgen", "ich gehe", "ich bin weg", "ich bin zu hause", "ich bin da", "ich gehe schlafen",
+        "boa noite", "bom dia", "vou sair", "estou a sair", "estou saindo", "cheguei", "cheguei em casa", "vou dormir",
     )
-    private val MODES = setOf("modalita", "scena", "scenario", "routine", "automazione", "script", "mode", "scene", "automation")
+    private val MODES = setOf("modalita", "scena", "scenario", "routine", "automazione", "script", "mode", "scene", "automation",
+        "modo", "escena", "rutina", "automatizacion", "scene", "automatisation", "modus", "szene", "automatisierung", "cena", "rotina", "automacao")
 
     /** Parole che non dicono niente da imparare. */
     private val STOP = ASK + DO + LIST + LIST_DO + MODES + setOf(
@@ -83,6 +119,8 @@ object HomeTalk {
         "anche", "ancora", "adesso", "subito", "casa", "percento", "cento", "minuti", "favore", "puoi", "potresti", "vorrei",
         "voglio", "grazie", "sempre", "fino", "dopo", "prima", "oggi", "domani", "stasera", "stanotte", "mattina", "sera",
         "the", "in", "of", "to", "please", "now", "all", "my", "a", "an", "and", "at", "it", "home", "percent", "minutes", "today", "tomorrow", "tonight",
+        "del", "los", "las", "por", "favor", "todas", "todos", "ahora", "les", "des", "dans", "toutes", "tous", "maintenant", "plait",
+        "der", "die", "das", "den", "dem", "im", "bitte", "alle", "jetzt", "dos", "das", "nas", "nos", "todas", "agora",
     )
 
     /**
