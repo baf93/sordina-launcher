@@ -12,8 +12,8 @@ android {
         applicationId = "app.sordina"
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
-        versionName = "0.1.3"
+        versionCode = 5
+        versionName = "0.1.4"
     }
 
     // La chiave di caricamento Play non sta mai su disco: la ricava signing/release.sh da una password e la passa qui

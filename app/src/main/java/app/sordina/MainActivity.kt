@@ -231,7 +231,7 @@ class MainActivity : ComponentActivity(), Ops {
         family = prefs.family
         mode = prefs.mode
         hidden = prefs.hidden
-        if (!prefs.onboarded) screen = Screen.ONBOARDING
+        if (!prefs.onboarded) { screen = Screen.ONBOARDING; onbStep = prefs.onboardStep }
         handleIntent(intent)
         backdropChanged()
 
@@ -1598,6 +1598,7 @@ class MainActivity : ComponentActivity(), Ops {
                         usage = proposals.usage,
                         startStep = onbStep,
                         ops = this@MainActivity,
+                        onStep = { prefs.onboardStep = it },
                         onDone = {
                             prefs.onboarded = true
                             changed()

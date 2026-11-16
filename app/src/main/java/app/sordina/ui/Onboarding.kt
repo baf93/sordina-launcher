@@ -31,6 +31,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import app.sordina.service.SordinaListener
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -119,9 +120,12 @@ fun Onboarding(
     usage: Map<String, Double>,
     ops: Ops,
     startStep: Int = 0,
+    onStep: (Int) -> Unit = {},
     onDone: () -> Unit,
 ) {
     var step by rememberSaveable(startStep) { mutableIntStateOf(startStep) }
+    // Si ricorda il passo: scegliere Sordina come Home la fa ripartire, e non deve ricominciare da capo
+    LaunchedEffect(step) { onStep(step) }
     // Una copia ritrovata dal backup di Google (telefono nuovo o app reinstallata): si può rimettere tutto com'era
     val ctx = androidx.compose.ui.platform.LocalContext.current
     var found by remember { mutableStateOf(Backup.found(ctx)) }
@@ -416,6 +420,8 @@ private fun Faces(app: SordinaApp, perms: PermState, ops: Ops) {
         else app.people.setImportant(ct, true)
         chosen = app.prefs.importantNames
         ops.changed()
+        // Quello che è già in sordina da prima (l'accesso alle notifiche è arrivato un passo fa) si ricontrolla subito
+        SordinaListener.reapply(app)
     }
     var q by remember { mutableStateOf("") }
     var small by remember { mutableStateOf(false) }
@@ -440,6 +446,8 @@ private fun AlwaysApps(app: SordinaApp, apps: List<AppEntry>, ops: Ops) {
         app.prefs.setAppLevel(pkg, if (pkg in chosen) null else Level.SEMPRE)
         chosen = app.prefs.appLevels.filterValues { it == Level.SEMPRE }.keys
         ops.changed()
+        // Le sue notifiche già in sordina (o nella tendina) passano dalla regola nuova adesso, non alla prossima
+        SordinaListener.reapply(app, pkg)
     }
     var q by remember { mutableStateOf("") }
     var small by remember { mutableStateOf(false) }

@@ -40,6 +40,11 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("onboarded", false)
         set(v) = put { putBoolean("onboarded", v) }
 
+    /** Il passo del primo avvio a cui si era arrivati: quando Sordina diventa la Home Android la riavvia, e si riprende da lì. */
+    var onboardStep: Int
+        get() = sp.getInt("onboardStep", 0)
+        set(v) = put { putInt("onboardStep", v) }
+
     // Aspetto
     /** Sfondo di Casa: 0 tinta del tema, 1 sfondo del telefono, 2 foto scelta, 3 astratto, 4 tinta scelta ([solidColor]) */
     var wallpaperMode: Int
