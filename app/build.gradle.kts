@@ -16,8 +16,20 @@ android {
         versionName = "0.1.0"
     }
 
+    // La chiave di caricamento Play non sta mai su disco: la ricava signing/release.sh da una password e la passa qui
+    val uploadKey = System.getenv("SORDINA_KEYSTORE")?.let { file(it) }
+    signingConfigs {
+        if (uploadKey != null) create("upload") {
+            storeFile = uploadKey
+            storePassword = System.getenv("SORDINA_STORE_PASSWORD")
+            keyAlias = "upload"
+            keyPassword = System.getenv("SORDINA_STORE_PASSWORD")
+        }
+    }
+
     buildTypes {
         release {
+            if (uploadKey != null) signingConfig = signingConfigs.getByName("upload")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))

@@ -526,7 +526,7 @@
     <string name="quiet_off">End mute</string>
     <string name="quiet_off_hint">Turns off the Do Not Disturb I turned on</string>
     <string name="quiet_done">Mute ended</string>
-    <string name="card_hidden">Hidden for today</string>
+    <string name="card_hidden">Card hidden</string>
     <string name="why_waiting">It\'s here because %1$s</string>
     <string name="why_default">Sordina decided it isn\'t urgent</string>
     <string name="why_braked">the app is braked</string>
@@ -1041,5 +1041,5 @@
     <string name="ach_new_many">%1$d new stickers</string>
     <string name="ach_locked">Still to win</string>
     <string name="usually_now">Usually now</string>
-    <string name="hide_today">Hide for today</string>
+    <string name="hide_card">Hide</string>
 </resources>

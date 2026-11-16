@@ -430,7 +430,7 @@
     <string name="car_line">W aucie · przechodzą ważne osoby i trwające czaty</string>
     <string name="car_line_open">W aucie</string>
     <string name="car_listening">Słucham · dotknij, by zakończyć</string>
-    <string name="card_hidden">Karta ukryta na dziś</string>
+    <string name="card_hidden">Karta ukryta</string>
     <string name="flight_x">Lot %1$s</string>
     <string name="health_access_fix">Daj dostęp</string>
     <string name="health_access_sub">Bez tego uprawnienia nic nie może być wstrzymane.</string>
@@ -1052,5 +1052,5 @@
     <string name="ach_new_many">Nowe naklejki: %1$d</string>
     <string name="ach_locked">Do zdobycia</string>
     <string name="usually_now">Zwykle teraz</string>
-    <string name="hide_today">Ukryj na dziś</string>
+    <string name="hide_card">Ukryj</string>
 </resources>

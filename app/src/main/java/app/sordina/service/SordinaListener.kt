@@ -1,6 +1,7 @@
 package app.sordina.service
 
 import app.sordina.data.Tally
+import app.sordina.data.NotifImages
 import android.app.ActivityOptions
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -13,6 +14,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import app.sordina.SordinaApp
 import app.sordina.data.CardDetector
+import app.sordina.data.CardKind
 import app.sordina.data.Decision
 import app.sordina.data.Held
 import app.sordina.data.Level
@@ -179,6 +181,8 @@ class SordinaListener : NotificationListenerService() {
             title = if (info.isMessage) null else info.title.takeIf { it.isNotBlank() && it != info.text },
             reason = reason,
             channel = info.channel, channelName = chName ?: channelName(sbn.key),
+            // Solo per quelle che restano in Sordina: le altre l'immagine la mostrano già nella tendina
+            image = if (release > 0) NotifImages.save(this, sbn) else null,
         )
     }
 
@@ -234,7 +238,8 @@ class SordinaListener : NotificationListenerService() {
         if (sbn.packageName == packageName) return
         runCatching {
             CardDetector.detect(sbn.key, sbn.packageName, label(sbn.packageName), info.category, info.title, info.text,
-                info.ongoing, Classifier.isOtp(info.title + " " + info.text), buttons(sbn), progress(sbn), sbn.postTime).let { c ->
+                info.ongoing, Classifier.isOtp(info.title + " " + info.text), buttons(sbn), progress(sbn), sbn.postTime)
+                ?.let { k -> if (k.kind == CardKind.MUSIC) k else NotifImages.bitmap(this, sbn)?.let { k.copy(image = it) } ?: k }.let { c ->
                 val signals = SordinaApp.of(this).signals
                 // Aggiornata e non serve più una scheda (la corsa è finita, il codice è stato sostituito): via quella di prima
                 if (c == null) signals.remove(sbn.key) else signals.put(c)

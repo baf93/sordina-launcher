@@ -408,7 +408,7 @@
     <string name="car_line">गाड़ी में · ज़रूरी लोग और चल रही चैट ही आती हैं</string>
     <string name="car_line_open">गाड़ी में</string>
     <string name="car_listening">सुन रहा हूँ · ख़त्म करने के लिए टैप करें</string>
-    <string name="card_hidden">आज के लिए कार्ड छिपाया गया</string>
+    <string name="card_hidden">कार्ड छिपाया गया</string>
     <string name="flight_x">फ़्लाइट %1$s</string>
     <string name="health_access_fix">अनुमति दें</string>
     <string name="health_access_sub">इस अनुमति के बिना कुछ भी रोका नहीं जा सकता।</string>
@@ -1030,5 +1030,5 @@
     <string name="ach_new_many">%1$d नए स्टिकर</string>
     <string name="ach_locked">अभी जीतना बाकी</string>
     <string name="usually_now">आमतौर पर अभी</string>
-    <string name="hide_today">आज के लिए छिपाएँ</string>
+    <string name="hide_card">छिपाएँ</string>
 </resources>

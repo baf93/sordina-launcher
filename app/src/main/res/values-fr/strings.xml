@@ -408,7 +408,7 @@
     <string name="car_line">En voiture · personnes importantes et discussions en cours passent</string>
     <string name="car_line_open">En voiture</string>
     <string name="car_listening">Je t\'écoute · touche pour finir</string>
-    <string name="card_hidden">Carte masquée pour aujourd\'hui</string>
+    <string name="card_hidden">Carte masquée</string>
     <string name="flight_x">Vol %1$s</string>
     <string name="health_access_fix">Autoriser l\'accès</string>
     <string name="health_access_sub">Sans cette autorisation, rien ne peut être retenu.</string>
@@ -1034,5 +1034,5 @@
     <string name="ach_new_many">%1$d nouveaux stickers</string>
     <string name="ach_locked">Encore à gagner</string>
     <string name="usually_now">D\'habitude, maintenant</string>
-    <string name="hide_today">Masquer aujourd\'hui</string>
+    <string name="hide_card">Masquer</string>
 </resources>

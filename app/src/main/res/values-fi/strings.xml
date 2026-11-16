@@ -408,7 +408,7 @@
     <string name="car_line">Autossa · tärkeät ihmiset ja käynnissä olevat keskustelut pääsevät läpi</string>
     <string name="car_line_open">Autossa</string>
     <string name="car_listening">Kuuntelen · lopeta napauttamalla</string>
-    <string name="card_hidden">Kortti piilotettu tänään</string>
+    <string name="card_hidden">Kortti piilotettu</string>
     <string name="flight_x">Lento %1$s</string>
     <string name="health_access_fix">Anna käyttöoikeus</string>
     <string name="health_access_sub">Ilman tätä lupaa mitään ei voi pidättää.</string>
@@ -1030,5 +1030,5 @@
     <string name="ach_new_many">%1$d uutta tarraa</string>
     <string name="ach_locked">Vielä ansaitsematta</string>
     <string name="usually_now">Yleensä nyt</string>
-    <string name="hide_today">Piilota tältä päivältä</string>
+    <string name="hide_card">Piilota</string>
 </resources>

@@ -452,7 +452,7 @@
     <string name="car_line">في السيارة · يصل الأشخاص المهمون والمحادثات الجارية</string>
     <string name="car_line_open">في السيارة</string>
     <string name="car_listening">أستمع · المس للإنهاء</string>
-    <string name="card_hidden">البطاقة مخفية لليوم</string>
+    <string name="card_hidden">البطاقة مخفية</string>
     <string name="flight_x">الرحلة %1$s</string>
     <string name="health_access_fix">امنح الوصول</string>
     <string name="health_access_sub">من دون هذا الإذن لا يمكن احتجاز أي شيء.</string>
@@ -1074,5 +1074,5 @@
     <string name="ach_new_many">%1$d ملصقات جديدة</string>
     <string name="ach_locked">لم يُكتسب بعد</string>
     <string name="usually_now">عادةً الآن</string>
-    <string name="hide_today">إخفاء اليوم</string>
+    <string name="hide_card">إخفاء</string>
 </resources>

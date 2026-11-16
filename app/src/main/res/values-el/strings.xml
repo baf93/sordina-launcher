@@ -408,7 +408,7 @@
     <string name="car_line">Στο αυτοκίνητο · περνούν σημαντικά άτομα και ενεργές συζητήσεις</string>
     <string name="car_line_open">Στο αυτοκίνητο</string>
     <string name="car_listening">Σε ακούω · πάτα για τέλος</string>
-    <string name="card_hidden">Η κάρτα κρύφτηκε για σήμερα</string>
+    <string name="card_hidden">Η κάρτα κρύφτηκε</string>
     <string name="flight_x">Πτήση %1$s</string>
     <string name="health_access_fix">Δώσε πρόσβαση</string>
     <string name="health_access_sub">Χωρίς αυτή την άδεια δεν μπορεί να κρατήσει τίποτα.</string>
@@ -1030,5 +1030,5 @@
     <string name="ach_new_many">%1$d νέα αυτοκόλλητα</string>
     <string name="ach_locked">Δεν έχει κερδηθεί ακόμα</string>
     <string name="usually_now">Συνήθως τώρα</string>
-    <string name="hide_today">Απόκρυψη για σήμερα</string>
+    <string name="hide_card">Απόκρυψη</string>
 </resources>

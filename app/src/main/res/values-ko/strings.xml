@@ -397,7 +397,7 @@
     <string name="car_line">운전 중 · 중요한 사람과 진행 중인 채팅만 와요</string>
     <string name="car_line_open">운전 중</string>
     <string name="car_listening">듣고 있어요 · 탭하면 끝</string>
-    <string name="card_hidden">오늘은 카드 숨김</string>
+    <string name="card_hidden">카드 숨김</string>
     <string name="flight_x">항공편 %1$s</string>
     <string name="health_access_fix">접근 허용</string>
     <string name="health_access_sub">이 권한이 없으면 아무것도 보류할 수 없어요.</string>
@@ -1019,5 +1019,5 @@
     <string name="ach_new_many">새 스티커 %1$d개</string>
     <string name="ach_locked">아직 얻지 못함</string>
     <string name="usually_now">이 시간엔 보통</string>
-    <string name="hide_today">오늘 숨기기</string>
+    <string name="hide_card">숨기기</string>
 </resources>

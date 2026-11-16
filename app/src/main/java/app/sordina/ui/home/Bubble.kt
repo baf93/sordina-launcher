@@ -10,6 +10,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -28,6 +35,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AlarmOff
 import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material.icons.rounded.Snooze
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Build
@@ -43,8 +52,6 @@ import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Videocam
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -115,7 +122,8 @@ private val TAIL = 7.dp
  * se non c'è niente in corso, quello che di solito fai adesso. Senza fumetto la sordina sta al centro;
  * quando parla scivola a sinistra. Il tocco sulla sordina apre sempre le notifiche in attesa.
  *
- * Fumetto: tocco = apre la cosa; tondo = l'azione principale; scorri di lato = via; tieni premuto = le altre azioni.
+ * Fumetto: tocco = apre la cosa; tondo = l'azione principale; scorri a sinistra = la cosa dopo, a destra = quella prima
+ * (in giro, con "2/3" in alto); tieni premuto = le altre azioni e "nascondi".
  */
 @Composable
 internal fun SordinaZone(
@@ -125,10 +133,14 @@ internal fun SordinaZone(
     onScene: (String) -> Unit,
     onSheet: () -> Unit,
 ) {
-    // La musica non si nasconde per un giorno: scorsa via, torna col brano dopo
+    // La musica non si nasconde per un giorno: nascosta, torna col brano dopo
     var swiped by remember { mutableStateOf(setOf<String>()) }
     val live = state.cards.filter { liveKey(it) !in swiped }
-    val card = live.firstOrNull()
+    // Quella su cui sei andato scorrendo resta finché c'è; se se ne va, si torna alla più importante
+    var pick by remember { mutableStateOf<String?>(null) }
+    var enter by remember { mutableIntStateOf(0) }
+    val at = live.indexOfFirst { it.key == pick }.coerceAtLeast(0)
+    val card = live.getOrNull(at)
     val usual = if (card == null) state.usual else emptyList()
     // La casa che risponde passa davanti a tutto: è la risposta a quello che hai appena chiesto
     // Mentre parli la sordina è già lì che ascolta, col fumetto di quello che dici; poi la ricerca o la risposta prendono il suo posto
@@ -146,17 +158,25 @@ internal fun SordinaZone(
     val last = remember { mutableStateOf(Said(null, null, null, emptyList())) }
     if (talking) last.value = Said(heard, reply, card, usual)
 
+    // Il fumetto con l'immagine aperta: cresce verso l'alto, sopra la barra, col fondo fermo dov'era
+    var open by remember { mutableStateOf<String?>(null) }
+    val tall = card != null && card.image != null && card.key == open && heard == null && reply == null
+
     Box(Modifier.fillMaxWidth().height(ZONE).padding(horizontal = 16.dp)) {
         if (shown > 0f) {
             val (hd, rp, k, u) = last.value
             Box(
-                Modifier.align(Alignment.CenterStart).padding(start = 52.dp).fillMaxWidth()
-                    .graphicsLayer { alpha = shown; translationX = (1f - shown) * -24.dp.toPx() },
+                (if (tall) Modifier.align(Alignment.BottomStart).padding(bottom = 20.dp).wrapContentHeight(Alignment.Bottom, unbounded = true)
+                else Modifier.align(Alignment.CenterStart))
+                    .padding(start = 52.dp).fillMaxWidth()
+                    .graphicsLayer { alpha = shown; translationX = (1f - shown) * -24.dp.toPx(); compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.ModulateAlpha },
             ) {
                 if (hd != null) HeardBubble(hd)
                 else if (rp != null) ReplyBubble(rp)
                 else if (k != null) androidx.compose.runtime.key(k.key) {
-                    CardBubble(k, more = live.size - 1, onAction, onCard) { if (k.kind == CardKind.MUSIC) swiped = swiped + liveKey(k) else onAction(k, CardAction("", CardOp.Hide)) }
+                    CardBubble(k, at, live.size, enter, onAction, onCard, expanded = tall, onExpand = { open = if (it) k.key else null },
+                        onStep = { step -> if (live.size > 1) { enter = step; pick = live[(at + step).mod(live.size)].key } },
+                        onHide = { pick = null; if (k.kind == CardKind.MUSIC) swiped = swiped + liveKey(k) else onAction(k, CardAction("", CardOp.Hide)) })
                 } else if (u.isNotEmpty()) UsualBubble(u, onScene)
             }
         }
@@ -236,52 +256,98 @@ private fun Mascot(state: HomeState, talking: Boolean, mood: app.sordina.ui.Mood
     }
 }
 
-/** Un fumetto che si scorre via di lato. */
+/**
+ * Un fumetto fra tanti: scorri a sinistra per quello dopo, a destra per quello prima. Il nuovo entra dal lato
+ * opposto a quello verso cui hai spinto il vecchio; se è l'unico, torna al suo posto e basta.
+ */
 @Composable
-private fun Swipeable(onGone: () -> Unit, content: @Composable (Modifier) -> Unit) {
+private fun Steppable(count: Int, enter: Int, onStep: (Int) -> Unit, content: @Composable (Modifier) -> Unit) {
     val feel = LocalFeel.current
-    val off = remember { Animatable(0f) }
+    val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == LayoutDirection.Rtl
+    val inFrom = with(androidx.compose.ui.platform.LocalDensity.current) { 56.dp.toPx() }
+    val off = remember { Animatable(enter * inFrom * (if (rtl) -1 else 1)) }
     val scope = rememberCoroutineScope()
     var w by remember { mutableIntStateOf(1) }
+    LaunchedEffect(Unit) { off.animateTo(0f, spring(dampingRatio = 0.85f, stiffness = 500f)) }
     content(
         Modifier.onSizeChanged { w = it.width.coerceAtLeast(1) }
-            .graphicsLayer { translationX = off.value; alpha = 1f - (abs(off.value) / w).coerceIn(0f, 1f) * 0.9f }
-            .pointerInput(Unit) {
+            // ModulateAlpha: niente livello a parte grande quanto il fumetto, così il simbolino che sporge non viene tagliato
+            .graphicsLayer { translationX = off.value; alpha = 1f - (abs(off.value) / w).coerceIn(0f, 1f) * 0.9f; compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.ModulateAlpha }
+            .pointerInput(count) {
                 detectHorizontalDragGestures(
                     onDragEnd = {
                         scope.launch {
-                            if (abs(off.value) > w * 0.3f) {
+                            if (count > 1 && abs(off.value) > w * 0.25f) {
                                 feel.tick()
-                                off.animateTo(sign(off.value) * w, tween(160))
-                                onGone()
+                                val out = sign(off.value)
+                                off.animateTo(out * w * 0.6f, tween(120))
+                                // Spinto a sinistra = il dopo (a destra nelle lingue da destra)
+                                val step = if ((out < 0) != rtl) 1 else -1
+                                onStep(step)
                             } else off.animateTo(0f, spring(dampingRatio = 0.8f))
                         }
                     },
                     onDragCancel = { scope.launch { off.animateTo(0f) } },
-                ) { change, dx -> change.consume(); scope.launch { off.snapTo(off.value + dx) } }
+                ) { change, dx ->
+                    change.consume()
+                    // Da solo si sposta poco: si sente che non c'è altro
+                    scope.launch { off.snapTo(off.value + if (count > 1) dx else dx * 0.25f) }
+                }
             },
     )
 }
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun CardBubble(card: Card, more: Int, onAction: (Card, CardAction) -> Unit, onCard: (Card) -> Unit, onGone: () -> Unit) {
+private fun CardBubble(
+    card: Card, at: Int, count: Int, enter: Int,
+    onAction: (Card, CardAction) -> Unit, onCard: (Card) -> Unit, expanded: Boolean, onExpand: (Boolean) -> Unit,
+    onStep: (Int) -> Unit, onHide: () -> Unit,
+) {
     val c = S.c
     val feel = LocalFeel.current
     var menu by remember { mutableStateOf(false) }
     val primary = primaryOf(card)
     val ask = card.kind == CardKind.ASK
-    Swipeable(onGone) { swipe ->
+    val picture = remember(card.image) { card.image?.asImageBitmap() }
+    Steppable(count, enter, onStep) { swipe ->
         Box(swipe) {
-            Row(
+            Column(
                 Modifier.fillMaxWidth().clip(BubbleShape).background(surface())
+                    // Con l'immagine: trascina in su per allargare, in giù per richiudere (di lato resta il passare alla scheda dopo)
+                    .then(if (picture == null) Modifier else Modifier.pointerInput(expanded) {
+                        val need = 32.dp.toPx()
+                        var dy = 0f
+                        detectVerticalDragGestures(
+                            onDragStart = { dy = 0f },
+                            onDragEnd = {
+                                if (!expanded && dy < -need) { feel.tick(); onExpand(true) }
+                                else if (expanded && dy > need) { feel.tick(); onExpand(false) }
+                            },
+                        ) { ch, d -> ch.consume(); dy += d }
+                    })
                     .combinedClickable(onClick = { feel.tick(); onCard(card) }, onLongClick = { feel.tick(); menu = true })
-                    .heightIn(min = 84.dp).padding(start = TAIL + 16.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                    .animateContentSize(Motion.enter(260))
+                    .heightIn(min = 84.dp).padding(start = TAIL + 16.dp, end = 12.dp, top = if (picture != null) 0.dp else 12.dp, bottom = 12.dp),
             ) {
+            // C'è un'immagine: una freccetta al centro in alto la apre verso l'alto (e, girata, la richiude)
+            if (picture != null) Box(
+                Modifier.align(Alignment.CenterHorizontally).size(width = 56.dp, height = 20.dp)
+                    .clickableNoRipple { feel.tick(); onExpand(!expanded) }.semantics { contentDescription = tr(R.string.open) },
+                contentAlignment = Alignment.Center,
+            ) { Icon(if (expanded) Icons.Rounded.KeyboardArrowDown else Icons.Rounded.KeyboardArrowUp, null, Modifier.size(20.dp), tint = c.soft) }
+            // Allargato: l'immagine sopra a tutto, larga quanto il fumetto, coi suoi rapporti e mai più alta di così
+            if (expanded && picture != null) Image(
+                picture, null,
+                Modifier.padding(top = 2.dp, bottom = 10.dp).fillMaxWidth().heightIn(max = 340.dp)
+                    .aspectRatio((picture.width.toFloat() / picture.height).coerceIn(0.75f, 2.2f))
+                    .clip(RoundedCornerShape(14.dp)),
+                contentScale = ContentScale.Crop,
+            )
+            Row(Modifier.fillMaxWidth().heightIn(min = 60.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     if (!ask) Text(
-                        if (more > 0) "${card.label} · +$more" else card.label,
+                        if (count > 1) "${card.label} · ${at + 1}/$count" else card.label,
                         maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 13.sp, color = c.soft),
                     )
                     when (card.look) {
@@ -324,12 +390,14 @@ private fun CardBubble(card: Card, more: Int, onAction: (Card, CardAction) -> Un
                     ) { Icon(Icons.Rounded.SkipNext, null, Modifier.size(26.dp), tint = c.ink) }
                 }
             }
-            // Tieni premuto: tutte le azioni, e "nascondi per oggi"
-            DropdownMenu(menu, onDismissRequest = { menu = false }) {
-                val all = card.actions + if (card.kind == CardKind.MUSIC) emptyList() else listOf(CardAction(tr(R.string.hide_today), CardOp.Hide))
-                all.forEach { a ->
-                    DropdownMenuItem(text = { Text(a.label) }, onClick = { menu = false; onAction(card, a) })
+            }
+            // Tieni premuto: il foglio di Sordina con tutte le azioni, e "nascondi"
+            if (menu) app.sordina.ui.Sheet(card.title, hint = card.label, onDismiss = { menu = false }) {
+                card.actions.forEach { a ->
+                    app.sordina.ui.SheetRow(a.label, iconOf(a)) { menu = false; onAction(card, a) }
                 }
+                // Scorrendo si passa alla prossima: nascondere si fa solo da qui (la musica torna col brano dopo)
+                app.sordina.ui.SheetRow(tr(R.string.hide_card), Icons.Rounded.VisibilityOff) { menu = false; onHide() }
             }
         }
     }
@@ -337,8 +405,9 @@ private fun CardBubble(card: Card, more: Int, onAction: (Card, CardAction) -> Un
 
 /**
  * "Di solito adesso": una proposta alla volta, scritta per intero. Che è un suggerimento lo dice il simbolino
- * in alto a sinistra, non una scritta. Tocco o tondo: la fa. Scorri via: la prossima; dopo l'ultima il fumetto
- * tace fino alla prossima fascia. Tieni premuto: il perché, e non propormela più.
+ * in alto a sinistra, non una scritta. Tocco o tondo: la fa. Scorri come le altre schede: a sinistra la prossima,
+ * a destra quella prima, in giro (scorrere è guardare, non dire di no). Tieni premuto: il perché, "non ora"
+ * (tace fino alla prossima fascia) e non propormela più.
  */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -346,12 +415,13 @@ private fun UsualBubble(usual: List<Usual>, onScene: (String) -> Unit) {
     val c = S.c
     val feel = LocalFeel.current
     var at by remember(usual.map { it.id }) { mutableIntStateOf(0) }
+    var enter by remember { mutableIntStateOf(0) }
     val u = usual.getOrNull(at) ?: return
     var menu by remember { mutableStateOf(false) }
     androidx.compose.runtime.key(u.id) {
-        // Il cervello impara dal fumetto: visto e non preso scende un po', scorso via scende in questa situazione
+        // Il cervello impara dal fumetto: visto e non preso scende un po'; "non ora" scende in questa situazione
         LaunchedEffect(Unit) { onScene("usual-seen:${u.id}") }
-        Swipeable({ onScene("usual-no:${u.id}"); if (at + 1 < usual.size) at++ else onScene("usual-hide") }) { swipe ->
+        Steppable(usual.size, enter, { step -> enter = step; at = (at + step).mod(usual.size) }) { swipe ->
             Box(swipe) {
                 Row(
                     Modifier.fillMaxWidth().clip(BubbleShape).background(surface())
@@ -359,7 +429,10 @@ private fun UsualBubble(usual: List<Usual>, onScene: (String) -> Unit) {
                         .heightIn(min = 84.dp).padding(start = TAIL + 16.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(u.title, Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 19.sp, lineHeight = 24.sp, color = c.ink))
+                    Column(Modifier.weight(1f)) {
+                        if (usual.size > 1) Text("${at + 1}/${usual.size}", maxLines = 1, style = TextStyle(fontSize = 13.sp, color = c.soft))
+                        Text(u.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 19.sp, lineHeight = 24.sp, color = c.ink))
+                    }
                     Spacer(Modifier.width(8.dp))
                     // Il tondo: l'icona dell'app se è un'app, altrimenti che genere di cosa è
                     Box(
@@ -377,10 +450,17 @@ private fun UsualBubble(usual: List<Usual>, onScene: (String) -> Unit) {
                         .clip(CircleShape).background(c.accent).semantics { contentDescription = tr(R.string.usually_now) },
                     contentAlignment = Alignment.Center,
                 ) { Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(13.dp), tint = c.bg) }
-                DropdownMenu(menu, onDismissRequest = { menu = false }) {
-                    // Perché te la propone: si legge solo se lo chiedi
-                    DropdownMenuItem(text = { Text(u.why?.trimEnd('.') ?: tr(R.string.usually_now), color = c.soft) }, onClick = { menu = false }, enabled = false)
-                    DropdownMenuItem(text = { Text(tr(R.string.dont_suggest)) }, onClick = { menu = false; onScene("usual-drop:${u.id}") })
+                // Tieni premuto: il foglio di Sordina, col perché te la propone (si legge solo se lo chiedi)
+                if (menu) app.sordina.ui.Sheet(
+                    u.title, hint = u.why?.trimEnd('.') ?: tr(R.string.usually_now), onDismiss = { menu = false },
+                    leading = {
+                        Box(Modifier.size(28.dp).clip(CircleShape).background(c.accent), contentAlignment = Alignment.Center) {
+                            Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(16.dp), tint = c.bg)
+                        }
+                    },
+                ) {
+                    app.sordina.ui.SheetRow(tr(R.string.not_now), Icons.Rounded.Snooze) { menu = false; onScene("usual-no:${u.id}"); onScene("usual-hide") }
+                    app.sordina.ui.SheetRow(tr(R.string.dont_suggest), Icons.Rounded.Block) { menu = false; onScene("usual-drop:${u.id}") }
                 }
             }
         }
@@ -413,7 +493,7 @@ private fun iconOf(a: CardAction): ImageVector = when (val op = a.op) {
     is CardOp.Query -> if (op.query.startsWith("chiama")) Icons.Rounded.Call else Icons.Rounded.ChatBubble
     is CardOp.Dial -> Icons.Rounded.Call
     is CardOp.Navigate -> Icons.Rounded.Navigation
-    is CardOp.OpenUrl -> Icons.Rounded.Videocam
+    is CardOp.OpenUrl, is CardOp.Join -> Icons.Rounded.Videocam
     is CardOp.AddEvent -> Icons.Rounded.EventAvailable
     CardOp.Fix -> Icons.Rounded.Build
     // Un pulsante della notifica (sveglia, timer): l'icona dal suo nome

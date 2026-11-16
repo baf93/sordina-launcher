@@ -430,7 +430,7 @@
     <string name="car_line">В авто · проходять важливі люди й поточні чати</string>
     <string name="car_line_open">В авто</string>
     <string name="car_listening">Слухаю · торкнись, щоб завершити</string>
-    <string name="card_hidden">Картку приховано на сьогодні</string>
+    <string name="card_hidden">Картку приховано</string>
     <string name="flight_x">Рейс %1$s</string>
     <string name="health_access_fix">Надати доступ</string>
     <string name="health_access_sub">Без цього дозволу нічого не затримати.</string>
@@ -1052,5 +1052,5 @@
     <string name="ach_new_many">Нових наліпок: %1$d</string>
     <string name="ach_locked">Ще не здобуто</string>
     <string name="usually_now">Зазвичай зараз</string>
-    <string name="hide_today">Сховати на сьогодні</string>
+    <string name="hide_card">Сховати</string>
 </resources>

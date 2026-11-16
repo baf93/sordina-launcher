@@ -2,6 +2,7 @@ package app.sordina
 import app.sordina.ui.Celebration
 
 import app.sordina.data.Backup
+import app.sordina.data.Signals
 import app.sordina.data.Tally
 import app.sordina.ui.theme.autoAccent
 import app.sordina.data.AppIcons
@@ -831,7 +832,7 @@ class MainActivity : ComponentActivity(), Ops {
 
     /** Una scheda tolta: per un giorno non torna; un piano dei messaggi non torna più. */
     private fun dismissCard(card: Card) {
-        app.signals.dismiss(card.key)
+        app.signals.dismiss(card)
         if (card.key.startsWith("plan:")) app.plans.forget(card.key)
     }
 
@@ -868,6 +869,7 @@ class MainActivity : ComponentActivity(), Ops {
             is CardOp.Navigate -> start(Intent(Intent.ACTION_VIEW, Uri.parse("google.navigation:q=" + Uri.encode(op.place))))
                 || start(Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=" + Uri.encode(op.place))))
             is CardOp.OpenUrl -> openUrl(op.url)
+            is CardOp.Join -> SordinaListener.open(this, op.key)
             is CardOp.OpenEvent -> start(Intent(Intent.ACTION_VIEW, android.content.ContentUris.withAppendedId(android.provider.CalendarContract.Events.CONTENT_URI, op.id)))
             is CardOp.AddEvent -> {
                 if (!app.calendars.hasPermission()) { request(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR); return }
@@ -1351,11 +1353,11 @@ class MainActivity : ComponentActivity(), Ops {
                                 .filterNot { it.startsAt != null && Search.normalize(it.title) in calendarTitles }
                                 .map { k -> k.startsAt?.takeIf { s -> s - ms < 3 * 3_600_000L }?.let { s -> k.copy(label = startLabel(s, ms) + " · " + k.label) } ?: k } // "Tra 10 min" solo quando manca poco: domani resta "domani alle 20"
                                 // Lo stesso piano letto due volte (dal modello e dalle regole, o da due notifiche): una scheda, la più ricca
-                                .filter { it.key !in dismissedCards }
+                                .filter { !Signals.hidden(it, dismissedCards) }
                                 .sortedByDescending { it.actions.size }.distinctBy { if (it.kind == CardKind.PLAN) "plan|${it.label}|${it.title}" else it.key }
                             (listOfNotNull(health?.let(::healthCard)) + fromNotifs + listOfNotNull(music) + calendar)
                                 // Una scheda senza titolo non dice niente: mai in Casa
-                                .filter { it.expiresAt > ms && it.key !in dismissedCards && it.title.isNotBlank() }
+                                .filter { it.expiresAt > ms && !Signals.hidden(it, dismissedCards) && it.title.isNotBlank() }
                                 // Ogni Casa tiene solo le schede che le servono: in auto e di notte quasi nulla
                                 // Sordina che non funziona si dice sempre, in ogni Casa
                                 .filter { k -> k.kind == CardKind.HEALTH || when (scene) {

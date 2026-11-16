@@ -408,7 +408,7 @@
     <string name="car_line">No carro · passam pessoas importantes e conversas em andamento</string>
     <string name="car_line_open">No carro</string>
     <string name="car_listening">Estou ouvindo · toque para terminar</string>
-    <string name="card_hidden">Cartão oculto por hoje</string>
+    <string name="card_hidden">Cartão oculto</string>
     <string name="flight_x">Voo %1$s</string>
     <string name="health_access_fix">Dar acesso</string>
     <string name="health_access_sub">Sem essa permissão, nada pode ficar retido.</string>
@@ -1034,5 +1034,5 @@
     <string name="ach_new_many">%1$d figurinhas novas</string>
     <string name="ach_locked">Ainda por ganhar</string>
     <string name="usually_now">Costuma agora</string>
-    <string name="hide_today">Ocultar hoje</string>
+    <string name="hide_card">Ocultar</string>
 </resources>

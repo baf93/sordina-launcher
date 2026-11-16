@@ -397,7 +397,7 @@
     <string name="car_line">Trên xe · chỉ người quan trọng và cuộc trò chuyện đang diễn ra được qua</string>
     <string name="car_line_open">Trên xe</string>
     <string name="car_listening">Đang nghe · chạm để kết thúc</string>
-    <string name="card_hidden">Đã ẩn thẻ hôm nay</string>
+    <string name="card_hidden">Đã ẩn thẻ</string>
     <string name="flight_x">Chuyến bay %1$s</string>
     <string name="health_access_fix">Cấp quyền</string>
     <string name="health_access_sub">Không có quyền này thì không giữ lại được gì.</string>
@@ -1019,5 +1019,5 @@
     <string name="ach_new_many">%1$d nhãn dán mới</string>
     <string name="ach_locked">Chưa đạt được</string>
     <string name="usually_now">Thường lúc này</string>
-    <string name="hide_today">Ẩn hôm nay</string>
+    <string name="hide_card">Ẩn</string>
 </resources>

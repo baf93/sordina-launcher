@@ -408,7 +408,7 @@
     <string name="car_line">I bilen · vigtige personer og igangværende chats kommer igennem</string>
     <string name="car_line_open">I bilen</string>
     <string name="car_listening">Jeg lytter · tryk for at stoppe</string>
-    <string name="card_hidden">Kort skjult i dag</string>
+    <string name="card_hidden">Kort skjult</string>
     <string name="flight_x">Fly %1$s</string>
     <string name="health_access_fix">Giv adgang</string>
     <string name="health_access_sub">Uden denne tilladelse kan intet holdes tilbage.</string>
@@ -1030,5 +1030,5 @@
     <string name="ach_new_many">%1$d nye klistermærker</string>
     <string name="ach_locked">Endnu ikke vundet</string>
     <string name="usually_now">Plejer nu</string>
-    <string name="hide_today">Skjul i dag</string>
+    <string name="hide_card">Skjul</string>
 </resources>

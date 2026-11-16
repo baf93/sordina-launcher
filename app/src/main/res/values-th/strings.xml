@@ -397,7 +397,7 @@
     <string name="car_line">ในรถ · เฉพาะคนสำคัญและแชทที่กำลังคุยผ่านได้</string>
     <string name="car_line_open">ในรถ</string>
     <string name="car_listening">กำลังฟัง · แตะเพื่อจบ</string>
-    <string name="card_hidden">ซ่อนการ์ดสำหรับวันนี้</string>
+    <string name="card_hidden">ซ่อนการ์ดแล้ว</string>
     <string name="flight_x">เที่ยวบิน %1$s</string>
     <string name="health_access_fix">ให้สิทธิ์</string>
     <string name="health_access_sub">หากไม่มีสิทธิ์นี้ จะพักอะไรไว้ไม่ได้เลย</string>
@@ -1019,5 +1019,5 @@
     <string name="ach_new_many">สติกเกอร์ใหม่ %1$d ชิ้น</string>
     <string name="ach_locked">ยังไม่ได้รับ</string>
     <string name="usually_now">ปกติช่วงนี้</string>
-    <string name="hide_today">ซ่อนวันนี้</string>
+    <string name="hide_card">ซ่อน</string>
 </resources>

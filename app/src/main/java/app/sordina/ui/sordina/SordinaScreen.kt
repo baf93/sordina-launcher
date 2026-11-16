@@ -75,6 +75,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.input.pointer.positionChangeIgnoreConsumed
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
@@ -82,6 +83,8 @@ import androidx.compose.material.icons.rounded.DoneAll
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -192,7 +195,7 @@ fun SordinaScreen(
                         Block(
                             g, open = key in expanded, dim = s.braked, icon = icon,
                             onToggle = { feel.tick(); expanded = if (key in expanded) expanded - key else expanded + key },
-                            onPullOpen = { if (key !in expanded) { feel.tick(); expanded = expanded + key } }, atTop = { !list.canScrollBackward },
+                            onPullOpen = { if (key !in expanded) { feel.tick(); expanded = expanded + key } },
                             onOpen = onOpen, onRead = onRead, onReadOne = onReadOne,
                             onPass = { passFor = g.first() }, onMove = { moveFor = g.first() },
                         )
@@ -244,7 +247,7 @@ private fun untilLabel(at: Long): String {
 @Composable
 private fun Block(
     g: List<Held>, open: Boolean, dim: Boolean, icon: (String) -> ImageBitmap?,
-    onToggle: () -> Unit, onPullOpen: () -> Unit, atTop: () -> Boolean, onOpen: (Held) -> Unit, onRead: (String) -> Unit, onReadOne: (Held) -> Unit,
+    onToggle: () -> Unit, onPullOpen: () -> Unit, onOpen: (Held) -> Unit, onRead: (String) -> Unit, onReadOne: (Held) -> Unit,
     onPass: () -> Unit, onMove: () -> Unit,
 ) {
     val c = S.c
@@ -260,7 +263,7 @@ private fun Block(
     Swipeable(h.groupKey, enabled = true, shape = shape, onSwiped = { if (single) onReadOne(h) else onRead(h.groupKey) }) {
         Column(
             Modifier.fillMaxWidth().clip(shape).background(c.card)
-                .pullToOpen(!open, atTop, onPullOpen)
+                .pullToOpen(!open, { feel.threshold() }, onPullOpen)
                 .clickable(onClick = onToggle).padding(horizontal = 14.dp, vertical = 12.dp),
         ) {
             Row(Modifier.alpha(if (dim) 0.6f else 1f), verticalAlignment = Alignment.CenterVertically) {
@@ -303,6 +306,7 @@ private fun Block(
                                 Modifier.padding(top = 2.dp), maxLines = 5, overflow = TextOverflow.Ellipsis,
                                 style = TextStyle(fontSize = 14.sp, lineHeight = 19.sp, color = c.soft),
                             )
+                            m.image?.let { HeldPicture(it) }
                         }
                         }
                     }
@@ -433,45 +437,54 @@ private fun Held.target(): RuleTarget {
 
 
 /**
- * Tirando giù un gruppo chiuso si apre, come nella tendina di Android: solo con la lista in cima,
- * così quando la lista è scorsa lo stesso gesto la riporta su e i due non si pestano i piedi.
- * Di lato resta a [Swipeable] (letta), in su resta allo scorrimento.
+ * Tieni premuto un gruppo chiuso e poi tira giù: si apre. Tre gesti che non si pestano mai i piedi:
+ * il tocco apre e chiude, di lato è [Swipeable] (letta), su e giù senza tenere premuto scorre la lista.
+ * Quando la presa è pronta lo si sente ([onArm]); se il dito si muove prima, il gesto è della lista.
  */
-private fun Modifier.pullToOpen(enabled: Boolean, atTop: () -> Boolean, onOpen: () -> Unit): Modifier =
+private fun Modifier.pullToOpen(enabled: Boolean, onArm: () -> Unit, onOpen: () -> Unit): Modifier =
     if (!enabled) this else pointerInput(Unit) {
         val slop = viewConfiguration.touchSlop
         val need = 32.dp.toPx()
         awaitEachGesture {
             val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-            if (!atTop()) return@awaitEachGesture
-            var dx = 0f; var dy = 0f; var mine = false
+            // La presa: il dito deve stare fermo per HOLD_MILLIS; se si muove o si alza prima, non è roba nostra
+            var moved = false
+            val released = withTimeoutOrNull(HOLD_MILLIS) {
+                var dx = 0f; var dy = 0f
+                while (true) {
+                    val e = awaitPointerEvent(PointerEventPass.Initial)
+                    val ch = e.changes.firstOrNull { it.id == down.id } ?: return@withTimeoutOrNull true
+                    if (!ch.pressed) return@withTimeoutOrNull true
+                    val d = ch.positionChange(); dx += d.x; dy += d.y
+                    if (kotlin.math.abs(dx) > slop || kotlin.math.abs(dy) > slop) { moved = true; return@withTimeoutOrNull true }
+                }
+                @Suppress("UNREACHABLE_CODE") true
+            }
+            if (released != null || moved) return@awaitEachGesture
+            onArm()
+            // Da qui il gesto è nostro: la lista non scorre, il blocco non va di lato e alzando il dito non è un clic
+            var dy = 0f
             while (true) {
                 val e = awaitPointerEvent(PointerEventPass.Initial)
+                e.changes.forEach { it.consume() }
                 val ch = e.changes.firstOrNull { it.id == down.id } ?: break
                 if (!ch.pressed) break
-                val d = ch.positionChange(); dx += d.x; dy += d.y
-                if (!mine) {
-                    // Di lato o in su non è roba nostra
-                    if (kotlin.math.abs(dx) > slop && kotlin.math.abs(dx) > kotlin.math.abs(dy)) break
-                    if (dy < -slop) break
-                    if (dy > slop && dy > kotlin.math.abs(dx)) mine = true
-                }
-                if (mine) {
-                    // Il gesto è nostro: la lista non si stira e il tocco non diventa un clic
-                    e.changes.forEach { it.consume() }
-                    if (dy > need) {
-                        onOpen()
-                        while (true) {
-                            val rest = awaitPointerEvent(PointerEventPass.Initial)
-                            rest.changes.forEach { it.consume() }
-                            if (rest.changes.none { it.pressed }) break
-                        }
-                        break
+                dy += ch.positionChangeIgnoreConsumed().y
+                if (dy > need) {
+                    onOpen()
+                    while (true) {
+                        val rest = awaitPointerEvent(PointerEventPass.Initial)
+                        rest.changes.forEach { it.consume() }
+                        if (rest.changes.none { it.pressed }) break
                     }
+                    break
                 }
             }
         }
     }
+
+/** Quanto tenere premuto un gruppo prima di tirarlo giù per aprirlo */
+private const val HOLD_MILLIS = 250L
 
 /** Scorrendo di lato oltre il 40% parte [onSwiped]; sotto compare "Letta". Se [enabled] è falso è un contenitore e basta. */
 @Composable
@@ -522,3 +535,22 @@ private fun Swipeable(key: Any, enabled: Boolean, shape: androidx.compose.ui.gra
 }
 
 
+
+/** La foto della notifica (chat, telecamera, anteprima): larga quanto il testo, coi suoi rapporti, mai altissima. */
+@Composable
+private fun HeldPicture(name: String) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val bmp by androidx.compose.runtime.produceState<ImageBitmap?>(null, name) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            runCatching { android.graphics.BitmapFactory.decodeFile(app.sordina.data.NotifImages.file(context, name).path)?.asImageBitmap() }.getOrNull()
+        }
+    }
+    val b = bmp ?: return
+    androidx.compose.foundation.Image(
+        b, null,
+        Modifier.padding(top = 8.dp).fillMaxWidth()
+            .aspectRatio((b.width.toFloat() / b.height).coerceIn(0.8f, 2.2f))
+            .clip(RoundedCornerShape(12.dp)),
+        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+    )
+}

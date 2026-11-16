@@ -397,7 +397,7 @@
     <string name="car_line">開車中 · 只有重要的人和進行中的聊天會通過</string>
     <string name="car_line_open">開車中</string>
     <string name="car_listening">正在聽 · 輕觸結束</string>
-    <string name="card_hidden">今天已隱藏卡片</string>
+    <string name="card_hidden">已隱藏卡片</string>
     <string name="flight_x">航班 %1$s</string>
     <string name="health_access_fix">授予權限</string>
     <string name="health_access_sub">沒有這個權限，就無法暫留任何通知。</string>
@@ -1019,5 +1019,5 @@
     <string name="ach_new_many">%1$d 張新貼圖</string>
     <string name="ach_locked">尚未獲得</string>
     <string name="usually_now">通常這時</string>
-    <string name="hide_today">今天隱藏</string>
+    <string name="hide_card">隱藏</string>
 </resources>

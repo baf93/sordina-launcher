@@ -525,7 +525,7 @@
     <string name="quiet_off">Disattiva sordina</string>
     <string name="quiet_off_hint">Spegne il Non disturbare attivato da Sordina</string>
     <string name="quiet_done">Sordina disattivata</string>
-    <string name="card_hidden">Nascosta per oggi</string>
+    <string name="card_hidden">Nascosta</string>
     <string name="why_waiting">È qui perché %1$s</string>
     <string name="why_default">Sordina l\'ha ritenuta non urgente</string>
     <string name="why_braked">l\'app è frenata</string>
@@ -1040,5 +1040,5 @@
     <string name="ach_new_many">%1$d nuovi adesivi</string>
     <string name="ach_locked">Ancora da vincere</string>
     <string name="usually_now">Di solito adesso</string>
-    <string name="hide_today">Nascondi per oggi</string>
+    <string name="hide_card">Nascondi</string>
 </resources>

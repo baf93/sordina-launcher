@@ -430,7 +430,7 @@
     <string name="car_line">V autě · projdou důležití lidé a probíhající chaty</string>
     <string name="car_line_open">V autě</string>
     <string name="car_listening">Poslouchám · klepni pro konec</string>
-    <string name="card_hidden">Karta pro dnešek skryta</string>
+    <string name="card_hidden">Karta skryta</string>
     <string name="flight_x">Let %1$s</string>
     <string name="health_access_fix">Povolit přístup</string>
     <string name="health_access_sub">Bez tohoto oprávnění nelze nic zadržet.</string>
@@ -1052,5 +1052,5 @@
     <string name="ach_new_many">Nové nálepky: %1$d</string>
     <string name="ach_locked">Ještě nezískané</string>
     <string name="usually_now">Obvykle teď</string>
-    <string name="hide_today">Skrýt na dnešek</string>
+    <string name="hide_card">Skrýt</string>
 </resources>

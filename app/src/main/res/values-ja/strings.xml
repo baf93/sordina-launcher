@@ -397,7 +397,7 @@
     <string name="car_line">運転中 · 大事な人とやり取り中のチャットだけ届く</string>
     <string name="car_line_open">運転中</string>
     <string name="car_listening">聞いています · タップで終了</string>
-    <string name="card_hidden">今日はカードを非表示</string>
+    <string name="card_hidden">カードを非表示にしました</string>
     <string name="flight_x">フライト %1$s</string>
     <string name="health_access_fix">アクセスを許可</string>
     <string name="health_access_sub">この権限がないと何も待たせられません。</string>
@@ -1019,5 +1019,5 @@
     <string name="ach_new_many">新しいステッカー %1$d 枚</string>
     <string name="ach_locked">未獲得</string>
     <string name="usually_now">いつもこの時間は</string>
-    <string name="hide_today">今日は非表示</string>
+    <string name="hide_card">非表示</string>
 </resources>

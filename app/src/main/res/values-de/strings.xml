@@ -408,7 +408,7 @@
     <string name="car_line">Im Auto · wichtige Personen und laufende Chats kommen durch</string>
     <string name="car_line_open">Im Auto</string>
     <string name="car_listening">Ich höre zu · tippen zum Beenden</string>
-    <string name="card_hidden">Karte für heute ausgeblendet</string>
+    <string name="card_hidden">Karte ausgeblendet</string>
     <string name="flight_x">Flug %1$s</string>
     <string name="health_access_fix">Zugriff erlauben</string>
     <string name="health_access_sub">Ohne diese Berechtigung kann nichts gehalten werden.</string>
@@ -1034,5 +1034,5 @@
     <string name="ach_new_many">%1$d neue Sticker</string>
     <string name="ach_locked">Noch zu gewinnen</string>
     <string name="usually_now">Sonst um diese Zeit</string>
-    <string name="hide_today">Für heute ausblenden</string>
+    <string name="hide_card">Ausblenden</string>
 </resources>

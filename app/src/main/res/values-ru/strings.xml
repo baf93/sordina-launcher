@@ -430,7 +430,7 @@
     <string name="car_line">В машине · проходят важные люди и текущие чаты</string>
     <string name="car_line_open">В машине</string>
     <string name="car_listening">Слушаю · нажми, чтобы закончить</string>
-    <string name="card_hidden">Карточка скрыта на сегодня</string>
+    <string name="card_hidden">Карточка скрыта</string>
     <string name="flight_x">Рейс %1$s</string>
     <string name="health_access_fix">Дать доступ</string>
     <string name="health_access_sub">Без этого разрешения ничего не задержать.</string>
@@ -1052,5 +1052,5 @@
     <string name="ach_new_many">Новых стикеров: %1$d</string>
     <string name="ach_locked">Ещё не получены</string>
     <string name="usually_now">Обычно сейчас</string>
-    <string name="hide_today">Скрыть на сегодня</string>
+    <string name="hide_card">Скрыть</string>
 </resources>

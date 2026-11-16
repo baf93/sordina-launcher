@@ -35,6 +35,8 @@ data class Held(
     /** Il canale (il "tipo" di notifica) e il suo nome, per le regole */
     val channel: String? = null,
     val channelName: String? = null,
+    /** L'immagine della notifica, copiata in [NotifImages] (nome del file) */
+    val image: String? = null,
 ) {
     /** Raggruppa per persona; se non c'è una persona, per app. */
     val groupKey: String
@@ -79,7 +81,7 @@ data class Decision(val time: Long, val pkg: String, val appLabel: String, val l
  * Le azioni di apertura (PendingIntent) restano solo in memoria: dopo un riavvio si recuperano
  * dalle notifiche posticipate, che Android conserva.
  */
-class NotifStore(context: Context) {
+class NotifStore(private val context: Context) {
     private val file = File(context.filesDir, "held.json")
     private val learnFile = File(context.filesDir, "person_apps.json")
     private val io = Executors.newSingleThreadScheduledExecutor()
@@ -257,10 +259,12 @@ class NotifStore(context: Context) {
                     put("person", h.person ?: JSONObject.NULL); put("conv", h.conversation ?: JSONObject.NULL)
                     put("text", h.text); put("time", h.time); put("level", h.level.name)
                     put("count", h.count); put("msg", h.isMessage)
-                    put("release", h.releaseAt); put("post", h.postTime); put("title", h.title ?: JSONObject.NULL); put("why", h.reason ?: JSONObject.NULL); put("ch", h.channel ?: JSONObject.NULL); put("chn", h.channelName ?: JSONObject.NULL)
+                    put("release", h.releaseAt); put("post", h.postTime); put("title", h.title ?: JSONObject.NULL); put("why", h.reason ?: JSONObject.NULL); put("ch", h.channel ?: JSONObject.NULL); put("chn", h.channelName ?: JSONObject.NULL); put("img", h.image ?: JSONObject.NULL)
                 })
             }
             runCatching { file.writeText(arr.toString()) }
+            // Le immagini delle notifiche lette se ne vanno con loro
+            runCatching { NotifImages.prune(context, snapshot.mapNotNull { it.image }.toSet()) }
         }
     }
 
@@ -282,6 +286,7 @@ class NotifStore(context: Context) {
                 reason = o.optString("why").takeIf { !o.isNull("why") && it.isNotEmpty() },
                 channel = o.optString("ch").takeIf { !o.isNull("ch") && it.isNotEmpty() },
                 channelName = o.optString("chn").takeIf { !o.isNull("chn") && it.isNotEmpty() },
+                image = o.optString("img").takeIf { !o.isNull("img") && it.isNotEmpty() },
             )
             m[h.key] = h
         }
@@ -314,6 +319,7 @@ class NotifStore(context: Context) {
 
     fun wipe() {
         clear()
+        io.execute { runCatching { NotifImages.wipe(context) } }
         synchronized(this) { read.clear(); _today.value = emptyList() }
         io.execute { runCatching { dismissedFile.delete() } }
         synchronized(this) { personApps.clear() }

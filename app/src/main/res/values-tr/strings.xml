@@ -408,7 +408,7 @@
     <string name="car_line">Arabada · önemli kişiler ve devam eden sohbetler geçer</string>
     <string name="car_line_open">Arabada</string>
     <string name="car_listening">Dinliyorum · bitirmek için dokun</string>
-    <string name="card_hidden">Kart bugünlük gizlendi</string>
+    <string name="card_hidden">Kart gizlendi</string>
     <string name="flight_x">Uçuş %1$s</string>
     <string name="health_access_fix">Erişim ver</string>
     <string name="health_access_sub">Bu izin olmadan hiçbir şey bekletilemez.</string>
@@ -1030,5 +1030,5 @@
     <string name="ach_new_many">%1$d yeni çıkartma</string>
     <string name="ach_locked">Henüz kazanılmadı</string>
     <string name="usually_now">Genelde şimdi</string>
-    <string name="hide_today">Bugünlük gizle</string>
+    <string name="hide_card">Gizle</string>
 </resources>

@@ -408,7 +408,7 @@
     <string name="car_line">In de auto · belangrijke mensen en lopende chats komen door</string>
     <string name="car_line_open">In de auto</string>
     <string name="car_listening">Ik luister · tik om te stoppen</string>
-    <string name="card_hidden">Kaart verborgen voor vandaag</string>
+    <string name="card_hidden">Kaart verborgen</string>
     <string name="flight_x">Vlucht %1$s</string>
     <string name="health_access_fix">Toegang geven</string>
     <string name="health_access_sub">Zonder deze toestemming kan er niets worden vastgehouden.</string>
@@ -1030,5 +1030,5 @@
     <string name="ach_new_many">%1$d nieuwe stickers</string>
     <string name="ach_locked">Nog te winnen</string>
     <string name="usually_now">Meestal nu</string>
-    <string name="hide_today">Vandaag verbergen</string>
+    <string name="hide_card">Verbergen</string>
 </resources>

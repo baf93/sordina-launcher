@@ -419,7 +419,7 @@
     <string name="car_line">În mașină · trec persoanele importante și conversațiile în curs</string>
     <string name="car_line_open">În mașină</string>
     <string name="car_listening">Te ascult · atinge ca să termini</string>
-    <string name="card_hidden">Card ascuns pentru azi</string>
+    <string name="card_hidden">Card ascuns</string>
     <string name="flight_x">Zborul %1$s</string>
     <string name="health_access_fix">Dă acces</string>
     <string name="health_access_sub">Fără această permisiune nu poate reține nimic.</string>
@@ -1041,5 +1041,5 @@
     <string name="ach_new_many">%1$d stickere noi</string>
     <string name="ach_locked">Încă de câștigat</string>
     <string name="usually_now">De obicei acum</string>
-    <string name="hide_today">Ascunde azi</string>
+    <string name="hide_card">Ascunde</string>
 </resources>

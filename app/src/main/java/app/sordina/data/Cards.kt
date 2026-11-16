@@ -20,6 +20,8 @@ sealed interface CardOp {
     data class Navigate(val place: String) : CardOp
     data class OpenUrl(val url: String) : CardOp
     data class OpenEvent(val id: Long) : CardOp
+    /** Riunione online senza link nella notifica: apre l'evento nell'app (Outlook), dove c'è il suo "Partecipa" */
+    data class Join(val key: String) : CardOp
     data class AddEvent(val title: String, val whenAt: When) : CardOp
     data class OpenPackage(val pkg: String) : CardOp
     data class Query(val query: String) : CardOp
@@ -79,6 +81,8 @@ data class Card(
     val sources: List<String> = emptyList(),
     /** Riunione o impegno: quando comincia (l'etichetta "Tra 10 min" si ricalcola ogni minuto) */
     val startsAt: Long? = null,
+    /** L'immagine della notifica (la telecamera di casa, una foto): solo in memoria, si vede allargando il fumetto */
+    val image: android.graphics.Bitmap? = null,
 ) {
     /** Una cosa da vedere una volta: aperta o usata, la scheda ha fatto il suo lavoro. */
     val oneShot: Boolean get() = kind in ONE_SHOT
@@ -104,10 +108,12 @@ class Signals(context: android.content.Context) {
     @Volatile var controller: MediaController? = null
         private set
     private var pausedAt = 0L
+    /** L'app che Sordina ha sentito suonare per ultima (da quando è accesa) */
+    private var heardPlaying: String? = null
 
     @Synchronized
     fun put(c: Card) {
-        if (c.key in dismissed) return
+        if (hidden(c, dismissed.keys)) return
         val old = _cards.value[c.key]
         // Lo stesso pagamento visto da due app (banca e portafoglio): una scheda, con entrambi i nomi
         val merged = if (old != null && old.kind == CardKind.PAYMENT && c.kind == CardKind.PAYMENT) old.copy(
@@ -156,12 +162,23 @@ class Signals(context: android.content.Context) {
 
     fun isDismissed(key: String) = key in dismissed
 
+    companion object {
+        /**
+         * Cosa ricorda "nascondi": le schede nate da una notifica si nascondono per quello che dicono, non per la
+         * notifica. Molte app riusano la stessa notifica per ogni codice (o chiamata, o pagamento): nascosto un codice,
+         * il prossimo deve comparire. Le altre (eventi, pioggia, abitudini) per la loro chiave, come sempre.
+         */
+        fun hideKey(c: Card): String = if ('|' in c.key) "${c.key}#${c.title.hashCode()}" else c.key
+
+        fun hidden(c: Card, keys: Set<String>): Boolean = c.key in keys || hideKey(c) in keys
+    }
+
     /** Tolta a mano: non torna se la notifica viene ripubblicata, né dopo un riavvio (per un giorno). */
     @Synchronized
-    fun dismiss(key: String) {
-        dismissed[key] = System.currentTimeMillis()
+    fun dismiss(c: Card) {
+        dismissed[hideKey(c)] = System.currentTimeMillis()
         while (dismissed.size > 200) dismissed.remove(dismissed.keys.first())
-        remove(key)
+        remove(c.key)
         _dismissedKeys.value = dismissed.keys.toSet()
         val snap = org.json.JSONObject(dismissed as Map<*, *>).toString()
         runCatching { dismissedFile.writeText(snap) }
@@ -174,12 +191,13 @@ class Signals(context: android.content.Context) {
         val state = c?.playbackState?.state
         val playing = state == PlaybackState.STATE_PLAYING || state == PlaybackState.STATE_BUFFERING
         if (c == null || meta == null || (!playing && state != PlaybackState.STATE_PAUSED)) { _music.value = null; pausedAt = 0; return }
-        if (playing) pausedAt = 0 else if (pausedAt == 0L) {
-            // Quando è stata messa in pausa davvero: lo dice il lettore. Così, se Sordina si riavvia,
-            // una pausa vecchia non ricompare per altri 2 minuti. Se non si sa, la si considera vecchia.
-            val since = c.playbackState?.lastPositionUpdateTime ?: 0L
-            val er = android.os.SystemClock.elapsedRealtime()
-            pausedAt = if (since in 1..er) System.currentTimeMillis() - (er - since) else 1L // 1: pausa vecchia, la scheda è già scaduta
+        val pkg = c.packageName
+        if (playing) { pausedAt = 0; heardPlaying = pkg }
+        else if (pausedAt == 0L) {
+            // In pausa conta solo se l'hai appena fermata: Sordina l'ha sentita suonare e poi fermarsi.
+            // Spotify e altri tengono viva la sessione in pausa (anche senza notifica) e ne aggiornano l'ora da soli:
+            // trovata già in pausa, è vecchia e non si mostra (1 = già scaduta).
+            pausedAt = if (heardPlaying == pkg) System.currentTimeMillis() else 1L
         }
         val title = meta.getString(android.media.MediaMetadata.METADATA_KEY_TITLE).orEmpty()
         val artist = meta.getString(android.media.MediaMetadata.METADATA_KEY_ARTIST)
@@ -240,6 +258,10 @@ object CardDetector {
 
     /** "15:30 - 16:00" o "15.30–16.00": l'orario di una riunione. */
     private val SPAN = Regex("(?<![\\d:.])([01]?\\d|2[0-3])[:.]([0-5]\\d)\\s*[-–—]\\s*([01]?\\d|2[0-3])[:.]([0-5]\\d)(?![\\d:.])")
+    /** Il link per entrare in una riunione online (Teams, Zoom, Meet, Webex) */
+    val MEETING_LINK = Regex("https://(meet\\.google\\.com|[\\w.-]*zoom\\.us|teams\\.microsoft\\.com|teams\\.live\\.com|[\\w.-]*webex\\.com)/\\S+")
+    /** "Microsoft Teams Meeting", "Riunione di Microsoft Teams", "Zoom", "Google Meet": si entra online */
+    internal val ONLINE_MEETING = Regex("\\b(teams|zoom|google meet|webex)\\b", RegexOption.IGNORE_CASE)
 
     /** Inizio e fine (millisecondi) della riunione scritta nel testo, nel giorno [day]. */
     fun meetingSpan(text: String, day: java.time.LocalDate): Pair<Long, Long>? {
@@ -320,8 +342,11 @@ object CardDetector {
         if (category == "event" && !ongoing) meetingSpan(text, java.time.Instant.ofEpochMilli(now).atZone(java.time.ZoneId.systemDefault()).toLocalDate())?.let { (from, to) ->
             val rest = text.replace(SPAN, "").lines().map { it.trim(' ', ',', '-', '·', '\t') }.filter { it.isNotEmpty() }
                 .joinToString(" · ").ifBlank { null }
+            // Riunione online: col link si entra da qui; senza (Outlook non lo mette) il tondo apre l'evento, dove c'è "Partecipa"
+            val join = MEETING_LINK.find(text)?.value?.let { CardAction(tr(R.string.join), CardOp.OpenUrl(it)) }
+                ?: if (ONLINE_MEETING.containsMatchIn(all)) CardAction(tr(R.string.join), CardOp.Join(key)) else null
             return Card(key, CardKind.EVENT, appLabel, title.ifBlank { text }, rest,
-                actions = listOf(CardAction(tr(R.string.open), CardOp.OpenNotif(key)), CardAction(tr(R.string.ok), CardOp.Done(key))),
+                actions = listOfNotNull(join, CardAction(tr(R.string.open), CardOp.OpenNotif(key)), CardAction(tr(R.string.ok), CardOp.Done(key))),
                 time = from, expiresAt = to, startsAt = from, bar = Bar(from, to), sources = listOf(key))
         }
         if ((category == "reminder" || category == "event") && !ongoing) {

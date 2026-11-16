@@ -124,7 +124,7 @@ fun Calendars.upcoming(context: Context, now: Long = System.currentTimeMillis())
             ),
             "${shown()}", null, "${CalendarContract.Instances.BEGIN} ASC",
         )?.use { c ->
-            val link = Regex("https://(meet\\.google\\.com|[\\w.-]*zoom\\.us|teams\\.microsoft\\.com|teams\\.live\\.com)/\\S+")
+            val link = CardDetector.MEETING_LINK
             while (c.moveToNext()) {
                 if (c.getInt(6) == 1) continue
                 val begin = c.getLong(2); val end = c.getLong(3)
