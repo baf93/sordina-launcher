@@ -56,6 +56,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -218,6 +221,10 @@ class MainActivity : ComponentActivity(), Ops {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        // Il telefono resta in verticale; sui tablet (lato corto ≥ 600 dp) si gira come il resto del sistema
+        requestedOrientation = if (resources.configuration.smallestScreenWidthDp >= 600)
+            android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_USER
+        else android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         proposalsEngine = Proposals(this, app.brain, app.intents)
         actions = Actions(this, catalog, app.people, app.ha, prefs)
         family = prefs.family
@@ -1339,6 +1346,9 @@ class MainActivity : ComponentActivity(), Ops {
                     else Motion.vertical(up)
                 },
                 label = "screen",
+                // Sui tablet una colonna da telefono al centro: il fondo resta a tutto schermo, le cose non si stirano
+                modifier = Modifier.align(androidx.compose.ui.Alignment.TopCenter)
+                    .widthIn(max = 560.dp).fillMaxHeight(),
             ) { s ->
                 when (s) {
                     Screen.HOME -> {

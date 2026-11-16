@@ -99,7 +99,6 @@
             android:clearTaskOnLaunch="true"
             android:resumeWhilePausing="true"
             android:excludeFromRecents="true"
-            android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize|stateHidden"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density">
             <intent-filter>
