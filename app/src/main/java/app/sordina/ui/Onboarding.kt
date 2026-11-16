@@ -921,41 +921,6 @@ fun ImportantPicker(app: SordinaApp, perms: PermState, ops: Ops) {
     }
 }
 
-/** Le quattro facce in auto: fino a 4 persone scelte, nell'ordine in cui le aggiungi. Vuoto = le impara Sordina. */
-@Composable
-fun CarPeoplePicker(app: SordinaApp, perms: PermState, ops: Ops) {
-    if (!perms.contacts) {
-        Secondary(tr(R.string.onb_allow_contacts), Modifier.fillMaxWidth()) {
-            ops.request(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)
-        }
-        return
-    }
-    var tick by remember { mutableIntStateOf(0) }
-    var q by remember { mutableStateOf("") }
-    var all by remember { mutableStateOf<List<Contact>>(emptyList()) }
-    LaunchedEffect(perms.contacts) { all = withContext(Dispatchers.IO) { app.people.all() } }
-    key(tick) {
-        val ids = app.prefs.carPeople.orEmpty()
-        val chosen = ids.mapNotNull { id -> all.firstOrNull { it.id == id } }
-        fun save(v: List<Long>) { app.prefs.carPeople = v; ops.changed(); tick++ }
-        if (chosen.isNotEmpty()) {
-            Group {
-                chosen.forEach { ct -> Line(ct.name, hint = ct.number, trailing = { SmallPill(tr(R.string.remove)) { save(ids - ct.id) } }) }
-            }
-            Spacer(Modifier.height(14.dp))
-        } else Hint(tr(R.string.n_car_people_auto), Modifier.padding(start = 4.dp, bottom = 10.dp))
-        if (chosen.size < 4) {
-            Field(q, { q = it }, tr(R.string.search_contact), Modifier.padding(horizontal = 4.dp))
-            val list = (if (q.isBlank()) all.filter { it.starred }.take(8) else app.people.search(q, 6))
-                .filter { it.id !in ids && it.number.isNotBlank() }
-            if (q.isBlank() && list.isNotEmpty()) Hint(tr(R.string.from_favorites), Modifier.padding(start = 4.dp, top = 10.dp))
-            if (list.isNotEmpty()) Group {
-                list.forEach { ct -> Line(ct.name, hint = ct.number, trailing = { SmallPill(tr(R.string.add_l).replaceFirstChar { it.uppercase() }) { q = ""; save(ids + ct.id) } }) }
-            }
-        }
-    }
-}
-
 @Composable
 fun CalendarPicker(app: SordinaApp, ops: Ops) {
     var cals by remember { mutableStateOf(emptyList<app.sordina.data.Cal>()) }
@@ -1048,7 +1013,7 @@ internal fun <T> PickList(
 }
 
 @Composable
-private fun Initial(name: String) {
+internal fun Initial(name: String) {
     val c = S.c
     androidx.compose.foundation.layout.Box(Modifier.size(30.dp).clip(androidx.compose.foundation.shape.CircleShape).background(c.tile), contentAlignment = Alignment.Center) {
         androidx.compose.material3.Text(name.trim().take(1).uppercase(), style = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = c.ink))

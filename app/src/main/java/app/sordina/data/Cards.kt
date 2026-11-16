@@ -311,8 +311,10 @@ object CardDetector {
                 expiresAt = now + 3 * 3600_000, avatar = true)
         }
         if (pkg in CLOCK_PKGS && (ongoing || category == "alarm")) {
+            // I pulsanti dell'Orologio ("Ignora", "Posticipa", "Stop", "Pausa") diventano quelli del fumetto: la sveglia
+            // che sta per suonare si spegne da qui. Senza pulsanti, il tocco apre l'Orologio
             return Card(key, CardKind.TIMER, appLabel, title.ifBlank { tr(R.string.timer) }, text.ifBlank { null },
-                actions = listOf(CardAction(tr(R.string.open), CardOp.OpenNotif(key))))
+                actions = buttons.take(3).mapIndexed { i, b -> CardAction(b, CardOp.Fire(key, i)) }.ifEmpty { listOf(CardAction(tr(R.string.open), CardOp.OpenNotif(key))) })
         }
         // Riunione o impegno avvisato dall'app (Outlook, Teams, calendari): "15:30 - 16:00, Microsoft Teams Meeting"
         if (category == "event" && !ongoing) meetingSpan(text, java.time.Instant.ofEpochMilli(now).atZone(java.time.ZoneId.systemDefault()).toLocalDate())?.let { (from, to) ->

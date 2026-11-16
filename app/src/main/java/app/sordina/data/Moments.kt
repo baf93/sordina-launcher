@@ -43,7 +43,10 @@ class Moments(private val context: Context, private val prefs: Prefs) {
         f != NotificationManager.INTERRUPTION_FILTER_ALL && f != NotificationManager.INTERRUPTION_FILTER_UNKNOWN
     }.getOrDefault(false)
 
-    fun current(): Moment = if (androidQuiet()) Moment.QUIET else Moment.NONE
+    fun current(): Moment = if (previewQuiet || androidQuiet()) Moment.QUIET else Moment.NONE
+
+    /** Solo nella versione di prova: la sordina come se fosse attiva, senza toccare il Non disturbare */
+    var previewQuiet = false
 
 
     /** Solo nella versione di prova: mostra una Casa a scelta, per vederla senza guidare o aspettare la sera */
@@ -97,13 +100,21 @@ class Moments(private val context: Context, private val prefs: Prefs) {
      * del Calendario e, con Orologio Samsung, l'avviso di risveglio della Modalità sonno (alle 8:00:03).
      * Vale solo quella di un'app orologio, e le sveglie vere suonano allo scoccare del minuto.
      */
-    fun clockAlarm(): Long? = runCatching {
-        val info = context.getSystemService(android.app.AlarmManager::class.java)?.nextAlarmClock ?: return@runCatching null
-        val owner = info.showIntent?.creatorPackage
-        val clock = context.packageManager.resolveActivity(android.content.Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS), 0)?.activityInfo?.packageName
-        if (owner != null && owner !in CardDetector.CLOCK_PKGS && owner != clock) return@runCatching null
-        info.triggerTime.takeIf { it % 60_000L == 0L }
-    }.getOrNull()
+    fun clockAlarm(): Long? {
+        val now = System.currentTimeMillis()
+        val real = runCatching {
+            val info = context.getSystemService(android.app.AlarmManager::class.java)?.nextAlarmClock ?: return@runCatching null
+            val owner = info.showIntent?.creatorPackage
+            val clock = context.packageManager.resolveActivity(android.content.Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS), 0)?.activityInfo?.packageName
+            if (owner != null && owner !in CardDetector.CLOCK_PKGS && owner != clock) return@runCatching null
+            info.triggerTime.takeIf { it % 60_000L == 0L }
+        }.getOrNull()
+        // La sveglia che hai appena impostato (dalla conferma dell'Orologio): conta finché Android non mostra
+        // una sveglia vera che arriva prima. Passata, si dimentica.
+        val hint = prefs.alarmHint.takeIf { it > now }
+        if (hint == null && prefs.alarmHint != 0L) prefs.alarmHint = 0L
+        return listOfNotNull(real, hint).minOrNull()
+    }
 
     /** Sordina a tempo, accesa da te: fino a quando, o null. */
     fun focusUntil(now: Long = System.currentTimeMillis()): Long? =

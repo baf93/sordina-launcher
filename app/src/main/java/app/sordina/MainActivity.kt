@@ -24,6 +24,8 @@ import app.sordina.ui.Feel
 import app.sordina.ui.LocalFeel
 import app.sordina.ui.HomeReply
 import app.sordina.ui.HomeReplyTimer
+import app.sordina.ui.shortDuration
+import app.sordina.data.Contact
 import app.sordina.ui.LocalGlass
 import app.sordina.ui.theme.Backdrop
 import app.sordina.ui.theme.Backdrops
@@ -289,7 +291,7 @@ class MainActivity : ComponentActivity(), Ops {
             screen = Screen.ONBOARDING; return
         }
         if (screen == Screen.ONBOARDING) return
-        // Solo nella versione di prova: "bubble" = un fumetto finto in Casa (otp, ask, call, ride, timer, music, event, eventnow, plan, health); "off" lo toglie
+        // Solo nella versione di prova: "bubble" = un fumetto finto in Casa (otp, ask, call, ride, timer, alarm, music, event, eventnow, plan, health); "off" lo toglie
         if (intent?.hasExtra("bubble") == true && (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
             val k = intent.getStringExtra("bubble").orEmpty()
             intent.removeExtra("bubble")
@@ -315,6 +317,7 @@ class MainActivity : ComponentActivity(), Ops {
             app.moments.preview = intent.getStringExtra("scene")?.let { s -> Scene.entries.firstOrNull { it.name == s } }
             // "carApps" = pacchetti separati da virgola ("" = quelle proposte)
             intent.getStringExtra("carApps")?.let { v -> prefs.carApps = v.split(',').filter { it.isNotBlank() }.ifEmpty { null }; prefsVersion++ }
+            app.moments.previewQuiet = intent.getBooleanExtra("quiet", false); moment = app.moments.current()
             scene = app.moments.scene(); screen = Screen.HOME
             lifecycleScope.launch(Dispatchers.IO) { sceneExtras(scene) }
             return
@@ -341,10 +344,25 @@ class MainActivity : ComponentActivity(), Ops {
         SordinaListener.sync()
         moment = app.moments.current()
         scene = app.moments.scene()
+        alarmFeedback()
         // Tornando da un'app la situazione è cambiata (l'app di prima, il luogo): si ricalcola, mai mentre guardi.
         // Un'occhiata a un'app e subito di nuovo Casa: le proposte di pochi secondi fa vanno ancora bene
         refreshProposals(force = System.currentTimeMillis() - proposalsAt > PROPOSALS_GAP)
         refreshExtras()
+    }
+
+    /** L'ultima sveglia di cui si è già detto "fatto": la conferma si dice una volta sola */
+    private var alarmSaidAt = 0L
+
+    /** Hai appena impostato una sveglia nell'Orologio: tornando a Casa la sordina conferma l'ora che ha capito. */
+    private fun alarmFeedback() {
+        val at = prefs.alarmHint
+        val setAt = prefs.alarmHintAt
+        val now = System.currentTimeMillis()
+        if (at <= now || setAt == alarmSaidAt || now - setAt > 3 * 60_000L) return
+        alarmSaidAt = setAt
+        val time = java.time.Instant.ofEpochMilli(at).atZone(java.time.ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
+        answer(tr(R.string.n_alarm_in, time, shortDuration(((at - now) / 60_000L).toInt())))
     }
 
     override fun onStop() {
@@ -439,17 +457,7 @@ class MainActivity : ComponentActivity(), Ops {
             }
         }.getOrNull() else null
         if (s == Scene.CAR) carPeople = runCatching {
-            // Chi chiami di solito in questa situazione; se il cervello non sa ancora, le persone importanti
-            val all = app.people.all()
-            val learned = app.brain.likelyPeople("call:", 4).mapNotNull { app.brain.contact(it.removePrefix("call:")) }
-            // Tra gli importanti ci sono anche parole ("allarme"): valgono solo i contatti veri, con un numero
-            val important = app.people.importantList().mapNotNull { n -> all.firstOrNull { it.normalized == n } ?: all.firstOrNull { it.normalized.startsWith("$n ") } }
-            val hidden = prefs.carHidden
-            // Le quattro scelte da te nelle impostazioni; se non le hai scelte, fra le importanti prima chi chiami di solito in auto
-            val importantIds = important.map { it.id }.toSet()
-            val mine = prefs.carPeople?.mapNotNull { id -> all.firstOrNull { it.id == id } }.orEmpty()
-            val chosen = (mine.ifEmpty { learned.filter { it.id in importantIds } + important.sortedBy { it.normalized } })
-                .filter { it.number.isNotBlank() && it.normalized !in hidden }.distinctBy { it.id }.take(4)
+            val chosen = carContacts()
             val px = (64 * resources.displayMetrics.density).toInt()
             // Due con lo stesso nome: "Francesco R." e "Francesco B."
             val first = chosen.groupingBy { it.name.substringBefore(' ') }.eachCount()
@@ -461,6 +469,21 @@ class MainActivity : ComponentActivity(), Ops {
             }
         }.getOrDefault(emptyList())
     }
+
+    /** Le persone in auto: le tue (fino a 4) o, se non ne hai scelte, fra le importanti prima chi chiami di solito in auto. */
+    override fun carContacts(): List<Contact> = runCatching {
+        val all = app.people.all()
+        val hidden = prefs.carHidden
+        val mine = prefs.carPeople?.mapNotNull { id -> all.firstOrNull { it.id == id } }
+        val list = mine ?: run {
+            val learned = app.brain.likelyPeople("call:", 4).mapNotNull { app.brain.contact(it.removePrefix("call:")) }
+            // Tra gli importanti ci sono anche parole ("allarme"): valgono solo i contatti veri, con un numero
+            val important = app.people.importantList().mapNotNull { n -> all.firstOrNull { it.normalized == n } ?: all.firstOrNull { it.normalized.startsWith("$n ") } }
+            val importantIds = important.map { it.id }.toSet()
+            (learned.filter { it.id in importantIds } + important.sortedBy { it.normalized }).filter { it.normalized !in hidden }
+        }
+        list.filter { it.number.isNotBlank() }.distinctBy { it.id }.take(4)
+    }.getOrDefault(emptyList())
 
     /** Le scorciatoie in auto: le tue (fino a tre) o, se non ne hai scelte, navigazione, musica e casa che usi di più. */
     /** In auto, di base: Maps, Spotify e Home Assistant, o quelle che fanno lo stesso lavoro sul telefono. */
@@ -549,8 +572,13 @@ class MainActivity : ComponentActivity(), Ops {
             }
             key.startsWith("hide:") -> {
                 // Pressione lunga su una persona in auto: non la si mostra più lì (resta importante)
-                prefs.carHidden = prefs.carHidden + Search.normalize(key.removePrefix("hide:"))
-                lifecycleScope.launch(Dispatchers.IO) { sceneExtras(Scene.CAR) }
+                val n = Search.normalize(key.removePrefix("hide:"))
+                prefs.carHidden = prefs.carHidden + n
+                // Se era tra le tue quattro, esce anche da lì (come "Rimuovi" nelle impostazioni)
+                lifecycleScope.launch(Dispatchers.IO) {
+                    prefs.carPeople?.let { ids -> val all = app.people.all(); prefs.carPeople = ids.filter { id -> all.firstOrNull { it.id == id }?.normalized != n } }
+                    sceneExtras(Scene.CAR)
+                }
                 say(tr(R.string.car_hidden))
             }
             key.startsWith("call:") -> {
@@ -731,7 +759,6 @@ class MainActivity : ComponentActivity(), Ops {
         val hm = java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)
         val out = ArrayList<AgendaRow>()
         // Il motore è fermo o rischia di esserlo: lo si dice per primo, un tocco porta dove si sistema
-        if (moment != Moment.NONE) out += AgendaRow(tr(R.string.now_l), app.moments.phrase(moment), "moment")
         val timed = ArrayList<Pair<Long, AgendaRow>>()
         for (e in agendaEvents) {
             val key = if (e.link == "ha") "ha" else "event:${e.id}"
@@ -1062,6 +1089,7 @@ class MainActivity : ComponentActivity(), Ops {
                 actions = listOf(CardAction(tr(R.string.call_back), CardOp.Query("chiama Marta")), CardAction(tr(R.string.write), CardOp.Query("scrivi a Marta"))), avatar = true)
             "ride" -> Card("demo:ride", CardKind.RIDE, "Glovo", "Il rider arriva tra 8 min", "Sushi Zen · 2 articoli", listOf(open), bar = Bar(value = 0.65f))
             "timer" -> Card("demo:timer", CardKind.TIMER, "Orologio", "Timer · 4:32", "Pasta", listOf(open))
+            "alarm" -> Card("demo:alarm", CardKind.TIMER, "Orologio", "Sveglia in arrivo", "Lun 07:15", listOf(CardAction("Ignora", CardOp.Fire("demo:alarm", 0))))
             "music" -> Card("demo:music", CardKind.MUSIC, "Spotify", "Tutto bene", "Cosmo", listOf(
                 CardAction(tr(R.string.prev), CardOp.MusicPrev, "prev"), CardAction(tr(R.string.pause), CardOp.MusicToggle, "pause"), CardAction(tr(R.string.next_track), CardOp.MusicNext, "next")))
             "event" -> Card("demo:event", CardKind.EVENT, "Teams", "Riunione di progetto", "Microsoft Teams", listOf(CardAction(tr(R.string.join), CardOp.OpenUrl("https://teams.microsoft.com"))),
@@ -1349,8 +1377,8 @@ class MainActivity : ComponentActivity(), Ops {
                                     else proposals.usual.map { s -> val k = s.candidate; Usual(k.id, k.title, k.kind, k.app?.takeIf { prefs.appIcons }?.let { catalog.cachedIcon(it) }, s.why) }
                                 },
                                 agenda = remember(agendaEvents, moment, now, scene, health) { agendaRows(waiting) }
-                                    // Senza impegni in Casa resta solo l'avviso che Sordina è ferma
-                                    .let { r -> if (prefs.homeAgenda) r else r.filter { it.key == "moment" } },
+                                    // Senza impegni in Casa non resta nulla
+                                    .let { r -> if (prefs.homeAgenda) r else emptyList() },
                                 weather = if (prefs.homeWeather) weatherNow else null,
                                 listening = voice.listening,
                                 partial = voice.partial,

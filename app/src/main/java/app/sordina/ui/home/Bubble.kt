@@ -26,6 +26,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AlarmOff
+import androidx.compose.material.icons.rounded.Snooze
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Call
@@ -101,6 +103,9 @@ data class Usual(val id: String, val title: String, val kind: Kind, val icon: Im
 
 /** Sotto la barra, sempre alta uguale: la barra non si sposta mai, qualunque cosa dica la sordina. */
 private val ZONE = 156.dp
+
+/** Quanto sta in alto la barra di Casa sopra la barra di sistema: la ricerca la tiene nello stesso punto, comodo per il pollice */
+internal val BAR_LIFT = 12.dp + ZONE + 16.dp + 12.dp
 private val TAIL = 7.dp
 
 /**
@@ -216,7 +221,7 @@ private fun Mascot(state: HomeState, talking: Boolean, mood: app.sordina.ui.Mood
             if (mood != null) app.sordina.ui.Mascot(
                 mood,
                 Modifier.size(44.dp),
-            ) else app.sordina.ui.MascotGlyph(pose, c.soft, Modifier.size(40.dp))
+            ) else app.sordina.ui.MascotGlyph(pose, if (pose == app.sordina.ui.Pose.QUIET) c.accent else c.soft, Modifier.size(40.dp))
             if (talking && on) Box(
                 Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-2).dp).heightIn(min = 18.dp).widthIn(min = 18.dp)
                     .clip(CircleShape).background(c.accent).padding(horizontal = 4.dp),
@@ -405,6 +410,16 @@ private fun iconOf(a: CardAction): ImageVector = when (val op = a.op) {
     is CardOp.OpenUrl -> Icons.Rounded.Videocam
     is CardOp.AddEvent -> Icons.Rounded.EventAvailable
     CardOp.Fix -> Icons.Rounded.Build
+    // Un pulsante della notifica (sveglia, timer): l'icona dal suo nome
+    is CardOp.Fire -> a.label.lowercase().let { l ->
+        when {
+            listOf("pausa", "pause").any { it in l } -> Icons.Rounded.Pause
+            listOf("riprendi", "resume", "avvia", "start").any { it in l } -> Icons.Rounded.PlayArrow
+            listOf("posticipa", "snooze", "rimanda").any { it in l } -> Icons.Rounded.Snooze
+            listOf("ignora", "dismiss", "stop", "disattiva", "annulla", "cancel", "elimina", "turn off").any { it in l } -> Icons.Rounded.AlarmOff
+            else -> Icons.Rounded.Check
+        }
+    }
     else -> Icons.Rounded.Check
 }
 

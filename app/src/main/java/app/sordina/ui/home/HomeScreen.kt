@@ -196,9 +196,8 @@ fun HomeScreen(
         Scene.NIGHT -> { NightHome(state, gestures, onSearch, onMicDown, onMicUp, onAction, onCard, onScene) { onSheet(true) }; return }
         else -> Unit
     }
-    // La sera Casa resta quella di sempre, con l'accento più caldo e uno sguardo a domani
-    if (state.scene == Scene.EVENING) Evening { DayHome(state, gestures, onSearch, onMicDown, onMicUp, onAction, onCard, onAgenda, onScene, onSheet) }
-    else DayHome(state, gestures, onSearch, onMicDown, onMicUp, onAction, onCard, onAgenda, onScene, onSheet)
+    // La sera Casa resta quella di sempre, con lo stesso colore: la riconosci dalla sordina e da "domani" nell'angolo
+    DayHome(state, gestures, onSearch, onMicDown, onMicUp, onAction, onCard, onAgenda, onScene, onSheet)
 }
 
 /** Su: le app. Giù: la tendina. Tieni premuto: le impostazioni. Doppio tocco: spegne (se scelto). Uguale in tutte le Case. */

@@ -217,8 +217,9 @@ class Prefs(context: Context) {
     /** In auto: persone da non mostrare (nomi normalizzati), tolte con una pressione lunga */
     /** In auto: le quattro persone scelte da te (id della rubrica), in ordine; null = quelle che chiami di più */
     var carPeople: List<Long>?
-        get() = sp.getString("carPeople", null)?.split('|')?.mapNotNull { it.toLongOrNull() }?.takeIf { it.isNotEmpty() }
-        set(v) = put { if (v.isNullOrEmpty()) remove("carPeople") else putString("carPeople", v.take(4).joinToString("|")) }
+        // Vuota (non null): le hai tolte tutte, in auto non c'è nessuno
+        get() = sp.getString("carPeople", null)?.split('|')?.mapNotNull { it.toLongOrNull() }
+        set(v) = put { if (v == null) remove("carPeople") else putString("carPeople", v.take(4).joinToString("|")) }
 
     var carHidden: Set<String>
         get() = sp.getStringSet("carHidden", emptySet())!!.toSet()
@@ -229,6 +230,13 @@ class Prefs(context: Context) {
         set(v) = put { putStringSet("homeWords", v) }
 
     /** Sordina a tempo: fino a quando (millisecondi), 0 = spenta */
+    /** L'ultima sveglia che hai impostato nell'Orologio (letta dalla sua conferma "Sveglia impostata tra…"), 0 = nessuna; e quando l'hai impostata */
+    var alarmHint: Long
+        get() = sp.getLong("alarmHint", 0L)
+        set(v) = put { putLong("alarmHint", v) }
+    var alarmHintAt: Long
+        get() = sp.getLong("alarmHintAt", 0L)
+        set(v) = put { putLong("alarmHintAt", v) }
     var quietUntil: Long
         get() = sp.getLong("quietUntil", 0L)
         set(v) = put { putLong("quietUntil", v) }

@@ -23,6 +23,12 @@ import kotlinx.coroutines.flow.StateFlow
  * contenuto di una finestra solo durante una [fill], che dura al massimo qualche secondo. Senza app frenate non riceve niente.
  */
 class SordinaAccess : AccessibilityService() {
+    /** Gli orologi da ascoltare: quelli noti più quello che usa questo telefono (Xiaomi, OnePlus, Motorola…) */
+    private val clocks by lazy {
+        app.sordina.data.CardDetector.CLOCK_PKGS + listOfNotNull(runCatching {
+            packageManager.resolveActivity(android.content.Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS), 0)?.activityInfo?.packageName
+        }.getOrNull())
+    }
     /** Le app ascoltate adesso: si chiede ad Android di cambiarle solo se cambiano davvero */
     private var watching: Set<String>? = null
     private var watchingTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
@@ -51,6 +57,15 @@ class SordinaAccess : AccessibilityService() {
     override fun onAccessibilityEvent(e: AccessibilityEvent?) {
         val pkg = e?.packageName?.toString() ?: return
         when (e.eventType) {
+            // La conferma dell'Orologio (un messaggio breve, non una notifica): l'ora della sveglia appena impostata
+            AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED -> if (pkg in clocks && e.parcelableData !is android.app.Notification) {
+                val text = e.text.joinToString(" ")
+                if ((applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) android.util.Log.d("SordinaAlarm", "toast: $text")
+                app.sordina.data.AlarmToast.parse(text, System.currentTimeMillis())?.let { at ->
+                    val prefs = SordinaApp.of(this).prefs
+                    prefs.alarmHint = at; prefs.alarmHintAt = System.currentTimeMillis()
+                }
+            }
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 if (pkg == pending?.pkg) { tryFill(); return }
                 runCatching { BrakeGuard.onForeground(this, pkg) }
@@ -94,9 +109,11 @@ class SordinaAccess : AccessibilityService() {
         // Sordina sempre: così si sa quando un browser non è più davanti
         val want = (if (on) prefs.braked + WebBrake.browsers(prefs.braked) + packageName else setOf(packageName))
             .let { w -> pending?.let { w + it.pkg } ?: w }
+            // E l'Orologio: solo la sua conferma "Sveglia impostata tra…" (succede quando imposti una sveglia, cioè quasi mai)
+            .plus(clocks)
         if (front != null && front !in want) front = null
         // Il contenuto delle pagine arriva solo mentre un browser è davanti, e a mazzetti
-        val types = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or (if (front != null) AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED else 0)
+        val types = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED or (if (front != null) AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED else 0)
         val timeout = if (front != null) 300L else 0L
         if (want == watching && types == watchingTypes) return
         val info = serviceInfo ?: return

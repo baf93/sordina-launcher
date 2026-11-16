@@ -150,7 +150,20 @@ fun SettingsScreen(
     // Ogni pagina ricorda dove eri: tornando indietro, sei lì
     val scrolls = remember { HashMap<Sub, ScrollState>() }
     fun scrollOf(s: Sub) = scrolls.getOrPut(s) { ScrollState(0) }
-    fun change(block: () -> Unit) { block(); tick++; ops.changed() }
+    // Ogni modifica ricostruisce la pagina: per un attimo è più corta e lo scorrimento salterebbe. Si torna dov'eri
+    var keep by remember { mutableStateOf<Pair<Sub, Int>?>(null) }
+    fun change(block: () -> Unit) { keep = sub to scrollOf(sub).value; block(); tick++; ops.changed() }
+    LaunchedEffect(tick) {
+        val (s, v) = keep ?: return@LaunchedEffect
+        keep = null
+        // Qualche fotogramma al massimo: appena la pagina è di nuovo lunga abbastanza
+        val st = scrollOf(s)
+        var frames = 0
+        do {
+            if (st.value != v) st.scrollTo(v)
+            androidx.compose.runtime.withFrameNanos { }
+        } while (st.value != v && ++frames < 12)
+    }
     fun up() { sub = sub.parent?.let { Sub.valueOf(it) } ?: Sub.MAIN }
     BackHandler(sub != Sub.MAIN) { up() }
     val back = { up() }
@@ -269,11 +282,25 @@ fun SettingsScreen(
                         AppKeys(car, apps, byPackage = true, sorted = false, onRemove = { k -> change { prefs.carApps = car - k } },
                             onMove = { i, j -> change { val l = car.toMutableList(); l[i] = l[j].also { l[j] = l[i] }; prefs.carApps = l } },
                             add = if (car.size < 3) tr(R.string.n_add_app) else null) { sub = Sub.CAR_APPS }
-                        // Le quattro facce in auto: scelte da te, o quelle che chiami di più
+                        // Le quattro facce in auto, come le app: quelle di adesso (tue o proposte), in ordine; togli, sposta, aggiungi
                         Topic(tr(R.string.n_car_people), tr(R.string.n_car_people_hint))
+                        val people = remember(tick) { ops.carContacts() }
+                        val ids = people.map { it.id }
                         Group {
-                            val mine = prefs.carPeople
-                            Line(tr(R.string.n_car_people_choose), hint = if (mine == null) tr(R.string.n_car_people_auto) else tr(R.string.n_car_people_some, mine.size), icon = Icons.Rounded.People) { sub = Sub.CAR_PEOPLE }
+                            people.forEachIndexed { i, p ->
+                                Line(p.name, trailing = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        if (people.size > 1) {
+                                            RoundIcon(Icons.Rounded.KeyboardArrowUp, tr(R.string.up), i > 0) { change { prefs.carPeople = ids.toMutableList().also { l -> l[i] = l[i - 1].also { l[i - 1] = l[i] } } } }
+                                            Spacer(Modifier.width(6.dp))
+                                            RoundIcon(Icons.Rounded.KeyboardArrowDown, tr(R.string.down), i < people.lastIndex) { change { prefs.carPeople = ids.toMutableList().also { l -> l[i] = l[i + 1].also { l[i + 1] = l[i] } } } }
+                                            Spacer(Modifier.width(10.dp))
+                                        }
+                                        SmallPill(tr(R.string.remove)) { change { prefs.carPeople = ids - p.id } }
+                                    }
+                                })
+                            }
+                            if (people.size < 4) Line(tr(R.string.n_add_person), icon = Icons.Rounded.Add, trailing = {}) { sub = Sub.CAR_PEOPLE }
                         }
                     }
                     // La pagina Sordina si apre da Casa: il suo ordine si sceglie qui
@@ -465,9 +492,12 @@ fun SettingsScreen(
                 Sub.BRAKED -> AppChooser(tr(R.string.s_braked_apps), null, apps, selected = { prefs.braked }, back) { pkg, on ->
                     prefs.braked = if (on) prefs.braked + pkg else prefs.braked - pkg; ops.changed()
                 }
-                Sub.CAR_PEOPLE -> Page(tr(R.string.n_car_people), tr(R.string.n_car_people_hint), back, scrollOf(page)) {
-                    Spacer(Modifier.height(8.dp))
-                    CarPeoplePicker(app, perms, ops)
+                Sub.CAR_PEOPLE -> ContactChooser(app, tr(R.string.n_car_people), tr(R.string.n_car_people_hint), selected = { ops.carContacts().map { it.id }.toSet() }, back) { id, on ->
+                    val now = ops.carContacts().map { it.id }
+                    prefs.carPeople = if (on) (if (now.size < 4) now + id else now) else now - id
+                    ops.changed()
+                    // Arrivati a quattro si torna indietro da soli
+                    if (on && now.size >= 3) back()
                 }
                 Sub.CAR_APPS -> AppChooser(tr(R.string.n_car_shortcuts), tr(R.string.n_car_shortcuts_hint), apps, selected = { ops.carApps().toSet() }, back) { pkg, on ->
                     val now = ops.carApps()
@@ -752,6 +782,27 @@ private fun AppChooser(title: String, about: String?, apps: List<AppEntry>, sele
         Box(Modifier.weight(1f).padding(start = 4.dp)) {
             PickList(installed, { it.packageName }, { it.label }, q, leading = { a -> AppDot(a.packageName) }, selected = chosen, onScrolled = {}) { a ->
                 onToggle(a.packageName, a.packageName !in chosen)
+                chosen = selected()
+            }
+        }
+    }
+}
+
+/** Come [AppChooser], per le persone: in cima le scelte, poi la rubrica per lettera (solo chi ha un numero), la lente per filtrare. */
+@Composable
+private fun ContactChooser(app: SordinaApp, title: String, about: String?, selected: () -> Set<Long>, onBack: () -> Unit, onToggle: (Long, Boolean) -> Unit) {
+    var all by remember { mutableStateOf(emptyList<app.sordina.data.Contact>()) }
+    LaunchedEffect(Unit) {
+        all = withContext(Dispatchers.IO) { app.people.all().filter { it.number.isNotBlank() }.distinctBy { it.id }.sortedBy { it.name.lowercase() } }
+    }
+    var chosen by remember { mutableStateOf(selected()) }
+    var q by remember { mutableStateOf("") }
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 16.dp)) {
+        Header(title, onBack, subtitle = about)
+        Field(q, { q = it }, tr(R.string.search_contact), Modifier.padding(horizontal = 4.dp))
+        Box(Modifier.weight(1f).padding(start = 4.dp)) {
+            PickList(all, { it.id.toString() }, { it.name }, q, leading = { k -> Initial(k.name) }, selected = chosen.mapTo(HashSet()) { it.toString() }, onScrolled = {}) { k ->
+                onToggle(k.id, k.id !in chosen)
                 chosen = selected()
             }
         }

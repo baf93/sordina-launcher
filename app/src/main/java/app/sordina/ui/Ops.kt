@@ -41,6 +41,8 @@ interface Ops {
     fun openBatterySettings()
     /** Le scorciatoie in auto (le tue o quelle proposte) */
     fun carApps(): List<String>
+    /** Le persone in auto (le tue, fino a 4, o quelle che chiami di più) */
+    fun carContacts(): List<app.sordina.data.Contact> = emptyList()
     /** Chiede impronta, volto o PIN del telefono; [onOk] solo se riesce (subito, se il telefono non ha un blocco) */
     fun unlock(title: String, onOk: () -> Unit)
     /** Apre un'app nascosta: niente freno, e il cervello non la impara */

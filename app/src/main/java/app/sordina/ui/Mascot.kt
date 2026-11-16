@@ -321,9 +321,13 @@ fun MascotGlyph(pose: Pose, tint: Color, modifier: Modifier = Modifier) {
                     Pose.NIGHT -> drawPath(path {
                         moveTo(-15f, 2f); quadraticTo(-9.5f, 8f, -4f, 2f); moveTo(4f, 2f); quadraticTo(9.5f, 8f, 15f, 2f)
                     }, tint, style = line)
-                    Pose.QUIET -> drawPath(path {
-                        moveTo(-15f, 5f); quadraticTo(-9.5f, -2f, -4f, 5f); moveTo(4f, 5f); quadraticTo(9.5f, -2f, 15f, 5f)
-                    }, tint, style = line)
+                    Pose.QUIET -> {
+                        drawPath(path {
+                            moveTo(-15f, 5f); quadraticTo(-9.5f, -2f, -4f, 5f); moveTo(4f, 5f); quadraticTo(9.5f, -2f, 15f, 5f)
+                        }, tint, style = line)
+                        // In sordina: una zeta accanto al cappuccio, si vede anche da piccola
+                        drawPath(path { moveTo(20f, -58f); lineTo(34f, -58f); lineTo(20f, -44f); lineTo(34f, -44f) }, tint, style = line)
+                    }
                     // Occhi grandi sulla strada
                     Pose.DRIVE -> { drawCircle(tint, 5f, Offset(-9f, -2f)); drawCircle(tint, 5f, Offset(9f, -2f)) }
                     Pose.AWAKE -> { drawCircle(tint, 4.6f, Offset(-9f, 3f)); drawCircle(tint, 4.6f, Offset(9f, 3f)) }

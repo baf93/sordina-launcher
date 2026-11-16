@@ -63,13 +63,6 @@ import java.util.Locale
 
 // ── Sera ──────────────────────────────────────────────────────────────────────
 
-/** La sera l'accento si scalda: stessa Casa, luce di fine giornata. */
-@Composable
-internal fun Evening(content: @Composable () -> Unit) {
-    val s = LocalSordina.current
-    CompositionLocalProvider(LocalSordina provides s.copy(colors = s.colors.copy(accent = Color(0xFFC98A4B))), content = content)
-}
-
 /** Sotto il programma di oggi: domani (sveglia, appuntamenti, tempo), quando comincia la notte, com'è andata oggi. */
 @Composable
 internal fun TomorrowCorner(state: HomeState, onScene: (String) -> Unit) {
@@ -113,13 +106,13 @@ private fun Tomorrow(state: HomeState, onScene: (String) -> Unit) {
 
 // ── Notte ─────────────────────────────────────────────────────────────────────
 
-/** Di notte tutto si spegne: nero pieno, testo smorzato, niente foto né vetro. */
+/** Di notte tutto si spegne: nero pieno, testo smorzato, niente foto né vetro. Il colore resta il tuo, solo un po' più spento. */
 @Composable
 private fun Night(content: @Composable () -> Unit) {
     val s = LocalSordina.current
     val night = s.colors.copy(
         bg = Color.Black, ink = Color(0xFFB9B3A9), soft = Color(0xFF6F6A63), line = Color(0x1FFFFFFF),
-        accent = Color(0xFFB0783F), tile = Color(0xFF121212), card = Color(0xFF121212), dot = Color(0xFF3A3A3A), dark = true,
+        accent = androidx.compose.ui.graphics.lerp(s.colors.accent, Color.Black, 0.25f), tile = Color(0xFF121212), card = Color(0xFF121212), dot = Color(0xFF3A3A3A), dark = true,
     )
     CompositionLocalProvider(LocalSordina provides s.copy(colors = night), LocalGlass provides false, content = content)
 }

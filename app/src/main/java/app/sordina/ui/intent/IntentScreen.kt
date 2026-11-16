@@ -24,6 +24,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import app.sordina.ui.imeJump
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
@@ -153,8 +157,7 @@ fun IntentScreen(
     val threshold = with(LocalDensity.current) { 64.dp.toPx() }
     val result = remember(query) { understand(query) }
     val feelTop = LocalFeel.current
-    LaunchedEffect(Unit) { if (keyboardOnOpen) runCatching { focus.requestFocus() } }
-    // Lo stesso gesto anche sopra i risultati: quello che la lista non usa per scorrere (già in cima, o già in fondo) passa qui.
+    LaunchedEffect(Unit) { if (keyboardOnOpen) runCatching { focus.requestFocus() } }    // Lo stesso gesto anche sopra i risultati: quello che la lista non usa per scorrere (già in cima, o già in fondo) passa qui.
     // Solo se il gesto è partito con la lista ferma al bordo: scorrendo i risultati non si esce per sbaglio
     val home by androidx.compose.runtime.rememberUpdatedState(onHome)
     val allApps by androidx.compose.runtime.rememberUpdatedState(onAllApps)
@@ -191,8 +194,7 @@ fun IntentScreen(
                 )
             }
             .systemBarsPadding()
-            .imeJump()
-            .padding(bottom = 12.dp),
+            .imeJump(),
     ) {
         OnBackdrop(topDark) {
             // Tutte le app: un'icona sola, in alto a destra, lontana dal pollice
@@ -264,9 +266,12 @@ fun IntentScreen(
         }
         notice?.let { n -> Box(Modifier.padding(horizontal = 16.dp)) { NoticeBar(n) } }
         Spacer(Modifier.height(8.dp))
-        // La barra
+        // La barra; mentre tieni premuto il microfono ne esce un cerchio grande che respira con la voce, come in Casa
+        val grow by androidx.compose.animation.core.animateFloatAsState(if (voice.listening) 1f else 0f, androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 500f), label = "mic")
+        val level by androidx.compose.animation.core.animateFloatAsState(if (voice.listening) voice.level else 0f, androidx.compose.animation.core.tween(90), label = "level")
+        Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(56.dp)) {
         Row(
-            Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(56.dp).clip(RoundedCornerShape(28.dp))
+            Modifier.fillMaxSize().clip(RoundedCornerShape(28.dp))
                 .background(surface()).padding(start = 22.dp, end = 7.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -289,8 +294,21 @@ fun IntentScreen(
             if (query.isNotEmpty()) Box(Modifier.size(42.dp).clip(CircleShape).clickableNoRipple { onQuery("") }, contentAlignment = Alignment.Center) {
                 Icon(Icons.Rounded.Close, tr(R.string.clear), Modifier.size(20.dp), tint = c.soft)
             }
-            if (voice.available) Mic(voice.listening, onVoiceDown, onVoiceUp)
+            if (voice.available) Mic(grow, onVoiceDown, onVoiceUp)
         }
+        if (grow > 0.01f) Box(
+            Modifier.align(Alignment.CenterEnd).offset(x = 28.dp).requiredSize(88.dp + 36.dp)
+                .graphicsLayer { scaleX = grow; scaleY = grow; alpha = grow },
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(Modifier.requiredSize(88.dp + 36.dp * level).clip(CircleShape).background(c.accent.copy(alpha = 0.25f)))
+            Box(Modifier.requiredSize(88.dp).clip(CircleShape).background(c.accent), contentAlignment = Alignment.Center) {
+                Icon(Icons.Rounded.Mic, null, Modifier.size(34.dp), tint = c.bg)
+            }
+        }
+        }
+        // La barra sta dove sta in Casa; con la tastiera aperta resta lì se ci sta, altrimenti sale appena sopra
+        Spacer(Modifier.height((app.sordina.ui.home.BAR_LIFT - app.sordina.ui.keyboardLift()).coerceAtLeast(12.dp)))
     }
 }
 
@@ -308,11 +326,11 @@ private fun Section(title: String, count: String? = null) {
 
 /** Microfono: tieni premuto, parli, rilasci. */
 @Composable
-private fun Mic(listening: Boolean, onDown: () -> Unit, onUp: () -> Unit) {
+private fun Mic(grow: Float, onDown: () -> Unit, onUp: () -> Unit) {
     val c = S.c
     val feel = LocalFeel.current
     Box(
-        Modifier.size(42.dp).clip(CircleShape).background(if (listening) c.accent else androidx.compose.ui.graphics.Color.Transparent)
+        Modifier.size(42.dp)
             .pointerInput(Unit) {
                 awaitEachGesture {
                     awaitFirstDown()
@@ -323,7 +341,7 @@ private fun Mic(listening: Boolean, onDown: () -> Unit, onUp: () -> Unit) {
                 }
             },
         contentAlignment = Alignment.Center,
-    ) { Icon(Icons.Rounded.Mic, tr(R.string.speak), Modifier.size(22.dp), tint = if (listening) c.bg else c.accent) }
+    ) { if (grow < 0.5f) Icon(Icons.Rounded.Mic, tr(R.string.speak), Modifier.size(22.dp), tint = c.accent) }
 }
 
 /** Azione verso un'altra persona, già pronta: serve il tuo tocco. Un blocco, e sotto il pulsante principale. */

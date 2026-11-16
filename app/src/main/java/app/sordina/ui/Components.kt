@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.imeAnimationTarget
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -587,3 +588,14 @@ fun RoundIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, label: Stri
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @androidx.compose.runtime.Composable
 fun Modifier.imeJump(): Modifier = this.then(Modifier.windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.imeAnimationTarget))
+
+/** Quanto la tastiera (a fine animazione) sale sopra la barra di sistema: zero se è chiusa. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@androidx.compose.runtime.Composable
+fun keyboardLift(): androidx.compose.ui.unit.Dp {
+    val d = androidx.compose.ui.platform.LocalDensity.current
+    val px = androidx.compose.foundation.layout.WindowInsets.imeAnimationTarget.getBottom(d) -
+        androidx.compose.foundation.layout.WindowInsets.navigationBars.getBottom(d)
+    return with(d) { px.coerceAtLeast(0).toDp() }
+}
+
