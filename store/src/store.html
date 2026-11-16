@@ -1,0 +1,355 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- Tutto il materiale del Play Store da una pagina sola: il frammento sceglie cosa disegnare.
+     #icon (512×512) · #feature-it / #feature-en (1024×500) · #shot-it-1 … #shot-en-7 (1080×1920)
+     Le schermate riproducono l'interfaccia vera (colori, misure in dp, testi dell'app) con dati inventati. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Roboto+Mono:wght@400&family=Fraunces:opsz,wght@9..144,300;9..144,400&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round&display=block" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F2EDE3; --ink: #1F1D1A; --soft: #8B857C; --accent: #1E7F78;
+    --brass: #E8A93A; --brass-dark: #B07A1E; --brass-cap: #9A6A16;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); overflow: hidden; }
+  body { font-family: Roboto, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  .mi { font-family: 'Material Icons Round'; font-weight: normal; font-style: normal; line-height: 1; letter-spacing: normal;
+        text-transform: none; display: inline-block; white-space: nowrap; direction: ltr; -webkit-font-feature-settings: 'liga'; }
+
+  /* ── Pagina delle schermate ── */
+  .shot { width: 1080px; height: 1920px; position: relative; overflow: hidden; background: var(--paper); }
+  .shot .glow { position: absolute; width: 1400px; height: 1400px; left: -160px; top: 760px; border-radius: 50%;
+                background: radial-gradient(closest-side, rgba(232,169,58,0.22), rgba(232,169,58,0) 70%); }
+  .caption { position: absolute; left: 96px; right: 96px; top: 120px; }
+  .caption h1 { font-family: Fraunces, serif; font-weight: 300; font-size: 84px; line-height: 1.04; letter-spacing: -1.5px; margin: 0; color: var(--ink); }
+  .caption p { font-size: 38px; line-height: 1.3; margin: 26px 0 0; color: #6E685F; font-weight: 400; }
+  .phone { position: absolute; left: 50%; top: 520px; width: 380px; height: 800px; margin-left: -190px;
+           transform: scale(1.62); transform-origin: top center; border-radius: 50px; background: #0B0B0B; padding: 10px;
+           box-shadow: 0 40px 70px rgba(60,40,10,0.22), 0 6px 18px rgba(0,0,0,0.18), inset 0 0 0 1.5px #2b2b2b; }
+  .screen { width: 360px; height: 780px; border-radius: 40px; overflow: hidden; position: relative; }
+  .camera { position: absolute; top: 12px; left: 50%; margin-left: -6px; width: 12px; height: 12px; border-radius: 50%; background: #050505; z-index: 5; }
+
+  /* ── Interfaccia di Sordina (in dp) ── */
+  .ui { position: absolute; inset: 0; display: flex; flex-direction: column; }
+  .dark  { --bg: #000; --uink: #EDEDED; --usoft: #8C8C8C; --card: #1E1E1E; --line: #2A2A2A; --uacc: #3FB0A6; background: var(--bg); color: var(--uink); }
+  .light { --bg: #F4F1EC; --uink: #1F1D1A; --usoft: #8B857C; --card: #FFFFFF; --line: #E4DED4; --uacc: #1E7F78; background: var(--bg); color: var(--uink); }
+  .status { height: 34px; display: flex; align-items: center; justify-content: space-between; padding: 6px 22px 0; font-size: 13px; font-weight: 500; }
+  .status .mi { font-size: 15px; margin-left: 3px; }
+  .home { padding: 28px 24px 0; }
+  .day { font-size: 31px; font-weight: 400; line-height: 38px; }
+  .date { font-size: 31px; color: var(--usoft); line-height: 38px; font-weight: 300; }
+  .weather { display: flex; align-items: center; margin-top: 12px; font-size: 18px; }
+  .weather .mi { font-size: 20px; margin-right: 8px; }
+  .dlabel { font-size: 13px; color: var(--usoft); margin: 12px 0 3px; }
+  .aline { display: flex; font-size: 17px; padding: 5px 0; }
+  .aline .t { min-width: 64px; padding-right: 12px; color: var(--usoft); }
+  .aline .t.acc { color: var(--uacc); }
+  .grow { flex: 1; }
+  .search { margin: 0 16px; height: 52px; border-radius: 26px; background: var(--card); display: flex; align-items: center; padding: 0 18px 0 22px;
+            font-size: 17px; color: var(--usoft); }
+  .search .mi { margin-left: auto; color: var(--uacc); font-size: 24px; }
+  .zone { height: 156px; margin: 12px 16px 16px; position: relative; display: flex; align-items: center; }
+  .mascot { width: 44px; height: 60px; position: relative; flex: none; }
+  .badge { position: absolute; top: -2px; right: -10px; min-width: 22px; height: 22px; border-radius: 11px; background: var(--uacc); color: var(--bg);
+           font-size: 12px; font-weight: 500; display: flex; align-items: center; justify-content: center; padding: 0 5px; border: 2px solid var(--bg); }
+  .bubble { margin-left: 10px; flex: 1; background: var(--card); border-radius: 24px; position: relative; padding: 12px 12px 12px 23px; min-height: 84px;
+            display: flex; align-items: center; }
+  .bubble:before { content: ''; position: absolute; left: -7px; top: 50%; margin-top: -9px; border-style: solid; border-width: 9px 9px 9px 0;
+                   border-color: transparent var(--card) transparent transparent; }
+  .bubble .col { flex: 1; min-width: 0; }
+  .lab { font-size: 13px; color: var(--usoft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ttl { font-size: 19px; line-height: 24px; }
+  .sub { font-size: 15px; color: var(--usoft); }
+  .round { width: 48px; height: 48px; border-radius: 24px; background: var(--uacc); color: var(--bg); display: flex; align-items: center; justify-content: center; flex: none; margin-left: 8px; }
+  .round .mi { font-size: 24px; }
+  .round.quiet { background: var(--line); color: var(--uink); }
+  .track { height: 4px; border-radius: 2px; background: var(--line); margin-top: 10px; overflow: hidden; }
+  .track i { display: block; height: 100%; background: var(--uacc); border-radius: 2px; }
+  .code { font-family: 'Roboto Mono', monospace; font-size: 28px; letter-spacing: 3px; }
+  .handle { text-align: center; color: var(--usoft); margin: -6px 0 2px; }
+  .handle .mi { font-size: 20px; }
+
+  /* Pagina Sordina */
+  .pagehead { display: flex; align-items: center; padding: 18px 16px 6px; font-size: 30px; }
+  .pagehead .mi { font-size: 26px; margin-right: 18px; }
+  .sec { font-size: 18px; padding: 16px 20px 8px; }
+  .sec span { color: var(--usoft); font-size: 15px; margin-left: 6px; }
+  .block { margin: 0 12px 8px; background: var(--card); border-radius: 22px; padding: 12px 14px; }
+  .brow { display: flex; align-items: center; }
+  .av { width: 40px; height: 40px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 17px; position: relative; flex: none; color: #2b2b2b; }
+  .av small { position: absolute; right: -4px; bottom: -3px; width: 18px; height: 18px; border-radius: 9px; border: 2px solid var(--card); display: flex; align-items: center; justify-content: center; }
+  .av small .mi { font-size: 11px; color: #fff; }
+  .bcol { flex: 1; min-width: 0; margin-left: 12px; }
+  .bt { font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bt b { font-weight: 400; color: var(--uacc); font-size: 14px; margin-left: 6px; }
+  .bp { font-size: 14px; color: var(--usoft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bp b { color: var(--uink); font-weight: 500; }
+  .btime { font-size: 12px; color: var(--usoft); margin-left: 8px; }
+  .chev { font-size: 20px; color: var(--usoft); margin-left: 2px; }
+  .msg { border-top: 1px solid var(--line); padding: 11px 2px; margin-top: 8px; }
+  .msg .h { font-size: 15px; font-weight: 500; display: flex; } .msg .h i { margin-left: auto; font-style: normal; font-size: 12px; color: var(--usoft); font-weight: 400; }
+  .msg .x { font-size: 14px; color: var(--usoft); margin-top: 2px; line-height: 19px; }
+  .acts { display: flex; gap: 8px; margin-top: 4px; }
+  .acts div { flex: 1; height: 38px; border-radius: 19px; background: var(--line); display: flex; align-items: center; justify-content: center; }
+  .acts .mi { font-size: 20px; }
+  .readall { position: absolute; left: 16px; right: 16px; bottom: 22px; height: 52px; border-radius: 26px; background: #EDEDED; color: #121212;
+             display: flex; align-items: center; justify-content: center; font-size: 17px; box-shadow: 0 -10px 30px #000; }
+
+  /* Intenzione */
+  .ihead { display: flex; align-items: center; justify-content: space-between; padding: 22px 20px 10px 24px; font-size: 30px; }
+  .ihead .apps { width: 44px; height: 44px; border-radius: 22px; background: var(--card); display: flex; align-items: center; justify-content: center; }
+  .res { margin: 6px 16px; background: var(--card); border-radius: 22px; padding: 12px 14px; display: flex; align-items: center; }
+  .res .ic { width: 44px; height: 44px; border-radius: 22px; background: rgba(63,176,166,0.16); color: var(--uacc); display: flex; align-items: center; justify-content: center; flex: none; }
+  .res .ic .mi { font-size: 22px; }
+  .res .rc { flex: 1; margin-left: 14px; min-width: 0; }
+  .res .rt { font-size: 18px; } .res .rs { font-size: 14px; color: var(--usoft); margin-top: 1px; }
+  .res .go { width: 40px; height: 40px; border-radius: 20px; background: #EDEDED; color: #121212; display: flex; align-items: center; justify-content: center; }
+  .res .go .mi { font-size: 20px; }
+  .typed { color: var(--uink); }
+  .caret { display: inline-block; width: 2px; height: 20px; background: var(--uacc); vertical-align: -4px; margin-left: 1px; }
+
+  /* Auto */
+  .car { padding: 26px 24px 0; }
+  .clock { font-size: 64px; font-weight: 300; line-height: 72px; }
+  .scene { font-size: 16px; color: var(--usoft); }
+  .faces { display: flex; gap: 8px; margin: 0 16px 14px; }
+  .face { flex: 1; text-align: center; }
+  .face .c { width: 64px; height: 64px; border-radius: 32px; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #2a2a2a; }
+  .face .n { font-size: 14px; }
+  .tiles { display: flex; gap: 10px; margin: 0 16px 10px; }
+  .tile { flex: 1; height: 76px; border-radius: 24px; background: var(--card); display: flex; align-items: center; justify-content: center; }
+  .tile .appic { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; }
+  .tile .appic .mi { font-size: 26px; color: #fff; }
+  .micbar { margin: 0 16px; height: 72px; border-radius: 36px; background: var(--uacc); color: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .micbar .mi { font-size: 30px; margin-right: 10px; }
+
+  /* Privacy */
+  .promise { position: absolute; left: 96px; right: 96px; top: 1150px; }
+  .promise div { display: flex; align-items: center; font-size: 40px; padding: 22px 0; border-top: 1.5px solid rgba(31,29,26,0.12); }
+  .promise div:last-child { border-bottom: 1.5px solid rgba(31,29,26,0.12); }
+  .promise .mi { font-size: 46px; color: var(--accent); margin-right: 30px; width: 50px; }
+
+  /* Grafica in evidenza */
+  .feature { width: 1024px; height: 500px; position: relative; overflow: hidden; background: var(--paper); }
+  .feature .glow { position: absolute; width: 760px; height: 760px; left: -120px; top: -120px; border-radius: 50%;
+                   background: radial-gradient(closest-side, rgba(232,169,58,0.30), rgba(232,169,58,0) 72%); }
+  .feature .say { position: absolute; left: 262px; top: 118px; background: #fff; border-radius: 26px; padding: 18px 24px; font-size: 24px; line-height: 30px;
+                  box-shadow: 0 10px 30px rgba(60,40,10,0.10); max-width: 300px; }
+  .feature .say:before { content: ''; position: absolute; left: -10px; bottom: 26px; border-style: solid; border-width: 10px 12px 10px 0; border-color: transparent #fff transparent transparent; }
+  .feature .say small { display: block; font-size: 16px; color: var(--soft); margin-bottom: 2px; }
+  .feature .name { position: absolute; left: 600px; top: 150px; font-family: Fraunces, serif; font-weight: 300; font-size: 104px; letter-spacing: -2px; line-height: 1; }
+  .feature .tag { position: absolute; left: 604px; top: 278px; font-size: 30px; line-height: 38px; color: #6E685F; width: 380px; }
+
+  .icon { width: 512px; height: 512px; background: #F2EDE3; display: flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- La sordina d'ottone: gli stessi tratti dell'icona (drawable/ic_launcher_foreground.xml) -->
+    <symbol id="brass" viewBox="-40 -58 80 102">
+      <path fill="#9A6A16" d="M-3,-54 L3,-54 Q9,-54 9,-48 L9,-46 Q9,-40 3,-40 L-3,-40 Q-9,-40 -9,-46 L-9,-48 Q-9,-54 -3,-54 Z"/>
+      <path fill="#E8A93A" d="M-12,-42 Q0,-46 12,-42 L33,26 Q34,40 0,40 Q-34,40 -33,26 Z"/>
+      <path fill="#B07A1E" d="M-30,24 Q0,34 30,24 L32,30 Q0,40 -32,30 Z"/>
+      <path fill="#D85A30" fill-opacity="0.4" d="M-22,12 a5,3 0 1,0 10,0 a5,3 0 1,0 -10,0 M12,12 a5,3 0 1,0 10,0 a5,3 0 1,0 -10,0"/>
+      <path fill="#3A2A0E" d="M-11.2,2 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0 M4.8,2 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0"/>
+      <path fill="none" stroke="#3A2A0E" stroke-width="2.5" stroke-linecap="round" d="M-6,12 Q0,18 6,12"/>
+    </symbol>
+    <!-- In Casa, sullo sfondo scuro, la sordina è disegnata a tratto -->
+    <symbol id="line" viewBox="-40 -58 80 102">
+      <g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M-3,-54 L3,-54 Q9,-54 9,-48 L9,-46 Q9,-40 3,-40 L-3,-40 Q-9,-40 -9,-46 L-9,-48 Q-9,-54 -3,-54 Z"/>
+        <path d="M-12,-42 Q0,-46 12,-42 L33,26 Q34,40 0,40 Q-34,40 -33,26 Z"/>
+        <path d="M-6,12 Q0,17 6,12"/>
+      </g>
+      <g fill="currentColor"><circle cx="-8" cy="2" r="3"/><circle cx="8" cy="2" r="3"/></g>
+    </symbol>
+  </defs>
+</svg>
+
+<script>
+const T = {
+  it: {
+    day: 'Lunedì', date: '16 novembre', weather: '8° sereno', today: 'Oggi', tomorrow: 'Domani',
+    ev1: 'Riunione di progetto', ev2: 'Pranzo con Giulia', ev3: 'Dentista',
+    search: 'Cosa ti serve?', inMin: 'Tra 5 min', calendar: 'Calendario',
+    caps: [
+      ['Il telefono che non ti interrompe', 'Una Casa calma: solo quello che conta adesso.'],
+      ['Le notifiche aspettano te', "L'importante passa. Il resto resta in sordina finché vuoi tu."],
+      ['Quello che serve, quando serve', 'Il codice da copiare, la riunione a cui partecipare: un tocco.'],
+      ['Allarga il fumetto', 'Trascina in su per vedere la foto della notifica.'],
+      ['Dillo, e Sordina lo fa', 'Scrivi o parla: chiama, scrivi, timer, la tua casa.'],
+      ["In auto, solo l'essenziale", 'Navigazione, musica e le tue persone, senza staccare gli occhi dalla strada.'],
+      ['Tutto resta sul telefono', 'Sordina non ha server: quello che impara resta con te.'],
+    ],
+    sordina: 'Sordina', people: 'Persone', groups: 'Gruppi', work: 'Lavoro', shop: 'Acquisti e soldi', readAll: 'Tutto letto',
+    p1: 'Giulia', p1m: 'Ci vediamo alle 8 al solito posto?', p1m2: 'Porto io il vino 🍷', p2: 'Calcetto del giovedì', p2s: 'Marco', p2m: 'Chi porta il pallone?',
+    w1: 'Riepilogo settimanale', w1s: 'Outlook', w1m: 'Le attività della settimana', w2: 'Canale progetto', w2s: 'Teams', w2m: 'Laura: ho caricato le slide',
+    s1: 'Il tuo ordine è in viaggio', s1s: 'Corriere', s1m: 'Consegna prevista domani',
+    bank: 'Banca', code: 'codice', copy: 'Copia',
+    homeLab: 'Casa · Campanello', homeTtl: 'È arrivato un pacco', homeSub: 'Sul tappetino davanti alla porta',
+    typed: 'scrivi a giulia che arrivo', r1: 'Scrivi a Giulia', r1s: '«Arrivo» · messaggio', r2: 'Chiama Giulia', r2s: 'Cellulare', r3: 'Timer di 10 minuti', r3s: 'Parte subito, senza aprire l\'Orologio',
+    usual: 'Di solito adesso', usualT: 'Verso casa',
+    carScene: 'In auto · passano solo le chiamate', carNext: '9:30', carEv: 'Riunione di progetto', mic: 'Tocca e parla',
+    faces: ['Giulia', 'Marco', 'Mamma', 'Luca'], playing: 'In riproduzione', song: 'Onde lente', artist: 'Marea',
+    promise: [['person_off', 'Niente account'], ['block', 'Niente pubblicità'], ['visibility_off', 'Niente tracciamento'], ['code', 'Open source']],
+    fSay: 'Niente di urgente fino alle&nbsp;13', fSmall: 'Sordina', fTag: 'Il telefono che non ti interrompe.',
+  },
+  en: {
+    day: 'Monday', date: 'November 16', weather: '46° clear', today: 'Today', tomorrow: 'Tomorrow',
+    ev1: 'Project meeting', ev2: 'Lunch with Julia', ev3: 'Dentist',
+    search: 'What do you need to do?', inMin: 'In 5 min', calendar: 'Calendar',
+    caps: [
+      ["The phone that doesn't interrupt you", 'A calm Home: only what matters right now.'],
+      ['Notifications wait for you', "What matters gets through. The rest waits until you're ready."],
+      ['What you need, when you need it', 'The code to copy, the meeting to join: one tap.'],
+      ['Swipe up to see more', 'Pictures from notifications, right in the bubble.'],
+      ["Say it, and it's done", 'Type or speak: call, text, timers, your home.'],
+      ['In the car, just the essentials', 'Navigation, music and your people, eyes on the road.'],
+      ['Everything stays on your phone', 'Sordina has no servers: what it learns stays with you.'],
+    ],
+    sordina: 'Sordina', people: 'People', groups: 'Groups', work: 'Work', shop: 'Shopping and money', readAll: 'All read',
+    p1: 'Julia', p1m: 'See you at 8 at the usual place?', p1m2: "I'll bring the wine 🍷", p2: 'Thursday football', p2s: 'Mark', p2m: "Who's bringing the ball?",
+    w1: 'Weekly summary', w1s: 'Outlook', w1m: "This week's tasks", w2: 'Project channel', w2s: 'Teams', w2m: 'Laura: slides are up',
+    s1: 'Your order is on its way', s1s: 'Courier', s1m: 'Expected delivery tomorrow',
+    bank: 'Bank', code: 'code', copy: 'Copy',
+    homeLab: 'Home · Doorbell', homeTtl: 'A parcel has arrived', homeSub: 'On the doormat by the front door',
+    typed: "text julia i'm on my way", r1: 'Text Julia', r1s: '"I\'m on my way" · message', r2: 'Call Julia', r2s: 'Mobile', r3: '10 minute timer', r3s: 'Starts right away, no Clock app needed',
+    usual: 'Usually now', usualT: 'Head home',
+    carScene: 'Driving · only calls get through', carNext: '9:30 AM', carEv: 'Project meeting', mic: 'Tap and speak',
+    faces: ['Julia', 'Mark', 'Mom', 'Luke'], playing: 'Now playing', song: 'Slow waves', artist: 'Marea',
+    promise: [['person_off', 'No account'], ['block', 'No ads'], ['visibility_off', 'No tracking'], ['code', 'Open source']],
+    fSay: 'Nothing urgent until 1&nbsp;PM', fSmall: 'Sordina', fTag: "The phone that doesn't interrupt you.",
+  },
+};
+const FACE = ['#E8A93A', '#9FD3BE', '#A8C5DA', '#F2A7A0', '#CFB194', '#B8A9D9'];
+
+const mi = (n, s = '') => `<span class="mi" style="${s}">${n}</span>`;
+const status = () => `<div class="status"><span>9:41</span><span>${mi('signal_cellular_alt')}${mi('wifi')}${mi('battery_full')}</span></div>`;
+const mascot = (n) => `<div class="mascot" style="color:var(--usoft)"><svg width="44" height="60"><use href="#line"/></svg>${n ? `<div class="badge">${n}</div>` : ''}</div>`;
+const phone = (cls, inner) => `<div class="phone"><div class="screen"><div class="camera"></div><div class="ui ${cls}">${status()}${inner}</div></div></div>`;
+const caption = (t, i) => `<div class="glow"></div><div class="caption"><h1>${t.caps[i][0]}</h1><p>${t.caps[i][1]}</p></div>`;
+
+function homeTop(t, agenda = true) {
+  return `<div class="home"><div class="day">${t.day}</div><div class="date">${t.date}</div>
+    <div class="weather">${mi('wb_sunny')}${t.weather}</div>
+    ${agenda ? `<div class="dlabel" style="margin-top:22px">${t.today}</div>
+    <div class="aline"><span class="t acc">10:00</span><span>${t.ev1}</span></div>
+    <div class="aline"><span class="t">13:00</span><span>${t.ev2}</span></div>
+    <div class="dlabel">${t.tomorrow}</div>
+    <div class="aline"><span class="t">8:30</span><span>${t.ev3}</span></div>` : ''}</div>`;
+}
+const searchBar = (t) => `<div class="search">${t.search}${mi('mic')}</div>`;
+
+// La foto del campanello: un'illustrazione, niente foto vere
+const doorPic = () => `<svg viewBox="0 0 300 220" width="100%" style="display:block;border-radius:14px">
+  <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3B4A5C"/><stop offset="1" stop-color="#6E7D86"/></linearGradient>
+  <radialGradient id="lamp" cx="0.5" cy="0.2" r="0.7"><stop offset="0" stop-color="#FFD58A" stop-opacity="0.55"/><stop offset="1" stop-color="#FFD58A" stop-opacity="0"/></radialGradient></defs>
+  <rect width="300" height="220" fill="url(#sky)"/>
+  <rect x="0" y="0" width="300" height="220" fill="#D9CBB5"/>
+  <rect x="0" y="168" width="300" height="52" fill="#A89A86"/>
+  <rect x="96" y="30" width="108" height="140" rx="4" fill="#2F5B57"/>
+  <rect x="104" y="40" width="40" height="56" rx="3" fill="#2A504C"/><rect x="156" y="40" width="40" height="56" rx="3" fill="#2A504C"/>
+  <rect x="104" y="104" width="40" height="58" rx="3" fill="#2A504C"/><rect x="156" y="104" width="40" height="58" rx="3" fill="#2A504C"/>
+  <circle cx="190" cy="104" r="4" fill="#E8C27A"/>
+  <rect x="88" y="22" width="124" height="10" rx="3" fill="#C2B39C"/>
+  <circle cx="228" cy="52" r="70" fill="url(#lamp)"/><rect x="223" y="44" width="10" height="14" rx="3" fill="#F4D9A0"/>
+  <rect x="104" y="170" width="92" height="14" rx="3" fill="#7A6A55"/>
+  <g transform="translate(118,128)"><rect width="64" height="44" rx="3" fill="#C99A5B"/><rect y="0" width="64" height="10" fill="#B5864A"/>
+  <rect x="28" y="0" width="8" height="44" fill="#E6D2A8" opacity="0.8"/></g>
+  <g transform="translate(40,120)"><rect x="0" y="34" width="34" height="30" rx="4" fill="#8C5E3C"/><circle cx="17" cy="24" r="20" fill="#5E8B5A"/><circle cx="8" cy="14" r="12" fill="#6F9C69"/><circle cx="26" cy="12" r="11" fill="#527E4F"/></g>
+</svg>`;
+
+function shot(lang, n) {
+  const t = T[lang];
+  const i = n - 1;
+  let inner = '';
+  if (n === 1) {
+    inner = phone('light', `${homeTop(t)}<div class="grow"></div>${searchBar(t)}
+      <div class="zone">${mascot(3)}<div class="bubble"><div class="col"><div class="lab">${t.inMin} · ${t.calendar}</div><div class="ttl">${t.ev1}</div></div>
+      <div class="round">${mi('videocam')}</div></div></div>`);
+  } else if (n === 2) {
+    const blk = (init, col, appCol, appIc, title, cnt, who, prev, time) => `<div class="block"><div class="brow">
+      <div class="av" style="background:${col}">${init}<small style="background:${appCol}">${mi(appIc)}</small></div>
+      <div class="bcol"><div class="bt">${title}${cnt ? `<b>${cnt}</b>` : ''}</div><div class="bp">${who ? `<b>${who}</b> ` : ''}${prev}</div></div>
+      <span class="btime">${time}</span>${mi('keyboard_arrow_down', 'font-size:20px;color:var(--usoft);margin-left:2px')}</div></div>`;
+    inner = phone('dark', `<div class="pagehead">${mi('arrow_back')}${t.sordina}</div>
+      <div class="sec">${t.people}<span>2</span></div>
+      <div class="block"><div class="brow"><div class="av" style="background:${FACE[3]}">${t.p1[0]}<small style="background:#25A35A">${mi('chat')}</small></div>
+        <div class="bcol"><div class="bt">${t.p1}<b>2</b></div></div><span class="btime">18:42</span>${mi('keyboard_arrow_up', 'font-size:20px;color:var(--usoft);margin-left:2px')}</div>
+        <div class="msg"><div class="h">${t.p1m}<i>18:40</i></div></div>
+        <div class="msg"><div class="h">${t.p1m2}<i>18:42</i></div></div>
+        <div class="acts"><div>${mi('notifications_active', 'color:var(--uacc)')}</div><div>${mi('drive_file_move')}</div><div>${mi('done_all')}</div></div></div>
+      ${blk(t.p2[0], FACE[1], '#25A35A', 'chat', t.p2, 5, t.p2s, t.p2m, '18:15')}
+      <div class="sec">${t.work}<span>2</span></div>
+      ${blk('O', '#A8C5DA', '#1C6FD1', 'mail', t.w1, 0, t.w1s, t.w1m, '17:30')}
+      ${blk('T', '#B8A9D9', '#5B5FC7', 'groups', t.w2, 3, t.w2s, t.w2m, '17:02')}
+      <div class="sec">${t.shop}<span>1</span></div>
+      ${blk('C', '#CFB194', '#8A6A3A', 'local_shipping', t.s1, 0, t.s1s, t.s1m, '15:20')}
+      <div class="readall">${t.readAll}</div>`);
+  } else if (n === 3) {
+    inner = phone('dark', `${homeTop(t)}<div class="grow"></div>${searchBar(t)}
+      <div class="zone">${mascot(2)}<div class="bubble"><div class="col"><div class="lab">${t.bank} · ${t.code} · 1/2</div><div class="code">482 913</div>
+      <div class="track"><i style="width:72%"></i></div></div><div class="round">${mi('content_copy')}</div></div></div>`);
+  } else if (n === 4) {
+    inner = phone('dark', `${homeTop(t, false)}<div class="grow"></div>
+      <div style="position:relative;height:0">
+        <div style="position:absolute;left:70px;right:16px;bottom:-150px" class="bubble-tall">
+          <div class="bubble" style="display:block;padding-top:4px;margin-left:0">
+            <div class="handle">${mi('keyboard_arrow_down')}</div>
+            <div style="margin:2px 0 10px">${doorPic()}</div>
+            <div style="display:flex;align-items:center"><div class="col"><div class="lab">${t.homeLab}</div><div class="ttl">${t.homeTtl}</div><div class="sub">${t.homeSub}</div></div>
+            <div class="round">${mi('check')}</div></div>
+          </div></div></div>
+      <div class="search" style="visibility:hidden"></div><div class="zone">${mascot(1)}</div>`);
+  } else if (n === 5) {
+    const res = (ic, tt, ts, go) => `<div class="res"><div class="ic">${mi(ic)}</div><div class="rc"><div class="rt">${tt}</div><div class="rs">${ts}</div></div>${go ? `<div class="go">${mi('keyboard_return')}</div>` : ''}</div>`;
+    inner = phone('dark', `<div class="ihead">${t.search}<div class="apps">${mi('apps', 'font-size:22px')}</div></div>
+      ${res('chat', t.r1, t.r1s, true)}${res('call', t.r2, t.r2s, false)}${res('timer', t.r3, t.r3s, false)}
+      <div class="grow"></div>
+      <div class="search" style="margin-bottom:12px"><span class="typed">${t.typed}</span><span class="caret"></span><span class="mi" style="color:var(--usoft);font-size:20px;margin-left:auto">close</span>${mi('mic', 'margin-left:14px')}</div>
+      <div class="zone">${mascot(0)}<div class="bubble"><div class="col"><div class="lab">${mi('auto_awesome', 'font-size:13px;color:var(--uacc);vertical-align:-2px;margin-right:4px')}${t.usual}</div><div class="ttl">${t.usualT}</div></div><div class="round">${mi('navigation')}</div></div></div>`);
+  } else if (n === 6) {
+    const faces = t.faces.map((f, k) => `<div class="face"><div class="c" style="background:${FACE[k]}">${f[0]}</div><div class="n">${f}</div></div>`).join('');
+    const tile = (bg, ic) => `<div class="tile"><div class="appic" style="background:${bg}">${mi(ic)}</div></div>`;
+    inner = phone('dark', `<div class="car"><div class="clock">8:42</div><div class="scene">${t.carScene}</div>
+      <div class="dlabel" style="margin-top:26px">${t.today}</div><div class="aline"><span class="t acc">${t.carNext}</span><span>${t.carEv}</span></div></div>
+      <div class="grow"></div><div class="faces">${faces}</div>
+      <div class="tiles">${tile('#2E8B57', 'navigation')}${tile('#D9534F', 'music_note')}${tile('#3E8ED0', 'home')}</div>
+      <div class="micbar">${mi('mic')}${t.mic}</div>
+      <div class="zone" style="margin-top:8px">${mascot(0)}<div class="bubble"><div class="col"><div class="lab">${t.playing}</div><div class="ttl">${t.song}</div><div class="sub">${t.artist}</div></div>
+      <div class="round">${mi('pause')}</div><div class="round quiet" style="margin-left:6px">${mi('skip_next')}</div></div></div>`);
+  } else if (n === 7) {
+    return `<div class="shot"><div class="caption"><h1>${t.caps[i][0]}</h1><p>${t.caps[i][1]}</p></div>
+      <div class="glow" style="top:120px"></div><svg style="position:absolute;left:50%;margin-left:-170px;top:560px" width="340" height="434"><use href="#brass"/></svg>
+      <div class="promise">${t.promise.map(([ic, s]) => `<div>${mi(ic)}${s}</div>`).join('')}</div></div>`;
+  }
+  return `<div class="shot">${caption(t, i)}${inner}</div>`;
+}
+
+function feature(lang) {
+  const t = T[lang];
+  return `<div class="feature"><div class="glow"></div>
+    <svg style="position:absolute;left:70px;top:96px" width="230" height="294"><use href="#brass"/></svg>
+    <div class="say"><small>${t.fSmall}</small>${t.fSay}</div>
+    <div class="name">Sordina</div><div class="tag">${t.fTag}</div></div>`;
+}
+
+// L'icona per Play: la stessa dell'app (fondo carta, sordina al centro, 60% della zona sicura). Play la ritaglia da sé.
+const icon = () => `<div class="icon"><svg width="300" height="383" style="margin-top:20px"><use href="#brass"/></svg></div>`;
+
+const h = location.hash.slice(1);
+let html = '';
+if (h === 'icon') html = icon();
+else if (h.startsWith('feature-')) html = feature(h.split('-')[1]);
+else if (h.startsWith('shot-')) { const [, lang, n] = h.split('-'); html = shot(lang, +n); }
+else html = shot('it', 1);
+document.getElementById('root').innerHTML = html;
+</script>
+</body>
+</html>
