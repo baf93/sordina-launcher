@@ -221,8 +221,14 @@ class SordinaAccess : AccessibilityService() {
             return s.performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
         }
 
-        /** Le impostazioni di Android dove si accende. */
-        fun openSettings(context: Context) {
+        /** Chi ha chiesto di accenderla: prima di mandare nelle impostazioni si spiega e si chiede il consenso (AccessConsent). */
+        val asking = MutableStateFlow(false)
+
+        /** Accenderla: prima l'informativa nell'app, poi, se l'utente accetta, le impostazioni di Android. */
+        fun openSettings(@Suppress("UNUSED_PARAMETER") context: Context) { asking.value = true }
+
+        /** Le impostazioni di Android dove si accende: solo dopo il consenso. */
+        fun openSystemSettings(context: Context) {
             runCatching {
                 context.startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }

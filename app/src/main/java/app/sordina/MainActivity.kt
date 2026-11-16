@@ -73,6 +73,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import app.sordina.data.Act
+import app.sordina.ui.AccessConsent
 import app.sordina.data.Actions
 import app.sordina.data.AppEntry
 import app.sordina.data.Candidate
@@ -256,6 +257,7 @@ class MainActivity : ComponentActivity(), Ops {
                         Root()
                         Bubble(bubble) { bubble = null }
                         HomeReplyTimer(reply) { reply = null }
+                        AccessConsent()
                     }
                 }
             }

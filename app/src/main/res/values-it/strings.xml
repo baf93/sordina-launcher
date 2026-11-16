@@ -726,6 +726,8 @@
     <string name="hidden_none">Nessuna app nascosta. Tieni premuta un\'app nell\'elenco e scegli Nascondi dall\'elenco.</string>
     <string name="access_summary">Freno istantaneo e doppio tocco per spegnere</string>
     <string name="access_desc">Sordina usa l\'accessibilità solo per tre cose: fermare un\'app frenata nell\'istante in cui va davanti (anche il suo sito nel browser, come youtube.com se freni YouTube), spegnere lo schermo con un doppio tocco e scrivere al posto tuo una frase dove le app non la accettano da fuori (Assist di Home Assistant, Signal). Ascolta solo le app che hai frenato e, se hanno un sito, i browser: di questi legge solo la barra dell\'indirizzo, mentre sono davanti. Lo schermo lo guarda solo per pochi secondi, solo in quell\'app. Niente esce dal telefono.</string>
+    <string name="access_consent_title">Usare l\'accessibilità?</string>
+    <string name="access_consent_ok">Accetto, apri le impostazioni</string>
     <string name="n_gestures">Gesti</string>
     <string name="s_double_tap">Doppio tocco per spegnere</string>
     <string name="s_double_tap_hint">Serve l\'accessibilità di Sordina</string>

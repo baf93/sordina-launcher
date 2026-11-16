@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -510,6 +511,34 @@ fun Confirm(title: String, text: String, action: String, onConfirm: () -> Unit, 
             Primary(action, Modifier.fillMaxWidth()) { onDismiss(); onConfirm() }
             androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
             Secondary(app.sordina.tr(app.sordina.R.string.cancel), Modifier.fillMaxWidth(), onDismiss)
+        }
+    }
+}
+
+/**
+ * L'informativa sull'accessibilità: cosa fa e cosa legge, con il consenso esplicito prima di aprire le impostazioni di Android
+ * (Google lo chiede per i servizi di accessibilità che non sono strumenti per l'accessibilità).
+ */
+@Composable
+fun AccessConsent() {
+    val asking by app.sordina.service.SordinaAccess.asking.collectAsState()
+    if (!asking) return
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val c = S.c
+    val close = { app.sordina.service.SordinaAccess.asking.value = false }
+    // Il testo si legge bene (colore pieno, 16 sp): l'informativa deve essere in evidenza, non una nota
+    Sheet(app.sordina.tr(app.sordina.R.string.access_consent_title), onDismiss = close) {
+        Text(
+            app.sordina.tr(app.sordina.R.string.access_desc),
+            Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp),
+            style = TextStyle(fontSize = 16.sp, lineHeight = 23.sp, color = c.ink),
+        )
+        androidx.compose.foundation.layout.Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp)) {
+            Primary(app.sordina.tr(app.sordina.R.string.access_consent_ok), Modifier.fillMaxWidth()) {
+                close(); app.sordina.service.SordinaAccess.openSystemSettings(ctx)
+            }
+            androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
+            Secondary(app.sordina.tr(app.sordina.R.string.cancel), Modifier.fillMaxWidth(), close)
         }
     }
 }
