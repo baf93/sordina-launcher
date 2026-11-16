@@ -745,7 +745,7 @@
     <string name="s_gbackup">Kopio Googlella</string>
     <string name="s_gbackup_last">Viimeisin kopio: %1$s</string>
     <string name="s_gbackup_none">Joka päivä, Googlen varmuuskopiossa</string>
-    <string name="s_gbackup_how">Joka päivä Sordina valmistelee kopion asetuksistasi, tarroistasi, jarruhistoriastasi, rutiineistasi ja siitä, mitä se on oppinut. Puhelimen Googlen varmuuskopio vie sen tilillesi, kun puhelin latautuu ja on wifissä. Odottavat ilmoitukset ja Home Assistant -tunnus jäävät puhelimeen.\n\nJotta tämä toimii, Googlen varmuuskopion on oltava päällä: Asetukset › Google › Varmuuskopiointi › ”Google Onen varmuuskopio”. Uudessa puhelimessa tai jos asennat Sordinan uudelleen samalla tilillä, kysyn ensimmäisellä käynnistyskerralla, palautetaanko kaikki.</string>
+    <string name="s_gbackup_how">Joka päivä Sordina valmistelee kopion asetuksistasi, tarroistasi, jarruhistoriastasi ja siitä, mitä se on oppinut. Puhelimen Googlen varmuuskopio vie sen tilillesi, kun puhelin latautuu ja on wifissä. Odottavat ilmoitukset ja Home Assistant -tunnus jäävät puhelimeen.\n\nJotta tämä toimii, Googlen varmuuskopion on oltava päällä: Asetukset › Google › Varmuuskopiointi › ”Google Onen varmuuskopio”. Uudessa puhelimessa tai jos asennat Sordinan uudelleen samalla tilillä, kysyn ensimmäisellä käynnistyskerralla, palautetaanko kaikki.</string>
     <string name="s_gbackup_open">Avaa Googlen varmuuskopio</string>
     <string name="s_restore">Palauta kopio ajalta %1$s</string>
     <string name="s_restore_title">Palautetaanko kopio?</string>

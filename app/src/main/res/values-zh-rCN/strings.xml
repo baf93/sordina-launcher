@@ -734,7 +734,7 @@
     <string name="s_gbackup">备份到 Google</string>
     <string name="s_gbackup_last">上次备份：%1$s</string>
     <string name="s_gbackup_none">每天，在 Google 备份中</string>
-    <string name="s_gbackup_how">Sordina 每天都会准备一份备份，包括你的设置、贴纸、减速记录、日常规则和它学到的东西。手机充电并连接 Wi-Fi 时，手机的 Google 备份会把它上传到你的账号。待处理的通知和 Home Assistant 令牌会留在手机上。\n\n要使用此功能，Google 备份必须开启：设置 › Google › 备份 ›“Google One 备份”。在新手机上，或用同一账号重新安装 Sordina 时，我会在首次启动时问你是否要全部恢复。</string>
+    <string name="s_gbackup_how">Sordina 每天都会准备一份备份，包括你的设置、贴纸、减速记录和它学到的东西。手机充电并连接 Wi-Fi 时，手机的 Google 备份会把它上传到你的账号。待处理的通知和 Home Assistant 令牌会留在手机上。\n\n要使用此功能，Google 备份必须开启：设置 › Google › 备份 ›“Google One 备份”。在新手机上，或用同一账号重新安装 Sordina 时，我会在首次启动时问你是否要全部恢复。</string>
     <string name="s_gbackup_open">打开 Google 备份</string>
     <string name="s_restore">恢复 %1$s 的备份</string>
     <string name="s_restore_title">要恢复备份吗？</string>

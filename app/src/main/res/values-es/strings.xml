@@ -745,7 +745,7 @@
     <string name="s_gbackup">Copia en Google</string>
     <string name="s_gbackup_last">Última copia: %1$s</string>
     <string name="s_gbackup_none">Cada día, en la copia de seguridad de Google</string>
-    <string name="s_gbackup_how">Cada día Sordina prepara una copia de tus ajustes, pegatinas, historial del freno, rutinas y lo que ha aprendido. La copia de seguridad de Google de tu móvil la lleva a tu cuenta cuando el móvil se está cargando y tiene Wi-Fi. Las notificaciones retenidas y el token de Home Assistant se quedan en el móvil.\n\nPara que funcione, la copia de seguridad de Google debe estar activada: Ajustes › Google › Copia de seguridad › «Copia de seguridad de Google One». En un móvil nuevo, o al reinstalar Sordina con la misma cuenta, te preguntaré al primer inicio si quieres recuperarlo todo.</string>
+    <string name="s_gbackup_how">Cada día Sordina prepara una copia de tus ajustes, pegatinas, historial del freno y lo que ha aprendido. La copia de seguridad de Google de tu móvil la lleva a tu cuenta cuando el móvil se está cargando y tiene Wi-Fi. Las notificaciones retenidas y el token de Home Assistant se quedan en el móvil.\n\nPara que funcione, la copia de seguridad de Google debe estar activada: Ajustes › Google › Copia de seguridad › «Copia de seguridad de Google One». En un móvil nuevo, o al reinstalar Sordina con la misma cuenta, te preguntaré al primer inicio si quieres recuperarlo todo.</string>
     <string name="s_gbackup_open">Abrir la copia de seguridad de Google</string>
     <string name="s_restore">Restaurar la copia del %1$s</string>
     <string name="s_restore_title">¿Restaurar la copia?</string>

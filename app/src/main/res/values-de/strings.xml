@@ -745,7 +745,7 @@
     <string name="s_gbackup">Kopie bei Google</string>
     <string name="s_gbackup_last">Letzte Kopie: %1$s</string>
     <string name="s_gbackup_none">Täglich, im Google-Backup</string>
-    <string name="s_gbackup_how">Jeden Tag bereitet Sordina eine Kopie deiner Einstellungen, Sticker, Bremsverlauf, Routinen und dessen vor, was es gelernt hat. Das Google-Backup deines Handys bringt sie in dein Konto, wenn das Handy lädt und im WLAN ist. Zurückgehaltene Benachrichtigungen und der Home-Assistant-Token bleiben auf dem Handy.\n\nDamit das funktioniert, muss das Google-Backup an sein: Einstellungen › Google › Sicherung › „Sicherung durch Google One“. Auf einem neuen Handy oder wenn du Sordina mit demselben Konto neu installierst, frage ich beim ersten Start, ob ich alles wiederherstellen soll.</string>
+    <string name="s_gbackup_how">Jeden Tag bereitet Sordina eine Kopie deiner Einstellungen, Sticker, Bremsverlauf und dessen vor, was es gelernt hat. Das Google-Backup deines Handys bringt sie in dein Konto, wenn das Handy lädt und im WLAN ist. Zurückgehaltene Benachrichtigungen und der Home-Assistant-Token bleiben auf dem Handy.\n\nDamit das funktioniert, muss das Google-Backup an sein: Einstellungen › Google › Sicherung › „Sicherung durch Google One“. Auf einem neuen Handy oder wenn du Sordina mit demselben Konto neu installierst, frage ich beim ersten Start, ob ich alles wiederherstellen soll.</string>
     <string name="s_gbackup_open">Google-Backup öffnen</string>
     <string name="s_restore">Kopie vom %1$s wiederherstellen</string>
     <string name="s_restore_title">Kopie wiederherstellen?</string>

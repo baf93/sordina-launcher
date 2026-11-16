@@ -734,7 +734,7 @@
     <string name="s_gbackup">Salinan di Google</string>
     <string name="s_gbackup_last">Salinan terakhir: %1$s</string>
     <string name="s_gbackup_none">Setiap hari, di cadangan Google</string>
-    <string name="s_gbackup_how">Setiap hari Sordina menyiapkan salinan setelan, stiker, riwayat rem, rutinitas, dan hal yang sudah dipelajarinya. Cadangan Google di ponsel membawanya ke akunmu saat ponsel sedang diisi daya dan tersambung ke wifi. Notifikasi tertunda dan token Home Assistant tetap di ponsel.\n\nAgar berfungsi, cadangan Google harus aktif: Setelan › Google › Cadangan › “Pencadangan dengan Google One”. Di ponsel baru, atau jika kamu memasang ulang Sordina dengan akun yang sama, saat pertama kali dibuka aku akan bertanya apakah semuanya mau dipulihkan.</string>
+    <string name="s_gbackup_how">Setiap hari Sordina menyiapkan salinan setelan, stiker, riwayat rem, dan hal yang sudah dipelajarinya. Cadangan Google di ponsel membawanya ke akunmu saat ponsel sedang diisi daya dan tersambung ke wifi. Notifikasi tertunda dan token Home Assistant tetap di ponsel.\n\nAgar berfungsi, cadangan Google harus aktif: Setelan › Google › Cadangan › “Pencadangan dengan Google One”. Di ponsel baru, atau jika kamu memasang ulang Sordina dengan akun yang sama, saat pertama kali dibuka aku akan bertanya apakah semuanya mau dipulihkan.</string>
     <string name="s_gbackup_open">Buka cadangan Google</string>
     <string name="s_restore">Pulihkan salinan dari %1$s</string>
     <string name="s_restore_title">Pulihkan salinan?</string>

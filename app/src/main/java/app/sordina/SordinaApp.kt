@@ -11,7 +11,6 @@ import app.sordina.data.Moments
 import app.sordina.data.NotifStore
 import app.sordina.data.People
 import app.sordina.data.Prefs
-import app.sordina.data.Routines
 import app.sordina.data.Signals
 import app.sordina.service.Scheduler
 import app.sordina.service.Silence
@@ -35,7 +34,6 @@ class SordinaApp : Application() {
     val cardSense by lazy { app.sordina.data.CardSense(this) }
     val plans by lazy { app.sordina.data.Plans(this) }
     val replies by lazy { app.sordina.data.Replies(java.io.File(filesDir, "replies.json")) }
-    val routines by lazy { Routines(this) }
     val weather by lazy { app.sordina.data.Weather(this) }
 
     override fun attachBaseContext(base: Context) { super.attachBaseContext(Lang.wrap(base)) }
@@ -46,6 +44,8 @@ class SordinaApp : Application() {
         app.sordina.data.Tally.init(this)
         app.sordina.data.Backup.onStart(this, prefs.onboarded)
         Lang.applyLegacy(this)
+        // Il vecchio motore delle abitudini non c'è più: il suo file resta solo come spazio sprecato
+        runCatching { java.io.File(filesDir, "routines.json").delete() }
         status.createChannels()
         Scheduler.refresh(this)
     }

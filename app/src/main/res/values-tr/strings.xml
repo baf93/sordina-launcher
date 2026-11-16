@@ -745,7 +745,7 @@
     <string name="s_gbackup">Google\'da yedek</string>
     <string name="s_gbackup_last">Son yedek: %1$s</string>
     <string name="s_gbackup_none">Her gün, Google yedeğinde</string>
-    <string name="s_gbackup_how">Sordina her gün ayarlarının, çıkartmalarının, fren geçmişinin, rutinlerinin ve öğrendiklerinin bir kopyasını hazırlar. Telefonun Google yedeği, telefon şarj olurken ve wifi\'deyken bunu hesabına taşır. Bekleyen bildirimler ve Home Assistant token\'ı telefonda kalır.\n\nBunun çalışması için Google yedeği açık olmalı: Ayarlar › Google › Yedekleme › “Google One ile yedekleme”. Yeni bir telefonda ya da Sordina\'yı aynı hesapla yeniden yüklersen, ilk açılışta her şeyi geri yükleyip yüklemeyeceğimi sorarım.</string>
+    <string name="s_gbackup_how">Sordina her gün ayarlarının, çıkartmalarının, fren geçmişinin ve öğrendiklerinin bir kopyasını hazırlar. Telefonun Google yedeği, telefon şarj olurken ve wifi\'deyken bunu hesabına taşır. Bekleyen bildirimler ve Home Assistant token\'ı telefonda kalır.\n\nBunun çalışması için Google yedeği açık olmalı: Ayarlar › Google › Yedekleme › “Google One ile yedekleme”. Yeni bir telefonda ya da Sordina\'yı aynı hesapla yeniden yüklersen, ilk açılışta her şeyi geri yükleyip yüklemeyeceğimi sorarım.</string>
     <string name="s_gbackup_open">Google yedeğini aç</string>
     <string name="s_restore">%1$s tarihli yedeği geri yükle</string>
     <string name="s_restore_title">Yedek geri yüklensin mi?</string>

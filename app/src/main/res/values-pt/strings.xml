@@ -745,7 +745,7 @@
     <string name="s_gbackup">Cópia no Google</string>
     <string name="s_gbackup_last">Última cópia: %1$s</string>
     <string name="s_gbackup_none">Todo dia, no backup do Google</string>
-    <string name="s_gbackup_how">Todo dia a Sordina prepara uma cópia das suas configurações, figurinhas, histórico do freio, rotinas e do que aprendeu. O backup do Google do seu celular leva a cópia para a sua conta quando o celular está carregando e no Wi-Fi. As notificações em espera e o token do Home Assistant ficam no celular.\n\nPara funcionar, o backup do Google precisa estar ativado: Configurações › Google › Backup › \"Backup do Google One\". Em um celular novo, ou reinstalando a Sordina com a mesma conta, vou perguntar na primeira abertura se você quer restaurar tudo.</string>
+    <string name="s_gbackup_how">Todo dia a Sordina prepara uma cópia das suas configurações, figurinhas, histórico do freio e do que aprendeu. O backup do Google do seu celular leva a cópia para a sua conta quando o celular está carregando e no Wi-Fi. As notificações em espera e o token do Home Assistant ficam no celular.\n\nPara funcionar, o backup do Google precisa estar ativado: Configurações › Google › Backup › \"Backup do Google One\". Em um celular novo, ou reinstalando a Sordina com a mesma conta, vou perguntar na primeira abertura se você quer restaurar tudo.</string>
     <string name="s_gbackup_open">Abrir o backup do Google</string>
     <string name="s_restore">Restaurar a cópia de %1$s</string>
     <string name="s_restore_title">Restaurar a cópia?</string>

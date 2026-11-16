@@ -750,7 +750,7 @@
     <string name="s_gbackup">Copia su Google</string>
     <string name="s_gbackup_last">Ultima copia: %1$s</string>
     <string name="s_gbackup_none">Ogni giorno, nel backup di Google</string>
-    <string name="s_gbackup_how">Ogni giorno Sordina prepara una copia di impostazioni, adesivi, storico del freno, routine e di quello che ha imparato. Il backup di Google del telefono la porta nel tuo account, quando il telefono è in carica e sul Wi-Fi. Le notifiche tenute e il token di Home Assistant restano sul telefono.\n\nPerché funzioni, il backup di Google dev\'essere attivo: Impostazioni › Google › Backup › «Backup di Google One». Su un telefono nuovo, o reinstallando Sordina con lo stesso account, al primo avvio ti chiedo se rimettere tutto com\'era.</string>
+    <string name="s_gbackup_how">Ogni giorno Sordina prepara una copia di impostazioni, adesivi, storico del freno e di quello che ha imparato. Il backup di Google del telefono la porta nel tuo account, quando il telefono è in carica e sul Wi-Fi. Le notifiche tenute e il token di Home Assistant restano sul telefono.\n\nPerché funzioni, il backup di Google dev\'essere attivo: Impostazioni › Google › Backup › «Backup di Google One». Su un telefono nuovo, o reinstallando Sordina con lo stesso account, al primo avvio ti chiedo se rimettere tutto com\'era.</string>
     <string name="s_gbackup_open">Apri il backup di Google</string>
     <string name="s_restore">Rimetti la copia del %1$s</string>
     <string name="s_restore_title">Rimettere la copia?</string>

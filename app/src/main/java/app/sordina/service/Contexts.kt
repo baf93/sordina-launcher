@@ -69,12 +69,11 @@ class Contexts(private val service: SordinaListener) {
         val r = object : BroadcastReceiver() {
             override fun onReceive(c: Context, i: Intent) {
                 when (i.action) {
-                    UiModeManager.ACTION_ENTER_CAR_MODE -> { Tally.onCar(); app.routines.onContext("car"); app.brain.onState("car", true); Scheduler.refresh(c) }
+                    UiModeManager.ACTION_ENTER_CAR_MODE -> { Tally.onCar(); app.brain.onState("car", true); Scheduler.refresh(c) }
                     UiModeManager.ACTION_EXIT_CAR_MODE -> { Tally.onCarExit(c); app.brain.onState("car", false); Scheduler.refresh(c) }
                     Intent.ACTION_POWER_CONNECTED -> {
                         app.brain.onState("chg", true)
                         app.brain.tuneIfDue(true)
-                        if (LocalTime.now().hour >= 20) app.routines.onContext("charge")
                     }
                     Intent.ACTION_POWER_DISCONNECTED -> app.brain.onState("chg", false)
                     // Schermo acceso: prima che tu guardi, le posticipate aggiornate (un messaggio urgente
@@ -98,7 +97,6 @@ class Contexts(private val service: SordinaListener) {
                 val on = androidAuto(c, force = true)
                 app.brain.onState("car", on)
                 if (on) Tally.onCar() else Tally.onCarExit(c)
-                if (on) app.routines.onContext("car")
                 Scheduler.refresh(c)
             }
         }
@@ -129,7 +127,6 @@ class Contexts(private val service: SordinaListener) {
         if (ssid == lastSsid) return
         lastSsid = ssid
         app.brain.onWifi(ssid)
-        app.routines.onContext("wifi:$ssid")
     }
 
     private fun startAudio() {
@@ -149,7 +146,6 @@ class Contexts(private val service: SordinaListener) {
                 device()
                 // La prima chiamata elenca quelli già collegati: non è un momento nuovo
                 if (first) { first = false; return }
-                if (added.any { it.isSink && it.type in heads }) app.routines.onContext("headset")
             }
             override fun onAudioDevicesRemoved(removed: Array<out AudioDeviceInfo>) { app.brain.onState("hs", anyHeadset()); device() }
         }

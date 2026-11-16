@@ -734,7 +734,7 @@
     <string name="s_gbackup">Google에 백업</string>
     <string name="s_gbackup_last">마지막 백업: %1$s</string>
     <string name="s_gbackup_none">매일, Google 백업에</string>
-    <string name="s_gbackup_how">Sordina는 매일 설정, 스티커, 브레이크 기록, 루틴, 그리고 배운 것을 백업으로 준비해요. 휴대전화의 Google 백업이 충전 중이고 Wi-Fi에 연결되어 있을 때 계정으로 옮겨요. 대기 중인 알림과 Home Assistant 토큰은 휴대전화에 남아요.\n\n이 기능이 작동하려면 Google 백업이 켜져 있어야 해요: 설정 › Google › 백업 › \"Google One 백업\". 새 휴대전화에서나 같은 계정으로 Sordina를 다시 설치하면, 처음 실행할 때 모두 복원할지 물어볼게요.</string>
+    <string name="s_gbackup_how">Sordina는 매일 설정, 스티커, 브레이크 기록, 그리고 배운 것을 백업으로 준비해요. 휴대전화의 Google 백업이 충전 중이고 Wi-Fi에 연결되어 있을 때 계정으로 옮겨요. 대기 중인 알림과 Home Assistant 토큰은 휴대전화에 남아요.\n\n이 기능이 작동하려면 Google 백업이 켜져 있어야 해요: 설정 › Google › 백업 › \"Google One 백업\". 새 휴대전화에서나 같은 계정으로 Sordina를 다시 설치하면, 처음 실행할 때 모두 복원할지 물어볼게요.</string>
     <string name="s_gbackup_open">Google 백업 열기</string>
     <string name="s_restore">%1$s 백업 복원</string>
     <string name="s_restore_title">백업을 복원할까요?</string>

@@ -21,7 +21,7 @@ object Backup {
     private const val COPY = "sordina.json"
     private const val FOUND = "restored.json"
     private val PREFS = listOf("sordina", "habits", "tally", "brain", "card_sense")
-    private val FILES = listOf("routines.json", "replies.json", "brain.tsv")
+    private val FILES = listOf("replies.json", "brain.tsv")
     private val SECRET = setOf("haToken", "haTokenEnc")
 
     private fun dir(ctx: Context) = File(ctx.filesDir, DIR).apply { mkdirs() }

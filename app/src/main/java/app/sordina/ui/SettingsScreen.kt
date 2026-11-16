@@ -428,7 +428,7 @@ fun SettingsScreen(
                         var ask by remember { mutableStateOf(false) }
                         Line(tr(R.string.s_wipe), icon = Icons.Rounded.DeleteOutline, trailing = {}) { ask = true }
                         if (ask) Confirm(tr(R.string.s_wipe_title), tr(R.string.s_wipe_text), tr(R.string.s_wipe),
-                            onConfirm = { app.routines.wipe(); onWipe() }, onDismiss = { ask = false })
+                            onConfirm = { onWipe() }, onDismiss = { ask = false })
                     }
                     Topic(tr(R.string.s_info))
                     Group {

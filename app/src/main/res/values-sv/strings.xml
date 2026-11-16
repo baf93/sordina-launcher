@@ -745,7 +745,7 @@
     <string name="s_gbackup">Kopia hos Google</string>
     <string name="s_gbackup_last">Senaste kopia: %1$s</string>
     <string name="s_gbackup_none">Varje dag, i Google-säkerhetskopian</string>
-    <string name="s_gbackup_how">Varje dag förbereder Sordina en kopia av dina inställningar, klistermärken, bromshistorik, rutiner och det den har lärt sig. Telefonens Google-säkerhetskopia tar den till ditt konto när telefonen laddas och är på wifi. Väntande aviseringar och Home Assistant-token stannar på telefonen.\n\nFör att det ska fungera måste Google-säkerhetskopian vara på: Inställningar › Google › Säkerhetskopiering › ”Säkerhetskopiering med Google One”. På en ny telefon, eller om du installerar om Sordina med samma konto, frågar jag vid första start om allt ska återställas.</string>
+    <string name="s_gbackup_how">Varje dag förbereder Sordina en kopia av dina inställningar, klistermärken, bromshistorik och det den har lärt sig. Telefonens Google-säkerhetskopia tar den till ditt konto när telefonen laddas och är på wifi. Väntande aviseringar och Home Assistant-token stannar på telefonen.\n\nFör att det ska fungera måste Google-säkerhetskopian vara på: Inställningar › Google › Säkerhetskopiering › ”Säkerhetskopiering med Google One”. På en ny telefon, eller om du installerar om Sordina med samma konto, frågar jag vid första start om allt ska återställas.</string>
     <string name="s_gbackup_open">Öppna Google-säkerhetskopian</string>
     <string name="s_restore">Återställ kopian från %1$s</string>
     <string name="s_restore_title">Återställa kopian?</string>

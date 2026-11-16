@@ -745,7 +745,7 @@
     <string name="s_gbackup">Kopie bij Google</string>
     <string name="s_gbackup_last">Laatste kopie: %1$s</string>
     <string name="s_gbackup_none">Elke dag, in de Google-back-up</string>
-    <string name="s_gbackup_how">Elke dag maakt Sordina een kopie van je instellingen, stickers, remgeschiedenis, routines en wat ze heeft geleerd. De Google-back-up van je telefoon brengt die naar je account als de telefoon oplaadt en op wifi zit. Vastgehouden meldingen en de Home Assistant-token blijven op de telefoon.\n\nDaarvoor moet de Google-back-up aanstaan: Instellingen › Google › Back-up › \"Back-up door Google One\". Op een nieuwe telefoon, of als je Sordina met hetzelfde account opnieuw installeert, vraag ik bij de eerste start of ik alles terug moet zetten.</string>
+    <string name="s_gbackup_how">Elke dag maakt Sordina een kopie van je instellingen, stickers, remgeschiedenis en wat ze heeft geleerd. De Google-back-up van je telefoon brengt die naar je account als de telefoon oplaadt en op wifi zit. Vastgehouden meldingen en de Home Assistant-token blijven op de telefoon.\n\nDaarvoor moet de Google-back-up aanstaan: Instellingen › Google › Back-up › \"Back-up door Google One\". Op een nieuwe telefoon, of als je Sordina met hetzelfde account opnieuw installeert, vraag ik bij de eerste start of ik alles terug moet zetten.</string>
     <string name="s_gbackup_open">Google-back-up openen</string>
     <string name="s_restore">Kopie van %1$s terugzetten</string>
     <string name="s_restore_title">Kopie terugzetten?</string>

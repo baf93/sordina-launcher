@@ -745,7 +745,7 @@
     <string name="s_gbackup">Copie sur Google</string>
     <string name="s_gbackup_last">Dernière copie : %1$s</string>
     <string name="s_gbackup_none">Chaque jour, dans la sauvegarde Google</string>
-    <string name="s_gbackup_how">Chaque jour, Sordina prépare une copie de tes réglages, stickers, historique du frein, routines et de ce qu\'elle a appris. La sauvegarde Google de ton téléphone l\'envoie sur ton compte quand le téléphone est en charge et en Wi-Fi. Les notifications en attente et le jeton Home Assistant restent sur le téléphone.\n\nPour que ça marche, la sauvegarde Google doit être activée : Paramètres › Google › Sauvegarde › « Sauvegarde par Google One ». Sur un nouveau téléphone, ou en réinstallant Sordina avec le même compte, je te demanderai au premier lancement si tu veux tout remettre.</string>
+    <string name="s_gbackup_how">Chaque jour, Sordina prépare une copie de tes réglages, stickers, historique du frein et de ce qu\'elle a appris. La sauvegarde Google de ton téléphone l\'envoie sur ton compte quand le téléphone est en charge et en Wi-Fi. Les notifications en attente et le jeton Home Assistant restent sur le téléphone.\n\nPour que ça marche, la sauvegarde Google doit être activée : Paramètres › Google › Sauvegarde › « Sauvegarde par Google One ». Sur un nouveau téléphone, ou en réinstallant Sordina avec le même compte, je te demanderai au premier lancement si tu veux tout remettre.</string>
     <string name="s_gbackup_open">Ouvrir la sauvegarde Google</string>
     <string name="s_restore">Restaurer la copie du %1$s</string>
     <string name="s_restore_title">Restaurer la copie ?</string>

@@ -16,6 +16,7 @@ import app.sordina.data.Rules
 import app.sordina.R
 import app.sordina.data.Categories
 import androidx.core.graphics.drawable.toBitmap
+import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.asImageBitmap
 import app.sordina.ui.Said
 import app.sordina.ui.Bubble
@@ -470,18 +471,11 @@ class MainActivity : ComponentActivity(), Ops {
         }.getOrDefault(emptyList())
     }
 
-    /** Le persone in auto: le tue (fino a 4) o, se non ne hai scelte, fra le importanti prima chi chiami di solito in auto. */
+    /** Le persone in auto: solo quelle che hai scelto tu (fino a 4). */
     override fun carContacts(): List<Contact> = runCatching {
         val all = app.people.all()
-        val hidden = prefs.carHidden
-        val mine = prefs.carPeople?.mapNotNull { id -> all.firstOrNull { it.id == id } }
-        val list = mine ?: run {
-            val learned = app.brain.likelyPeople("call:", 4).mapNotNull { app.brain.contact(it.removePrefix("call:")) }
-            // Tra gli importanti ci sono anche parole ("allarme"): valgono solo i contatti veri, con un numero
-            val important = app.people.importantList().mapNotNull { n -> all.firstOrNull { it.normalized == n } ?: all.firstOrNull { it.normalized.startsWith("$n ") } }
-            val importantIds = important.map { it.id }.toSet()
-            (learned.filter { it.id in importantIds } + important.sortedBy { it.normalized }).filter { it.normalized !in hidden }
-        }
+        // Solo le persone che hai scelto tu: se non ne hai scelte, in auto non compare nessuno
+        val list = prefs.carPeople?.mapNotNull { id -> all.firstOrNull { it.id == id } }.orEmpty()
         list.filter { it.number.isNotBlank() }.distinctBy { it.id }.take(4)
     }.getOrDefault(emptyList())
 
@@ -675,7 +669,6 @@ class MainActivity : ComponentActivity(), Ops {
                 val undo = out.undo
                 if (out.message != null && !here) notice = Notice(out.message, undo?.let { u -> { lifecycleScope.launch { u(); notice = Notice(tr(R.string.undone)) } } })
                 if (out.message != null && screen == Screen.HOME && !here) answer(out.message, out.ok)
-                if (out.ok) app.routines.onCommand(c.title, query.ifBlank { c.title })
                 // Hai appena scritto o chiamato qualcuno: la sua risposta passa per i prossimi 15 minuti
                 val talkTo = (act as? Act.Message)?.contact ?: (act as? Act.Call)?.contact
                 if (out.ok && talkTo != null && prefs.talkPass) {
@@ -922,6 +915,17 @@ class MainActivity : ComponentActivity(), Ops {
         if (voice.listening) runCatching { recognizer?.stopListening() } else voiceDown(handsFree = true)
     }
 
+    /** A mani libere: se dopo qualche secondo non hai detto nulla, si smette di ascoltare (in auto non serve un secondo tocco). */
+    private val voiceHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var speechHeard = false
+    private val noSpeech = Runnable {
+        if (voice.listening && !speechHeard) {
+            runCatching { recognizer?.cancel() }
+            voice = voice.copy(listening = false, partial = "", level = 0f)
+            if (screen == Screen.HOME) answer(tr(R.string.not_understood), ok = false)
+        }
+    }
+
     private fun voiceDown(handsFree: Boolean = false) {
         if (Build.VERSION.SDK_INT < 31) return
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
@@ -934,7 +938,7 @@ class MainActivity : ComponentActivity(), Ops {
         val r = recognizer ?: SpeechRecognizer.createOnDeviceSpeechRecognizer(this).also { recognizer = it }
         r.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {}
-            override fun onBeginningOfSpeech() {}
+            override fun onBeginningOfSpeech() { speechHeard = true; voiceHandler.removeCallbacks(noSpeech) }
             override fun onRmsChanged(rmsdB: Float) {
                 // Il cerchio del microfono respira con la voce: solo mentre ascolta, a passi visibili (niente ricomposizioni inutili)
                 val l = (((rmsdB + 2f) / 12f).coerceIn(0f, 1f) * 8).toInt() / 8f
@@ -945,9 +949,11 @@ class MainActivity : ComponentActivity(), Ops {
             override fun onEvent(eventType: Int, params: Bundle?) {}
             override fun onPartialResults(partial: Bundle?) {
                 val t = partial?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty()
+                if (t.isNotBlank()) { speechHeard = true; voiceHandler.removeCallbacks(noSpeech) }
                 voice = voice.copy(partial = t)
             }
             override fun onResults(results: Bundle?) {
+                voiceHandler.removeCallbacks(noSpeech)
                 val heard = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION).orEmpty().filter { it.isNotBlank() }
                 // Quello che hai detto resta nel fumetto della sordina mentre decide: la ricerca o la risposta prendono il suo posto
                 voice = voice.copy(listening = false, partial = heard.firstOrNull().orEmpty(), level = 0f)
@@ -966,6 +972,7 @@ class MainActivity : ComponentActivity(), Ops {
                 lifecycleScope.launch { voice = voice.copy(partial = "") }
             }
             override fun onError(error: Int) {
+                voiceHandler.removeCallbacks(noSpeech)
                 voice = voice.copy(listening = false, partial = "", level = 0f)
                 notice = when (error) {
                     12, 13 -> Notice(tr(R.string.voice_no_lang))
@@ -995,6 +1002,9 @@ class MainActivity : ComponentActivity(), Ops {
             bias += app.ha.cached().filter { it.controllable }.map { it.name }
             i.putStringArrayListExtra(RecognizerIntent.EXTRA_BIASING_STRINGS, ArrayList(bias.distinct().take(100)))
         }
+        speechHeard = false
+        voiceHandler.removeCallbacks(noSpeech)
+        if (handsFree) voiceHandler.postDelayed(noSpeech, NO_SPEECH_MILLIS)
         voiceDownAt = System.currentTimeMillis()
         voice = voice.copy(listening = true, partial = "")
         query = ""
@@ -1311,6 +1321,13 @@ class MainActivity : ComponentActivity(), Ops {
             if (bare) backdrop.image?.let { img ->
                 androidx.compose.foundation.Image(img, null, Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             }
+            // Sotto le scritte in alto un velo sfumato, solo se lo sfondo lo chiede: scuro col testo chiaro, chiaro col testo scuro
+            if (bare && backdrop.topScrim > 0f) {
+                val veil = if (backdrop.topDark == true) androidx.compose.ui.graphics.Color(0xFFF6F4EF) else androidx.compose.ui.graphics.Color.Black
+                androidx.compose.foundation.layout.Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(
+                    0f to veil.copy(alpha = backdrop.topScrim), 0.42f to veil.copy(alpha = backdrop.topScrim * 0.75f), 0.62f to androidx.compose.ui.graphics.Color.Transparent,
+                )))
+            }
             AnimatedContent(
                 targetState = screen,
                 transitionSpec = {
@@ -1583,6 +1600,8 @@ class MainActivity : ComponentActivity(), Ops {
 
     companion object {
         const val ACTION_WAITING = "app.sordina.WAITING"
+        /** In auto, dopo il tocco: quanto si aspetta che cominci a parlare */
+        private const val NO_SPEECH_MILLIS = 6_000L
         /** La scheda "di solito" del cervello compare solo da questa probabilità (misurata sulla memoria vera). */
         /** Le schede che il fumetto dice sempre: in corso (musica, timer, corsa) o che non aspettano (codice, casa, chiamata) */
         val BUBBLE_KINDS = setOf(CardKind.HEALTH, CardKind.OTP, CardKind.ASK, CardKind.CALL, CardKind.RIDE, CardKind.TIMER, CardKind.MUSIC)

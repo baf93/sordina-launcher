@@ -756,7 +756,7 @@
     <string name="s_gbackup">Copie la Google</string>
     <string name="s_gbackup_last">Ultima copie: %1$s</string>
     <string name="s_gbackup_none">În fiecare zi, în backupul Google</string>
-    <string name="s_gbackup_how">În fiecare zi Sordina pregătește o copie a setărilor, stickerelor, istoricului frânei, rutinelor și a ceea ce a învățat. Backupul Google al telefonului o duce în contul tău când telefonul se încarcă și e pe wifi. Notificările în așteptare și tokenul Home Assistant rămân pe telefon.\n\nCa să funcționeze, backupul Google trebuie să fie activat: Setări › Google › Backup › „Backup cu Google One”. Pe un telefon nou sau dacă reinstalezi Sordina cu același cont, te întreb la prima pornire dacă să restaurez totul.</string>
+    <string name="s_gbackup_how">În fiecare zi Sordina pregătește o copie a setărilor, stickerelor, istoricului frânei și a ceea ce a învățat. Backupul Google al telefonului o duce în contul tău când telefonul se încarcă și e pe wifi. Notificările în așteptare și tokenul Home Assistant rămân pe telefon.\n\nCa să funcționeze, backupul Google trebuie să fie activat: Setări › Google › Backup › „Backup cu Google One”. Pe un telefon nou sau dacă reinstalezi Sordina cu același cont, te întreb la prima pornire dacă să restaurez totul.</string>
     <string name="s_gbackup_open">Deschide backupul Google</string>
     <string name="s_restore">Restaurează copia din %1$s</string>
     <string name="s_restore_title">Restaurezi copia?</string>

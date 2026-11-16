@@ -26,6 +26,8 @@ data class Backdrop(
     val bottomDark: Boolean? = null,
     /** Colore suggerito dallo sfondo */
     val accent: Int? = null,
+    /** Velo sfumato sotto le scritte in alto (0 = nessuno): scuro col testo chiaro, chiaro col testo scuro */
+    val topScrim: Float = 0f,
 ) {
     val active get() = mode != 0
 }
@@ -82,9 +84,11 @@ object Backdrops {
                 }
                 val small = Bitmap.createScaledBitmap(bmp, 54, (54f * bmp.height / bmp.width).toInt().coerceAtLeast(2), true)
                 val h = small.height
+                // In alto: dove stanno davvero le scritte (giorno, data, meteo, impegni), il caso peggiore e non la media
+                val (top, scrim) = Legibility.pick(samples(small, 0, (h * 0.5f).toInt(), (small.width * 0.85f).toInt()))
                 Backdrop(
                     mode = mode, image = bmp.asImageBitmap(),
-                    topDark = luminance(small, 0, (h * 0.45f).toInt()) > 0.5f,
+                    topDark = top, topScrim = scrim,
                     bottomDark = luminance(small, (h * 0.6f).toInt(), h) > 0.5f,
                     accent = if (Build.VERSION.SDK_INT >= 27) WallpaperColors.fromBitmap(small).primaryColor.toArgb() else null,
                 )
@@ -92,7 +96,12 @@ object Backdrops {
             1 -> {
                 val wc = if (Build.VERSION.SDK_INT >= 27) WallpaperManager.getInstance(context).getWallpaperColors(WallpaperManager.FLAG_SYSTEM) else null
                 val dark = wc != null && Build.VERSION.SDK_INT >= 31 && (wc.colorHints and WallpaperColors.HINT_SUPPORTS_DARK_TEXT) != 0
-                Backdrop(mode = 1, topDark = dark, bottomDark = dark, accent = wc?.primaryColor?.toArgb())
+                // Lo sfondo del telefono non si vede: Android dice solo i suoi colori principali. Si sceglie su quelli,
+                // e un velo minimo resta sempre, perché non si sa dove cadono
+                val colors = listOfNotNull(wc?.primaryColor, wc?.secondaryColor, wc?.tertiaryColor)
+                val (top, scrim) = if (colors.isEmpty()) dark to PHONE_SCRIM
+                    else Legibility.pick(colors.map { val a = it.toArgb(); Legibility.luminance((a shr 16) and 255, (a shr 8) and 255, a and 255) }.toDoubleArray(), PHONE_SCRIM)
+                Backdrop(mode = 1, topDark = top, bottomDark = top, accent = wc?.primaryColor?.toArgb(), topScrim = scrim)
             }
             else -> Backdrop()
         }
@@ -108,6 +117,19 @@ object Backdrops {
             Bitmap.createBitmap(b, (b.width - nw) / 2, 0, nw, b.height)
         }
     }
+
+    /** Le luminanze dei punti di una zona (righe [from, to), colonne fino a [width]). */
+    private fun samples(b: Bitmap, from: Int, to: Int, width: Int): DoubleArray {
+        val out = ArrayList<Double>()
+        for (y in from until to.coerceAtMost(b.height)) for (x in 0 until width.coerceAtMost(b.width)) {
+            val p = b.getPixel(x, y)
+            out += Legibility.luminance((p shr 16) and 255, (p shr 8) and 255, p and 255)
+        }
+        return out.toDoubleArray()
+    }
+
+    /** Sfondo del telefono: il velo minimo sotto le scritte */
+    private const val PHONE_SCRIM = 0.22f
 
     /** Luminosità media (0..1) delle righe [from, to). */
     private fun luminance(b: Bitmap, from: Int, to: Int): Float {
@@ -127,7 +149,22 @@ fun OnBackdrop(dark: Boolean?, content: @Composable () -> Unit) {
     if (dark == null) { content(); return }
     val s = LocalSordina.current
     // Anche i riquadri seguono lo sfondo: testo bianco su riquadri scuri, testo scuro su riquadri chiari
-    val cols = if (dark) s.colors.copy(ink = Color(0xFF141414), soft = Color(0xFF3C3C3C), card = Color(0xFFF6F4EF), line = Color(0x1F000000))
-    else s.colors.copy(ink = Color.White, soft = Color(0xFFE6E6E6), card = Color(0xFF26262A), line = Color(0x26FFFFFF))
+    // L'accento (l'ora del prossimo impegno) si scurisce o schiarisce quanto basta per leggersi sullo sfondo
+    val accent = readableAccent(s.colors.accent, dark)
+    val cols = if (dark) s.colors.copy(ink = Color(0xFF141414), soft = Color(0xFF3C3C3C), card = Color(0xFFF6F4EF), line = Color(0x1F000000), accent = accent)
+    else s.colors.copy(ink = Color.White, soft = Color(0xFFE6E6E6), card = Color(0xFF26262A), line = Color(0x26FFFFFF), accent = accent)
     CompositionLocalProvider(LocalSordina provides s.copy(colors = cols), content = content)
+}
+
+/** L'accento sopra uno sfondo: verso il nero col testo scuro, verso il bianco col testo chiaro, finché si legge. */
+internal fun readableAccent(a: Color, darkText: Boolean): Color {
+    fun lum(c: Color) = Legibility.luminance((c.red * 255).toInt(), (c.green * 255).toInt(), (c.blue * 255).toInt())
+    val target = if (darkText) Color.Black else Color.White
+    var c = a
+    var t = 0f
+    while (t < 1f && (if (darkText) lum(c) > 0.12 else lum(c) < 0.45)) {
+        t += 0.1f
+        c = androidx.compose.ui.graphics.lerp(a, target, t)
+    }
+    return c
 }

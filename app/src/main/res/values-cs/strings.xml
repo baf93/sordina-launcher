@@ -767,7 +767,7 @@
     <string name="s_gbackup">Záloha u Googlu</string>
     <string name="s_gbackup_last">Poslední záloha: %1$s</string>
     <string name="s_gbackup_none">Každý den, v záloze Google</string>
-    <string name="s_gbackup_how">Každý den Sordina připraví zálohu tvých nastavení, nálepek, historie brzdy, rutin a toho, co se naučila. Záloha Google v telefonu ji přenese na tvůj účet, když se telefon nabíjí a je na wifi. Čekající oznámení a token Home Assistant zůstávají v telefonu.\n\nAby to fungovalo, musí být záloha Google zapnutá: Nastavení › Google › Zálohování › „Záloha pomocí Google One“. Na novém telefonu, nebo když Sordinu přeinstaluješ se stejným účtem, se při prvním spuštění zeptám, jestli mám vše obnovit.</string>
+    <string name="s_gbackup_how">Každý den Sordina připraví zálohu tvých nastavení, nálepek, historie brzdy a toho, co se naučila. Záloha Google v telefonu ji přenese na tvůj účet, když se telefon nabíjí a je na wifi. Čekající oznámení a token Home Assistant zůstávají v telefonu.\n\nAby to fungovalo, musí být záloha Google zapnutá: Nastavení › Google › Zálohování › „Záloha pomocí Google One“. Na novém telefonu, nebo když Sordinu přeinstaluješ se stejným účtem, se při prvním spuštění zeptám, jestli mám vše obnovit.</string>
     <string name="s_gbackup_open">Otevřít zálohu Google</string>
     <string name="s_restore">Obnovit zálohu z %1$s</string>
     <string name="s_restore_title">Obnovit zálohu?</string>

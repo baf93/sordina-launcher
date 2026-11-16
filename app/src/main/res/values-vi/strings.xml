@@ -734,7 +734,7 @@
     <string name="s_gbackup">Bản sao trên Google</string>
     <string name="s_gbackup_last">Bản sao gần nhất: %1$s</string>
     <string name="s_gbackup_none">Mỗi ngày, trong bản sao lưu Google</string>
-    <string name="s_gbackup_how">Mỗi ngày Sordina chuẩn bị một bản sao cài đặt, nhãn dán, lịch sử phanh, thói quen và những gì nó đã học. Bản sao lưu Google của điện thoại đưa nó lên tài khoản của bạn khi điện thoại đang sạc và dùng wifi. Thông báo đang chờ và token Home Assistant vẫn ở trên điện thoại.\n\nĐể hoạt động, bản sao lưu Google phải được bật: Cài đặt › Google › Sao lưu › “Sao lưu bằng Google One”. Trên điện thoại mới, hoặc nếu bạn cài lại Sordina bằng cùng tài khoản, ở lần mở đầu tiên tôi sẽ hỏi có khôi phục mọi thứ không.</string>
+    <string name="s_gbackup_how">Mỗi ngày Sordina chuẩn bị một bản sao cài đặt, nhãn dán, lịch sử phanh và những gì nó đã học. Bản sao lưu Google của điện thoại đưa nó lên tài khoản của bạn khi điện thoại đang sạc và dùng wifi. Thông báo đang chờ và token Home Assistant vẫn ở trên điện thoại.\n\nĐể hoạt động, bản sao lưu Google phải được bật: Cài đặt › Google › Sao lưu › “Sao lưu bằng Google One”. Trên điện thoại mới, hoặc nếu bạn cài lại Sordina bằng cùng tài khoản, ở lần mở đầu tiên tôi sẽ hỏi có khôi phục mọi thứ không.</string>
     <string name="s_gbackup_open">Mở bản sao lưu Google</string>
     <string name="s_restore">Khôi phục bản sao ngày %1$s</string>
     <string name="s_restore_title">Khôi phục bản sao?</string>

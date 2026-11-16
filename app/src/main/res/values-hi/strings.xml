@@ -745,7 +745,7 @@
     <string name="s_gbackup">Google पर कॉपी</string>
     <string name="s_gbackup_last">आखिरी कॉपी: %1$s</string>
     <string name="s_gbackup_none">हर दिन, Google बैकअप में</string>
-    <string name="s_gbackup_how">हर दिन Sordina आपकी सेटिंग, स्टिकर, ब्रेक का इतिहास, रूटीन और जो उसने सीखा है, उसकी एक कॉपी तैयार करता है। फ़ोन चार्ज होते समय और wifi पर होने पर फ़ोन का Google बैकअप उसे आपके खाते में ले जाता है। बाकी सूचनाएँ और Home Assistant टोकन फ़ोन पर ही रहते हैं।\n\nइसके काम करने के लिए Google बैकअप चालू होना चाहिए: सेटिंग › Google › बैकअप › “Google One से बैकअप”। नए फ़ोन पर, या उसी खाते से Sordina दोबारा इंस्टॉल करने पर, पहली बार खोलते समय मैं पूछूँगी कि क्या सब कुछ वापस लाऊँ।</string>
+    <string name="s_gbackup_how">हर दिन Sordina आपकी सेटिंग, स्टिकर, ब्रेक का इतिहास और जो उसने सीखा है, उसकी एक कॉपी तैयार करता है। फ़ोन चार्ज होते समय और wifi पर होने पर फ़ोन का Google बैकअप उसे आपके खाते में ले जाता है। बाकी सूचनाएँ और Home Assistant टोकन फ़ोन पर ही रहते हैं।\n\nइसके काम करने के लिए Google बैकअप चालू होना चाहिए: सेटिंग › Google › बैकअप › “Google One से बैकअप”। नए फ़ोन पर, या उसी खाते से Sordina दोबारा इंस्टॉल करने पर, पहली बार खोलते समय मैं पूछूँगी कि क्या सब कुछ वापस लाऊँ।</string>
     <string name="s_gbackup_open">Google बैकअप खोलें</string>
     <string name="s_restore">%1$s की कॉपी वापस लाएँ</string>
     <string name="s_restore_title">कॉपी वापस लाएँ?</string>

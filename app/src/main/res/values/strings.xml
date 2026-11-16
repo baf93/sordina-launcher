@@ -751,7 +751,7 @@
     <string name="s_gbackup">Copy on Google</string>
     <string name="s_gbackup_last">Last copy: %1$s</string>
     <string name="s_gbackup_none">Every day, in Google backup</string>
-    <string name="s_gbackup_how">Every day Sordina prepares a copy of your settings, stickers, brake history, routines and what it has learned. Your phone\'s Google backup takes it to your account, when the phone is charging and on Wi-Fi. Held notifications and the Home Assistant token stay on the phone.\n\nFor this to work, Google backup must be on: Settings › Google › Backup › “Backup by Google One”. On a new phone, or reinstalling Sordina with the same account, I\'ll ask at first launch whether to put everything back.</string>
+    <string name="s_gbackup_how">Every day Sordina prepares a copy of your settings, stickers, brake history and what it has learned. Your phone\'s Google backup takes it to your account, when the phone is charging and on Wi-Fi. Held notifications and the Home Assistant token stay on the phone.\n\nFor this to work, Google backup must be on: Settings › Google › Backup › “Backup by Google One”. On a new phone, or reinstalling Sordina with the same account, I\'ll ask at first launch whether to put everything back.</string>
     <string name="s_gbackup_open">Open Google backup</string>
     <string name="s_restore">Restore the copy from %1$s</string>
     <string name="s_restore_title">Restore the copy?</string>

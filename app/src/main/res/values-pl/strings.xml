@@ -767,7 +767,7 @@
     <string name="s_gbackup">Kopia w Google</string>
     <string name="s_gbackup_last">Ostatnia kopia: %1$s</string>
     <string name="s_gbackup_none">Codziennie, w kopii zapasowej Google</string>
-    <string name="s_gbackup_how">Codziennie Sordina przygotowuje kopię twoich ustawień, naklejek, historii hamulca, rutyn i tego, czego się nauczyła. Kopia zapasowa Google w telefonie przenosi ją na twoje konto, gdy telefon się ładuje i jest w Wi-Fi. Wstrzymane powiadomienia i token Home Assistant zostają w telefonie.\n\nŻeby to działało, kopia zapasowa Google musi być włączona: Ustawienia › Google › Kopia zapasowa › „Kopia zapasowa Google One”. Na nowym telefonie albo po ponownej instalacji Sordiny na tym samym koncie zapytam przy pierwszym uruchomieniu, czy przywrócić wszystko.</string>
+    <string name="s_gbackup_how">Codziennie Sordina przygotowuje kopię twoich ustawień, naklejek, historii hamulca i tego, czego się nauczyła. Kopia zapasowa Google w telefonie przenosi ją na twoje konto, gdy telefon się ładuje i jest w Wi-Fi. Wstrzymane powiadomienia i token Home Assistant zostają w telefonie.\n\nŻeby to działało, kopia zapasowa Google musi być włączona: Ustawienia › Google › Kopia zapasowa › „Kopia zapasowa Google One”. Na nowym telefonie albo po ponownej instalacji Sordiny na tym samym koncie zapytam przy pierwszym uruchomieniu, czy przywrócić wszystko.</string>
     <string name="s_gbackup_open">Otwórz kopię zapasową Google</string>
     <string name="s_restore">Przywróć kopię z %1$s</string>
     <string name="s_restore_title">Przywrócić kopię?</string>
