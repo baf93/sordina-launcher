@@ -1090,4 +1090,29 @@
     <string name="budget_done_text">Χρησιμοποίησες %1$s. Εσύ αποφασίζεις αν θα συνεχίσεις.</string>
     <string name="ch_budget">Προϋπολογισμός φρένου</string>
     <string name="ch_budget_desc">Όταν τελειώνει ο ημερήσιος προϋπολογισμός μιας εφαρμογής στο φρένο ενώ τη χρησιμοποιείς</string>
+    <string name="notif_intro">Όλα περιμένουν στο Sordina, εκτός από:</string>
+    <string name="notif_important">Σημαντικά</string>
+    <string name="notif_security">Κωδικοί και ασφάλεια</string>
+    <string name="notif_security_hint">Κωδικοί σύνδεσης, ειδοποιήσεις απάτης, πληρωμές προς επιβεβαίωση. Περνούν πάντα</string>
+    <string name="notif_missed">Αναπάντητες κλήσεις</string>
+    <string name="notif_remind">Υπενθυμίσεις και συμβάντα</string>
+    <string name="notif_on_app">στο %1$s</string>
+    <string name="app_kinds_sub">Περνούν όλα, εκτός από όσα απενεργοποιείς. Οι νέοι τύποι περνούν.</string>
+    <string name="app_kinds_none">Τίποτα ακόμα: οι τύποι εμφανίζονται εδώ όταν η εφαρμογή στέλνει ειδοποιήσεις.</string>
+    <string name="app_kinds_chats">Συνομιλίες</string>
+    <string name="app_kinds_types">Τύποι ειδοποιήσεων</string>
+    <string name="app_remove">Αφαίρεση %1$s</string>
+    <string name="rule_next">Από εδώ και πέρα</string>
+    <string name="rule_person_in">Άφησε να περνά %1$s</string>
+    <string name="rule_person_in_hint">Μόνο στο %1$s</string>
+    <string name="rule_app_in">Άφησε να περνούν όλα από %1$s</string>
+    <string name="rule_app_in_hint">Όλα, εκτός από όσα απενεργοποιείς</string>
+    <string name="rule_off">Άφησε %1$s να περιμένει</string>
+    <string name="rule_off_hint">Μια εξαίρεση στο %1$s</string>
+    <string name="rule_enters">%1$s περνά</string>
+    <string name="rule_waits">%1$s περιμένει στο Sordina</string>
+    <plurals name="n_exceptions">
+        <item quantity="one">%d εξαίρεση</item>
+        <item quantity="other">%d εξαιρέσεις</item>
+    </plurals>
 </resources>

@@ -1094,4 +1094,29 @@
     <string name="budget_done_text">Du hast %1$s genutzt. Ob du weitermachst, entscheidest du.</string>
     <string name="ch_budget">Bremsbudget</string>
     <string name="ch_budget_desc">Wenn das Tagesbudget einer gebremsten App aufgebraucht ist, während du sie nutzt</string>
+    <string name="notif_intro">Alles wartet in Sordina, außer:</string>
+    <string name="notif_important">Wichtig</string>
+    <string name="notif_security">Codes und Sicherheit</string>
+    <string name="notif_security_hint">Anmeldecodes, Betrugswarnungen, zu bestätigende Zahlungen. Kommen immer durch</string>
+    <string name="notif_missed">Verpasste Anrufe</string>
+    <string name="notif_remind">Erinnerungen und Termine</string>
+    <string name="notif_on_app">auf %1$s</string>
+    <string name="app_kinds_sub">Alles kommt durch, außer was du ausschaltest. Neue Arten kommen durch.</string>
+    <string name="app_kinds_none">Noch nichts: Die Arten erscheinen hier, sobald die App Benachrichtigungen sendet.</string>
+    <string name="app_kinds_chats">Chats</string>
+    <string name="app_kinds_types">Benachrichtigungsarten</string>
+    <string name="app_remove">%1$s entfernen</string>
+    <string name="rule_next">Ab jetzt</string>
+    <string name="rule_person_in">%1$s durchlassen</string>
+    <string name="rule_person_in_hint">Nur auf %1$s</string>
+    <string name="rule_app_in">Alles von %1$s durchlassen</string>
+    <string name="rule_app_in_hint">Alles, außer was du ausschaltest</string>
+    <string name="rule_off">%1$s warten lassen</string>
+    <string name="rule_off_hint">Eine Ausnahme in %1$s</string>
+    <string name="rule_enters">%1$s kommt durch</string>
+    <string name="rule_waits">%1$s wartet in Sordina</string>
+    <plurals name="n_exceptions">
+        <item quantity="one">%d Ausnahme</item>
+        <item quantity="other">%d Ausnahmen</item>
+    </plurals>
 </resources>

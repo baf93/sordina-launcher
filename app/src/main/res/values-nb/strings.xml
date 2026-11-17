@@ -1090,4 +1090,29 @@
     <string name="budget_done_text">Du har brukt %1$s. Det er opp til deg om du fortsetter.</string>
     <string name="ch_budget">Bremsebudsjett</string>
     <string name="ch_budget_desc">Når dagsbudsjettet til en bremset app er brukt opp mens du bruker den</string>
+    <string name="notif_intro">Alt venter i Sordina, unntatt:</string>
+    <string name="notif_important">Viktige</string>
+    <string name="notif_security">Koder og sikkerhet</string>
+    <string name="notif_security_hint">Påloggingskoder, svindelvarsler, betalinger som må bekreftes. Kommer alltid gjennom</string>
+    <string name="notif_missed">Tapte anrop</string>
+    <string name="notif_remind">Påminnelser og hendelser</string>
+    <string name="notif_on_app">på %1$s</string>
+    <string name="app_kinds_sub">Alt kommer gjennom, unntatt det du slår av. Nye typer kommer gjennom.</string>
+    <string name="app_kinds_none">Ingenting ennå: typene vises her når appen sender varsler.</string>
+    <string name="app_kinds_chats">Chatter</string>
+    <string name="app_kinds_types">Varseltyper</string>
+    <string name="app_remove">Fjern %1$s</string>
+    <string name="rule_next">Fra nå av</string>
+    <string name="rule_person_in">Slipp %1$s gjennom</string>
+    <string name="rule_person_in_hint">Bare på %1$s</string>
+    <string name="rule_app_in">Slipp alt fra %1$s gjennom</string>
+    <string name="rule_app_in_hint">Alt, unntatt det du slår av</string>
+    <string name="rule_off">La %1$s vente</string>
+    <string name="rule_off_hint">Et unntak i %1$s</string>
+    <string name="rule_enters">%1$s kommer gjennom</string>
+    <string name="rule_waits">%1$s venter i Sordina</string>
+    <plurals name="n_exceptions">
+        <item quantity="one">%d unntak</item>
+        <item quantity="other">%d unntak</item>
+    </plurals>
 </resources>

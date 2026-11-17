@@ -1094,4 +1094,30 @@
     <string name="budget_done_text">Has usado %1$s. Tú decides si seguir.</string>
     <string name="ch_budget">Presupuesto del freno</string>
     <string name="ch_budget_desc">Cuando se agota el presupuesto diario de una app frenada mientras la usas</string>
+    <string name="notif_intro">Todo espera en Sordina, excepto:</string>
+    <string name="notif_important">Importantes</string>
+    <string name="notif_security">Códigos y seguridad</string>
+    <string name="notif_security_hint">Códigos de acceso, alertas de fraude, pagos por confirmar. Siempre entran</string>
+    <string name="notif_missed">Llamadas perdidas</string>
+    <string name="notif_remind">Recordatorios y eventos</string>
+    <string name="notif_on_app">en %1$s</string>
+    <string name="app_kinds_sub">Entra todo, excepto lo que desactives. Los tipos nuevos entran.</string>
+    <string name="app_kinds_none">Nada todavía: los tipos aparecen aquí cuando la app envía notificaciones.</string>
+    <string name="app_kinds_chats">Chats</string>
+    <string name="app_kinds_types">Tipos de notificación</string>
+    <string name="app_remove">Quitar %1$s</string>
+    <string name="rule_next">A partir de ahora</string>
+    <string name="rule_person_in">Dejar entrar a %1$s</string>
+    <string name="rule_person_in_hint">Solo en %1$s</string>
+    <string name="rule_app_in">Dejar entrar todo de %1$s</string>
+    <string name="rule_app_in_hint">Todo, excepto lo que desactives</string>
+    <string name="rule_off">Hacer esperar %1$s</string>
+    <string name="rule_off_hint">Una excepción dentro de %1$s</string>
+    <string name="rule_enters">%1$s entra</string>
+    <string name="rule_waits">%1$s espera en Sordina</string>
+    <plurals name="n_exceptions">
+        <item quantity="one">%d excepción</item>
+        <item quantity="many">%d excepciones</item>
+        <item quantity="other">%d excepciones</item>
+    </plurals>
 </resources>

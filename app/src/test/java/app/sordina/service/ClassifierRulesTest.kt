@@ -32,27 +32,53 @@ class ClassifierRulesTest {
         assertNull(level(app(category = Notification.CATEGORY_ALARM)))
     }
 
-    @Test fun channelRuleBeatsEverything() {
-        val s = base.copy(channelRules = mapOf("com.bank|alerts" to Level.RIEPILOGO))
-        assertEquals(Level.RIEPILOGO, level(app(pkg = "com.bank", channel = "alerts", category = Notification.CATEGORY_CALL), s))
+    @Test fun appInLetsEverythingThrough() {
+        val s = base.copy(inApps = setOf("com.shop"))
+        assertEquals(Level.SEMPRE, level(app(), s))
+        assertEquals(Classifier.REASON_DEFAULT, reason(app(pkg = "com.other"), s))
     }
 
-    @Test fun personRuleIsPerApp() {
-        val s = base.copy(personRules = mapOf("com.whatsapp|famiglia" to Level.RIEPILOGO))
-        assertEquals(Level.RIEPILOGO, level(msg(conversation = "Famiglia"), s))
-        // Lo stesso nome su Telegram non è toccato dalla regola di WhatsApp
-        assertEquals(Classifier.REASON_DEFAULT, reason(msg(pkg = "org.telegram.messenger", conversation = "Famiglia"), s))
+    @Test fun offTypeIsAnExceptionEvenForStickyButNeverForSecurity() {
+        val s = base.copy(inApps = setOf("com.bank"), offTypes = setOf("com.bank|alerts"))
+        assertEquals(Classifier.REASON_CHANNEL, reason(app(pkg = "com.bank", channel = "alerts"), s))
+        assertEquals(Classifier.REASON_CHANNEL, reason(app(pkg = "com.bank", channel = "alerts", category = Notification.CATEGORY_CALL), s))
+        assertEquals(Level.SEMPRE, level(app(pkg = "com.bank", channel = "other"), s))
+        assertEquals(Classifier.REASON_OTP, reason(app(pkg = "com.bank", channel = "alerts", text = "Il tuo codice di verifica è 482913"), s))
     }
 
-    @Test fun legacyPersonRuleStillAppliesEverywhere() {
-        val s = base.copy(personRules = mapOf("famiglia" to Level.RIEPILOGO))
-        assertEquals(Classifier.REASON_PERSON, reason(msg(pkg = "org.telegram.messenger", conversation = "Famiglia"), s))
+    @Test fun offChatIsPerApp() {
+        val s = base.copy(inApps = setOf("com.whatsapp", "org.telegram.messenger"), offChats = setOf("com.whatsapp|famiglia"))
+        assertEquals(Classifier.REASON_PERSON, reason(msg(conversation = "Famiglia"), s))
+        // Lo stesso nome su Telegram non è toccato dall'eccezione di WhatsApp
+        assertEquals(Level.SEMPRE, level(msg(pkg = "org.telegram.messenger", conversation = "Famiglia"), s))
+    }
+
+    @Test fun personInOnlyFromThatApp() {
+        val s = base.copy(peopleIn = setOf("com.whatsapp|anna rossi"))
+        assertEquals(Classifier.REASON_PERSON, reason(msg(), s))
+        assertEquals(Level.SUBITO, level(msg(), s))
+        assertEquals(Classifier.REASON_DEFAULT, reason(msg(pkg = "org.telegram.messenger"), s))
+    }
+
+    @Test fun offChatBeatsPersonEverywhere() {
+        val s = base.copy(important = setOf("anna rossi"), importantInGroups = setOf("anna rossi"), offChats = setOf("com.whatsapp|calcetto"))
+        assertEquals(Classifier.REASON_PERSON, reason(msg(conversation = "Calcetto"), s))
+        assertEquals(Level.RIEPILOGO, level(msg(conversation = "Calcetto"), s))
     }
 
     @Test fun brakedWaitsEvenForImportant() {
         val s = base.copy(braked = setOf("com.whatsapp"), important = setOf("anna rossi"))
         assertEquals(Classifier.REASON_BRAKED, reason(msg(), s))
-        assertEquals(Level.SEMPRE, level(msg(), s.copy(appLevels = mapOf("com.whatsapp" to Level.SEMPRE))))
+        // Messa fra le app che entrano, il freno non la trattiene
+        assertEquals("persona importante", reason(msg(), s.copy(inApps = setOf("com.whatsapp"))))
+        assertEquals(Level.SEMPRE, level(msg(person = "Marco"), s.copy(inApps = setOf("com.whatsapp"))))
+    }
+
+    @Test fun missedAndRemindersCanBeTurnedOff() {
+        assertEquals(Classifier.REASON_MISSED, reason(app(category = "missed_call")))
+        assertEquals(Classifier.REASON_DEFAULT, reason(app(category = "missed_call"), base.copy(missedPass = false)))
+        assertEquals(Classifier.REASON_REMINDER, reason(app(category = Notification.CATEGORY_REMINDER)))
+        assertEquals(Classifier.REASON_DEFAULT, reason(app(category = Notification.CATEGORY_REMINDER), base.copy(remindPass = false)))
     }
 
     @Test fun otpAndPaymentAlertsPass() {
@@ -64,8 +90,8 @@ class ClassifierRulesTest {
         assertEquals("pagamento", reason(app(pkg = "com.bank", title = "Banca", text = "Pagamento di 12,50 € presso BAR")))
     }
 
-    @Test fun securityBeatsAppRuleButNotYourPersonRule() {
-        val s = base.copy(appLevels = mapOf("com.bank" to Level.RIEPILOGO))
+    @Test fun securityAlwaysGetsThrough() {
+        val s = base.copy(braked = setOf("com.bank"))
         assertEquals(Classifier.REASON_OTP, reason(app(pkg = "com.bank", text = "Codice 482913 per accedere"), s))
     }
 
@@ -110,14 +136,14 @@ class ClassifierRulesTest {
     @Test fun quietHoldsOnlyRuleBasedPasses() {
         val q = base.copy(quiet = true)
         assertEquals("modalità", reason(app(category = "missed_call"), q))
-        assertEquals("modalità", reason(app(pkg = "com.x"), q.copy(appLevels = mapOf("com.x" to Level.SUBITO))))
+        assertEquals("modalità", reason(msg(), q.copy(peopleIn = setOf("com.whatsapp|anna rossi"))))
         assertEquals(Classifier.REASON_OTP, reason(app(text = "Il tuo codice è 482913"), q))
         assertEquals("persona importante", reason(msg(), q.copy(important = setOf("anna rossi"))))
-        assertEquals(Level.SEMPRE, level(app(pkg = "com.x"), q.copy(appLevels = mapOf("com.x" to Level.SEMPRE))))
+        assertEquals(Level.SEMPRE, level(app(pkg = "com.x"), q.copy(inApps = setOf("com.x"))))
     }
 
     @Test fun passUntilWins() {
-        val s = base.copy(passUntil = mapOf("a:com.shop" to now + 1000), personRules = mapOf("com.shop|x" to Level.RIEPILOGO))
+        val s = base.copy(passUntil = mapOf("a:com.shop" to now + 1000), offChats = setOf("com.shop|x"))
         assertNull(level(app(), s))
         assertEquals(Classifier.REASON_DEFAULT, reason(app(), s.copy(passUntil = mapOf("a:com.shop" to now - 1))))
     }

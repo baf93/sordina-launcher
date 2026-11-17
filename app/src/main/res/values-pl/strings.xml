@@ -1112,4 +1112,31 @@
     <string name="budget_done_text">Wykorzystano %1$s. Ty decydujesz, czy kontynuować.</string>
     <string name="ch_budget">Budżet hamulca</string>
     <string name="ch_budget_desc">Gdy dzienny budżet hamowanej aplikacji kończy się w trakcie używania</string>
+    <string name="notif_intro">Wszystko czeka w Sordinie, oprócz:</string>
+    <string name="notif_important">Ważne</string>
+    <string name="notif_security">Kody i bezpieczeństwo</string>
+    <string name="notif_security_hint">Kody logowania, alerty o oszustwach, płatności do potwierdzenia. Zawsze docierają</string>
+    <string name="notif_missed">Nieodebrane połączenia</string>
+    <string name="notif_remind">Przypomnienia i wydarzenia</string>
+    <string name="notif_on_app">w %1$s</string>
+    <string name="app_kinds_sub">Dociera wszystko, oprócz tego, co wyłączysz. Nowe typy docierają.</string>
+    <string name="app_kinds_none">Jeszcze nic: typy pojawią się tutaj, gdy aplikacja wyśle powiadomienia.</string>
+    <string name="app_kinds_chats">Czaty</string>
+    <string name="app_kinds_types">Typy powiadomień</string>
+    <string name="app_remove">Usuń %1$s</string>
+    <string name="rule_next">Od teraz</string>
+    <string name="rule_person_in">Przepuszczaj %1$s</string>
+    <string name="rule_person_in_hint">Tylko w %1$s</string>
+    <string name="rule_app_in">Przepuszczaj wszystko z %1$s</string>
+    <string name="rule_app_in_hint">Wszystko, oprócz tego, co wyłączysz</string>
+    <string name="rule_off">Niech %1$s czeka</string>
+    <string name="rule_off_hint">Wyjątek w %1$s</string>
+    <string name="rule_enters">%1$s dociera</string>
+    <string name="rule_waits">%1$s czeka w Sordinie</string>
+    <plurals name="n_exceptions">
+        <item quantity="one">%d wyjątek</item>
+        <item quantity="few">%d wyjątki</item>
+        <item quantity="many">%d wyjątków</item>
+        <item quantity="other">%d wyjątku</item>
+    </plurals>
 </resources>

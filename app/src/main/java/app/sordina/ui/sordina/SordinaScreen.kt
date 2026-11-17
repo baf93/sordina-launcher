@@ -8,7 +8,7 @@ import app.sordina.R
 import app.sordina.tr
 import app.sordina.trn
 import app.sordina.data.Level
-import app.sordina.data.RuleScope
+import app.sordina.data.RuleOp
 import app.sordina.data.RuleTarget
 import app.sordina.ui.RuleSheet
 import app.sordina.ui.RuleLabel
@@ -146,9 +146,10 @@ fun SordinaScreen(
     onReadKeys: (List<String>) -> Unit,
     onReadAll: () -> Unit,
     onLetPass: (Held, Int?) -> Unit,
-    ruleOf: (RuleTarget, RuleScope) -> Level?,
-    /** Una regola per tipo, persona o gruppo, app; null la toglie */
-    onRule: (RuleTarget, RuleScope, Level?) -> Unit,
+    /** Le scelte possibili per una notifica, com'è adesso ciascuna, e il tocco che la cambia */
+    ruleOps: (RuleTarget) -> List<RuleOp>,
+    ruleOn: (RuleTarget, RuleOp) -> Boolean,
+    onRule: (RuleTarget, RuleOp) -> Unit,
     onMove: (key: String, Category) -> Unit,
     onBack: () -> Unit,
     /** Le app nascoste: una riga sola finché non si sblocca */
@@ -299,7 +300,8 @@ fun SordinaScreen(
 
     actionsFor?.let { h ->
         // Tenendo premuto: una regola per sempre (tipo, persona o gruppo, app), "lascia passare" per qualche ora, la categoria
-        RuleSheet(h.target(), ruleOf, onRule, onDismiss = { actionsFor = null }) {
+        val t = h.target()
+        RuleSheet(t, ruleOps(t), ruleOn, onRule, onDismiss = { actionsFor = null }) {
             val now = System.currentTimeMillis()
             RuleLabel(tr(R.string.let_pass))
             PASS_OPTIONS.filter { it.second != null }.forEach { (label, hours) ->

@@ -1099,4 +1099,29 @@
     <string name="budget_done_text">You\'ve used %1$s. It\'s up to you whether to keep going.</string>
     <string name="ch_budget">Brake budget</string>
     <string name="ch_budget_desc">When a braked app\'s daily budget runs out while you\'re using it</string>
+    <string name="notif_intro">Everything waits in Sordina, except:</string>
+    <string name="notif_important">Important</string>
+    <string name="notif_security">Codes and security</string>
+    <string name="notif_security_hint">Login codes, fraud alerts, payments to confirm. Always get through</string>
+    <string name="notif_missed">Missed calls</string>
+    <string name="notif_remind">Reminders and events</string>
+    <string name="notif_on_app">on %1$s</string>
+    <string name="app_kinds_sub">Everything gets through, except what you turn off. New types get through.</string>
+    <string name="app_kinds_none">Nothing yet: types show up here as the app sends notifications.</string>
+    <string name="app_kinds_chats">Chats</string>
+    <string name="app_kinds_types">Notification types</string>
+    <string name="app_remove">Remove %1$s</string>
+    <string name="rule_next">From now on</string>
+    <string name="rule_person_in">Let %1$s through</string>
+    <string name="rule_person_in_hint">Only on %1$s</string>
+    <string name="rule_app_in">Let everything from %1$s through</string>
+    <string name="rule_app_in_hint">Everything, except what you turn off</string>
+    <string name="rule_off">Make %1$s wait</string>
+    <string name="rule_off_hint">An exception inside %1$s</string>
+    <string name="rule_enters">%1$s gets through</string>
+    <string name="rule_waits">%1$s waits in Sordina</string>
+    <plurals name="n_exceptions">
+        <item quantity="one">%d exception</item>
+        <item quantity="other">%d exceptions</item>
+    </plurals>
 </resources>

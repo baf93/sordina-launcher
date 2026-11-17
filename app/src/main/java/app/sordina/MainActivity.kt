@@ -12,7 +12,7 @@ import app.sordina.data.Prefs
 import app.sordina.data.Faults
 import app.sordina.data.Held
 import app.sordina.data.Habits
-import app.sordina.data.RuleScope
+import app.sordina.data.RuleOp
 import app.sordina.data.RuleTarget
 import app.sordina.data.Rules
 import app.sordina.R
@@ -648,11 +648,12 @@ class MainActivity : ComponentActivity(), Ops {
     }
 
     /** Una regola dalla pagina Sordina: vale subito, anche per quello che è già nella tendina o in sordina. */
-    internal fun setRule(t: RuleTarget, s: RuleScope, level: Level?) {
-        Rules.set(prefs, t, s, level)
+    internal fun setRule(t: RuleTarget, op: RuleOp) {
+        Rules.toggle(prefs, t, op)
         SordinaListener.reapply(this, t.pkg)
         changed()
-        hint(if (level == null) tr(R.string.rule_removed) else tr(R.string.rule_set, t.name(s), level.label))
+        val who = when (op) { RuleOp.PERSON_IN -> t.personTitle ?: t.person.orEmpty(); RuleOp.APP_IN -> t.appLabel; RuleOp.OFF -> t.kindName }
+        hint(tr(if (Rules.enters(prefs, t, op)) R.string.rule_enters else R.string.rule_waits, who))
     }
 
     /** Telefoni prima di Android 10: la schermata di conferma del blocco, con il suo risultato */

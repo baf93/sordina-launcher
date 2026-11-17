@@ -157,6 +157,12 @@ class SordinaListener : NotificationListenerService() {
         val existing = store.get(key)
         val ranking = Faults.guard("ranking") { Ranking().takeIf { currentRanking.getRanking(key, it) } }
         val importance = ranking?.importance ?: NotificationManager.IMPORTANCE_DEFAULT
+        // I tipi e le chat di ogni app, per spegnerli dalla sua pagina in Impostazioni → Notifiche
+        if (fresh && !info.system && !info.isGroupSummary && sbn.packageName != packageName) Faults.guard("kinds") {
+            val who = Classifier.personKey(info)
+            if (who != null) app.kinds.chat(info.pkg, who, info.conversation ?: info.person)
+            else app.kinds.channel(info.pkg, info.channel, ranking?.channel?.name?.toString())
+        }
         // Le schede in Casa seguono il verdetto: niente da ciò che hai messo in sordina tu (app, persona, tipo, frenata, nascosta)
         val mutedByYou = level == Level.RIEPILOGO && verdict.reason in Classifier.MUTED_BY_YOU
         if (mutedByYou) app.signals.remove(key) else card(sbn, info, scanPlans = fresh)

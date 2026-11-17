@@ -1079,4 +1079,28 @@
     <string name="budget_done_text">%1$s 사용했어요. 계속할지는 직접 정하세요.</string>
     <string name="ch_budget">브레이크 예산</string>
     <string name="ch_budget_desc">브레이크를 건 앱의 하루 예산이 사용 중에 다 떨어질 때</string>
+    <string name="notif_intro">Sordina에서는 모두 대기합니다. 다음은 제외:</string>
+    <string name="notif_important">중요</string>
+    <string name="notif_security">코드 및 보안</string>
+    <string name="notif_security_hint">로그인 코드, 사기 경고, 확인이 필요한 결제. 항상 도착합니다</string>
+    <string name="notif_missed">부재중 전화</string>
+    <string name="notif_remind">리마인더 및 일정</string>
+    <string name="notif_on_app">%1$s에서</string>
+    <string name="app_kinds_sub">끈 것을 제외하고 모두 도착합니다. 새 유형은 도착합니다.</string>
+    <string name="app_kinds_none">아직 없음: 앱이 알림을 보내면 여기에 유형이 표시됩니다.</string>
+    <string name="app_kinds_chats">채팅</string>
+    <string name="app_kinds_types">알림 유형</string>
+    <string name="app_remove">%1$s 제거</string>
+    <string name="rule_next">앞으로</string>
+    <string name="rule_person_in">%1$s 통과</string>
+    <string name="rule_person_in_hint">%1$s에서만</string>
+    <string name="rule_app_in">%1$s의 모든 알림 통과</string>
+    <string name="rule_app_in_hint">끈 것을 제외하고 모두</string>
+    <string name="rule_off">%1$s 대기</string>
+    <string name="rule_off_hint">%1$s 안의 예외</string>
+    <string name="rule_enters">%1$s 도착</string>
+    <string name="rule_waits">%1$s Sordina에서 대기</string>
+    <plurals name="n_exceptions">
+        <item quantity="other">예외 %d개</item>
+    </plurals>
 </resources>

@@ -10,7 +10,6 @@ import app.sordina.ui.Motion
 import app.sordina.data.Prefs
 import app.sordina.data.Held
 import app.sordina.data.Habits
-import app.sordina.data.RuleScope
 import app.sordina.data.RuleTarget
 import app.sordina.data.Rules
 import app.sordina.R

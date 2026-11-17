@@ -12,7 +12,6 @@ import app.sordina.ui.Motion
 import app.sordina.data.Prefs
 import app.sordina.data.Held
 import app.sordina.data.Habits
-import app.sordina.data.RuleScope
 import app.sordina.data.RuleTarget
 import app.sordina.data.Rules
 import app.sordina.R
@@ -479,7 +478,8 @@ internal fun MainActivity.Root() {
                     onReadKeys = { keys -> SordinaListener.readKeys(this@Root, keys) },
                     onReadAll = { SordinaListener.readAll(this@Root); screen = Screen.HOME },
                     onLetPass = ::letPass,
-                    ruleOf = { t, s -> Rules.get(prefs, t, s) },
+                    ruleOps = { t -> Rules.ops(prefs, t) },
+                    ruleOn = { t, op -> Rules.isOn(prefs, t, op) },
                     onRule = ::setRule,
                     onMove = { k, cat -> prefs.categoryOverrides = prefs.categoryOverrides + (k to cat.name); changed() },
                     onBack = { screen = Screen.HOME },

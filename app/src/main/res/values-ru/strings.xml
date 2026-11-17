@@ -1112,4 +1112,31 @@
     <string name="budget_done_text">Ты провёл здесь %1$s. Продолжать или нет — решать тебе.</string>
     <string name="ch_budget">Бюджет тормоза</string>
     <string name="ch_budget_desc">Когда дневной бюджет приложения на тормозе заканчивается во время использования</string>
+    <string name="notif_intro">Всё ждёт в Sordina, кроме:</string>
+    <string name="notif_important">Важное</string>
+    <string name="notif_security">Коды и безопасность</string>
+    <string name="notif_security_hint">Коды входа, предупреждения о мошенничестве, платежи для подтверждения. Приходят всегда</string>
+    <string name="notif_missed">Пропущенные звонки</string>
+    <string name="notif_remind">Напоминания и события</string>
+    <string name="notif_on_app">в %1$s</string>
+    <string name="app_kinds_sub">Приходит всё, кроме того, что вы выключите. Новые типы приходят.</string>
+    <string name="app_kinds_none">Пока ничего: типы появятся здесь, когда приложение пришлёт уведомления.</string>
+    <string name="app_kinds_chats">Чаты</string>
+    <string name="app_kinds_types">Типы уведомлений</string>
+    <string name="app_remove">Убрать %1$s</string>
+    <string name="rule_next">Отныне</string>
+    <string name="rule_person_in">Пропускать %1$s</string>
+    <string name="rule_person_in_hint">Только в %1$s</string>
+    <string name="rule_app_in">Пропускать всё из %1$s</string>
+    <string name="rule_app_in_hint">Всё, кроме того, что вы выключите</string>
+    <string name="rule_off">Пусть %1$s ждёт</string>
+    <string name="rule_off_hint">Исключение в %1$s</string>
+    <string name="rule_enters">%1$s приходит</string>
+    <string name="rule_waits">%1$s ждёт в Sordina</string>
+    <plurals name="n_exceptions">
+        <item quantity="one">%d исключение</item>
+        <item quantity="few">%d исключения</item>
+        <item quantity="many">%d исключений</item>
+        <item quantity="other">%d исключения</item>
+    </plurals>
 </resources>

@@ -36,6 +36,25 @@ class Prefs(context: Context) {
     private fun str(k: String, d: String) = sp.getString(k, d) ?: d
     private fun put(block: SharedPreferences.Editor.() -> Unit) = sp.edit().apply(block).apply()
 
+    init { migrateNotif() }
+
+    /**
+     * Le regole delle notifiche diventano "tutto aspetta, tranne": le app entrano o no (niente più "aspetta" esplicito),
+     * i tipi e le chat si possono solo spegnere dentro un'app, le persone entrano ovunque o da un'app sola.
+     * Gira una volta (e dopo un'importazione, che può portare regole vecchie).
+     */
+    fun migrateNotif(force: Boolean = false) {
+        if (!force && sp.getInt("notifModel", 0) >= 2) return
+        appLevels = appLevels.filterValues { it != Level.RIEPILOGO }.mapValues { Level.SEMPRE }
+        channelRules = channelRules.filterValues { it == Level.RIEPILOGO }
+        val old = personRules
+        // Le regole vecchie solo col nome valevano su tutte le app: chi passava entra ovunque, chi aspettava aspetta già
+        val everywhere = old.filter { '|' !in it.key && it.value != Level.RIEPILOGO }.keys
+        if (everywhere.isNotEmpty()) importantNames = importantNames + everywhere
+        personRules = old.filterKeys { '|' in it }.mapValues { if (it.value == Level.RIEPILOGO) Level.RIEPILOGO else Level.SUBITO }
+        put { putInt("notifModel", 2) }
+    }
+
     var onboarded: Boolean
         get() = sp.getBoolean("onboarded", false)
         set(v) = put { putBoolean("onboarded", v) }
@@ -120,6 +139,36 @@ class Prefs(context: Context) {
     fun setAppLevel(pkg: String, level: Level?) {
         appLevels = if (level == null) appLevels - pkg else appLevels + (pkg to level)
     }
+
+    /** Le app che entrano (sezione App di Notifiche): tutto il resto aspetta in Sordina. */
+    var inApps: Set<String>
+        get() = appLevels.filterValues { it != Level.RIEPILOGO }.keys
+        set(v) { appLevels = v.associateWith { Level.SEMPRE } }
+
+    /** I tipi di notifica spenti dentro un'app: "pacchetto|canale". */
+    var offTypes: Set<String>
+        get() = channelRules.filterValues { it == Level.RIEPILOGO }.keys
+        set(v) { channelRules = v.associateWith { Level.RIEPILOGO } }
+
+    /** Le chat spente dentro un'app: "pacchetto|persona o gruppo". */
+    var offChats: Set<String>
+        get() = personRules.filter { '|' in it.key && it.value == Level.RIEPILOGO }.keys
+        set(v) { personRules = personRules.filterValues { it != Level.RIEPILOGO } + v.associateWith { Level.RIEPILOGO } }
+
+    /** Le persone che entrano solo da un'app: "pacchetto|persona". */
+    var peopleIn: Set<String>
+        get() = personRules.filter { '|' in it.key && it.value != Level.RIEPILOGO }.keys
+        set(v) { personRules = personRules.filterValues { it == Level.RIEPILOGO } + v.associateWith { Level.SUBITO } }
+
+    /** Importanti: le chiamate perse entrano. */
+    var missedPass: Boolean
+        get() = sp.getBoolean("missedPass", true)
+        set(v) = put { putBoolean("missedPass", v) }
+
+    /** Importanti: promemoria e impegni del calendario entrano. */
+    var remindPass: Boolean
+        get() = sp.getBoolean("remindPass", true)
+        set(v) = put { putBoolean("remindPass", v) }
 
     /** "Lascia passare": contatto o app (chiave del gruppo, es. "p:anna" o "a:com.app") → fino a quando (millisecondi) */
     var passUntil: Map<String, Long>
@@ -522,6 +571,8 @@ class Prefs(context: Context) {
                 }
             }
         }
+        // Un file salvato prima di "tutto aspetta, tranne": le sue regole si convertono
+        if (o.optInt("notifModel", 0) < 2) migrateNotif(force = true)
     }
 
     fun clearAll() = sp.edit().clear().apply()
@@ -547,7 +598,7 @@ class Prefs(context: Context) {
         /** Le chiavi delle regole: persone, app, tipi di notifica, app frenate o nascoste, "lascia passare", urgenze */
         val RULE_KEYS = setOf(
             "hidden", "appLevels", "passUntil", "importantNames", "importantInGroups", "talkPass",
-            "urgentEnabled", "urgentWords", "channelRules", "personRules", "braked", "systemPass",
+            "urgentEnabled", "urgentWords", "channelRules", "personRules", "braked", "systemPass", "missedPass", "remindPass",
         )
         const val MAX_PINNED = 4
         /** Una fissata che non è un'app ("scrivi a Elisa su Telegram"): davanti alla cosa del cervello */

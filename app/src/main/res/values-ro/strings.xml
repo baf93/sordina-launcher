@@ -1101,4 +1101,30 @@
     <string name="budget_done_text">Ai folosit %1$s. Tu decizi dacă mai continui.</string>
     <string name="ch_budget">Bugetul frânei</string>
     <string name="ch_budget_desc">Când bugetul zilnic al unei aplicații frânate se termină în timp ce o folosești</string>
+    <string name="notif_intro">Totul așteaptă în Sordina, în afară de:</string>
+    <string name="notif_important">Importante</string>
+    <string name="notif_security">Coduri și securitate</string>
+    <string name="notif_security_hint">Coduri de acces, alerte de fraudă, plăți de confirmat. Trec mereu</string>
+    <string name="notif_missed">Apeluri pierdute</string>
+    <string name="notif_remind">Mementouri și evenimente</string>
+    <string name="notif_on_app">pe %1$s</string>
+    <string name="app_kinds_sub">Trece tot, în afară de ce dezactivezi. Tipurile noi trec.</string>
+    <string name="app_kinds_none">Nimic încă: tipurile apar aici când aplicația trimite notificări.</string>
+    <string name="app_kinds_chats">Conversații</string>
+    <string name="app_kinds_types">Tipuri de notificări</string>
+    <string name="app_remove">Elimină %1$s</string>
+    <string name="rule_next">De acum</string>
+    <string name="rule_person_in">Lasă-l pe %1$s să treacă</string>
+    <string name="rule_person_in_hint">Doar pe %1$s</string>
+    <string name="rule_app_in">Lasă să treacă tot din %1$s</string>
+    <string name="rule_app_in_hint">Tot, în afară de ce dezactivezi</string>
+    <string name="rule_off">Lasă %1$s să aștepte</string>
+    <string name="rule_off_hint">O excepție în %1$s</string>
+    <string name="rule_enters">%1$s trece</string>
+    <string name="rule_waits">%1$s așteaptă în Sordina</string>
+    <plurals name="n_exceptions">
+        <item quantity="one">%d excepție</item>
+        <item quantity="few">%d excepții</item>
+        <item quantity="other">%d de excepții</item>
+    </plurals>
 </resources>

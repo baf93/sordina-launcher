@@ -1079,4 +1079,28 @@
     <string name="budget_done_text">Bạn đã dùng %1$s. Tiếp tục hay không là do bạn.</string>
     <string name="ch_budget">Ngân sách phanh</string>
     <string name="ch_budget_desc">Khi ngân sách hằng ngày của một ứng dụng bị phanh hết trong lúc bạn đang dùng</string>
+    <string name="notif_intro">Mọi thứ chờ trong Sordina, ngoại trừ:</string>
+    <string name="notif_important">Quan trọng</string>
+    <string name="notif_security">Mã và bảo mật</string>
+    <string name="notif_security_hint">Mã đăng nhập, cảnh báo gian lận, thanh toán cần xác nhận. Luôn được báo</string>
+    <string name="notif_missed">Cuộc gọi nhỡ</string>
+    <string name="notif_remind">Lời nhắc và sự kiện</string>
+    <string name="notif_on_app">trên %1$s</string>
+    <string name="app_kinds_sub">Mọi thứ đều được báo, trừ những gì bạn tắt. Loại mới được báo.</string>
+    <string name="app_kinds_none">Chưa có gì: các loại sẽ hiện ở đây khi ứng dụng gửi thông báo.</string>
+    <string name="app_kinds_chats">Cuộc trò chuyện</string>
+    <string name="app_kinds_types">Loại thông báo</string>
+    <string name="app_remove">Gỡ %1$s</string>
+    <string name="rule_next">Từ giờ</string>
+    <string name="rule_person_in">Cho %1$s báo</string>
+    <string name="rule_person_in_hint">Chỉ trên %1$s</string>
+    <string name="rule_app_in">Cho mọi thứ từ %1$s báo</string>
+    <string name="rule_app_in_hint">Mọi thứ, trừ những gì bạn tắt</string>
+    <string name="rule_off">Để %1$s chờ</string>
+    <string name="rule_off_hint">Một ngoại lệ trong %1$s</string>
+    <string name="rule_enters">%1$s được báo</string>
+    <string name="rule_waits">%1$s chờ trong Sordina</string>
+    <plurals name="n_exceptions">
+        <item quantity="other">%d ngoại lệ</item>
+    </plurals>
 </resources>

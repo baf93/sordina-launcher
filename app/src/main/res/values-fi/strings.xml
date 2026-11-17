@@ -1090,4 +1090,29 @@
     <string name="budget_done_text">Olet käyttänyt %1$s. Sinä päätät, jatkatko.</string>
     <string name="ch_budget">Jarrun budjetti</string>
     <string name="ch_budget_desc">Kun jarrutetun sovelluksen päiväbudjetti loppuu käytön aikana</string>
+    <string name="notif_intro">Kaikki odottaa Sordinassa, paitsi:</string>
+    <string name="notif_important">Tärkeät</string>
+    <string name="notif_security">Koodit ja turvallisuus</string>
+    <string name="notif_security_hint">Kirjautumiskoodit, petosvaroitukset, vahvistettavat maksut. Tulevat aina läpi</string>
+    <string name="notif_missed">Vastaamattomat puhelut</string>
+    <string name="notif_remind">Muistutukset ja tapahtumat</string>
+    <string name="notif_on_app">sovelluksessa %1$s</string>
+    <string name="app_kinds_sub">Kaikki tulee läpi, paitsi se minkä sammutat. Uudet tyypit tulevat läpi.</string>
+    <string name="app_kinds_none">Ei vielä mitään: tyypit näkyvät täällä, kun sovellus lähettää ilmoituksia.</string>
+    <string name="app_kinds_chats">Keskustelut</string>
+    <string name="app_kinds_types">Ilmoitustyypit</string>
+    <string name="app_remove">Poista %1$s</string>
+    <string name="rule_next">Tästä lähtien</string>
+    <string name="rule_person_in">Päästä %1$s läpi</string>
+    <string name="rule_person_in_hint">Vain sovelluksessa %1$s</string>
+    <string name="rule_app_in">Päästä kaikki sovelluksesta %1$s läpi</string>
+    <string name="rule_app_in_hint">Kaikki, paitsi se minkä sammutat</string>
+    <string name="rule_off">Anna %1$s odottaa</string>
+    <string name="rule_off_hint">Poikkeus sovelluksessa %1$s</string>
+    <string name="rule_enters">%1$s tulee läpi</string>
+    <string name="rule_waits">%1$s odottaa Sordinassa</string>
+    <plurals name="n_exceptions">
+        <item quantity="one">%d poikkeus</item>
+        <item quantity="other">%d poikkeusta</item>
+    </plurals>
 </resources>

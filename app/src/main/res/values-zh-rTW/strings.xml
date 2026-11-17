@@ -1079,4 +1079,28 @@
     <string name="budget_done_text">你已使用 %1$s。要不要繼續，由你決定。</string>
     <string name="ch_budget">煞車額度</string>
     <string name="ch_budget_desc">被煞車的 App 在使用中用完每日額度時</string>
+    <string name="notif_intro">一切都在 Sordina 中等候，除了：</string>
+    <string name="notif_important">重要</string>
+    <string name="notif_security">驗證碼與安全</string>
+    <string name="notif_security_hint">登入驗證碼、詐騙警示、待確認的付款。一律送達</string>
+    <string name="notif_missed">未接來電</string>
+    <string name="notif_remind">提醒與行程</string>
+    <string name="notif_on_app">在 %1$s</string>
+    <string name="app_kinds_sub">除了你關閉的，全部送達。新類型會送達。</string>
+    <string name="app_kinds_none">目前沒有：應用程式傳送通知後，類型會顯示在這裡。</string>
+    <string name="app_kinds_chats">聊天</string>
+    <string name="app_kinds_types">通知類型</string>
+    <string name="app_remove">移除 %1$s</string>
+    <string name="rule_next">從現在起</string>
+    <string name="rule_person_in">讓 %1$s 送達</string>
+    <string name="rule_person_in_hint">僅在 %1$s</string>
+    <string name="rule_app_in">讓 %1$s 的所有通知送達</string>
+    <string name="rule_app_in_hint">全部，除了你關閉的</string>
+    <string name="rule_off">讓 %1$s 等候</string>
+    <string name="rule_off_hint">%1$s 中的例外</string>
+    <string name="rule_enters">%1$s 會送達</string>
+    <string name="rule_waits">%1$s 在 Sordina 中等候</string>
+    <plurals name="n_exceptions">
+        <item quantity="other">%d 個例外</item>
+    </plurals>
 </resources>

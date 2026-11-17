@@ -1090,4 +1090,29 @@
     <string name="budget_done_text">आपने %1$s इस्तेमाल किए। आगे जारी रखना है या नहीं, आप तय करें।</string>
     <string name="ch_budget">ब्रेक का बजट</string>
     <string name="ch_budget_desc">जब किसी ब्रेक लगे ऐप का रोज़ का बजट इस्तेमाल के दौरान खत्म हो जाए</string>
+    <string name="notif_intro">Sordina में सब कुछ इंतज़ार करता है, सिवाय:</string>
+    <string name="notif_important">ज़रूरी</string>
+    <string name="notif_security">कोड और सुरक्षा</string>
+    <string name="notif_security_hint">लॉगिन कोड, धोखाधड़ी की चेतावनी, पुष्टि वाले भुगतान। हमेशा आते हैं</string>
+    <string name="notif_missed">छूटी कॉल</string>
+    <string name="notif_remind">रिमाइंडर और कार्यक्रम</string>
+    <string name="notif_on_app">%1$s पर</string>
+    <string name="app_kinds_sub">सब कुछ आता है, सिवाय उसके जो आप बंद करें। नए प्रकार आते हैं।</string>
+    <string name="app_kinds_none">अभी कुछ नहीं: ऐप के सूचनाएँ भेजने पर प्रकार यहाँ दिखेंगे।</string>
+    <string name="app_kinds_chats">चैट</string>
+    <string name="app_kinds_types">सूचना के प्रकार</string>
+    <string name="app_remove">%1$s हटाएँ</string>
+    <string name="rule_next">अब से</string>
+    <string name="rule_person_in">%1$s को आने दें</string>
+    <string name="rule_person_in_hint">सिर्फ़ %1$s पर</string>
+    <string name="rule_app_in">%1$s से सब कुछ आने दें</string>
+    <string name="rule_app_in_hint">सब कुछ, सिवाय उसके जो आप बंद करें</string>
+    <string name="rule_off">%1$s को इंतज़ार कराएँ</string>
+    <string name="rule_off_hint">%1$s में एक अपवाद</string>
+    <string name="rule_enters">%1$s आता है</string>
+    <string name="rule_waits">%1$s Sordina में इंतज़ार करता है</string>
+    <plurals name="n_exceptions">
+        <item quantity="one">%d अपवाद</item>
+        <item quantity="other">%d अपवाद</item>
+    </plurals>
 </resources>

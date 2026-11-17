@@ -1090,4 +1090,29 @@
     <string name="budget_done_text">%1$s kullandın. Devam edip etmemek sana kalmış.</string>
     <string name="ch_budget">Fren bütçesi</string>
     <string name="ch_budget_desc">Frenlenen bir uygulamanın günlük bütçesi sen kullanırken bittiğinde</string>
+    <string name="notif_intro">Sordina\'da her şey bekler, şunlar hariç:</string>
+    <string name="notif_important">Önemli</string>
+    <string name="notif_security">Kodlar ve güvenlik</string>
+    <string name="notif_security_hint">Giriş kodları, dolandırıcılık uyarıları, onaylanacak ödemeler. Her zaman gelir</string>
+    <string name="notif_missed">Cevapsız aramalar</string>
+    <string name="notif_remind">Hatırlatıcılar ve etkinlikler</string>
+    <string name="notif_on_app">%1$s üzerinde</string>
+    <string name="app_kinds_sub">Kapattıkların dışında her şey gelir. Yeni türler gelir.</string>
+    <string name="app_kinds_none">Henüz bir şey yok: uygulama bildirim gönderdikçe türler burada görünür.</string>
+    <string name="app_kinds_chats">Sohbetler</string>
+    <string name="app_kinds_types">Bildirim türleri</string>
+    <string name="app_remove">%1$s uygulamasını kaldır</string>
+    <string name="rule_next">Bundan sonra</string>
+    <string name="rule_person_in">%1$s gelsin</string>
+    <string name="rule_person_in_hint">Yalnızca %1$s üzerinde</string>
+    <string name="rule_app_in">%1$s uygulamasından her şey gelsin</string>
+    <string name="rule_app_in_hint">Kapattıkların dışında her şey</string>
+    <string name="rule_off">%1$s beklesin</string>
+    <string name="rule_off_hint">%1$s içinde bir istisna</string>
+    <string name="rule_enters">%1$s gelir</string>
+    <string name="rule_waits">%1$s Sordina\'da bekler</string>
+    <plurals name="n_exceptions">
+        <item quantity="one">%d istisna</item>
+        <item quantity="other">%d istisna</item>
+    </plurals>
 </resources>

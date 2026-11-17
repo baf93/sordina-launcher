@@ -1090,4 +1090,29 @@
     <string name="budget_done_text">Je hebt %1$s gebruikt. Jij beslist of je doorgaat.</string>
     <string name="ch_budget">Rembudget</string>
     <string name="ch_budget_desc">Als het dagbudget van een geremde app op is terwijl je haar gebruikt</string>
+    <string name="notif_intro">Alles wacht in Sordina, behalve:</string>
+    <string name="notif_important">Belangrijk</string>
+    <string name="notif_security">Codes en beveiliging</string>
+    <string name="notif_security_hint">Inlogcodes, fraudemeldingen, te bevestigen betalingen. Komen altijd door</string>
+    <string name="notif_missed">Gemiste oproepen</string>
+    <string name="notif_remind">Herinneringen en afspraken</string>
+    <string name="notif_on_app">op %1$s</string>
+    <string name="app_kinds_sub">Alles komt door, behalve wat je uitzet. Nieuwe soorten komen door.</string>
+    <string name="app_kinds_none">Nog niets: soorten verschijnen hier zodra de app meldingen stuurt.</string>
+    <string name="app_kinds_chats">Chats</string>
+    <string name="app_kinds_types">Soorten meldingen</string>
+    <string name="app_remove">%1$s verwijderen</string>
+    <string name="rule_next">Vanaf nu</string>
+    <string name="rule_person_in">%1$s doorlaten</string>
+    <string name="rule_person_in_hint">Alleen op %1$s</string>
+    <string name="rule_app_in">Alles van %1$s doorlaten</string>
+    <string name="rule_app_in_hint">Alles, behalve wat je uitzet</string>
+    <string name="rule_off">%1$s laten wachten</string>
+    <string name="rule_off_hint">Een uitzondering binnen %1$s</string>
+    <string name="rule_enters">%1$s komt door</string>
+    <string name="rule_waits">%1$s wacht in Sordina</string>
+    <plurals name="n_exceptions">
+        <item quantity="one">%d uitzondering</item>
+        <item quantity="other">%d uitzonderingen</item>
+    </plurals>
 </resources>

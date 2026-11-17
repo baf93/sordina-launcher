@@ -1079,4 +1079,28 @@
     <string name="budget_done_text">%1$s使いました。続けるかどうかはあなた次第です。</string>
     <string name="ch_budget">ブレーキの予算</string>
     <string name="ch_budget_desc">ブレーキ中のアプリの1日の予算が使用中に尽きたとき</string>
+    <string name="notif_intro">Sordinaではすべて待機します。ただし次を除く:</string>
+    <string name="notif_important">重要</string>
+    <string name="notif_security">コードとセキュリティ</string>
+    <string name="notif_security_hint">ログインコード、不正利用の警告、確認が必要な支払い。常に届きます</string>
+    <string name="notif_missed">不在着信</string>
+    <string name="notif_remind">リマインダーと予定</string>
+    <string name="notif_on_app">%1$sで</string>
+    <string name="app_kinds_sub">オフにしたもの以外はすべて届きます。新しい種類は届きます。</string>
+    <string name="app_kinds_none">まだありません。アプリが通知を送るとここに種類が表示されます。</string>
+    <string name="app_kinds_chats">チャット</string>
+    <string name="app_kinds_types">通知の種類</string>
+    <string name="app_remove">%1$sを外す</string>
+    <string name="rule_next">今後</string>
+    <string name="rule_person_in">%1$sを通す</string>
+    <string name="rule_person_in_hint">%1$sのみ</string>
+    <string name="rule_app_in">%1$sのすべてを通す</string>
+    <string name="rule_app_in_hint">オフにしたもの以外すべて</string>
+    <string name="rule_off">%1$sを待機させる</string>
+    <string name="rule_off_hint">%1$s内の例外</string>
+    <string name="rule_enters">%1$sは届きます</string>
+    <string name="rule_waits">%1$sはSordinaで待機します</string>
+    <plurals name="n_exceptions">
+        <item quantity="other">例外 %d 件</item>
+    </plurals>
 </resources>

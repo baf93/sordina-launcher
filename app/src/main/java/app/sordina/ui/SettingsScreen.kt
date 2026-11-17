@@ -95,9 +95,9 @@ import app.sordina.data.CarApps
 import app.sordina.data.Categories
 import app.sordina.data.Level
 import app.sordina.data.Moments
-import app.sordina.data.RuleScope
 import app.sordina.data.RuleTarget
 import app.sordina.data.Rules
+import app.sordina.data.Kinds.Kind as KindEntry
 import app.sordina.data.Search
 import app.sordina.service.SordinaListener
 import app.sordina.service.SordinaAccess
@@ -117,7 +117,7 @@ private const val REPO = "https://github.com/baf93/sordina-launcher"
 private enum class Sub(val parent: String?) {
     MAIN(null),
     NOTIF("MAIN"), HOME("MAIN"), BRAKE("MAIN"), SEARCH("MAIN"), THEMES("MAIN"), GENERAL("MAIN"), PROGRESS("MAIN"),
-    PEOPLE("NOTIF"), ALWAYS("NOTIF"), RULES("NOTIF"), ORDER("HOME"), LEVELS("RULES"),
+    PEOPLE("NOTIF"), ALWAYS("NOTIF"), KINDS("NOTIF"), ORDER("HOME"),
     BRAKED("BRAKE"), HIDDEN("BRAKE"), MASCOTS("HOME"), PINNED("SEARCH"), EXCLUDED("SEARCH"), HA("MAIN"), CAR_APPS("HOME"), CAR_PEOPLE("HOME"), PERMS("GENERAL"), CREDITS("GENERAL"), LANG("GENERAL"), FAULTS("GENERAL"), WHY("GENERAL"),
 }
 
@@ -150,6 +150,8 @@ fun SettingsScreen(
     hiddenApps: @Composable () -> Unit = {},
 ) {
     var sub by rememberSaveable { mutableStateOf(if (sticker != null) Sub.PROGRESS else Sub.MAIN) }
+    // L'app di cui si guardano i tipi di notifica (pagina Sub.KINDS)
+    var kindsOf by rememberSaveable { mutableStateOf<String?>(null) }
     // Solo all'apertura: poi la pagina si comporta come sempre
     val jumpToSticker = remember { sticker }
     var tick by remember { mutableIntStateOf(0) }
@@ -217,21 +219,10 @@ fun SettingsScreen(
                     TopicCard(tr(R.string.t_general), tr(R.string.t_general_d), Icons.Rounded.Tune) { sub = Sub.GENERAL }
                 }
 
-                // ── Notifiche: cosa passa subito e cosa aspetta
-                Sub.NOTIF -> Page(tr(R.string.perm_notifications), null, back, scrollOf(page)) {
-                    // Persone e app, divise per come vanno: chi passa sempre e chi resta in sordina. Tocchi un gettone e cambi.
-                    val refresh = { tick++; ops.changed(); SordinaListener.reapply(ctx) }
-                    Topic(tr(R.string.cat_people))
-                    Choices(app, apps, Kind.PEOPLE, { sub = Sub.PEOPLE }, null, refresh)
-                    Topic(tr(R.string.kind_apps))
-                    Choices(app, apps, Kind.APPS, { sub = Sub.ALWAYS }, { sub = Sub.RULES }, refresh)
-                    // Le scorciatoie intelligenti: valgono per tutti
-                    Topic(tr(R.string.n_also))
-                    Group {
-                        Toggle(tr(R.string.s_urgent), prefs.urgentEnabled, null, Icons.Rounded.PriorityHigh) { v -> change { prefs.urgentEnabled = v } }
-                        Toggle(tr(R.string.s_talk), prefs.talkPass, null, Icons.Rounded.Forum) { v -> change { prefs.talkPass = v; if (!v) Talking.clear() } }
-                        Toggle(tr(R.string.s_system), prefs.systemPass, null, Icons.Rounded.Settings) { v -> change { prefs.systemPass = v } }
-                    }
+                // ── Notifiche: tutto aspetta in Sordina, tranne. Dal generico allo specifico
+                Sub.NOTIF -> Page(tr(R.string.perm_notifications), tr(R.string.notif_intro), back, scrollOf(page)) {
+                    NotifPage(app, apps, change = ::change, onAddApp = { sub = Sub.ALWAYS }, onAddPerson = { sub = Sub.PEOPLE },
+                        onApp = { pkg -> kindsOf = pkg; sub = Sub.KINDS })
                 }
 
                 // ── Home: come cambia durante il giorno e cosa sa
@@ -515,9 +506,8 @@ fun SettingsScreen(
                     Spacer(Modifier.height(8.dp))
                     ImportantPicker(app, perms, ops)
                 }
-                Sub.ALWAYS -> AppChooser(tr(R.string.s_always_apps), null, apps,
-                    selected = { prefs.appLevels.filterValues { it == Level.SEMPRE }.keys }, back) { pkg, on ->
-                    prefs.setAppLevel(pkg, if (on) Level.SEMPRE else null); ops.changed()
+                Sub.ALWAYS -> AppChooser(tr(R.string.n_add_app), null, apps, selected = { prefs.inApps }, back) { pkg, on ->
+                    Rules.setApp(prefs, pkg, on); ops.changed(); SordinaListener.reapply(ctx, pkg)
                 }
                 Sub.BRAKED -> AppChooser(tr(R.string.s_braked_apps), null, apps, selected = { prefs.braked }, back) { pkg, on ->
                     prefs.braked = if (on) prefs.braked + pkg else prefs.braked - pkg; ops.changed()
@@ -536,8 +526,7 @@ fun SettingsScreen(
                     // Arrivati a tre si torna indietro da soli
                     if (on && now.size >= 2) back()
                 }
-                Sub.LEVELS -> LevelsPage(app, apps, back)
-                Sub.RULES -> RulesPage(app, apps, onChange = { ops.changed() }, onApps = { sub = Sub.LEVELS }, onBack = back)
+                Sub.KINDS -> kindsOf?.let { pkg -> AppKindsPage(app, pkg, apps.firstOrNull { it.packageName == pkg }?.label ?: pkg, scrollOf(page), back, onChange = { tick++; ops.changed(); SordinaListener.reapply(ctx, pkg) }) }
                 Sub.ORDER -> Page(tr(R.string.s_your_order), null, back, scrollOf(page)) {
                     val order = Categories.custom(prefs.categoryOrder)
                     Spacer(Modifier.height(8.dp))
@@ -605,129 +594,6 @@ fun SettingsScreen(
         }
         }
     }
-    }
-}
-
-private enum class Kind { PEOPLE, APPS }
-
-/** Una scelta salvata: una persona (importante o con una regola), un'app, un tipo di notifica di un'app. */
-private class Choice(val name: String, val pkg: String?, val passes: Boolean, val important: Boolean, val key: String, val set: (Level?) -> Unit)
-
-/**
- * Persone o app, divise per come vanno: chi passa sempre e chi resta in sordina. Ogni voce è un gettone;
- * lo tocchi e scegli fra le due, o lo togli. "Silenziosa", di chi l'aveva già, sta con chi passa.
- * I tipi di notifica di un'app stanno con le app, col nome del tipo accanto.
- */
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-@Composable
-private fun Choices(app: SordinaApp, apps: List<AppEntry>, kind: Kind, onAdd: () -> Unit, onAddFromNotif: (() -> Unit)?, onChange: () -> Unit) {
-    val prefs = app.prefs
-    val names = prefs.ruleNames
-    fun appName(pkg: String) = apps.firstOrNull { it.packageName == pkg }?.label ?: pkg
-    val list = buildList {
-        when (kind) {
-            Kind.PEOPLE -> {
-                prefs.importantNames.forEach { n ->
-                    add(Choice(n.replaceFirstChar { it.uppercase() }, null, true, true, n) { lv ->
-                        if (lv == null) app.people.removeImportantName(n)
-                        else if (lv == Level.RIEPILOGO) { app.people.removeImportantName(n); prefs.personRules = prefs.personRules + (n to lv) }
-                    })
-                }
-                prefs.personRules.forEach { (k, v) ->
-                    add(Choice(names[k] ?: k.replaceFirstChar { it.uppercase() }, null, v != Level.RIEPILOGO, false, k) { lv ->
-                        prefs.personRules = if (lv == null) prefs.personRules - k else prefs.personRules + (k to lv)
-                    })
-                }
-            }
-            Kind.APPS -> {
-                prefs.appLevels.forEach { (k, v) -> add(Choice(appName(k), k, v != Level.RIEPILOGO, false, k) { lv -> prefs.setAppLevel(k, lv) }) }
-                prefs.channelRules.forEach { (k, v) ->
-                    val pkg = k.substringBefore('|')
-                    add(Choice(names[k] ?: (appName(pkg) + " · " + k.substringAfter('|')), pkg, v != Level.RIEPILOGO, false, k) { lv ->
-                        prefs.channelRules = if (lv == null) prefs.channelRules - k else prefs.channelRules + (k to lv)
-                    })
-                }
-            }
-        }
-    }.sortedBy { it.name.lowercase() }
-    var editing by remember { mutableStateOf<Choice?>(null) }
-    val inGroups = prefs.importantInGroups
-    for (pass in listOf(true, false)) {
-        val mine = list.filter { it.passes == pass }
-        ChipBox(if (pass) tr(R.string.r_pass_title) else tr(R.string.lv_summary)) {
-            if (mine.isEmpty()) Text(tr(R.string.r_empty), Modifier.padding(vertical = 6.dp), style = TextStyle(fontSize = 15.sp, color = S.c.soft))
-            mine.forEach { w -> RuleChip(w.name, w.pkg, grouped = w.important && w.key in inGroups) { editing = w } }
-            // Si aggiunge sempre da chi passa: per la sordina c'è già tutto il resto
-            if (pass) {
-                AddChip(if (kind == Kind.PEOPLE) tr(R.string.n_add_person) else tr(R.string.n_add_app), onAdd)
-                onAddFromNotif?.let { AddChip(tr(R.string.n_add_from_notif), it) }
-            }
-        }
-    }
-    editing?.let { w ->
-        Sheet(w.name, onDismiss = { editing = null }) {
-            SheetRow(tr(R.string.lv_always), if (w.passes) Icons.Rounded.Check else null, accent = w.passes) {
-                if (!w.passes) w.set(Level.SEMPRE)
-                editing = null; onChange()
-            }
-            SheetRow(tr(R.string.lv_summary), if (!w.passes) Icons.Rounded.Check else null, accent = !w.passes) {
-                if (w.passes) w.set(Level.RIEPILOGO)
-                editing = null; onChange()
-            }
-            if (w.important) {
-                val on = w.key in prefs.importantInGroups
-                Toggle(tr(R.string.n_in_groups), on, null, Icons.Rounded.Groups) { v ->
-                    prefs.importantInGroups = if (v) prefs.importantInGroups + w.key else prefs.importantInGroups - w.key
-                    editing = null; onChange()
-                }
-            }
-            SheetRow(tr(R.string.remove), Icons.Rounded.DeleteOutline) { w.set(null); editing = null; onChange() }
-        }
-    }
-}
-
-/** Un riquadro con un titolo piccolo e i gettoni che vanno a capo. */
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-@Composable
-private fun ChipBox(title: String, content: @Composable () -> Unit) {
-    val c = S.c
-    Column(Modifier.padding(vertical = 4.dp).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(c.card).padding(14.dp)) {
-        Text(title, Modifier.padding(start = 4.dp, bottom = 10.dp), style = TextStyle(fontSize = 14.sp, color = c.soft))
-        androidx.compose.foundation.layout.FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) { content() }
-    }
-}
-
-/** Un gettone: l'icona dell'app o l'iniziale della persona, e il nome. */
-@Composable
-private fun RuleChip(name: String, pkg: String?, grouped: Boolean, onClick: () -> Unit) {
-    val c = S.c
-    Row(
-        Modifier.clip(RoundedCornerShape(20.dp)).background(c.line).clickable(onClick = onClick).padding(start = 5.dp, end = 14.dp, top = 5.dp, bottom = 5.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (pkg != null) Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) { AppDot(pkg) }
-        else Box(Modifier.size(28.dp).clip(CircleShape).background(c.accent.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
-            Text(name.take(1).uppercase(), style = TextStyle(fontSize = 13.sp, color = c.accent))
-        }
-        Spacer(Modifier.width(8.dp))
-        Text(name, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 15.sp, color = c.ink))
-        if (grouped) Icon(Icons.Rounded.Groups, tr(R.string.n_in_groups), Modifier.padding(start = 6.dp).size(16.dp), tint = c.soft)
-    }
-}
-
-@Composable
-private fun AddChip(label: String, onClick: () -> Unit) {
-    val c = S.c
-    Row(
-        Modifier.clip(RoundedCornerShape(20.dp)).border(1.dp, c.dot, RoundedCornerShape(20.dp)).clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 9.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(Icons.Rounded.Add, null, Modifier.size(16.dp), tint = c.accent)
-        Spacer(Modifier.width(6.dp))
-        Text(label, style = TextStyle(fontSize = 14.sp, color = c.accent))
     }
 }
 
@@ -925,86 +791,114 @@ private fun ListCell(i: Int, n: Int, content: @Composable () -> Unit) {
     Box(Modifier.fillMaxWidth().clip(shape).background(S.c.line).padding(top = if (i == 0) 0.dp else 1.dp)) { content() }
 }
 
-/** Cosa passa subito, app per app. Tocco: un foglio con i livelli. In cima le app che hanno scritto oggi. */
+// ── Notifiche ─────────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Tutto aspetta in Sordina, tranne: gli Importanti (codici e sicurezza sempre, il resto si spegne),
+ * le App che entrano (con le eventuali eccezioni dentro), le Persone che entrano ovunque o da un'app sola.
+ * Il sottotitolo c'è solo quando dice qualcosa: "2 eccezioni", "su WhatsApp".
+ */
 @Composable
-private fun LevelsPage(app: SordinaApp, apps: List<AppEntry>, onBack: () -> Unit) {
+private fun NotifPage(app: SordinaApp, apps: List<AppEntry>, change: (() -> Unit) -> Unit, onAddApp: () -> Unit, onAddPerson: () -> Unit, onApp: (String) -> Unit) {
     val prefs = app.prefs
-    var levels by remember { mutableStateOf(prefs.appLevels) }
-    var q by remember { mutableStateOf("") }
-    var editing by remember { mutableStateOf<AppEntry?>(null) }
-    val todayPkgs = remember { app.store.today.value.groupBy { it.pkg }.mapValues { it.value.size } }
-    val pkgs = remember(apps) { apps.distinctBy { it.packageName } }
-    val nq = Search.normalize(q)
-    val list = pkgs.filter { nq.isEmpty() || it.normalized.contains(nq) }
-        .sortedWith(compareByDescending<AppEntry> { todayPkgs[it.packageName] ?: 0 }.thenByDescending { if (it.packageName in levels) 1 else 0 })
-    LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 16.dp, bottom = 48.dp)) {
-        item(key = "head") {
-            Header(tr(R.string.s_apps_pass), onBack)
-            Field(q, { q = it }, tr(R.string.s_search_app), Modifier.padding(horizontal = 4.dp, vertical = 8.dp))
-        }
-        itemsIndexed(list, key = { _, a -> a.key }) { i, a ->
-            ListCell(i, list.size) {
-                Line(a.label, levels[a.packageName]?.label ?: tr(R.string.s_order_auto), todayPkgs[a.packageName]?.let { trn(R.plurals.n_today, it) }) { editing = a }
-            }
-        }
+    val ctx = LocalContext.current
+    fun appName(pkg: String) = apps.firstOrNull { it.packageName == pkg }?.label ?: pkg
+    fun apply(block: () -> Unit) = change { block(); SordinaListener.reapply(ctx) }
+
+    Topic(tr(R.string.notif_important))
+    Group {
+        Line(tr(R.string.notif_security), hint = tr(R.string.notif_security_hint), icon = Icons.Rounded.Lock)
+        Toggle(tr(R.string.notif_missed), prefs.missedPass, null, Icons.Rounded.Call) { v -> apply { prefs.missedPass = v } }
+        Toggle(tr(R.string.notif_remind), prefs.remindPass, null, Icons.Rounded.Schedule) { v -> apply { prefs.remindPass = v } }
+        Toggle(tr(R.string.s_urgent), prefs.urgentEnabled, tr(R.string.s_urgent_hint), Icons.Rounded.PriorityHigh) { v -> apply { prefs.urgentEnabled = v } }
+        Toggle(tr(R.string.s_talk), prefs.talkPass, tr(R.string.h_talk), Icons.Rounded.Forum) { v -> apply { prefs.talkPass = v; if (!v) Talking.clear() } }
+        Toggle(tr(R.string.s_system), prefs.systemPass, tr(R.string.h_system), Icons.Rounded.Settings) { v -> apply { prefs.systemPass = v } }
     }
-    editing?.let { a ->
-        val opts = listOf<Pair<Level?, Option>>(
-            null to Option(tr(R.string.s_order_auto), tr(R.string.lv_auto_hint)),
-            Level.SEMPRE to Option(tr(R.string.lv_always), tr(R.string.lv_always_hint)),
-            Level.RIEPILOGO to Option(tr(R.string.lv_summary), tr(R.string.lv_summary_hint)),
-        )
-        Sheet(a.label, onDismiss = { editing = null }) {
-            opts.forEach { (lv, o) ->
-                val on = levels[a.packageName] == lv
-                Row(
-                    Modifier.fillMaxWidth().clickable {
-                        prefs.setAppLevel(a.packageName, lv); levels = prefs.appLevels; editing = null
-                    }.padding(horizontal = 24.dp, vertical = 13.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(o.label, style = TextStyle(fontSize = 17.sp, color = if (on) S.c.accent else S.c.ink))
-                        Text(o.hint.orEmpty(), style = TextStyle(fontSize = 13.sp, color = S.c.soft))
-                    }
-                    if (on) Icon(Icons.Rounded.Check, null, tint = S.c.accent)
-                }
+
+    Topic(tr(R.string.kind_apps))
+    Group {
+        prefs.inApps.sortedBy { appName(it).lowercase() }.forEach { pkg ->
+            val n = Rules.exceptions(prefs, pkg)
+            Line(appName(pkg), hint = if (n > 0) trn(R.plurals.n_exceptions, n) else null) { onApp(pkg) }
+        }
+        Line(tr(R.string.n_add_app), icon = Icons.Rounded.Add, trailing = {}, onClick = onAddApp)
+    }
+
+    Topic(tr(R.string.cat_people))
+    var editing by remember { mutableStateOf<String?>(null) }
+    val names = prefs.ruleNames
+    fun personName(k: String) = names[k]?.substringAfter(" · ") ?: k.substringAfter('|').replaceFirstChar { it.uppercase() }
+    Group {
+        val everywhere = prefs.importantNames.map { it to null as String? }
+        val oneApp = prefs.peopleIn.map { it to it.substringBefore('|') }
+        (everywhere + oneApp).sortedBy { (k, pkg) -> (if (pkg == null) k else personName(k)).lowercase() }.forEach { (k, pkg) ->
+            if (pkg == null) Line(k.replaceFirstChar { it.uppercase() }, hint = if (k in prefs.importantInGroups) tr(R.string.n_in_groups) else null) { editing = k }
+            else Line(personName(k), hint = tr(R.string.notif_on_app, appName(pkg))) { editing = k }
+        }
+        Line(tr(R.string.n_add_person), icon = Icons.Rounded.Add, trailing = {}, onClick = onAddPerson)
+    }
+    editing?.let { k ->
+        val everywhere = '|' !in k
+        Sheet(if (everywhere) k.replaceFirstChar { it.uppercase() } else personName(k), onDismiss = { editing = null }) {
+            if (everywhere) Toggle(tr(R.string.n_in_groups), k in prefs.importantInGroups, null, Icons.Rounded.Groups) { v ->
+                apply { prefs.importantInGroups = if (v) prefs.importantInGroups + k else prefs.importantInGroups - k }
+                editing = null
+            }
+            SheetRow(tr(R.string.remove), Icons.Rounded.DeleteOutline) {
+                apply { if (everywhere) app.people.removeImportantName(k) else prefs.peopleIn = prefs.peopleIn - k }
+                editing = null
             }
         }
     }
 }
 
-/** Le regole scelte da te: per tipo di notifica, persona o gruppo, app. Si aggiungono dalla pagina Sordina o dalla tendina qui sotto. */
+/**
+ * Un'app che entra: entra tutto, tranne i tipi (o le chat) che spegni qui. I tipi si imparano man mano che
+ * arrivano (Android non ne dà l'elenco a un launcher); quelli nuovi entrano.
+ */
 @Composable
-private fun RulesPage(app: SordinaApp, apps: List<AppEntry>, onChange: () -> Unit, onApps: () -> Unit, onBack: () -> Unit) {
+private fun AppKindsPage(app: SordinaApp, pkg: String, label: String, scroll: ScrollState, onBack: () -> Unit, onChange: () -> Unit) {
     val prefs = app.prefs
-    val ctx = LocalContext.current
-    // Quello che c'è adesso nella tendina: si tocca per dargli una regola (es. la notifica fissa di un'app)
-    var tray by remember { mutableStateOf(SordinaListener.tray()) }
-    var ruleFor by remember { mutableStateOf<RuleTarget?>(null) }
-    // Niente giri: la lista si rilegge quando arriva o sparisce una notifica
-    val trayVersion by SordinaListener.trayChanges.collectAsState()
-    LaunchedEffect(trayVersion) { tray = SordinaListener.tray() }
-    val icons = remember { HashMap<String, ImageBitmap?>() }
-    fun icon(pkg: String) = icons.getOrPut(pkg) {
-        AppIcons.forPackage(ctx.packageManager, pkg, 96)
-    }
-    LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 16.dp, bottom = 48.dp)) {
-        item(key = "head") {
-            // Le notifiche di adesso: ne tocchi una e scegli come deve avvisarti (lei, chi l'ha mandata o tutta l'app)
-            Header(tr(R.string.n_add_from_notif), onBack)
+    // Quello che c'è adesso nella tendina o in sordina conta già: la lista non parte vuota
+    val kinds = remember(pkg) {
+        SordinaListener.tray().filter { it.pkg == pkg }.forEach { t ->
+            if (t.person != null) app.kinds.chat(pkg, t.person, t.personTitle) else app.kinds.channel(pkg, t.channel, t.channelName)
         }
-        item(key = "tray_h") { Topic(tr(R.string.tray), if (tray.isEmpty()) tr(R.string.tray_none) else null) }
-        itemsIndexed(tray, key = { _, t -> "t_" + (t.key ?: t.title) }) { _, t ->
-            TrayRow(t, t.scopes.firstNotNullOfOrNull { Rules.get(prefs, t, it) }, icon(t.pkg)) { ruleFor = t }
-        }
+        app.store.held.value.values.filter { it.pkg == pkg && !it.groupKey.startsWith("p:") }.forEach { h -> app.kinds.channel(pkg, h.channel, h.channelName) }
+        app.kinds.of(pkg)
     }
-    ruleFor?.let { t ->
-        RuleSheet(t, { x, s -> Rules.get(prefs, x, s) }, { x, s, lv ->
-            Rules.set(prefs, x, s, lv)
-            SordinaListener.reapply(ctx, x.pkg)
-            onChange()
-        }, onDismiss = { ruleFor = null })
+    var off by remember { mutableStateOf(prefs.offTypes + prefs.offChats) }
+    // Spente ma non (più) fra quelle viste: restano in lista, si possono riaccendere
+    val known = kinds.map { it.ruleKey }.toSet()
+    val orphans = off.filter { it.substringBefore('|') == pkg && it !in known }.map { k ->
+        KindEntry(pkg, k in prefs.offChats, k.substringAfter('|'), prefs.ruleNames[k]?.substringAfter(" · ") ?: k.substringAfter('|'), 0L)
+    }
+    val all = kinds + orphans
+    fun flip(k: KindEntry, on: Boolean) {
+        val key = k.ruleKey
+        if (k.isChat) prefs.offChats = if (on) prefs.offChats - key else prefs.offChats + key
+        else prefs.offTypes = if (on) prefs.offTypes - key else prefs.offTypes + key
+        if (!on) prefs.ruleNames = prefs.ruleNames + (key to "$label · ${k.name}")
+        off = prefs.offTypes + prefs.offChats
+        onChange()
+    }
+    Page(label, tr(R.string.app_kinds_sub), onBack, scroll) {
+        val (chats, types) = all.partition { it.isChat }
+        if (all.isEmpty()) Text(tr(R.string.app_kinds_none), Modifier.padding(horizontal = 8.dp, vertical = 12.dp), style = TextStyle(fontSize = 15.sp, color = S.c.soft))
+        if (chats.isNotEmpty()) {
+            if (types.isNotEmpty()) Topic(tr(R.string.app_kinds_chats))
+            Group { chats.forEach { k -> Toggle(k.name, k.ruleKey !in off) { v -> flip(k, v) } } }
+        }
+        if (types.isNotEmpty()) {
+            if (chats.isNotEmpty()) Topic(tr(R.string.app_kinds_types))
+            Group { types.forEach { k -> Toggle(k.name, k.ruleKey !in off) { v -> flip(k, v) } } }
+        }
+        Spacer(Modifier.height(26.dp))
+        Group {
+            SheetRow(tr(R.string.app_remove, label), Icons.Rounded.DeleteOutline) {
+                Rules.setApp(prefs, pkg, false); onChange(); onBack()
+            }
+        }
     }
 }
 

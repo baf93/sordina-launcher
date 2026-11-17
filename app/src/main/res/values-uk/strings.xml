@@ -1112,4 +1112,31 @@
     <string name="budget_done_text">Ти використав %1$s. Продовжувати чи ні — вирішуєш ти.</string>
     <string name="ch_budget">Бюджет гальма</string>
     <string name="ch_budget_desc">Коли денний бюджет застосунку на гальмі закінчується під час використання</string>
+    <string name="notif_intro">Усе чекає в Sordina, крім:</string>
+    <string name="notif_important">Важливе</string>
+    <string name="notif_security">Коди та безпека</string>
+    <string name="notif_security_hint">Коди входу, попередження про шахрайство, платежі для підтвердження. Надходять завжди</string>
+    <string name="notif_missed">Пропущені дзвінки</string>
+    <string name="notif_remind">Нагадування та події</string>
+    <string name="notif_on_app">у %1$s</string>
+    <string name="app_kinds_sub">Надходить усе, крім того, що ви вимкнете. Нові типи надходять.</string>
+    <string name="app_kinds_none">Поки нічого: типи з\'являться тут, коли застосунок надішле сповіщення.</string>
+    <string name="app_kinds_chats">Чати</string>
+    <string name="app_kinds_types">Типи сповіщень</string>
+    <string name="app_remove">Прибрати %1$s</string>
+    <string name="rule_next">Відтепер</string>
+    <string name="rule_person_in">Пропускати %1$s</string>
+    <string name="rule_person_in_hint">Лише в %1$s</string>
+    <string name="rule_app_in">Пропускати все з %1$s</string>
+    <string name="rule_app_in_hint">Усе, крім того, що ви вимкнете</string>
+    <string name="rule_off">Хай %1$s чекає</string>
+    <string name="rule_off_hint">Виняток у %1$s</string>
+    <string name="rule_enters">%1$s надходить</string>
+    <string name="rule_waits">%1$s чекає в Sordina</string>
+    <plurals name="n_exceptions">
+        <item quantity="one">%d виняток</item>
+        <item quantity="few">%d винятки</item>
+        <item quantity="many">%d винятків</item>
+        <item quantity="other">%d винятку</item>
+    </plurals>
 </resources>

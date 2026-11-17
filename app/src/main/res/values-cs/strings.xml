@@ -1112,4 +1112,31 @@
     <string name="budget_done_text">Využil(a) jsi %1$s. Je na tobě, jestli pokračovat.</string>
     <string name="ch_budget">Rozpočet brzdy</string>
     <string name="ch_budget_desc">Když se denní rozpočet brzděné aplikace vyčerpá během používání</string>
+    <string name="notif_intro">Všechno čeká v Sordině, kromě:</string>
+    <string name="notif_important">Důležité</string>
+    <string name="notif_security">Kódy a zabezpečení</string>
+    <string name="notif_security_hint">Přihlašovací kódy, upozornění na podvody, platby k potvrzení. Projdou vždy</string>
+    <string name="notif_missed">Zmeškané hovory</string>
+    <string name="notif_remind">Připomínky a události</string>
+    <string name="notif_on_app">v %1$s</string>
+    <string name="app_kinds_sub">Projde všechno, kromě toho, co vypneš. Nové typy projdou.</string>
+    <string name="app_kinds_none">Zatím nic: typy se tu objeví, až aplikace pošle oznámení.</string>
+    <string name="app_kinds_chats">Chaty</string>
+    <string name="app_kinds_types">Typy oznámení</string>
+    <string name="app_remove">Odebrat %1$s</string>
+    <string name="rule_next">Od teď</string>
+    <string name="rule_person_in">Pouštět %1$s</string>
+    <string name="rule_person_in_hint">Jen v %1$s</string>
+    <string name="rule_app_in">Pouštět vše z %1$s</string>
+    <string name="rule_app_in_hint">Všechno, kromě toho, co vypneš</string>
+    <string name="rule_off">Nechat %1$s čekat</string>
+    <string name="rule_off_hint">Výjimka v %1$s</string>
+    <string name="rule_enters">%1$s projde</string>
+    <string name="rule_waits">%1$s čeká v Sordině</string>
+    <plurals name="n_exceptions">
+        <item quantity="one">%d výjimka</item>
+        <item quantity="few">%d výjimky</item>
+        <item quantity="many">%d výjimky</item>
+        <item quantity="other">%d výjimek</item>
+    </plurals>
 </resources>

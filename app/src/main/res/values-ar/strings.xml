@@ -1134,4 +1134,33 @@
     <string name="budget_done_text">استخدمت %1$s. القرار لك إن أردت المتابعة.</string>
     <string name="ch_budget">ميزانية المكابح</string>
     <string name="ch_budget_desc">عندما تنتهي الميزانية اليومية لتطبيق مكبوح أثناء استخدامه</string>
+    <string name="notif_intro">كل شيء ينتظر في Sordina، ما عدا:</string>
+    <string name="notif_important">المهمة</string>
+    <string name="notif_security">الرموز والأمان</string>
+    <string name="notif_security_hint">رموز الدخول وتنبيهات الاحتيال والمدفوعات التي تحتاج تأكيدًا. تصل دائمًا</string>
+    <string name="notif_missed">المكالمات الفائتة</string>
+    <string name="notif_remind">التذكيرات والمواعيد</string>
+    <string name="notif_on_app">على %1$s</string>
+    <string name="app_kinds_sub">يصل كل شيء ما عدا ما توقفه. الأنواع الجديدة تصل.</string>
+    <string name="app_kinds_none">لا شيء بعد: تظهر الأنواع هنا عندما يرسل التطبيق إشعارات.</string>
+    <string name="app_kinds_chats">المحادثات</string>
+    <string name="app_kinds_types">أنواع الإشعارات</string>
+    <string name="app_remove">إزالة %1$s</string>
+    <string name="rule_next">من الآن فصاعدًا</string>
+    <string name="rule_person_in">السماح بوصول %1$s</string>
+    <string name="rule_person_in_hint">على %1$s فقط</string>
+    <string name="rule_app_in">السماح بوصول كل شيء من %1$s</string>
+    <string name="rule_app_in_hint">كل شيء ما عدا ما توقفه</string>
+    <string name="rule_off">جعل %1$s ينتظر</string>
+    <string name="rule_off_hint">استثناء داخل %1$s</string>
+    <string name="rule_enters">%1$s يصل</string>
+    <string name="rule_waits">%1$s ينتظر في Sordina</string>
+    <plurals name="n_exceptions">
+        <item quantity="zero">لا استثناءات</item>
+        <item quantity="one">استثناء واحد</item>
+        <item quantity="two">استثناءان</item>
+        <item quantity="few">%d استثناءات</item>
+        <item quantity="many">%d استثناءً</item>
+        <item quantity="other">%d استثناء</item>
+    </plurals>
 </resources>

@@ -1090,4 +1090,29 @@
     <string name="budget_done_text">Du har använt %1$s. Det är du som bestämmer om du fortsätter.</string>
     <string name="ch_budget">Bromsbudget</string>
     <string name="ch_budget_desc">När en bromsad apps dagsbudget tar slut medan du använder den</string>
+    <string name="notif_intro">Allt väntar i Sordina, utom:</string>
+    <string name="notif_important">Viktiga</string>
+    <string name="notif_security">Koder och säkerhet</string>
+    <string name="notif_security_hint">Inloggningskoder, bedrägerivarningar, betalningar att bekräfta. Kommer alltid fram</string>
+    <string name="notif_missed">Missade samtal</string>
+    <string name="notif_remind">Påminnelser och händelser</string>
+    <string name="notif_on_app">på %1$s</string>
+    <string name="app_kinds_sub">Allt kommer fram, utom det du stänger av. Nya typer kommer fram.</string>
+    <string name="app_kinds_none">Inget än: typerna visas här när appen skickar aviseringar.</string>
+    <string name="app_kinds_chats">Chattar</string>
+    <string name="app_kinds_types">Aviseringstyper</string>
+    <string name="app_remove">Ta bort %1$s</string>
+    <string name="rule_next">Från och med nu</string>
+    <string name="rule_person_in">Släpp fram %1$s</string>
+    <string name="rule_person_in_hint">Bara på %1$s</string>
+    <string name="rule_app_in">Släpp fram allt från %1$s</string>
+    <string name="rule_app_in_hint">Allt, utom det du stänger av</string>
+    <string name="rule_off">Låt %1$s vänta</string>
+    <string name="rule_off_hint">Ett undantag i %1$s</string>
+    <string name="rule_enters">%1$s kommer fram</string>
+    <string name="rule_waits">%1$s väntar i Sordina</string>
+    <plurals name="n_exceptions">
+        <item quantity="one">%d undantag</item>
+        <item quantity="other">%d undantag</item>
+    </plurals>
 </resources>

@@ -1079,4 +1079,28 @@
     <string name="budget_done_text">Kamu sudah memakai %1$s. Kamu yang memutuskan mau lanjut atau tidak.</string>
     <string name="ch_budget">Anggaran rem</string>
     <string name="ch_budget_desc">Saat anggaran harian aplikasi yang direm habis ketika kamu memakainya</string>
+    <string name="notif_intro">Semua menunggu di Sordina, kecuali:</string>
+    <string name="notif_important">Penting</string>
+    <string name="notif_security">Kode dan keamanan</string>
+    <string name="notif_security_hint">Kode masuk, peringatan penipuan, pembayaran yang perlu dikonfirmasi. Selalu masuk</string>
+    <string name="notif_missed">Panggilan tak terjawab</string>
+    <string name="notif_remind">Pengingat dan acara</string>
+    <string name="notif_on_app">di %1$s</string>
+    <string name="app_kinds_sub">Semua masuk, kecuali yang kamu matikan. Jenis baru masuk.</string>
+    <string name="app_kinds_none">Belum ada: jenisnya muncul di sini saat aplikasi mengirim notifikasi.</string>
+    <string name="app_kinds_chats">Chat</string>
+    <string name="app_kinds_types">Jenis notifikasi</string>
+    <string name="app_remove">Hapus %1$s</string>
+    <string name="rule_next">Mulai sekarang</string>
+    <string name="rule_person_in">Biarkan %1$s masuk</string>
+    <string name="rule_person_in_hint">Hanya di %1$s</string>
+    <string name="rule_app_in">Biarkan semua dari %1$s masuk</string>
+    <string name="rule_app_in_hint">Semua, kecuali yang kamu matikan</string>
+    <string name="rule_off">Buat %1$s menunggu</string>
+    <string name="rule_off_hint">Pengecualian di %1$s</string>
+    <string name="rule_enters">%1$s masuk</string>
+    <string name="rule_waits">%1$s menunggu di Sordina</string>
+    <plurals name="n_exceptions">
+        <item quantity="other">%d pengecualian</item>
+    </plurals>
 </resources>

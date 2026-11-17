@@ -45,31 +45,40 @@ data class RuleSnapshot(
     val self: String,
     val now: Long,
     val quiet: Boolean = false,
-    val channelRules: Map<String, Level> = emptyMap(),
+    /** Le app che entrano (sezione App) */
+    val inApps: Set<String> = emptySet(),
+    /** I tipi di notifica spenti: "pacchetto|canale" (eccezioni dentro un'app) */
+    val offTypes: Set<String> = emptySet(),
+    /** Le chat spente dentro un'app: "pacchetto|persona o gruppo" */
+    val offChats: Set<String> = emptySet(),
+    /** Le persone che entrano solo da un'app: "pacchetto|persona" (sezione Persone, "su WhatsApp") */
+    val peopleIn: Set<String> = emptySet(),
+    /** Le persone che entrano ovunque (sezione Persone) */
+    val important: Set<String> = emptySet(),
+    val importantInGroups: Set<String> = emptySet(),
     val systemPass: Boolean = true,
     val passUntil: Map<String, Long> = emptyMap(),
-    val personRules: Map<String, Level> = emptyMap(),
     val braked: Set<String> = emptySet(),
-    val appLevels: Map<String, Level> = emptyMap(),
     val talkPass: Boolean = true,
     /** Conversazioni in corso adesso ([Classifier.talkKey]) */
     val talking: Set<String> = emptySet(),
-    val important: Set<String> = emptySet(),
-    val importantInGroups: Set<String> = emptySet(),
     val urgentEnabled: Boolean = true,
     val urgentWords: List<String> = Classifier.URGENT_WORDS,
+    val missedPass: Boolean = true,
+    val remindPass: Boolean = true,
     /** I nomi della rubrica, normalizzati */
     val contacts: Set<String> = emptySet(),
 ) {
     companion object {
         fun of(self: String, prefs: Prefs, people: People, moment: Moment, now: Long = System.currentTimeMillis()) = RuleSnapshot(
             self = self, now = now, quiet = moment == Moment.QUIET,
-            channelRules = prefs.channelRules, systemPass = prefs.systemPass, passUntil = prefs.passUntil,
-            personRules = prefs.personRules, braked = prefs.braked, appLevels = prefs.appLevels,
-            talkPass = prefs.talkPass, talking = Talking.activeKeys(now),
+            inApps = prefs.inApps, offTypes = prefs.offTypes, offChats = prefs.offChats, peopleIn = prefs.peopleIn,
             important = prefs.importantNames, importantInGroups = prefs.importantInGroups,
+            systemPass = prefs.systemPass, passUntil = prefs.passUntil, braked = prefs.braked,
+            talkPass = prefs.talkPass, talking = Talking.activeKeys(now),
             urgentEnabled = prefs.urgentEnabled,
             urgentWords = prefs.urgentWords.split(',').map { it.trim() }.filter { it.isNotEmpty() }.ifEmpty { Classifier.URGENT_WORDS },
+            missedPass = prefs.missedPass, remindPass = prefs.remindPass,
             contacts = people.normalizedNames(),
         )
     }
@@ -192,7 +201,7 @@ object Classifier {
     fun isPaymentAlert(text: String): Boolean = PAY_ALERT.containsMatchIn(text)
 
     /** I motivi che in una modalità di Android (QUIET) aspettano invece di passare in silenzio. */
-    private val QUIET_HOLDS = setOf(REASON_CHANNEL, REASON_PERSON, REASON_APP, REASON_MISSED, REASON_REMINDER)
+    private val QUIET_HOLDS = setOf(REASON_PERSON, REASON_MISSED, REASON_REMINDER)
 
     const val REASON_CHANNEL = "regola del tipo"
     const val REASON_PERSON = "regola della persona"
@@ -208,24 +217,25 @@ object Classifier {
     val MUTED_BY_YOU = setOf(REASON_CHANNEL, REASON_PERSON, REASON_APP, REASON_BRAKED, REASON_HIDDEN)
 
     /**
-     * Le regole, dalla più specifica alla più generale. Funzione pura: stesso ingresso, stesso verdetto.
+     * Tutto aspetta in Sordina, tranne quello che lasci entrare. Funzione pura: stesso ingresso, stesso verdetto.
+     * Dal generico allo specifico, e il più specifico vince:
      *
      *  1. Sordina stessa e i componenti di sistema: mai toccati
-     *  2. Regola per tipo di notifica (canale)
+     *  2. Un tipo di notifica spento (eccezione dentro un'app): aspetta, anche se è fissa. Mai un codice o un avviso di sicurezza
      *  3. Chiamate, sveglie, navigazione, musica, notifiche in corso: passano come sono
      *  4. "Lascia passare per qualche ora"
-     *  5. Regola per persona o gruppo (in questa app)
-     *  6. App frenata: aspetta (vince solo "Passa sempre" per lei)
-     *  7. Sicurezza: codici di accesso e avvisi di pagamento passano
-     *  8. App nascosta: aspetta, senza mostrarsi
-     *  9. Conversazione in corso: passa
-     * 10. "Passa sempre" per l'app
-     * 11. Persone importanti; urgenze e insistenza solo da chi è in rubrica
-     * 12. Regola dell'app
-     * 13. Le regole di Sordina: pagamenti eseguiti aspettano; chiamate perse e promemoria passano; il resto aspetta
+     *  5. Importanti, sempre: codici di accesso e avvisi di sicurezza
+     *  6. Una chat spenta dentro un'app: aspetta
+     *  7. Una persona che entra da quell'app (Persone, "su WhatsApp")
+     *  8. App frenata o nascosta: aspetta, se non l'hai messa fra le app che entrano
+     *  9. Chi ti sta rispondendo (Importanti)
+     * 10. Le persone che entrano ovunque (Persone)
+     * 11. Le app che entrano (App)
+     * 12. Importanti: chi scrive "urgente" o insiste, chiamate perse, promemoria
+     * 13. Tutto il resto aspetta
      *
-     * Con una modalità di Android accesa ([RuleSnapshot.quiet]) aspettano anche le notifiche che passerebbero
-     * per i motori in [QUIET_HOLDS]; sicurezza, persone importanti e urgenze restano visibili.
+     * Con una modalità di Android accesa ([RuleSnapshot.quiet]) aspettano anche persone per app, chiamate perse
+     * e promemoria; sicurezza, persone di ovunque, app e urgenze restano visibili.
      */
     fun classify(n: NotifInfo, s: RuleSnapshot): Verdict {
         if (n.pkg == s.self) return Verdict(null, "Sordina")
@@ -233,7 +243,9 @@ object Classifier {
         fun ruled(level: Level, why: String) =
             if (level == Level.SUBITO && s.quiet && why in QUIET_HOLDS) Verdict(Level.RIEPILOGO, "modalità") else Verdict(level, why)
 
-        s.channelRules[channelKey(n.pkg, n.channel)]?.let { return ruled(it, REASON_CHANNEL) }
+        val all = n.title + " " + n.text
+        val security = isOtp(all) || (!n.isMessage && isPaymentAlert(all))
+        if (!security && channelKey(n.pkg, n.channel) in s.offTypes) return Verdict(Level.RIEPILOGO, REASON_CHANNEL)
 
         if (n.system && s.systemPass) return Verdict(null, "sistema")
         if (n.category in PASS_CATEGORIES) return Verdict(null, "chiamata, sveglia o servizio")
@@ -243,20 +255,20 @@ object Classifier {
         val who = personKey(n)
         if ((s.passUntil["a:" + n.pkg] ?: 0L) > s.now || (who != null && (s.passUntil["p:$who"] ?: 0L) > s.now)) return Verdict(null, "lasciata passare")
 
-        if (who != null) (s.personRules[personRuleKey(n.pkg, who)] ?: s.personRules[who])?.let { return ruled(it, REASON_PERSON) }
-
-        val appLevel = s.appLevels[n.pkg]
-        if (n.pkg in s.braked && appLevel != Level.SEMPRE) return Verdict(Level.RIEPILOGO, REASON_BRAKED)
-
-        val all = n.title + " " + n.text
         if (isOtp(all)) return Verdict(Level.SUBITO, REASON_OTP)
         if (!n.isMessage && isPaymentAlert(all)) return Verdict(Level.SUBITO, REASON_PAY_ALERT)
 
-        if (n.hidden && appLevel != Level.SEMPRE) return Verdict(Level.RIEPILOGO, REASON_HIDDEN)
+        if (who != null) {
+            val k = personRuleKey(n.pkg, who)
+            if (k in s.offChats) return Verdict(Level.RIEPILOGO, REASON_PERSON)
+            if (k in s.peopleIn) return ruled(Level.SUBITO, REASON_PERSON)
+        }
+
+        val listed = n.pkg in s.inApps
+        if (n.pkg in s.braked && !listed) return Verdict(Level.RIEPILOGO, REASON_BRAKED)
+        if (n.hidden && !listed) return Verdict(Level.RIEPILOGO, REASON_HIDDEN)
 
         if (n.isMessage && s.talkPass && n.peer != null && talkKey(n.pkg, n.peer) in s.talking) return Verdict(null, "conversazione in corso")
-
-        if (appLevel == Level.SEMPRE) return Verdict(Level.SEMPRE, REASON_APP)
 
         if (n.isMessage) {
             val inGroup = n.conversation != null
@@ -264,21 +276,21 @@ object Classifier {
             val imp = importantKey(n.person, s.important, exact) ?: if (!inGroup) importantKey(n.title, s.important, exact) else null
             if (imp != null && (!inGroup || imp in s.importantInGroups)) return Verdict(Level.SUBITO, "persona importante")
         }
+
+        if (listed) return Verdict(Level.SEMPRE, REASON_APP)
+
         // Urgenze: solo in una chat a due, solo da qualcuno che è nella tua rubrica (uno sconosciuto non decide quanto conta)
         if (s.urgentEnabled && n.isMessage && n.conversation == null && n.person != null && Search.normalize(n.person) in s.contacts) {
             if (isUrgent(n.text, s.urgentWords)) return Verdict(Level.SUBITO, "urgente")
             if (n.burst >= BURST) return Verdict(Level.SUBITO, "insiste")
         }
-
-        if (appLevel != null) return ruled(appLevel, REASON_APP)
-
+        if (s.missedPass && n.category == "missed_call") return ruled(Level.SUBITO, REASON_MISSED)
+        if (s.remindPass && (n.category == Notification.CATEGORY_REMINDER || n.category == Notification.CATEGORY_EVENT)) return ruled(Level.SUBITO, REASON_REMINDER)
         if (!n.isMessage && CardDetector.paymentCents(all) != null) return Verdict(Level.RIEPILOGO, "pagamento")
-        if (n.category == "missed_call") return ruled(Level.SUBITO, REASON_MISSED)
-        if (n.category == Notification.CATEGORY_REMINDER || n.category == Notification.CATEGORY_EVENT) return ruled(Level.SUBITO, REASON_REMINDER)
         return Verdict(Level.RIEPILOGO, REASON_DEFAULT)
     }
 
-    /** Regola per persona dentro un'app: "pacchetto|nome". Le regole vecchie (solo il nome) valgono ancora per tutte le app. */
+    /** Chiave di una persona o chat dentro un'app: "pacchetto|nome". */
     fun personRuleKey(pkg: String, who: String) = "$pkg|$who"
 
     /** La chiave di una conversazione in corso. */

@@ -1094,4 +1094,30 @@
     <string name="budget_done_text">Tu as utilisé %1$s. À toi de décider si tu continues.</string>
     <string name="ch_budget">Budget du frein</string>
     <string name="ch_budget_desc">Quand le budget quotidien d\'une app freinée est épuisé pendant que tu l\'utilises</string>
+    <string name="notif_intro">Tout attend dans Sordina, sauf :</string>
+    <string name="notif_important">Important</string>
+    <string name="notif_security">Codes et sécurité</string>
+    <string name="notif_security_hint">Codes de connexion, alertes de fraude, paiements à confirmer. Passent toujours</string>
+    <string name="notif_missed">Appels manqués</string>
+    <string name="notif_remind">Rappels et événements</string>
+    <string name="notif_on_app">sur %1$s</string>
+    <string name="app_kinds_sub">Tout passe, sauf ce que vous désactivez. Les nouveaux types passent.</string>
+    <string name="app_kinds_none">Rien pour l\'instant : les types apparaissent ici quand l\'app envoie des notifications.</string>
+    <string name="app_kinds_chats">Discussions</string>
+    <string name="app_kinds_types">Types de notification</string>
+    <string name="app_remove">Retirer %1$s</string>
+    <string name="rule_next">Désormais</string>
+    <string name="rule_person_in">Laisser passer %1$s</string>
+    <string name="rule_person_in_hint">Seulement sur %1$s</string>
+    <string name="rule_app_in">Laisser passer tout %1$s</string>
+    <string name="rule_app_in_hint">Tout, sauf ce que vous désactivez</string>
+    <string name="rule_off">Faire attendre %1$s</string>
+    <string name="rule_off_hint">Une exception dans %1$s</string>
+    <string name="rule_enters">%1$s passe</string>
+    <string name="rule_waits">%1$s attend dans Sordina</string>
+    <plurals name="n_exceptions">
+        <item quantity="one">%d exception</item>
+        <item quantity="many">%d exceptions</item>
+        <item quantity="other">%d exceptions</item>
+    </plurals>
 </resources>

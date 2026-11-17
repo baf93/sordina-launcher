@@ -1079,4 +1079,28 @@
     <string name="budget_done_text">คุณใช้ไป %1$s แล้ว จะใช้ต่อหรือไม่ คุณเป็นคนตัดสินใจ</string>
     <string name="ch_budget">งบของเบรก</string>
     <string name="ch_budget_desc">เมื่องบรายวันของแอปที่ถูกเบรกหมดระหว่างที่คุณใช้อยู่</string>
+    <string name="notif_intro">ทุกอย่างรอใน Sordina ยกเว้น:</string>
+    <string name="notif_important">สำคัญ</string>
+    <string name="notif_security">รหัสและความปลอดภัย</string>
+    <string name="notif_security_hint">รหัสเข้าสู่ระบบ การแจ้งเตือนการฉ้อโกง การชำระเงินที่ต้องยืนยัน เข้ามาเสมอ</string>
+    <string name="notif_missed">สายที่ไม่ได้รับ</string>
+    <string name="notif_remind">การช่วยเตือนและกิจกรรม</string>
+    <string name="notif_on_app">ใน %1$s</string>
+    <string name="app_kinds_sub">ทุกอย่างเข้ามา ยกเว้นที่คุณปิด ประเภทใหม่จะเข้ามา</string>
+    <string name="app_kinds_none">ยังไม่มี: ประเภทจะแสดงที่นี่เมื่อแอปส่งการแจ้งเตือน</string>
+    <string name="app_kinds_chats">แชท</string>
+    <string name="app_kinds_types">ประเภทการแจ้งเตือน</string>
+    <string name="app_remove">นำ %1$s ออก</string>
+    <string name="rule_next">ต่อจากนี้</string>
+    <string name="rule_person_in">ให้ %1$s เข้ามา</string>
+    <string name="rule_person_in_hint">เฉพาะใน %1$s</string>
+    <string name="rule_app_in">ให้ทุกอย่างจาก %1$s เข้ามา</string>
+    <string name="rule_app_in_hint">ทุกอย่าง ยกเว้นที่คุณปิด</string>
+    <string name="rule_off">ให้ %1$s รอ</string>
+    <string name="rule_off_hint">ข้อยกเว้นใน %1$s</string>
+    <string name="rule_enters">%1$s เข้ามา</string>
+    <string name="rule_waits">%1$s รอใน Sordina</string>
+    <plurals name="n_exceptions">
+        <item quantity="other">ข้อยกเว้น %d รายการ</item>
+    </plurals>
 </resources>
