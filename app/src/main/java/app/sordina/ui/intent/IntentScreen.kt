@@ -276,7 +276,12 @@ fun IntentScreen(
                 Spacer(Modifier.height(16.dp))
             }
         }
-        notice?.let { n -> Box(Modifier.padding(horizontal = 16.dp)) { NoticeBar(n) } }
+        // Un avviso vale per poco: uno vecchio (arrivato prima di aprire la ricerca) non compare, uno nuovo sparisce da solo
+        notice?.let { n ->
+            var visible by remember(n.id) { mutableStateOf(System.nanoTime() - n.id < NOTICE_NANOS) }
+            LaunchedEffect(n.id) { if (visible) { kotlinx.coroutines.delay(((NOTICE_NANOS - (System.nanoTime() - n.id)) / 1_000_000).coerceAtLeast(0)); visible = false } }
+            if (visible) Box(Modifier.padding(horizontal = 16.dp)) { NoticeBar(n) }
+        }
         Spacer(Modifier.height(8.dp))
         // La barra; mentre tieni premuto il microfono ne esce un cerchio grande che respira con la voce, come in Casa
         val grow by androidx.compose.animation.core.animateFloatAsState(if (voice.listening) 1f else 0f, androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 500f), label = "mic")
@@ -585,3 +590,6 @@ private fun NoticeBar(n: Notice) {
 
 /** Il thread della ricerca: uno solo, così le frasi si capiscono nell'ordine in cui le scrivi */
 private val SEARCH_THREAD = java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "sordina-ricerca").apply { isDaemon = true } }.asCoroutineDispatcher()
+
+/** Quanto resta un avviso nella ricerca (anche con "Annulla"): 8 secondi */
+private const val NOTICE_NANOS = 8_000_000_000L

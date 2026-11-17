@@ -190,13 +190,14 @@ internal fun MainActivity.voiceDown(handsFree: Boolean = false) {
         override fun onError(error: Int) {
             voiceHandler.removeCallbacks(noSpeech)
             voice = voice.copy(listening = false, partial = "", level = 0f)
-            notice = when (error) {
+            val n = when (error) {
                 12, 13 -> Notice(tr(R.string.voice_no_lang))
                 SpeechRecognizer.ERROR_NO_MATCH, SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> Notice(tr(R.string.not_understood))
                 SpeechRecognizer.ERROR_CLIENT -> null
                 else -> Notice(tr(R.string.mic_unavailable))
             }
-            if (screen == Screen.HOME) notice?.let { answer(it.text, ok = false) }
+            // In Casa lo dice il fumetto; l'avviso della ricerca serve solo se sei nella ricerca (se no resterebbe lì ad aspettarti)
+            if (screen == Screen.HOME) n?.let { answer(it.text, ok = false) } else notice = n
         }
     })
     val i = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
