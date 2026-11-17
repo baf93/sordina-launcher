@@ -242,6 +242,22 @@ class Prefs(context: Context) {
     var alarmHintAt: Long
         get() = sp.getLong("alarmHintAt", 0L)
         set(v) = put { putLong("alarmHintAt", v) }
+    /**
+     * Le sveglie che conosci per certo (impostate da Sordina, o confermate dall'Orologio), in millisecondi.
+     * Servono perché Android ne dice una sola, e l'Orologio Samsung la occupa coi suoi promemoria.
+     */
+    var alarmHints: List<Long>
+        get() = sp.getString("alarmHints", "")!!.split(',').mapNotNull { it.toLongOrNull() }
+        set(v) = put { putString("alarmHints", v.distinct().sorted().takeLast(12).joinToString(",")) }
+
+    /**
+     * Una sveglia nuova si aggiunge a quelle note. Impostata nell'Orologio ([confirm]): tornando in Casa la sordina
+     * conferma l'ora; impostata da Sordina no, l'ha già detto lei.
+     */
+    fun addAlarm(at: Long, confirm: Boolean, now: Long = System.currentTimeMillis()) {
+        if (confirm) { alarmHint = at; alarmHintAt = now }
+        alarmHints = alarmHints.filter { it > now } + at
+    }
     var quietUntil: Long
         get() = sp.getLong("quietUntil", 0L)
         set(v) = put { putLong("quietUntil", v) }
@@ -352,6 +368,10 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("systemPass", true)
         set(v) = put { putBoolean("systemPass", v) }
     /** Come ordinare la pagina Sordina: 0 automatico (per priorità), 1 per arrivo, 2 ordine tuo */
+    /** Nella pagina Sordina hai già tenuto premuto una riga: la nota "tieni premuto" non serve più */
+    var sordinaHoldLearned: Boolean
+        get() = sp.getBoolean("sordinaHoldLearned", false)
+        set(v) = put { putBoolean("sordinaHoldLearned", v) }
     var sordinaOrder: Int
         get() = sp.getInt("sordinaOrder", 0)
         set(v) = put { putInt("sordinaOrder", v) }

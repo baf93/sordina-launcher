@@ -228,7 +228,8 @@ internal fun MainActivity.sceneLine(s: Scene): String? = when (s) {
     Scene.EVENING -> null
     // La modalità attiva la dice già la sordina (in basso, con la sua faccia): qui solo l'orario del silenzio che hai chiesto tu
     Scene.NIGHT -> app.moments.focusUntil()?.let { tr(R.string.moment_focus_until, app.moments.clock(it)) }
-    Scene.CAR -> tr(if (moment == Moment.QUIET) R.string.car_line else R.string.car_line_open)
+    // In auto basta l'ora: che sei in auto lo vedi, cosa passa l'hai scelto tu
+    Scene.CAR -> null
     Scene.DAY -> null
 }
 

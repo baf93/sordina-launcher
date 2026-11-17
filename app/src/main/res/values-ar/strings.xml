@@ -449,8 +449,6 @@
     <string name="brake_win_streak">احصل على +%1$d دقيقة واحفظ سلسلتك</string>
     <string name="car_hidden">مخفي أثناء القيادة</string>
     <string name="car_hold">المس وتحدث</string>
-    <string name="car_line">في السيارة · يصل الأشخاص المهمون والمحادثات الجارية</string>
-    <string name="car_line_open">في السيارة</string>
     <string name="car_listening">أستمع · المس للإنهاء</string>
     <string name="card_hidden">البطاقة مخفية</string>
     <string name="flight_x">الرحلة %1$s</string>
@@ -1113,4 +1111,10 @@
     <string name="why_r6_t">كل شيء يبقى هنا</string>
     <string name="why_r6">ما يتعلمه عنك يبقى على هاتفك.</string>
     <string name="why_end">ضجيج أقل، موسيقى أكثر.</string>
+    <string name="undo">تراجع</string>
+    <string name="sordina_hold_hint">اضغط مطولاً على صف للقواعد و«السماح بالمرور»</string>
+    <plurals name="n_read">
+        <item quantity="one">مقروء</item>
+        <item quantity="other">%d مقروءة</item>
+    </plurals>
 </resources>

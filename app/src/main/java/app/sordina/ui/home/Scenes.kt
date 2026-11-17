@@ -67,24 +67,25 @@ import java.util.Locale
 @Composable
 internal fun TomorrowCorner(state: HomeState, onScene: (String) -> Unit) {
     val c = S.c
-    // Allineato a sinistra dentro l'angolo: le icone stanno in colonna
+    // Allineato a sinistra dentro l'angolo: le icone stanno in colonna.
+    // Righe strette (4+16+4+22+8+20 = 74 dp): resta dentro l'altezza di giorno e data (80), così meteo e impegni stanno dove stanno di giorno
     // Tutto il blocco porta alle sveglie (il meteo si apre già da quello di oggi)
     Column(Modifier.padding(top = 4.dp, start = 12.dp).clickableNoRipple { onScene("alarm") }, horizontalAlignment = Alignment.Start) {
-        Text(tr(R.string.tomorrow_cap), Modifier.padding(bottom = 6.dp), style = TextStyle(fontSize = 13.sp, color = c.soft))
+        Text(tr(R.string.tomorrow_cap), Modifier.padding(bottom = 4.dp), style = TextStyle(fontSize = 13.sp, lineHeight = 16.sp, color = c.soft))
         // La sveglia c'è sempre: senza, l'icona spenta; un tocco apre le sveglie
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.Alarm, null, Modifier.size(18.dp), tint = if (state.alarm != null) c.accent else c.soft)
             // Senza sveglia, un trattino: si vede che non c'è
             Spacer(Modifier.width(6.dp))
-            Text(state.alarm ?: "—", style = TextStyle(fontSize = 18.sp, color = if (state.alarm != null) c.ink else c.soft))
+            Text(state.alarm ?: "—", style = TextStyle(fontSize = 18.sp, lineHeight = 22.sp, color = if (state.alarm != null) c.ink else c.soft))
         }
         state.tomorrowWeather?.let { w ->
             // Solo le temperature: il cielo lo dice l'icona
             val temps = w.split(' ').filter { '°' in it || it == "/" }.joinToString(" ").ifBlank { w }
-            Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(weatherIcon(w), null, Modifier.size(18.dp), tint = c.soft)
                 Spacer(Modifier.width(6.dp))
-                Text(temps, style = TextStyle(fontSize = 15.sp, color = c.soft))
+                Text(temps, style = TextStyle(fontSize = 15.sp, lineHeight = 20.sp, color = c.soft))
             }
         }
     }

@@ -405,8 +405,6 @@
     <string name="brake_win_streak">Cobra +%1$d min y salva tu racha</string>
     <string name="car_hidden">Oculta en el coche</string>
     <string name="car_hold">Toca y habla</string>
-    <string name="car_line">En el coche · pasan personas importantes y chats en curso</string>
-    <string name="car_line_open">En el coche</string>
     <string name="car_listening">Te escucho · toca para terminar</string>
     <string name="card_hidden">Tarjeta oculta</string>
     <string name="flight_x">Vuelo %1$s</string>
@@ -1073,4 +1071,10 @@
     <string name="why_r6_t">Todo se queda aquí</string>
     <string name="why_r6">Lo que aprende de ti se queda en este teléfono.</string>
     <string name="why_end">Menos ruido, más música.</string>
+    <string name="undo">Deshacer</string>
+    <string name="sordina_hold_hint">Mantén pulsada una fila para reglas y «dejar pasar»</string>
+    <plurals name="n_read">
+        <item quantity="one">Leída</item>
+        <item quantity="other">%d leídas</item>
+    </plurals>
 </resources>

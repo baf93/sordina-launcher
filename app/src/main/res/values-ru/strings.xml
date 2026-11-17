@@ -427,8 +427,6 @@
     <string name="brake_win_streak">Забрать +%1$d мин и сохранить серию</string>
     <string name="car_hidden">Скрыто в машине</string>
     <string name="car_hold">Нажми и говори</string>
-    <string name="car_line">В машине · проходят важные люди и текущие чаты</string>
-    <string name="car_line_open">В машине</string>
     <string name="car_listening">Слушаю · нажми, чтобы закончить</string>
     <string name="card_hidden">Карточка скрыта</string>
     <string name="flight_x">Рейс %1$s</string>
@@ -1091,4 +1089,10 @@
     <string name="why_r6_t">Всё остаётся здесь</string>
     <string name="why_r6">То, что она узнаёт о тебе, остаётся в телефоне.</string>
     <string name="why_end">Меньше шума, больше музыки.</string>
+    <string name="undo">Отменить</string>
+    <string name="sordina_hold_hint">Удерживайте строку для правил и «пропустить»</string>
+    <plurals name="n_read">
+        <item quantity="one">Прочитано</item>
+        <item quantity="other">Прочитано: %d</item>
+    </plurals>
 </resources>

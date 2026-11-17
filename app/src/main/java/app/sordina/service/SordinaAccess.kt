@@ -62,8 +62,7 @@ class SordinaAccess : AccessibilityService() {
                 val text = e.text.joinToString(" ")
                 if ((applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) android.util.Log.d("SordinaAlarm", "toast: $text")
                 app.sordina.data.AlarmToast.parse(text, System.currentTimeMillis())?.let { at ->
-                    val prefs = SordinaApp.of(this).prefs
-                    prefs.alarmHint = at; prefs.alarmHintAt = System.currentTimeMillis()
+                    SordinaApp.of(this).prefs.addAlarm(at, confirm = true)
                 }
             }
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {

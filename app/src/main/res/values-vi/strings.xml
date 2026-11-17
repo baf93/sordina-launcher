@@ -394,8 +394,6 @@
     <string name="brake_win_streak">Nhận +%1$d phút và giữ chuỗi</string>
     <string name="car_hidden">Ẩn khi lái xe</string>
     <string name="car_hold">Chạm và nói</string>
-    <string name="car_line">Trên xe · chỉ người quan trọng và cuộc trò chuyện đang diễn ra được qua</string>
-    <string name="car_line_open">Trên xe</string>
     <string name="car_listening">Đang nghe · chạm để kết thúc</string>
     <string name="card_hidden">Đã ẩn thẻ</string>
     <string name="flight_x">Chuyến bay %1$s</string>
@@ -1058,4 +1056,10 @@
     <string name="why_r6_t">Mọi thứ ở lại đây</string>
     <string name="why_r6">Những gì nó học về bạn ở lại trên điện thoại.</string>
     <string name="why_end">Bớt ồn ào, thêm âm nhạc.</string>
+    <string name="undo">Hoàn tác</string>
+    <string name="sordina_hold_hint">Nhấn giữ một hàng để đặt quy tắc và \"cho qua\"</string>
+    <plurals name="n_read">
+        <item quantity="one">Đã đọc</item>
+        <item quantity="other">Đã đọc %d</item>
+    </plurals>
 </resources>

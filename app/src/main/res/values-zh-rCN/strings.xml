@@ -394,8 +394,6 @@
     <string name="brake_win_streak">领取 +%1$d 分钟并保住连胜</string>
     <string name="car_hidden">开车时隐藏</string>
     <string name="car_hold">点按说话</string>
-    <string name="car_line">开车中 · 只有重要的人和进行中的聊天会通过</string>
-    <string name="car_line_open">开车中</string>
     <string name="car_listening">正在听 · 点按结束</string>
     <string name="card_hidden">已隐藏卡片</string>
     <string name="flight_x">航班 %1$s</string>
@@ -1058,4 +1056,10 @@
     <string name="why_r6_t">一切都留在这里</string>
     <string name="why_r6">它了解到的关于你的一切，都只留在这部手机上。</string>
     <string name="why_end">少些噪音，多些音乐。</string>
+    <string name="undo">撤销</string>
+    <string name="sordina_hold_hint">长按一行可设置规则和“放行”</string>
+    <plurals name="n_read">
+        <item quantity="one">已读</item>
+        <item quantity="other">已读 %d 条</item>
+    </plurals>
 </resources>

@@ -405,8 +405,6 @@
     <string name="brake_win_streak">+%1$d dk kazan ve serini kurtar</string>
     <string name="car_hidden">Arabada gizli</string>
     <string name="car_hold">Dokun ve konuş</string>
-    <string name="car_line">Arabada · önemli kişiler ve devam eden sohbetler geçer</string>
-    <string name="car_line_open">Arabada</string>
     <string name="car_listening">Dinliyorum · bitirmek için dokun</string>
     <string name="card_hidden">Kart gizlendi</string>
     <string name="flight_x">Uçuş %1$s</string>
@@ -1069,4 +1067,10 @@
     <string name="why_r6_t">Her şey burada kalır</string>
     <string name="why_r6">Senin hakkında öğrendikleri telefonda kalır.</string>
     <string name="why_end">Daha az gürültü, daha çok müzik.</string>
+    <string name="undo">Geri al</string>
+    <string name="sordina_hold_hint">Kurallar ve \"geçir\" için bir satıra basılı tutun</string>
+    <plurals name="n_read">
+        <item quantity="one">Okundu</item>
+        <item quantity="other">%d okundu</item>
+    </plurals>
 </resources>

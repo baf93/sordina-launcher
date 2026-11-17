@@ -416,8 +416,6 @@
     <string name="brake_win_streak">Încasează +%1$d min și salvează-ți seria</string>
     <string name="car_hidden">Ascunsă în mașină</string>
     <string name="car_hold">Atinge și vorbește</string>
-    <string name="car_line">În mașină · trec persoanele importante și conversațiile în curs</string>
-    <string name="car_line_open">În mașină</string>
     <string name="car_listening">Te ascult · atinge ca să termini</string>
     <string name="card_hidden">Card ascuns</string>
     <string name="flight_x">Zborul %1$s</string>
@@ -1080,4 +1078,10 @@
     <string name="why_r6_t">Totul rămâne aici</string>
     <string name="why_r6">Ce învață despre tine rămâne pe telefon.</string>
     <string name="why_end">Mai puțin zgomot, mai multă muzică.</string>
+    <string name="undo">Anulează</string>
+    <string name="sordina_hold_hint">Ține apăsat un rând pentru reguli și „lasă să treacă”</string>
+    <plurals name="n_read">
+        <item quantity="one">Citită</item>
+        <item quantity="other">%d citite</item>
+    </plurals>
 </resources>

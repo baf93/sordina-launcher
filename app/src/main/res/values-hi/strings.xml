@@ -405,8 +405,6 @@
     <string name="brake_win_streak">+%1$d मिनट लें और लय बचाएँ</string>
     <string name="car_hidden">गाड़ी में छिपा</string>
     <string name="car_hold">टैप करें और बोलें</string>
-    <string name="car_line">गाड़ी में · ज़रूरी लोग और चल रही चैट ही आती हैं</string>
-    <string name="car_line_open">गाड़ी में</string>
     <string name="car_listening">सुन रहा हूँ · ख़त्म करने के लिए टैप करें</string>
     <string name="card_hidden">कार्ड छिपाया गया</string>
     <string name="flight_x">फ़्लाइट %1$s</string>
@@ -1069,4 +1067,10 @@
     <string name="why_r6_t">सब यहीं रहता है</string>
     <string name="why_r6">यह आपके बारे में जो सीखता है, वह फ़ोन पर ही रहता है।</string>
     <string name="why_end">कम शोर, ज़्यादा संगीत।</string>
+    <string name="undo">पूर्ववत करें</string>
+    <string name="sordina_hold_hint">नियमों और «आने दें» के लिए पंक्ति को दबाकर रखें</string>
+    <plurals name="n_read">
+        <item quantity="one">पढ़ ली</item>
+        <item quantity="other">%d पढ़ ली गईं</item>
+    </plurals>
 </resources>

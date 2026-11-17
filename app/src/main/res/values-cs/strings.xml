@@ -427,8 +427,6 @@
     <string name="brake_win_streak">Získej +%1$d min a zachraň sérii</string>
     <string name="car_hidden">V autě skryto</string>
     <string name="car_hold">Klepni a mluv</string>
-    <string name="car_line">V autě · projdou důležití lidé a probíhající chaty</string>
-    <string name="car_line_open">V autě</string>
     <string name="car_listening">Poslouchám · klepni pro konec</string>
     <string name="card_hidden">Karta skryta</string>
     <string name="flight_x">Let %1$s</string>
@@ -1091,4 +1089,10 @@
     <string name="why_r6_t">Všechno zůstává tady</string>
     <string name="why_r6">Co se o tobě naučí, zůstane v telefonu.</string>
     <string name="why_end">Méně hluku, víc hudby.</string>
+    <string name="undo">Zpět</string>
+    <string name="sordina_hold_hint">Podržte řádek pro pravidla a „propustit“</string>
+    <plurals name="n_read">
+        <item quantity="one">Přečteno</item>
+        <item quantity="other">Přečteno: %d</item>
+    </plurals>
 </resources>

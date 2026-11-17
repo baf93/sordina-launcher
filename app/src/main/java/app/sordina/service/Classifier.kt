@@ -106,23 +106,39 @@ object Classifier {
     /** Un numero da solo: niente pezzi di date, orari, importi, carte mascherate (XXXX1234) o codici alfanumerici. */
     private val OTP_NUMBER = Regex("(?<![\\w/.,:€$#+-])(\\d{4,8}|\\d{3}[- ]\\d{3})(?![\\w/:%€$]|[.,]\\d)|(?<=\\bG-)\\d{6}\\b")
     private val YEAR = Regex("(19|20)\\d\\d")
-    /** Il corpo di una mail (risposte, inoltri): lì "codice" e numeri sono quasi sempre altro. */
-    private val MAIL_BODY = Regex("Messaggio originale|Original Message|-----|\\b(Da|From|Inviato|Sent|Oggetto|Subject):", RegexOption.IGNORE_CASE)
+    /**
+     * Una risposta o un inoltro (il messaggio citato sotto): lì "codice" e numeri sono quasi sempre altro.
+     * Non basta una riga di trattini o un "Da:": i modelli delle mail con il codice li usano come separatori.
+     */
+    private val MAIL_BODY = Regex(
+        "Messaggio originale|Original Message|Forwarded message|Messaggio inoltrato|\\b(Da|From):[\\s\\S]{0,200}?\\b(Inviato|Sent|Data|Date|Oggetto|Subject):",
+        RegexOption.IGNORE_CASE,
+    )
+    /** Una mail lunga: il codice sta in cima (oggetto e prime righe), il resto è firma, privacy e pubblicità. */
+    private const val SHORT = 300
+    private const val MAIL_HEAD = 600
 
     /**
-     * Un codice di accesso: una parola del codice e il numero vicini (entro 40 caratteri), in un testo breve.
+     * Un codice di accesso: una parola del codice e il numero vicini (entro 40 caratteri).
      * Le parole ambigue (pin, password, verifica) contano solo se il testo parla di un accesso a un servizio.
+     * Un testo lungo (una mail) si legge solo in cima e solo con una parola forte (codice, OTP, monouso…).
      */
-    fun isOtp(text: String): Boolean {
-        if (text.length > 300 || MAIL_BODY.containsMatchIn(text)) return false
-        val clean = NOT_OTP.replace(text, " ")
+    fun isOtp(text: String): Boolean = otpNumber(text) != null
+
+    /** Il numero del codice di accesso (solo cifre), quello vicino alla parola: in una mail non è il primo numero che capita. */
+    fun otpNumber(text: String): String? {
+        if (MAIL_BODY.containsMatchIn(text)) return null
+        val long = text.length > SHORT
+        val clean = NOT_OTP.replace(if (long) text.take(MAIL_HEAD) else text, " ")
         val words = OTP_STRONG.findAll(clean).map { it.range }.toList() +
-            (if (SERVICE.containsMatchIn(clean)) OTP_WEAK.findAll(clean).map { it.range }.toList() else emptyList())
-        if (words.isEmpty()) return false
-        return OTP_NUMBER.findAll(clean).any { m ->
+            (if (!long && SERVICE.containsMatchIn(clean)) OTP_WEAK.findAll(clean).map { it.range }.toList() else emptyList())
+        if (words.isEmpty()) return null
+        // Una mail lunga deve anche dire che è un accesso (scadenza, non condividere, accedi…): le newsletter no
+        if (long && !SERVICE.containsMatchIn(clean)) return null
+        return OTP_NUMBER.findAll(clean).firstOrNull { m ->
             !(m.value.length == 4 && YEAR.matches(m.value)) &&
                 words.any { w -> m.range.first - w.last in 1..40 || w.first - m.range.last in 1..40 }
-        }
+        }?.value?.filter { it.isDigit() }
     }
 
     /** Parole che rendono urgente un messaggio (di serie). */

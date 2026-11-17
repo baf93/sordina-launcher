@@ -104,6 +104,9 @@ fun SordinaTheme(family: ThemeFamily, mode: ThemeMode, accent: Color? = null, bl
 @Composable
 fun Modifier.paper(): Modifier = this.background(LocalSordina.current.colors.bg)
 
+/** Il colore principale del tema, senza scelte: quello che "Auto" dà quando lo sfondo non ha colori. */
+fun themeAccent(dark: Boolean): Color = if (dark) Dark.accent else Light.accent
+
 /**
  * Il colore principale "Auto": quello dello sfondo, reso leggibile (né spento, né troppo scuro o chiaro).
  * Uno sfondo grigio o senza colori dà null: resta il colore del tema.

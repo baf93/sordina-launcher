@@ -405,8 +405,6 @@
     <string name="brake_win_streak">Pak +%1$d min en red je reeks</string>
     <string name="car_hidden">Verborgen in de auto</string>
     <string name="car_hold">Tik en spreek</string>
-    <string name="car_line">In de auto · belangrijke mensen en lopende chats komen door</string>
-    <string name="car_line_open">In de auto</string>
     <string name="car_listening">Ik luister · tik om te stoppen</string>
     <string name="card_hidden">Kaart verborgen</string>
     <string name="flight_x">Vlucht %1$s</string>
@@ -1069,4 +1067,10 @@
     <string name="why_r6_t">Alles blijft hier</string>
     <string name="why_r6">Wat het over jou leert, blijft op deze telefoon.</string>
     <string name="why_end">Minder lawaai, meer muziek.</string>
+    <string name="undo">Ongedaan maken</string>
+    <string name="sordina_hold_hint">Houd een rij ingedrukt voor regels en ‘doorlaten’</string>
+    <plurals name="n_read">
+        <item quantity="one">Gelezen</item>
+        <item quantity="other">%d gelezen</item>
+    </plurals>
 </resources>

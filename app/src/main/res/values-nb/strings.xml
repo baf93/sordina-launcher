@@ -405,8 +405,6 @@
     <string name="brake_win_streak">Ta +%1$d min og redd rekken din</string>
     <string name="car_hidden">Skjult i bilen</string>
     <string name="car_hold">Trykk og snakk</string>
-    <string name="car_line">I bilen · viktige personer og pågående chatter kommer gjennom</string>
-    <string name="car_line_open">I bilen</string>
     <string name="car_listening">Jeg lytter · trykk for å avslutte</string>
     <string name="card_hidden">Kortet skjult</string>
     <string name="flight_x">Fly %1$s</string>
@@ -1069,4 +1067,10 @@
     <string name="why_r6_t">Alt blir her</string>
     <string name="why_r6">Det den lærer om deg, blir på telefonen.</string>
     <string name="why_end">Mindre støy, mer musikk.</string>
+    <string name="undo">Angre</string>
+    <string name="sordina_hold_hint">Hold inne en rad for regler og «slipp gjennom»</string>
+    <plurals name="n_read">
+        <item quantity="one">Lest</item>
+        <item quantity="other">%d lest</item>
+    </plurals>
 </resources>

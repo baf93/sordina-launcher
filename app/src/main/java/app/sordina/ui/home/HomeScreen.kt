@@ -189,8 +189,9 @@ fun HomeScreen(
 ) {
     val gestures = Modifier.homeGestures(onSwipeUp, onSwipeDown, onLongPress, onDoubleTap)
     when (state.scene) {
-        // In auto niente pressione lunga: si toccano pulsanti grandi, le impostazioni non devono aprirsi per sbaglio
-        Scene.CAR -> { CarHome(state, Modifier.homeGestures(onSwipeUp, onSwipeDown, {}), onSearch, onMicDown, onMicUp, onAction, onCard, onScene) { onSheet(true) }; return }
+        // In auto niente pressione lunga: si toccano pulsanti grandi, le impostazioni non devono aprirsi per sbaglio.
+        // Il doppio tocco per spegnere invece resta, come nelle altre Case
+        Scene.CAR -> { CarHome(state, Modifier.homeGestures(onSwipeUp, onSwipeDown, {}, onDoubleTap), onSearch, onMicDown, onMicUp, onAction, onCard, onScene) { onSheet(true) }; return }
         Scene.NIGHT -> { NightHome(state, gestures, onSearch, onMicDown, onMicUp, onAction, onCard, onScene) { onSheet(true) }; return }
         else -> Unit
     }
@@ -258,11 +259,6 @@ private fun DayHome(
                     Text(w, style = TextStyle(fontSize = 18.sp, color = c.ink))
                 }
             }
-            // La sera, sotto il meteo e prima degli impegni: com'è andata oggi. Tocco: le statistiche del telefono
-            state.recap?.let {
-                Text(it, Modifier.padding(top = 10.dp).clickableNoRipple { onScene("usage") }, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    style = TextStyle(fontSize = 15.sp, color = c.soft))
-            }
             if (state.agenda.isNotEmpty()) Spacer(Modifier.height(24.dp))
             state.agenda.forEachIndexed { i, r ->
                 if (r.day != null && r.day != state.agenda.getOrNull(i - 1)?.day) Text(r.day, Modifier.padding(top = if (i == 0) 0.dp else 10.dp, bottom = 2.dp), style = TextStyle(fontSize = 13.sp, color = c.soft))
@@ -270,6 +266,13 @@ private fun DayHome(
             }
         } }
         Spacer(Modifier.weight(1f))
+        // La sera, appena sopra la barra e allineata alla sua scritta: com'è andata oggi. Tocco: le statistiche del telefono
+        state.recap?.let {
+            OnBackdrop(state.bottomDark) {
+                Text(it, Modifier.padding(start = 38.dp, end = 28.dp, bottom = 14.dp).clickableNoRipple { onScene("usage") }, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    style = TextStyle(fontSize = 15.sp, color = S.c.soft))
+            }
+        }
         SearchBar(state, onSearch, onMicDown, onMicUp)
         // La barra sta sempre allo stesso posto, in ogni momento: sotto, la zona della sordina è alta uguale con o senza fumetto
         Spacer(Modifier.height(12.dp))

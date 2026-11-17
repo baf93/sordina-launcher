@@ -338,7 +338,7 @@ internal fun MainActivity.Root() {
                             if (!SordinaAccess.lock()) notice = Notice(tr(R.string.double_tap_needs))
                         }) else null,
                     )
-                    Celebration(celebrate, onOpen = { celebrate = emptyList(); openStickers = true; screen = Screen.SETTINGS }) { celebrate = emptyList() } }
+                    Celebration(celebrate, onOpen = { openSticker = celebrate.firstOrNull(); celebrate = emptyList(); screen = Screen.SETTINGS }) { celebrate = emptyList() } }
                 }
                 Screen.INTENT -> IntentScreen(
                     showIcons = remember(prefsVersion) { prefs.appIcons },
@@ -408,7 +408,7 @@ internal fun MainActivity.Root() {
                     onWipe = ::wipe,
                     ops = this@Root,
                     onBack = { screen = Screen.HOME },
-                    stickers = openStickers.also { androidx.compose.runtime.SideEffect { openStickers = false } },
+                    sticker = openSticker.also { androidx.compose.runtime.SideEffect { openSticker = null } },
                     hiddenApps = {
                         AllAppsScreen(
                             showHidden = true,
@@ -469,8 +469,7 @@ internal fun MainActivity.Root() {
                     order = remember(prefsVersion) { when (prefs.sordinaOrder) { 1 -> null; 2 -> Categories.custom(prefs.categoryOrder); else -> Categories.AUTO } },
                     icon = ::notifIcon,
                     onOpen = { h -> SordinaListener.open(this@Root, h.key) },
-                    onRead = { k -> SordinaListener.readGroup(this@Root, k) },
-                    onReadOne = { h -> SordinaListener.readOne(this@Root, h.key) },
+                    onReadKeys = { keys -> SordinaListener.readKeys(this@Root, keys) },
                     onReadAll = { SordinaListener.readAll(this@Root); screen = Screen.HOME },
                     onLetPass = ::letPass,
                     ruleOf = { t, s -> Rules.get(prefs, t, s) },
@@ -479,6 +478,8 @@ internal fun MainActivity.Root() {
                     onBack = { screen = Screen.HOME },
                     hiddenRevealed = hiddenRevealed,
                     onRevealHidden = { unlock(getString(R.string.hidden_apps)) { hiddenRevealed = true } },
+                    holdHint = remember(prefsVersion) { !prefs.sordinaHoldLearned },
+                    onHoldLearned = { if (!prefs.sordinaHoldLearned) { prefs.sordinaHoldLearned = true; changed() } },
                 )
                 }
 

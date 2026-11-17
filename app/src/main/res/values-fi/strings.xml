@@ -405,8 +405,6 @@
     <string name="brake_win_streak">Lunasta +%1$d min ja pelasta putkesi</string>
     <string name="car_hidden">Piilotettu autossa</string>
     <string name="car_hold">Napauta ja puhu</string>
-    <string name="car_line">Autossa · tärkeät ihmiset ja käynnissä olevat keskustelut pääsevät läpi</string>
-    <string name="car_line_open">Autossa</string>
     <string name="car_listening">Kuuntelen · lopeta napauttamalla</string>
     <string name="card_hidden">Kortti piilotettu</string>
     <string name="flight_x">Lento %1$s</string>
@@ -1069,4 +1067,10 @@
     <string name="why_r6_t">Kaikki pysyy täällä</string>
     <string name="why_r6">Mitä se oppii sinusta, pysyy puhelimessa.</string>
     <string name="why_end">Vähemmän melua, enemmän musiikkia.</string>
+    <string name="undo">Kumoa</string>
+    <string name="sordina_hold_hint">Paina riviä pitkään: säännöt ja ”päästä läpi”</string>
+    <plurals name="n_read">
+        <item quantity="one">Luettu</item>
+        <item quantity="other">%d luettu</item>
+    </plurals>
 </resources>

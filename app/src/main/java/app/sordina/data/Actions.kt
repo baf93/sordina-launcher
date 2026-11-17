@@ -129,6 +129,9 @@ class Actions(
             .putExtra(AlarmClock.EXTRA_SKIP_UI, true)
         if (a.label.isNotBlank()) i.putExtra(AlarmClock.EXTRA_MESSAGE, a.label)
         val ok = start(i)
+        // Android dice alle altre app una sola "prossima sveglia" (e l'Orologio Samsung ci mette i suoi promemoria):
+        // quella che imposti da qui Sordina se la segna, così in Casa la vedi sotto "Domani"
+        if (ok) prefs.addAlarm(nextAt(a.hour, a.minute), confirm = false)
         return Outcome(if (ok) tr(R.string.alarm_at, java.time.LocalTime.of(a.hour, a.minute).format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))) else tr(R.string.no_clock_app), ok)
     }
 
@@ -243,4 +246,11 @@ class Actions(
             cm.registerTorchCallback(cb, android.os.Handler(android.os.Looper.getMainLooper()))
         }
     }
+}
+
+/** La prossima volta che l'orologio segna [hour]:[minute] (oggi se non è ancora passata, se no domani), in millisecondi. */
+internal fun nextAt(hour: Int, minute: Int, now: java.time.ZonedDateTime = java.time.ZonedDateTime.now()): Long {
+    var t = now.withHour(hour).withMinute(minute).withSecond(0).withNano(0)
+    if (!t.isAfter(now)) t = t.plusDays(1)
+    return t.toInstant().toEpochMilli()
 }

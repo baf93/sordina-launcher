@@ -394,8 +394,6 @@
     <string name="brake_win_streak">+%1$d 分を獲得して連続記録を守る</string>
     <string name="car_hidden">運転中は非表示</string>
     <string name="car_hold">タップして話す</string>
-    <string name="car_line">運転中 · 大事な人とやり取り中のチャットだけ届く</string>
-    <string name="car_line_open">運転中</string>
     <string name="car_listening">聞いています · タップで終了</string>
     <string name="card_hidden">カードを非表示にしました</string>
     <string name="flight_x">フライト %1$s</string>
@@ -1058,4 +1056,10 @@
     <string name="why_r6_t">すべてここに残る</string>
     <string name="why_r6">あなたについて学んだことは、このスマホに残ります。</string>
     <string name="why_end">雑音は少なく、音楽を多く。</string>
+    <string name="undo">元に戻す</string>
+    <string name="sordina_hold_hint">行を長押しでルールと「通す」</string>
+    <plurals name="n_read">
+        <item quantity="one">既読</item>
+        <item quantity="other">%d 件既読</item>
+    </plurals>
 </resources>

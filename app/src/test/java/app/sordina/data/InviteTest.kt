@@ -21,3 +21,12 @@ class InviteTest {
         assertTrue(isInvite("Treffen morgen um 10"))
     }
 }
+
+class EventMailTest {
+    @org.junit.Test fun concerto() {
+        org.junit.Assert.assertTrue(isEvent("TicketOne\nI tuoi biglietti per Coldplay - Stadio San Siro, sabato 13 giugno 2027 ore 21:00"))
+        org.junit.Assert.assertTrue(isInvite("TicketOne\nI tuoi biglietti per Coldplay"))
+        org.junit.Assert.assertTrue(isEvent("Your e-ticket for the concert"))
+        org.junit.Assert.assertFalse(isEvent("Il tuo estratto conto di novembre"))
+    }
+}

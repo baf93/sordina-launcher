@@ -394,8 +394,6 @@
     <string name="brake_win_streak">Ambil +%1$d mnt dan selamatkan rangkaianmu</string>
     <string name="car_hidden">Disembunyikan saat berkendara</string>
     <string name="car_hold">Ketuk dan bicara</string>
-    <string name="car_line">Di mobil · hanya orang penting dan chat yang sedang berjalan yang masuk</string>
-    <string name="car_line_open">Di mobil</string>
     <string name="car_listening">Mendengarkan · ketuk untuk selesai</string>
     <string name="card_hidden">Kartu disembunyikan</string>
     <string name="flight_x">Penerbangan %1$s</string>
@@ -1058,4 +1056,10 @@
     <string name="why_r6_t">Semua tetap di sini</string>
     <string name="why_r6">Yang dipelajarinya tentangmu tetap di ponsel ini.</string>
     <string name="why_end">Kurangi bising, perbanyak musik.</string>
+    <string name="undo">Urungkan</string>
+    <string name="sordina_hold_hint">Tahan baris untuk aturan dan \"izinkan lewat\"</string>
+    <plurals name="n_read">
+        <item quantity="one">Dibaca</item>
+        <item quantity="other">%d dibaca</item>
+    </plurals>
 </resources>

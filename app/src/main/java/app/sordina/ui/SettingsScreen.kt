@@ -2,6 +2,7 @@ package app.sordina.ui
 
 import app.sordina.data.Backup
 import app.sordina.ui.theme.autoAccent
+import app.sordina.ui.theme.themeAccent
 import app.sordina.data.Prefs
 import androidx.compose.ui.text.style.TextOverflow
 import app.sordina.data.AppIcons
@@ -144,13 +145,13 @@ fun SettingsScreen(
     ops: Ops,
     onBack: () -> Unit,
     /** La lista delle app nascoste (si apre dopo l'impronta) */
-    /** Si apre già sugli adesivi (dal riquadro di un adesivo appena vinto) */
-    stickers: Boolean = false,
+    /** Si apre già su questo adesivo, con la sua scheda aperta (dal riquadro di un adesivo appena vinto) */
+    sticker: app.sordina.data.Medal? = null,
     hiddenApps: @Composable () -> Unit = {},
 ) {
-    var sub by rememberSaveable { mutableStateOf(if (stickers) Sub.PROGRESS else Sub.MAIN) }
+    var sub by rememberSaveable { mutableStateOf(if (sticker != null) Sub.PROGRESS else Sub.MAIN) }
     // Solo all'apertura: poi la pagina si comporta come sempre
-    val jumpToStickers = remember { stickers }
+    val jumpToSticker = remember { sticker }
     var tick by remember { mutableIntStateOf(0) }
     // Ogni pagina ricorda dove eri: tornando indietro, sei lì
     val scrolls = remember { HashMap<Sub, ScrollState>() }
@@ -208,11 +209,11 @@ fun SettingsScreen(
                     } else Spacer(Modifier.height(10.dp))
                     TopicCard(tr(R.string.t_progress), tr(R.string.t_progress_d), Icons.Rounded.EmojiEvents) { sub = Sub.PROGRESS }
                     TopicCard(tr(R.string.perm_notifications), tr(R.string.t_notif_d), Icons.Rounded.NotificationsActive) { sub = Sub.NOTIF }
-                    TopicCard(tr(R.string.perm_home), tr(R.string.t_home_d), Icons.Rounded.Home) { sub = Sub.HOME }
                     TopicCard(tr(R.string.s_brake), tr(R.string.t_brake_d), Icons.Rounded.PanTool) { sub = Sub.BRAKE }
+                    TopicCard(tr(R.string.perm_home), tr(R.string.t_home_d), Icons.Rounded.Home) { sub = Sub.HOME }
+                    TopicCard(tr(R.string.t_themes), tr(R.string.t_themes_d), Icons.Rounded.Palette) { sub = Sub.THEMES }
                     TopicCard(tr(R.string.s_search), tr(R.string.t_search_d), Icons.Rounded.Search) { sub = Sub.SEARCH }
                     TopicCard(tr(R.string.s_ha), tr(R.string.t_ha_d), Icons.Rounded.Lightbulb) { sub = Sub.HA }
-                    TopicCard(tr(R.string.t_themes), tr(R.string.t_themes_d), Icons.Rounded.Palette) { sub = Sub.THEMES }
                     TopicCard(tr(R.string.t_general), tr(R.string.t_general_d), Icons.Rounded.Tune) { sub = Sub.GENERAL }
                 }
 
@@ -579,7 +580,7 @@ fun SettingsScreen(
                 }
                 // Solo nella versione di prova: ogni disegno della mascotte, grande, con dove compare
                 Sub.MASCOTS -> Page("Tutte le sordine", null, back, scrollOf(page)) { MascotGallery() }
-                Sub.PROGRESS -> Page(tr(R.string.t_progress), null, back, scrollOf(page)) { ProgressPage(app.habits, jump = jumpToStickers) }
+                Sub.PROGRESS -> Page(tr(R.string.t_progress), null, back, scrollOf(page)) { ProgressPage(app.habits, jump = jumpToSticker) }
                 Sub.HA -> Page(tr(R.string.s_ha), null, back, scrollOf(page)) {
                     HaSettings(app, ops) { tick++ }
                 }
@@ -1088,9 +1089,10 @@ private fun ThemesPage(app: SordinaApp, mode: ThemeMode, backdrop: Int, backdrop
     // 3. Il colore principale: pulsanti, interruttori, evidenze
     Topic(tr(R.string.n_accent))
     Swatches {
-        // Auto: il colore dello sfondo; mostra quello che si otterrebbe
+        // Auto: il colore dello sfondo (o quello del tema); mostra quello che si otterrebbe,
+        // lo stesso qualunque altro colore sia scelto: cambia solo se cambia lo sfondo
         val isAuto = accent == 0 || accent == 1
-        val autoColor = autoAccent(backdropAccent)?.let { Color(it) } ?: if (isAuto) c.accent else null
+        val autoColor = autoAccent(backdropAccent)?.let { Color(it) } ?: themeAccent(c.dark)
         Swatch(autoColor, tr(R.string.n_auto), isAuto) { apply { prefs.accent = 0 } }
         ACCENTS.forEach { a -> Swatch(Color(a), null, accent == a) { apply { prefs.accent = a } } }
         val custom = accent != 0 && accent != 1 && accent !in ACCENTS

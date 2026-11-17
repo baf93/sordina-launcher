@@ -405,8 +405,6 @@
     <string name="brake_win_streak">Κέρδισε +%1$d λεπτά και σώσε το σερί σου</string>
     <string name="car_hidden">Κρυφή στο αυτοκίνητο</string>
     <string name="car_hold">Πάτα και μίλα</string>
-    <string name="car_line">Στο αυτοκίνητο · περνούν σημαντικά άτομα και ενεργές συζητήσεις</string>
-    <string name="car_line_open">Στο αυτοκίνητο</string>
     <string name="car_listening">Σε ακούω · πάτα για τέλος</string>
     <string name="card_hidden">Η κάρτα κρύφτηκε</string>
     <string name="flight_x">Πτήση %1$s</string>
@@ -1069,4 +1067,10 @@
     <string name="why_r6_t">Όλα μένουν εδώ</string>
     <string name="why_r6">Ό,τι μαθαίνει για σένα μένει στο τηλέφωνο.</string>
     <string name="why_end">Λιγότερος θόρυβος, περισσότερη μουσική.</string>
+    <string name="undo">Αναίρεση</string>
+    <string name="sordina_hold_hint">Πατήστε παρατεταμένα μια γραμμή για κανόνες και «άφησέ το να περάσει»</string>
+    <plurals name="n_read">
+        <item quantity="one">Διαβάστηκε</item>
+        <item quantity="other">%d διαβάστηκαν</item>
+    </plurals>
 </resources>

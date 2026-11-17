@@ -405,8 +405,6 @@
     <string name="brake_win_streak">Encaisse +%1$d min et sauve ta série</string>
     <string name="car_hidden">Masquée en voiture</string>
     <string name="car_hold">Touche et parle</string>
-    <string name="car_line">En voiture · personnes importantes et discussions en cours passent</string>
-    <string name="car_line_open">En voiture</string>
     <string name="car_listening">Je t\'écoute · touche pour finir</string>
     <string name="card_hidden">Carte masquée</string>
     <string name="flight_x">Vol %1$s</string>
@@ -1073,4 +1071,10 @@
     <string name="why_r6_t">Tout reste ici</string>
     <string name="why_r6">Ce qu\'il apprend de toi reste sur ce téléphone.</string>
     <string name="why_end">Moins de bruit, plus de musique.</string>
+    <string name="undo">Annuler</string>
+    <string name="sordina_hold_hint">Appui long sur une ligne pour les règles et « laisser passer »</string>
+    <plurals name="n_read">
+        <item quantity="one">Lue</item>
+        <item quantity="other">%d lues</item>
+    </plurals>
 </resources>

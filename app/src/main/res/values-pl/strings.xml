@@ -427,8 +427,6 @@
     <string name="brake_win_streak">Zgarnij +%1$d min i uratuj serię</string>
     <string name="car_hidden">Ukryte w aucie</string>
     <string name="car_hold">Dotknij i mów</string>
-    <string name="car_line">W aucie · przechodzą ważne osoby i trwające czaty</string>
-    <string name="car_line_open">W aucie</string>
     <string name="car_listening">Słucham · dotknij, by zakończyć</string>
     <string name="card_hidden">Karta ukryta</string>
     <string name="flight_x">Lot %1$s</string>
@@ -1091,4 +1089,10 @@
     <string name="why_r6_t">Wszystko zostaje tutaj</string>
     <string name="why_r6">To, czego się o tobie uczy, zostaje w telefonie.</string>
     <string name="why_end">Mniej hałasu, więcej muzyki.</string>
+    <string name="undo">Cofnij</string>
+    <string name="sordina_hold_hint">Przytrzymaj wiersz, aby ustawić reguły i „przepuść”</string>
+    <plurals name="n_read">
+        <item quantity="one">Przeczytane</item>
+        <item quantity="other">Przeczytane: %d</item>
+    </plurals>
 </resources>

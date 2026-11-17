@@ -120,6 +120,19 @@ class AppCatalog(private val context: Context) {
         return synchronized(iconCache) { iconCache.getOrPut(app.key) { bmp } }
     }
 
+    /** L'icona dell'app che esegue un'azione (vedi [ActHandler]); null se la fa Sordina da sola. */
+    fun actionIcon(act: Act): ImageBitmap? {
+        val pkg = ActHandler.packageOf(context, act) ?: return null
+        val key = "act:$pkg"
+        synchronized(iconCache) { iconCache[key] }?.let { return it }
+        val bmp = runCatching {
+            val d = launcherApps.getActivityList(pkg, Process.myUserHandle()).firstOrNull()?.getIcon(0)
+                ?: context.packageManager.getApplicationIcon(pkg)
+            AppIcons.render(d, iconPx).asImageBitmap()
+        }.getOrNull() ?: return null
+        return synchronized(iconCache) { iconCache.getOrPut(key) { bmp } }
+    }
+
     /** Prepara in sottofondo le icone di tutte le app, così la lista scorre liscia. */
     fun warmIcons(apps: List<AppEntry>) { apps.forEach { icon(it) } }
 

@@ -394,8 +394,6 @@
     <string name="brake_win_streak">+%1$d분 받고 연속 기록 지키기</string>
     <string name="car_hidden">운전 중 숨김</string>
     <string name="car_hold">탭하고 말하기</string>
-    <string name="car_line">운전 중 · 중요한 사람과 진행 중인 채팅만 와요</string>
-    <string name="car_line_open">운전 중</string>
     <string name="car_listening">듣고 있어요 · 탭하면 끝</string>
     <string name="card_hidden">카드 숨김</string>
     <string name="flight_x">항공편 %1$s</string>
@@ -1058,4 +1056,10 @@
     <string name="why_r6_t">모든 건 여기에</string>
     <string name="why_r6">당신에 대해 배운 건 이 휴대폰에만 남아요.</string>
     <string name="why_end">소음은 줄이고, 음악은 더.</string>
+    <string name="undo">실행 취소</string>
+    <string name="sordina_hold_hint">행을 길게 누르면 규칙과 \'통과시키기\'</string>
+    <plurals name="n_read">
+        <item quantity="one">읽음</item>
+        <item quantity="other">%d개 읽음</item>
+    </plurals>
 </resources>

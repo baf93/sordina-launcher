@@ -109,11 +109,13 @@ class Moments(private val context: Context, private val prefs: Prefs) {
             if (owner != null && owner !in CardDetector.CLOCK_PKGS && owner != clock) return@runCatching null
             info.triggerTime.takeIf { it % 60_000L == 0L }
         }.getOrNull()
-        // La sveglia che hai appena impostato (dalla conferma dell'Orologio): conta finché Android non mostra
-        // una sveglia vera che arriva prima. Passata, si dimentica.
-        val hint = prefs.alarmHint.takeIf { it > now }
-        if (hint == null && prefs.alarmHint != 0L) prefs.alarmHint = 0L
-        return listOfNotNull(real, hint).minOrNull()
+        // Le sveglie che Sordina conosce per certo (impostate da lei o confermate dall'Orologio): contano finché
+        // non passano. Se Android mostra una sveglia vera che arriva dopo una di queste, quella è stata spenta.
+        // (prima ne teneva una sola: la si porta nell'elenco)
+        val known = prefs.alarmHints.ifEmpty { listOf(prefs.alarmHint).filter { it > now } }
+        val alive = known.filter { it > now && (real == null || it >= real) }
+        if (alive != known) prefs.alarmHints = alive
+        return listOfNotNull(real, alive.minOrNull()).minOrNull()
     }
 
     /** Sordina a tempo, accesa da te: fino a quando, o null. */

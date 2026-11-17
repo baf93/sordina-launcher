@@ -394,8 +394,6 @@
     <string name="brake_win_streak">รับ +%1$d นาทีและรักษาสถิติ</string>
     <string name="car_hidden">ซ่อนขณะขับรถ</string>
     <string name="car_hold">แตะแล้วพูด</string>
-    <string name="car_line">ในรถ · เฉพาะคนสำคัญและแชทที่กำลังคุยผ่านได้</string>
-    <string name="car_line_open">ในรถ</string>
     <string name="car_listening">กำลังฟัง · แตะเพื่อจบ</string>
     <string name="card_hidden">ซ่อนการ์ดแล้ว</string>
     <string name="flight_x">เที่ยวบิน %1$s</string>
@@ -1058,4 +1056,10 @@
     <string name="why_r6_t">ทุกอย่างอยู่ที่นี่</string>
     <string name="why_r6">สิ่งที่มันเรียนรู้เกี่ยวกับคุณอยู่บนโทรศัพท์เครื่องนี้</string>
     <string name="why_end">เสียงรบกวนน้อยลง ดนตรีมากขึ้น</string>
+    <string name="undo">เลิกทำ</string>
+    <string name="sordina_hold_hint">กดค้างที่แถวเพื่อตั้งกฎและ «ให้ผ่าน»</string>
+    <plurals name="n_read">
+        <item quantity="one">อ่านแล้ว</item>
+        <item quantity="other">อ่านแล้ว %d</item>
+    </plurals>
 </resources>

@@ -191,7 +191,8 @@ class MainActivity : ComponentActivity(), Ops {
     /** Gli adesivi appena vinti, da far vedere in cima a Casa */
     internal var celebrate by mutableStateOf<List<app.sordina.data.Medal>>(emptyList())
     internal var medalsAt = 0L
-    internal var openStickers = false
+    /** L'adesivo da aprire nella pagina adesivi (dal riquadro in Casa) */
+    internal var openSticker: app.sordina.data.Medal? = null
     internal var recognizer: SpeechRecognizer? = null
 
     internal val permLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {

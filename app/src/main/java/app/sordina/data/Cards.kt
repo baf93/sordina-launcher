@@ -318,7 +318,7 @@ object CardDetector {
         val now = postTime.takeIf { it in 1..System.currentTimeMillis() } ?: System.currentTimeMillis()
         val all = "$title $text"
         if (otp) {
-            val code = otpCode(all) ?: return null
+            val code = app.sordina.service.Classifier.otpNumber(all) ?: otpCode(all) ?: return null
             val pretty = if (code.length == 6) code.substring(0, 3) + " " + code.substring(3) else code
             return Card(key, CardKind.OTP, tr(R.string.code_x, appLabel), pretty, actions = listOf(CardAction(tr(R.string.copy), CardOp.Copy(code))),
                 expiresAt = now + 10 * 60_000, look = CardLook.CODE, bar = Bar(now, now + 10 * 60_000, drain = true))

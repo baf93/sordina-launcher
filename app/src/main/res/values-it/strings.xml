@@ -509,8 +509,6 @@
     <string name="scene_no_alarm">Nessuna sveglia</string>
     <string name="scene_recap">Oggi %1$s al telefono · %2$d sblocchi</string>
     <string name="scene_recap_time">Oggi %s al telefono</string>
-    <string name="car_line">In auto · solo persone importanti e chat aperte</string>
-    <string name="car_line_open">In auto</string>
     <string name="car_hold">Tocca e parla</string>
     <string name="s_scene_evening">Sera</string>
     <string name="s_scene_night">Notte</string>
@@ -1077,4 +1075,10 @@
     <string name="why_r6_t">Tutto resta qui</string>
     <string name="why_r6">Quello che impara di te resta sul telefono.</string>
     <string name="why_end">Meno rumore, più musica.</string>
+    <string name="undo">Annulla</string>
+    <string name="sordina_hold_hint">Tieni premuto per le regole e «lascia passare»</string>
+    <plurals name="n_read">
+        <item quantity="one">Letta</item>
+        <item quantity="other">%d lette</item>
+    </plurals>
 </resources>

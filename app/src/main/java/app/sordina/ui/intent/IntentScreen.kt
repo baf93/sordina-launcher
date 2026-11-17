@@ -123,7 +123,8 @@ data class Notice(val text: String, val undo: (() -> Unit)? = null, val id: Long
 data class VoiceState(val available: Boolean, val listening: Boolean, val partial: String, val level: Float = 0f)
 
 /**
- * Ricerca: solo parole, niente icone (le icone invitano ad aprire).
+ * Ricerca: parole prima di tutto; le icone delle app solo se attive, tranne accanto alle azioni,
+ * dove l'icona dice con quale app finiscono ("Scrivi a Elisa" → WhatsApp).
  * La barra sta in basso, sopra la tastiera, dove arriva il pollice; i risultati salgono da lì.
  * Scorrendo in su si arriva a Tutte le app.
  */
@@ -153,7 +154,10 @@ fun IntentScreen(
     val c = S.c
     val icons = remember { HashMap<String, androidx.compose.ui.graphics.ImageBitmap?>() }
     fun appIcon(a: AppEntry) = if (!showIcons) null else icons.getOrPut(a.key) { catalog.icon(a) }
-    fun icon(cand: Candidate) = cand.app?.let { appIcon(it) }
+    // Le azioni ("Scrivi a Elisa", "Chiama", "Timer") portano sempre l'icona dell'app che le esegue: dice dove finiscono
+    val actIcons = remember { HashMap<String, androidx.compose.ui.graphics.ImageBitmap?>() }
+    fun actIcon(act: Act) = actIcons.getOrPut(if (act is Act.Message) "msg:${act.via}" else act.javaClass.name) { catalog.actionIcon(act) }
+    fun icon(cand: Candidate) = cand.app?.let { appIcon(it) } ?: if (cand.app == null) actIcon(cand.act) else null
     val focus = remember { FocusRequester() }
     val threshold = with(LocalDensity.current) { 64.dp.toPx() }
     // Capire la frase legge rubrica, cervello e tendina: fuori dal thread dell'interfaccia, una alla volta e in ordine
@@ -227,7 +231,7 @@ fun IntentScreen(
                 if (query.isNotBlank()) {
                     val ready = result.candidates.firstOrNull()?.takeIf { result.confident && it.toOthers }
                     val first = result.candidates.firstOrNull()
-                    if (ready != null) ReadyBlock(ready) { onRun(ready, 0) }
+                    if (ready != null) ReadyBlock(ready, icon(ready)) { onRun(ready, 0) }
                     else if (first != null) EnterBlock(first, query, icon(first)) { onRun(first, 0) }
                     // Il resto, diviso per tipo come le categorie della pagina Sordina: titolo grande, quanti sono, un blocco
                     val rest = result.candidates.withIndex().filter { it.index > 0 }
@@ -265,7 +269,7 @@ fun IntentScreen(
                                 row.forEach { p ->
                                     val a = p.app
                                     if (a != null) ProposalLine(a, actions, appIcon(a), Modifier.weight(1f)) { onLaunch(a) }
-                                    else ActionProposal(p, actions, Modifier.weight(1f)) { onRun(p, -1) }
+                                    else ActionProposal(p, actions, icon(p), Modifier.weight(1f)) { onRun(p, -1) }
                                 }
                                 if (row.size == 1) Spacer(Modifier.weight(1f))
                             }
@@ -304,8 +308,8 @@ fun IntentScreen(
                     textStyle = TextStyle(fontSize = 17.sp, color = c.ink),
                     cursorBrush = SolidColor(c.accent),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
-                    // Invio: verso altri (chiamare, scrivere, aprire la porta) solo se la persona è sicura; se no restano le scelte
-                    keyboardActions = KeyboardActions(onGo = { val r = current(); r.candidates.firstOrNull()?.takeIf { !it.toOthers || r.confident }?.let { onRun(it, 0) } }),
+                    // Invio fa quello che mostra il primo blocco (con il suo tasto Invio): anche chiamare o scrivere, lo vedi prima di premere
+                    keyboardActions = KeyboardActions(onGo = { current().candidates.firstOrNull()?.let { onRun(it, 0) } }),
                     modifier = Modifier.fillMaxWidth().focusRequester(focus),
                 )
             }
@@ -364,7 +368,7 @@ private fun Mic(grow: Float, onDown: () -> Unit, onUp: () -> Unit) {
 
 /** Azione verso un'altra persona, già pronta: serve il tuo tocco. Un blocco, e sotto il pulsante principale. */
 @Composable
-private fun ReadyBlock(cand: Candidate, onGo: () -> Unit) {
+private fun ReadyBlock(cand: Candidate, icon: androidx.compose.ui.graphics.ImageBitmap?, onGo: () -> Unit) {
     val c = S.c
     val feel = LocalFeel.current
     // Subito in cima, come il primo risultato: la nota sta dentro il blocco
@@ -372,7 +376,7 @@ private fun ReadyBlock(cand: Candidate, onGo: () -> Unit) {
     Column(Modifier.fillMaxWidth().clip(BLOCK).background(surface()).padding(14.dp)) {
         Text(tr(R.string.ready_touch), Modifier.padding(bottom = 10.dp), style = TextStyle(fontSize = 13.sp, color = c.soft))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Leading(cand, null, 44.dp)
+            Leading(cand, icon, 44.dp)
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(cand.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 19.sp, lineHeight = 24.sp, color = c.ink))
@@ -533,7 +537,7 @@ private fun ProposalLine(app: AppEntry, actions: ProposalActions, icon: androidx
 
 /** Una proposta che non è un'app: una persona, un comando che ripeti, la casa. Stesso blocchetto, con il suo simbolo. */
 @Composable
-private fun ActionProposal(cand: Candidate, actions: ProposalActions, modifier: Modifier, onClick: () -> Unit) {
+private fun ActionProposal(cand: Candidate, actions: ProposalActions, icon: androidx.compose.ui.graphics.ImageBitmap?, modifier: Modifier, onClick: () -> Unit) {
     val feel = LocalFeel.current
     val c = S.c
     var menu by remember { mutableStateOf(false) }
@@ -552,8 +556,9 @@ private fun ActionProposal(cand: Candidate, actions: ProposalActions, modifier: 
                 .padding(horizontal = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Tondo tenue nell'accento, come i simboli delle Impostazioni
-            Box(Modifier.padding(end = 12.dp).size(32.dp).clip(CircleShape).background(c.accent.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+            // L'icona dell'app che la esegue, come le proposte di app; se la fa Sordina da sola, il tondo tenue col simbolo
+            if (icon != null) androidx.compose.foundation.Image(icon, null, Modifier.padding(end = 12.dp).size(32.dp).clip(RoundedCornerShape(10.dp)))
+            else Box(Modifier.padding(end = 12.dp).size(32.dp).clip(CircleShape).background(c.accent.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
                 Icon(glyph, null, Modifier.size(17.dp), tint = c.accent)
             }
             Text(cand.title, Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 15.sp, lineHeight = 18.sp, color = c.ink))

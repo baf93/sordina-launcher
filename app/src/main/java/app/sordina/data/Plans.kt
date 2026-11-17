@@ -36,6 +36,8 @@ class Plans(context: Context) {
     data class Plan(
         val key: String, val label: String, val who: String?, val snippet: String,
         val at: Long?, val dayOnly: Boolean, val place: String?, val tracking: String?, val flight: String?, val posted: Long,
+        /** Un evento con biglietto letto in una mail (concerto, teatro) */
+        val event: Boolean = false,
     )
 
     private val file = File(context.filesDir, "plans.json")
@@ -80,7 +82,7 @@ class Plans(context: Context) {
         val ex = extractor
         if (ex == null || !ready) {
             prepare()
-            if (!mail) fallback(id, appLabel, who, text, postTime)?.let(::keep)
+            if (!mail || isEvent(text)) fallback(id, appLabel, who, text, postTime, mail)?.let(::keep)
             return
         }
         val params = EntityExtractionParams.Builder(text.take(2000))
@@ -89,6 +91,9 @@ class Plans(context: Context) {
         // generico sbaglia (13:00 del giorno dopo). Il modello serve per tutto il resto: indirizzi, voli, spedizioni, date in altre lingue.
         val mine = DateParser.parse(text, Instant.ofEpochMilli(postTime).atZone(ZoneId.systemDefault()).toLocalDateTime()).whenAt
             ?.takeIf { !it.allDay }?.start?.atZone(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
+            // La data dell'ordine o dell'invio ("ordine del 15 novembre") non è l'appuntamento
+            ?.takeIf { it > postTime }
+        val event = mail && isEvent(text)
         ex.annotate(params).addOnSuccessListener { found ->
             var at: Long? = null; var dayOnly = false; var place: String? = null; var tracking: String? = null; var flight: String? = null
             for (a in found) for (e in a.entities) when (e.type) {
@@ -96,39 +101,46 @@ class Plans(context: Context) {
                     val d = e.asDateTimeEntity() ?: continue
                     val g = d.dateTimeGranularity
                     if (g < DateTimeEntity.GRANULARITY_DAY) continue
-                    if (at == null) { at = d.timestampMillis; dayOnly = g == DateTimeEntity.GRANULARITY_DAY }
+                    // La prima data che viene dopo l'arrivo: in una mail di conferma la prima è spesso quella dell'ordine
+                    val day = g == DateTimeEntity.GRANULARITY_DAY
+                    if (at == null || (at!! <= postTime && d.timestampMillis > postTime)) { at = d.timestampMillis; dayOnly = day }
                 }
                 Entity.TYPE_ADDRESS -> if (place == null) place = a.annotatedText
                 Entity.TYPE_TRACKING_NUMBER -> if (tracking == null) tracking = a.annotatedText
                 Entity.TYPE_FLIGHT_NUMBER -> if (flight == null) flight = a.annotatedText
             }
-            // Nelle mail le date sono ovunque (offerte, scadenze): conta solo un volo, una spedizione o un appuntamento con l'indirizzo
-            if (mail && flight == null && tracking == null && (place == null || at == null || dayOnly)) return@addOnSuccessListener
             if (mine != null && flight == null) { at = mine; dayOnly = false }
-            plan(id, appLabel, who, text, postTime, at, dayOnly, place, tracking, flight)?.let(::keep)
-        }.addOnFailureListener { if (!mail) fallback(id, appLabel, who, text, postTime)?.let(::keep) }
+            // Nelle mail le date sono ovunque (offerte, scadenze): conta solo un volo, una spedizione, un appuntamento con
+            // l'indirizzo, o un evento con giorno e ora (concerto, teatro: il luogo spesso non è un indirizzo, "Unipol Forum")
+            if (mail && flight == null && tracking == null && (at == null || dayOnly || (place == null && !event))) return@addOnSuccessListener
+            plan(id, appLabel, who, text, postTime, at, dayOnly, place, tracking, flight, event)?.let(::keep)
+        }.addOnFailureListener { if (!mail || event) fallback(id, appLabel, who, text, postTime, event)?.let(::keep) }
     }
 
     /** Senza il modello: le regole di Sordina per le date (in italiano), niente indirizzi. */
-    private fun fallback(key: String, appLabel: String, who: String?, text: String, postTime: Long): Plan? {
+    private fun fallback(key: String, appLabel: String, who: String?, text: String, postTime: Long, far: Boolean = false): Plan? {
         val w = DateParser.parse(text, Instant.ofEpochMilli(postTime).atZone(ZoneId.systemDefault()).toLocalDateTime()).whenAt ?: return null
         if (w.allDay) return null
-        return plan(key, appLabel, who, text, postTime, w.start.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(), false, null, null, null)
+        return plan(key, appLabel, who, text, postTime, w.start.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(), false, null, null, null, far)
     }
 
     private fun plan(
         key: String, appLabel: String, who: String?, text: String, postTime: Long,
         at: Long?, dayOnly: Boolean, place: String?, tracking: String?, flight: String?,
+        /** Un evento comprato (concerto, teatro): si prenota con mesi d'anticipo */
+        far: Boolean = false,
     ): Plan? {
         // Un'ora da sola ("alle 13 30") è una risposta, non un invito: senza un indirizzo, un volo o una spedizione serve una
         // parola da appuntamento (ci vediamo, cena, riunione, dentista…)
         if (place == null && flight == null && tracking == null && !isInvite(text)) return null
         val now = System.currentTimeMillis()
-        val future = at != null && at > now && at - now < 30 * 86_400_000L
+        val future = at != null && at > now && at - now < (if (far) 400 else 30) * 86_400_000L
         val usable = (future && (!dayOnly || place != null || flight != null)) || tracking != null || (flight != null && (at == null || future))
         if (!usable) return null
-        return Plan(key, listOfNotNull(who, appLabel).distinct().joinToString(" · "), who, CardDetector.firstLine(text).take(80),
-            at?.takeIf { future }, dayOnly, place, tracking, flight, postTime)
+        // Una mail arriva come "mittente\noggetto": quello che dice è l'oggetto ("Coldplay · Stadio San Siro")
+        val what = if (who == null && '\n' in text) text.substringAfter('\n').ifBlank { text } else text
+        return Plan(key, listOfNotNull(who, appLabel).distinct().joinToString(" · "), who, CardDetector.firstLine(what).take(80),
+            at?.takeIf { future }, dayOnly, place, tracking, flight, postTime, far)
     }
 
     @Synchronized
@@ -200,7 +212,7 @@ class Plans(context: Context) {
                 val a = JSONArray()
                 snap.forEach { p ->
                     a.put(JSONObject().put("k", p.key).put("l", p.label).put("w", p.who).put("s", p.snippet).put("at", p.at ?: 0L)
-                        .put("d", p.dayOnly).put("pl", p.place).put("tr", p.tracking).put("fl", p.flight).put("p", p.posted))
+                        .put("d", p.dayOnly).put("pl", p.place).put("tr", p.tracking).put("fl", p.flight).put("p", p.posted).put("ev", p.event))
                 }
                 file.writeText(a.toString())
             }
@@ -215,9 +227,9 @@ class Plans(context: Context) {
             val o = a.getJSONObject(i)
             fun s(n: String) = if (!o.has(n) || o.isNull(n)) null else o.optString(n).ifEmpty { null }
             val p = Plan(o.getString("k"), o.optString("l"), s("w"), o.optString("s"), o.optLong("at").takeIf { it > 0 },
-                o.optBoolean("d"), s("pl"), s("tr"), s("fl"), o.optLong("p"))
+                o.optBoolean("d"), s("pl"), s("tr"), s("fl"), o.optLong("p"), o.optBoolean("ev"))
             // Quelli letti con la regola vecchia (un'ora sola, senza invito) non tornano
-            if (p.place == null && p.flight == null && p.tracking == null && !isInvite(p.snippet)) continue
+            if (p.place == null && p.flight == null && p.tracking == null && !p.event && !isInvite(p.snippet)) continue
             m[p.key] = p
         }
         synchronized(this) { _plans.value = prune(m + _plans.value) }
@@ -227,20 +239,25 @@ class Plans(context: Context) {
         /** Può contenere un piano: un numero, un giorno, un indirizzo. Gli altri testi non arrivano al modello. */
         private val MAYBE = Regex("\\d|oggi|domani|stasera|stamattina|stanotte|dopodomani|luned|marted|mercoled|gioved|venerd|sabato|domenica|mezzogiorno|\\bvia\\b|piazza|corso|viale|tomorrow|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday|street")
         /** Una mail che può valere una scheda (le newsletter no). */
-        private val MAIL_WORTH = Regex("volo|flight|imbarco|boarding|prenotazion|booking|reservation|check-in|spedizion|tracking|consegna|delivery|appuntamento|appointment|biglietto|ticket")
+        private val MAIL_WORTH = Regex("volo|flight|imbarco|boarding|prenotazion|booking|reservation|check-in|spedizion|tracking|consegna|delivery|appuntamento|appointment|bigliett|ticket|concert|spettacol|teatro|evento|event|ingress|festival")
     }
 }
 
 /** Le parole da appuntamento, in più lingue (testo normalizzato: minuscolo, senza accenti). */
 private val INVITE = Regex(
     "\\b(ci vediamo|vediamoci|ci becchiamo|ci sentiamo|appuntamento|incontr\\w*|cena|cenare|pranzo|pranzare|colazione|aperitiv\\w*|apericena|caffe|" +
-    "riunione|call|meeting|festa|compleanno|visita|dentista|medico|dottore|parrucchiere|partita|calcetto|palestra|cinema|concerto|teatro|" +
+    "riunione|call|meeting|festa|compleanno|visita|dentista|medico|dottore|parrucchiere|partita|calcetto|palestra|cinema|concert\\w*|teatro|spettacol\\w*|festival|bigliett\\w*|tickets?|" +
     "prenotat\\w*|prenotazione|passo a prender\\w*|ti passo a|vieni|venite|veniamo|andiamo|usciamo|sei liber\\w|siete liberi|ti va|vi va|ritrovo|" +
     "meet|meeting|see you|dinner|lunch|breakfast|brunch|drinks|coffee|party|appointment|booked|booking|reservation|pick you up|let s|are you free|" +
     "quedamos|nos vemos|cena|comida|almuerzo|cita|reunion|fiesta|reserva|" +
     "rendez vous|rdv|on se voit|diner|dejeuner|reunion|soiree|reservation|" +
     "treffen|termin|abendessen|mittagessen|fruhstuck|besprechung|party|reserviert)\\b"
 )
+
+/** Un evento a cui vai (con un biglietto): concerto, spettacolo, partita, festival. */
+private val EVENT = Regex("\\b(concert\\w*|spettacol\\w*|teatro|festival|partita|bigliett\\w*|tickets?|e ticket|evento|event|apertura porte|doors open|ingresso|admission)\\b")
+
+internal fun isEvent(text: String): Boolean = EVENT.containsMatchIn(Search.normalize(text))
 
 /** Il messaggio parla di vedersi o di un impegno? */
 internal fun isInvite(text: String): Boolean = INVITE.containsMatchIn(Search.normalize(text))

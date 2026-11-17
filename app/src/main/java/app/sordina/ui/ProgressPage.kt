@@ -5,6 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.sordina.R
@@ -55,7 +58,7 @@ import kotlinx.coroutines.launch
  */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-fun ColumnScope.ProgressPage(habits: Habits, jump: Boolean = false) {
+fun ColumnScope.ProgressPage(habits: Habits, jump: Medal? = null) {
     val c = S.c
     val streak = remember { habits.streak() }
     val days = remember { habits.days() }
@@ -68,10 +71,15 @@ fun ColumnScope.ProgressPage(habits: Habits, jump: Boolean = false) {
     val today = LocalDate.now()
 
     Player(streak)
-    Row(Modifier.padding(top = 10.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    // Altezza comune: se un'etichetta va su due righe, le tre tile restano allineate
+    Row(Modifier.padding(top = 10.dp).fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Fact("${streak.days}", tr(R.string.p_series), Modifier.weight(1f))
         Fact("${streak.best}", tr(R.string.p_best), Modifier.weight(1f))
-        Fact(shortDuration(streak.totalMinutes), tr(R.string.p_total), Modifier.weight(1f))
+        // È un contatore: sotto il minuto "0 min", non la frase "meno di un minuto" (che va a capo e spacca la riga)
+        Fact(
+            if (streak.totalMinutes < 1) tr(R.string.minutes_short, 0) else shortDuration(streak.totalMinutes),
+            tr(R.string.p_total), Modifier.weight(1f),
+        )
     }
 
     // ── Le giornate: un mese alla volta, fin dove arriva lo storico
@@ -135,14 +143,12 @@ fun ColumnScope.ProgressPage(habits: Habits, jump: Boolean = false) {
     }
 
     // ── Gli adesivi: per gruppo, tre per riga. Toccato, si guarda grande e si manda a chi vuoi
-    // Arrivando da un adesivo appena vinto, la pagina scende fin qui
+    // Arrivando da un adesivo appena vinto, la pagina scende fino a lui e ne apre la scheda
     val here = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
-    LaunchedEffect(jump, medals.isNotEmpty()) { if (jump && medals.isNotEmpty()) here.bringIntoView(androidx.compose.ui.geometry.Rect(0f, 0f, 1f, 1800f)) }
-    Box(Modifier.bringIntoViewRequester(here)) {
-        Column { Topic(tr(R.string.p_medals, medals.size, Medal.entries.size)) }
-    }
+    LaunchedEffect(jump, medals.isNotEmpty()) { if (jump != null && medals.isNotEmpty()) here.bringIntoView() }
+    Topic(tr(R.string.p_medals, medals.size, Medal.entries.size))
     StickerPacks(medals)
-    var open by remember { mutableStateOf<Medal?>(null) }
+    var open by remember { mutableStateOf(jump) }
     Medal.Group.entries.forEach { g ->
         val inGroup = Medal.entries.filter { it.group == g }
         val have = inGroup.count { it in medals }
@@ -159,7 +165,8 @@ fun ColumnScope.ProgressPage(habits: Habits, jump: Boolean = false) {
                 row.forEach { m ->
                     val won = medals[m]
                     Column(
-                        Modifier.weight(1f).clip(RoundedCornerShape(18.dp)).clickableNoRipple { open = m }.padding(horizontal = 4.dp, vertical = 4.dp),
+                        Modifier.weight(1f).then(if (m == jump) Modifier.bringIntoViewRequester(here) else Modifier)
+                            .clip(RoundedCornerShape(18.dp)).clickableNoRipple { open = m }.padding(horizontal = 4.dp, vertical = 4.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Sticker(m, won != null, 84.dp)
@@ -211,11 +218,14 @@ private val WON = androidx.compose.ui.graphics.Color(0xFF2E9E5B)
 private fun Fact(value: String, label: String, modifier: Modifier = Modifier) {
     val c = S.c
     Column(
-        modifier.clip(RoundedCornerShape(18.dp)).background(c.card).padding(horizontal = 10.dp, vertical = 12.dp),
+        modifier.fillMaxHeight().clip(RoundedCornerShape(18.dp)).background(c.card).padding(horizontal = 10.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(value, style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = c.accent))
-        Text(label, style = TextStyle(fontSize = 11.sp, color = c.soft))
+        Text(
+            value, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis,
+            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = c.accent),
+        )
+        Text(label, maxLines = 2, textAlign = TextAlign.Center, style = TextStyle(fontSize = 11.sp, color = c.soft))
     }
 }
 

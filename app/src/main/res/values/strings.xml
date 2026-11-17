@@ -510,8 +510,6 @@
     <string name="scene_no_alarm">No alarm set</string>
     <string name="scene_recap">Today %1$s on your phone · unlocked %2$d times</string>
     <string name="scene_recap_time">Today %s on your phone</string>
-    <string name="car_line">In the car · only important people and open chats get through</string>
-    <string name="car_line_open">Driving</string>
     <string name="car_hold">Tap and speak</string>
     <string name="s_scene_evening">Evening</string>
     <string name="s_scene_night">Night</string>
@@ -1078,4 +1076,10 @@
     <string name="why_r6_t">Everything stays here</string>
     <string name="why_r6">What it learns about you stays on this phone.</string>
     <string name="why_end">Less noise, more music.</string>
+    <string name="undo">Undo</string>
+    <string name="sordina_hold_hint">Hold a row for rules and \"let through\"</string>
+    <plurals name="n_read">
+        <item quantity="one">Read</item>
+        <item quantity="other">%d read</item>
+    </plurals>
 </resources>
