@@ -1048,4 +1048,25 @@
     <string name="access_consent_ok">Jeg godtar, åpne innstillinger</string>
     <string name="s_instant_brake_hint">Med tilgjengelighet kommer bremsen med en gang, gjelder også nettstedene til bremsede apper, og Sordina slutter å sjekke med få sekunders mellomrom. Hvis den ikke kan slås på: Appinfo › ⋮ › Tillat begrensede innstillinger.</string>
     <string name="brake_recent">Telt for litt siden</string>
+    <string name="why_title">Hvorfor Sordina</string>
+    <string name="why_tagline">Telefonen fortsetter å spille. Bare mykere.</string>
+    <string name="why_word_t">Ordet</string>
+    <string name="why_word_pron">sor·dì·na · italiensk, av sordo, «døv»</string>
+    <string name="why_word">I musikken er sordinen demperen: en liten bit som hviler på fiolinens stol eller sitter i trompetens klokke. Instrumentet slutter ikke å spille. Det låter mykere, varmere, nærmere. På italiensk betyr «in sordina» å gjøre noe stille og rolig, uten oppstyr.</string>
+    <string name="why_idea_t">Idéen</string>
+    <string name="why_idea">En telefon er et fantastisk instrument, men den spiller alltid på full styrke. Sordina slår den ikke av og tar den ikke fra deg: den legger en sordin på. Det viktige kommer gjennom, resten venter på sitt øyeblikk. Ingenting går tapt, det er bare roligere.</string>
+    <string name="why_rules_t">Slik tenker den</string>
+    <string name="why_r1_t">Den starter tom</string>
+    <string name="why_r1">En mørk side og én setning. Du kaller på appene, ikke de på deg.</string>
+    <string name="why_r2_t">Hensikten først</string>
+    <string name="why_r2">Du sier hva du vil gjøre, ikke hvilken app du skal åpne.</string>
+    <string name="why_r3_t">Det viktige kommer gjennom</string>
+    <string name="why_r3">De som betyr noe, når deg alltid. Resten venter, samlet.</string>
+    <string name="why_r4_t">Friksjon bare for «bare fordi»</string>
+    <string name="why_r4">Et pust før appene som suger deg inn. Aldri en mur.</string>
+    <string name="why_r5_t">En lett lek, aldri press</string>
+    <string name="why_r5">Den feirer valgene dine og ber deg aldri komme tilbake.</string>
+    <string name="why_r6_t">Alt blir her</string>
+    <string name="why_r6">Det den lærer om deg, blir på telefonen.</string>
+    <string name="why_end">Mindre støy, mer musikk.</string>
 </resources>

@@ -1037,4 +1037,25 @@
     <string name="access_consent_ok">Saya setuju, buka setelan</string>
     <string name="s_instant_brake_hint">Dengan aksesibilitas, rem langsung bekerja, juga berlaku untuk situs aplikasi yang direm, dan Sordina berhenti memeriksa setiap beberapa detik. Jika tidak bisa diaktifkan: Info aplikasi › ⋮ › Izinkan setelan terbatas.</string>
     <string name="brake_recent">Sudah dihitung barusan</string>
+    <string name="why_title">Kenapa Sordina</string>
+    <string name="why_tagline">Ponselmu tetap berbunyi. Hanya lebih pelan.</string>
+    <string name="why_word_t">Katanya</string>
+    <string name="why_word_pron">sor·dì·na · bahasa Italia, dari sordo, “tuli”</string>
+    <string name="why_word">Dalam musik, sordina adalah peredam: potongan kecil yang diletakkan di kuda-kuda biola atau dimasukkan ke corong trompet. Alat musiknya tidak berhenti berbunyi. Suaranya jadi lebih lembut, lebih hangat, lebih dekat. Dalam bahasa Italia, “in sordina” berarti diam-diam, tanpa ribut.</string>
+    <string name="why_idea_t">Idenya</string>
+    <string name="why_idea">Ponsel adalah alat musik yang luar biasa, tapi selalu berbunyi dengan volume penuh. Sordina tidak mematikannya dan tidak mengambilnya darimu: ia hanya memasang peredam. Yang penting tetap sampai, sisanya menunggu waktunya. Tidak ada yang hilang, hanya lebih tenang.</string>
+    <string name="why_rules_t">Cara berpikirnya</string>
+    <string name="why_r1_t">Mulai dari kosong</string>
+    <string name="why_r1">Halaman gelap dan satu kalimat. Kamu yang memanggil aplikasi, bukan sebaliknya.</string>
+    <string name="why_r2_t">Niat dulu</string>
+    <string name="why_r2">Kamu bilang ingin melakukan apa, bukan aplikasi mana yang dibuka.</string>
+    <string name="why_r3_t">Yang penting tetap sampai</string>
+    <string name="why_r3">Orang yang berarti selalu bisa menghubungimu. Sisanya menunggu, terkumpul.</string>
+    <string name="why_r4_t">Hambatan hanya untuk yang “iseng”</string>
+    <string name="why_r4">Satu tarikan napas sebelum aplikasi yang menyedotmu. Tidak pernah tembok.</string>
+    <string name="why_r5_t">Permainan ringan, tanpa tekanan</string>
+    <string name="why_r5">Merayakan pilihanmu, tidak pernah memintamu kembali.</string>
+    <string name="why_r6_t">Semua tetap di sini</string>
+    <string name="why_r6">Yang dipelajarinya tentangmu tetap di ponsel ini.</string>
+    <string name="why_end">Kurangi bising, perbanyak musik.</string>
 </resources>

@@ -1052,4 +1052,25 @@
     <string name="access_consent_ok">J\'accepte, ouvrir les paramètres</string>
     <string name="s_instant_brake_hint">Avec l\'accessibilité, le frein arrive tout de suite, s\'applique aussi aux sites des apps freinées, et Sordina n\'a plus besoin de vérifier toutes les quelques secondes. Si l\'activation est impossible : Infos sur l\'app › ⋮ › Autoriser les paramètres restreints.</string>
     <string name="brake_recent">Déjà compté il y a un instant</string>
+    <string name="why_title">Pourquoi Sordina</string>
+    <string name="why_tagline">Ton téléphone continue de jouer. Juste plus doucement.</string>
+    <string name="why_word_t">Le mot</string>
+    <string name="why_word_pron">sor·dì·na · italien, de sordo, « sourd »</string>
+    <string name="why_word">En musique, la sordina, c\'est la sourdine : la petite pièce posée sur le chevalet du violon ou glissée dans le pavillon de la trompette. L\'instrument ne s\'arrête pas de jouer. Il joue plus doucement, plus chaud, plus près. D\'où « en sourdine » : discrètement, sans faire de bruit.</string>
+    <string name="why_idea_t">L\'idée</string>
+    <string name="why_idea">Un téléphone est un instrument merveilleux, mais il joue toujours à plein volume. Sordina ne l\'éteint pas et ne te l\'enlève pas : il y pose une sourdine. Ce qui compte passe, le reste attend son moment. Rien n\'est perdu, c\'est juste plus calme.</string>
+    <string name="why_rules_t">Sa façon de penser</string>
+    <string name="why_r1_t">Il démarre vide</string>
+    <string name="why_r1">Une page sombre et une phrase. C\'est toi qui appelles les apps, pas l\'inverse.</string>
+    <string name="why_r2_t">L\'intention d\'abord</string>
+    <string name="why_r2">Tu dis ce que tu veux faire, pas quelle app ouvrir.</string>
+    <string name="why_r3_t">L\'important passe</string>
+    <string name="why_r3">Ceux qui comptent te joignent toujours. Le reste attend, rassemblé.</string>
+    <string name="why_r4_t">De la friction seulement pour le « juste comme ça »</string>
+    <string name="why_r4">Une respiration avant les apps qui t\'aspirent. Jamais un mur.</string>
+    <string name="why_r5_t">Un jeu léger, jamais une pression</string>
+    <string name="why_r5">Il fête tes choix et ne te demande jamais de revenir.</string>
+    <string name="why_r6_t">Tout reste ici</string>
+    <string name="why_r6">Ce qu\'il apprend de toi reste sur ce téléphone.</string>
+    <string name="why_end">Moins de bruit, plus de musique.</string>
 </resources>

@@ -1048,4 +1048,25 @@
     <string name="access_consent_ok">Akkoord, instellingen openen</string>
     <string name="s_instant_brake_hint">Met toegankelijkheid werkt de rem meteen, geldt hij ook voor de websites van afgeremde apps, en hoeft Sordina niet meer om de paar seconden te kijken. Lukt inschakelen niet: App-info › ⋮ › Beperkte instellingen toestaan.</string>
     <string name="brake_recent">Net al geteld</string>
+    <string name="why_title">Waarom Sordina</string>
+    <string name="why_tagline">Je telefoon blijft spelen. Alleen zachter.</string>
+    <string name="why_word_t">Het woord</string>
+    <string name="why_word_pron">sor·dì·na · Italiaans, van sordo, ‘doof’</string>
+    <string name="why_word">In de muziek is de sordina de demper: een klein stukje dat op de kam van een viool rust of in de beker van een trompet zit. Het instrument stopt niet met spelen. Het klinkt zachter, warmer, dichterbij. Italianen zeggen ‘in sordina’ voor iets stilletjes doen, zonder ophef.</string>
+    <string name="why_idea_t">Het idee</string>
+    <string name="why_idea">Een telefoon is een prachtig instrument, maar hij speelt altijd op vol volume. Sordina zet hem niet uit en neemt hem niet af: het legt er een demper op. Wat ertoe doet komt erdoor, de rest wacht op zijn moment. Er gaat niets verloren, het is alleen rustiger.</string>
+    <string name="why_rules_t">Hoe het denkt</string>
+    <string name="why_r1_t">Het begint leeg</string>
+    <string name="why_r1">Een donkere pagina en één zin. Jij roept de apps, niet zij jou.</string>
+    <string name="why_r2_t">Eerst de bedoeling</string>
+    <string name="why_r2">Je zegt wat je wilt doen, niet welke app je opent.</string>
+    <string name="why_r3_t">Het belangrijke komt erdoor</string>
+    <string name="why_r3">Wie ertoe doet, bereikt je altijd. De rest wacht, verzameld.</string>
+    <string name="why_r4_t">Alleen frictie voor ‘zomaar’</string>
+    <string name="why_r4">Een ademhaling voor de apps die je opslokken. Nooit een muur.</string>
+    <string name="why_r5_t">Een licht spel, nooit druk</string>
+    <string name="why_r5">Het viert je keuzes en vraagt nooit dat je terugkomt.</string>
+    <string name="why_r6_t">Alles blijft hier</string>
+    <string name="why_r6">Wat het over jou leert, blijft op deze telefoon.</string>
+    <string name="why_end">Minder lawaai, meer muziek.</string>
 </resources>

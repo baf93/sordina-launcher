@@ -1048,4 +1048,25 @@
     <string name="access_consent_ok">मैं सहमत हूँ, सेटिंग्स खोलें</string>
     <string name="s_instant_brake_hint">सुलभता के साथ ब्रेक तुरंत लगता है, ब्रेक वाले ऐप्स की वेबसाइटों पर भी लागू होता है, और Sordina को हर कुछ सेकंड में जाँचना नहीं पड़ता। अगर चालू न हो: ऐप जानकारी › ⋮ › प्रतिबंधित सेटिंग्स की अनुमति दें।</string>
     <string name="brake_recent">अभी-अभी गिना जा चुका है</string>
+    <string name="why_title">Sordina क्यों</string>
+    <string name="why_tagline">आपका फ़ोन बजता रहता है। बस थोड़ा धीमे।</string>
+    <string name="why_word_t">शब्द</string>
+    <string name="why_word_pron">sor·dì·na · इतालवी, sordo यानी “बहरा” से</string>
+    <string name="why_word">संगीत में sordina म्यूट होता है: एक छोटा टुकड़ा जो वायलिन के ब्रिज पर रखा जाता है या ट्रम्पेट की घंटी में लगाया जाता है। वाद्य बजना बंद नहीं करता। वह धीमा, गर्म और क़रीब सुनाई देता है। इतालवी में “in sordina” का मतलब है चुपचाप, बिना शोर किए।</string>
+    <string name="why_idea_t">विचार</string>
+    <string name="why_idea">फ़ोन एक शानदार वाद्य है, पर वह हमेशा पूरी आवाज़ में बजता है। Sordina उसे बंद नहीं करता, न ही आपसे छीनता है: बस उस पर एक म्यूट रख देता है। जो ज़रूरी है वह पहुँचता है, बाक़ी अपने समय का इंतज़ार करता है। कुछ खोता नहीं, बस सब शांत हो जाता है।</string>
+    <string name="why_rules_t">यह कैसे सोचता है</string>
+    <string name="why_r1_t">ख़ाली से शुरुआत</string>
+    <string name="why_r1">एक गहरा पन्ना और एक वाक्य। ऐप्स को आप बुलाते हैं, वे आपको नहीं।</string>
+    <string name="why_r2_t">पहले इरादा</string>
+    <string name="why_r2">आप बताते हैं कि क्या करना है, न कि कौन-सा ऐप खोलना है।</string>
+    <string name="why_r3_t">ज़रूरी पहुँचता है</string>
+    <string name="why_r3">जो मायने रखते हैं, वे हमेशा आप तक पहुँचते हैं। बाक़ी इकट्ठा होकर इंतज़ार करता है।</string>
+    <string name="why_r4_t">रुकावट सिर्फ़ “यूँ ही” के लिए</string>
+    <string name="why_r4">खींच लेने वाले ऐप्स से पहले एक साँस। कभी दीवार नहीं।</string>
+    <string name="why_r5_t">हल्का खेल, कभी दबाव नहीं</string>
+    <string name="why_r5">आपके फ़ैसलों का जश्न मनाता है, लौटने को कभी नहीं कहता।</string>
+    <string name="why_r6_t">सब यहीं रहता है</string>
+    <string name="why_r6">यह आपके बारे में जो सीखता है, वह फ़ोन पर ही रहता है।</string>
+    <string name="why_end">कम शोर, ज़्यादा संगीत।</string>
 </resources>

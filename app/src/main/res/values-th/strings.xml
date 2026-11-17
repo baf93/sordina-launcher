@@ -1037,4 +1037,25 @@
     <string name="access_consent_ok">ยอมรับ เปิดการตั้งค่า</string>
     <string name="s_instant_brake_hint">เมื่อใช้การช่วยเหลือพิเศษ การเบรกจะทำงานทันที ใช้กับเว็บไซต์ของแอปที่ถูกเบรกด้วย และ Sordina ไม่ต้องตรวจทุกไม่กี่วินาทีอีก หากเปิดไม่ได้: ข้อมูลแอป › ⋮ › อนุญาตการตั้งค่าที่ถูกจำกัด</string>
     <string name="brake_recent">นับไปแล้วเมื่อสักครู่</string>
+    <string name="why_title">ทำไมต้อง Sordina</string>
+    <string name="why_tagline">โทรศัพท์ยังคงบรรเลงต่อไป แค่เบาลง</string>
+    <string name="why_word_t">คำนี้</string>
+    <string name="why_word_pron">sor·dì·na · ภาษาอิตาลี มาจาก sordo แปลว่า “หูหนวก”</string>
+    <string name="why_word">ในดนตรี sordina คือมิวต์ ชิ้นเล็ก ๆ ที่วางบนหย่องของไวโอลินหรือสอดเข้าไปในปากลำโพงของทรัมเป็ต เครื่องดนตรีไม่ได้หยุดเล่น แต่เสียงเบาลง อุ่นขึ้น และใกล้ขึ้น ในภาษาอิตาลี “in sordina” หมายถึงทำอะไรอย่างเงียบ ๆ ไม่โวยวาย</string>
+    <string name="why_idea_t">แนวคิด</string>
+    <string name="why_idea">โทรศัพท์เป็นเครื่องดนตรีที่ยอดเยี่ยม แต่มันเล่นเสียงดังสุดเสมอ Sordina ไม่ได้ปิดมันหรือเอามันไปจากคุณ แค่วางมิวต์ลงบนมัน สิ่งสำคัญยังมาถึง ที่เหลือรอจังหวะของมัน ไม่มีอะไรหายไป แค่เงียบลง</string>
+    <string name="why_rules_t">วิธีคิดของมัน</string>
+    <string name="why_r1_t">เริ่มจากความว่าง</string>
+    <string name="why_r1">หน้าจอมืดกับประโยคเดียว คุณเป็นคนเรียกแอป ไม่ใช่แอปเรียกคุณ</string>
+    <string name="why_r2_t">เจตนามาก่อน</string>
+    <string name="why_r2">บอกว่าอยากทำอะไร ไม่ใช่จะเปิดแอปไหน</string>
+    <string name="why_r3_t">สิ่งสำคัญมาถึงเสมอ</string>
+    <string name="why_r3">คนที่สำคัญติดต่อคุณได้เสมอ ที่เหลือรอไว้รวมกัน</string>
+    <string name="why_r4_t">หน่วงเฉพาะตอน “เปิดเล่น ๆ”</string>
+    <string name="why_r4">หายใจหนึ่งครั้งก่อนเข้าแอปที่ดูดคุณเข้าไป ไม่เคยเป็นกำแพง</string>
+    <string name="why_r5_t">เกมเบา ๆ ไม่มีแรงกดดัน</string>
+    <string name="why_r5">ฉลองการเลือกของคุณ ไม่เคยเรียกร้องให้กลับมา</string>
+    <string name="why_r6_t">ทุกอย่างอยู่ที่นี่</string>
+    <string name="why_r6">สิ่งที่มันเรียนรู้เกี่ยวกับคุณอยู่บนโทรศัพท์เครื่องนี้</string>
+    <string name="why_end">เสียงรบกวนน้อยลง ดนตรีมากขึ้น</string>
 </resources>

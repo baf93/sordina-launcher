@@ -1052,4 +1052,25 @@
     <string name="access_consent_ok">Acepto, abrir ajustes</string>
     <string name="s_instant_brake_hint">Con la accesibilidad el freno llega al instante, vale también para las webs de las apps frenadas y Sordina deja de comprobar cada pocos segundos. Si no se puede activar: Info de la app › ⋮ › Permitir ajustes restringidos.</string>
     <string name="brake_recent">Ya contado hace un momento</string>
+    <string name="why_title">Por qué Sordina</string>
+    <string name="why_tagline">Tu teléfono sigue sonando. Solo que más bajo.</string>
+    <string name="why_word_t">La palabra</string>
+    <string name="why_word_pron">sor·dì·na · del italiano, de sordo, «sordo»</string>
+    <string name="why_word">En música, la sordina es la pieza pequeña que se apoya en el puente del violín o se mete en la campana de la trompeta. El instrumento no deja de sonar: suena más suave, más cálido, más cerca. De ahí «en sordina»: con discreción, sin hacer ruido.</string>
+    <string name="why_idea_t">La idea</string>
+    <string name="why_idea">Un teléfono es un instrumento maravilloso, pero siempre suena a todo volumen. Sordina no lo apaga ni te lo quita: le pone una sordina. Lo que importa pasa, lo demás espera su momento. No se pierde nada, solo está más tranquilo.</string>
+    <string name="why_rules_t">Cómo piensa</string>
+    <string name="why_r1_t">Empieza vacío</string>
+    <string name="why_r1">Una página oscura y una frase. Tú llamas a las apps, no ellas a ti.</string>
+    <string name="why_r2_t">Primero la intención</string>
+    <string name="why_r2">Dices qué quieres hacer, no qué app abrir.</string>
+    <string name="why_r3_t">Lo importante pasa</string>
+    <string name="why_r3">Quien importa siempre te encuentra. Lo demás espera, recogido.</string>
+    <string name="why_r4_t">Fricción solo para el «porque sí»</string>
+    <string name="why_r4">Un respiro antes de las apps que te atrapan. Nunca un muro.</string>
+    <string name="why_r5_t">Un juego ligero, nunca presión</string>
+    <string name="why_r5">Celebra lo que eliges y nunca te pide que vuelvas.</string>
+    <string name="why_r6_t">Todo se queda aquí</string>
+    <string name="why_r6">Lo que aprende de ti se queda en este teléfono.</string>
+    <string name="why_end">Menos ruido, más música.</string>
 </resources>

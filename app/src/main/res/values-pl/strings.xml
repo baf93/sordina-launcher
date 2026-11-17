@@ -1070,4 +1070,25 @@
     <string name="access_consent_ok">Zgadzam się, otwórz ustawienia</string>
     <string name="s_instant_brake_hint">Z ułatwieniami dostępu hamulec działa od razu, obejmuje też strony przyhamowanych aplikacji, a Sordina nie musi sprawdzać co kilka sekund. Jeśli nie da się włączyć: Informacje o aplikacji › ⋮ › Zezwól na ustawienia z ograniczeniami.</string>
     <string name="brake_recent">Już policzone przed chwilą</string>
+    <string name="why_title">Dlaczego Sordina</string>
+    <string name="why_tagline">Twój telefon gra dalej. Tylko ciszej.</string>
+    <string name="why_word_t">Słowo</string>
+    <string name="why_word_pron">sor·dì·na · z włoskiego sordo, „głuchy”</string>
+    <string name="why_word">W muzyce sordina to tłumik: mały element opierany o podstawek skrzypiec albo wkładany do czary trąbki. Instrument nie przestaje grać. Brzmi ciszej, cieplej, bliżej. Po włosku „in sordina” znaczy po cichu, bez rozgłosu.</string>
+    <string name="why_idea_t">Pomysł</string>
+    <string name="why_idea">Telefon to cudowny instrument, ale zawsze gra na pełną głośność. Sordina go nie wyłącza i ci go nie zabiera: zakłada na niego tłumik. To, co ważne, przechodzi, reszta czeka na swój moment. Nic nie ginie, jest tylko ciszej.</string>
+    <string name="why_rules_t">Jak myśli</string>
+    <string name="why_r1_t">Zaczyna od pustki</string>
+    <string name="why_r1">Ciemna strona i jedno zdanie. To ty wołasz aplikacje, nie one ciebie.</string>
+    <string name="why_r2_t">Najpierw zamiar</string>
+    <string name="why_r2">Mówisz, co chcesz zrobić, a nie którą aplikację otworzyć.</string>
+    <string name="why_r3_t">Ważne przechodzi</string>
+    <string name="why_r3">Ci, którzy się liczą, zawsze do ciebie dotrą. Reszta czeka, zebrana.</string>
+    <string name="why_r4_t">Opór tylko dla „tak sobie”</string>
+    <string name="why_r4">Oddech przed aplikacjami, które wciągają. Nigdy mur.</string>
+    <string name="why_r5_t">Lekka gra, nigdy presja</string>
+    <string name="why_r5">Świętuje twoje wybory i nigdy nie prosi o powrót.</string>
+    <string name="why_r6_t">Wszystko zostaje tutaj</string>
+    <string name="why_r6">To, czego się o tobie uczy, zostaje w telefonie.</string>
+    <string name="why_end">Mniej hałasu, więcej muzyki.</string>
 </resources>

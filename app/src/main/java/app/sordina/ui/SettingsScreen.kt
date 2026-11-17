@@ -80,6 +80,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontStyle
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import androidx.compose.ui.unit.dp
@@ -114,7 +117,7 @@ private enum class Sub(val parent: String?) {
     MAIN(null),
     NOTIF("MAIN"), HOME("MAIN"), BRAKE("MAIN"), SEARCH("MAIN"), THEMES("MAIN"), GENERAL("MAIN"), PROGRESS("MAIN"),
     PEOPLE("NOTIF"), ALWAYS("NOTIF"), RULES("NOTIF"), ORDER("HOME"), LEVELS("RULES"),
-    BRAKED("BRAKE"), HIDDEN("BRAKE"), MASCOTS("HOME"), PINNED("SEARCH"), EXCLUDED("SEARCH"), HA("MAIN"), CAR_APPS("HOME"), CAR_PEOPLE("HOME"), PERMS("GENERAL"), CREDITS("GENERAL"), LANG("GENERAL"), FAULTS("GENERAL"),
+    BRAKED("BRAKE"), HIDDEN("BRAKE"), MASCOTS("HOME"), PINNED("SEARCH"), EXCLUDED("SEARCH"), HA("MAIN"), CAR_APPS("HOME"), CAR_PEOPLE("HOME"), PERMS("GENERAL"), CREDITS("GENERAL"), LANG("GENERAL"), FAULTS("GENERAL"), WHY("GENERAL"),
 }
 
 private fun hm(min: Int) = Moments.fmt(min)
@@ -436,11 +439,15 @@ fun SettingsScreen(
                     Group {
                         Line(tr(R.string.s_version), version, icon = Icons.Rounded.Info)
                         Line(tr(R.string.s_source), "GitHub", null, Icons.Rounded.Code) { ops.openUrl(REPO) }
+                        Line(tr(R.string.why_title), icon = Icons.Rounded.MusicNote) { sub = Sub.WHY }
                         Line(tr(R.string.n_credits), icon = Icons.Rounded.Favorite) { sub = Sub.CREDITS }
                         val faults = remember { Faults.recent().size }
                         Line(tr(R.string.faults_title), if (faults == 0) "" else "$faults", null, Icons.Rounded.BugReport) { sub = Sub.FAULTS }
                     }
                 }
+
+                // ── Perché Sordina: la parola, l'idea, come la pensa. Solo da leggere
+                Sub.WHY -> Page(tr(R.string.why_title), null, back, scrollOf(page)) { WhySordina() }
 
                 // ── Gli errori recenti: quando, dove, cosa. Restano sul telefono
                 Sub.FAULTS -> Page(tr(R.string.faults_title), tr(R.string.faults_hint), back, scrollOf(page)) {
@@ -1289,3 +1296,61 @@ private fun MascotGallery() {
         }
     }
 }
+
+/** La pagina sul nome: la sordina del violino, l'idea che ne viene, i principi detti in una riga. */
+@Composable
+private fun WhySordina() {
+    val c = S.c
+    val serif = S.style.serif
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Mascot(Mood.REST, Modifier.size(160.dp))
+        Text(
+            tr(R.string.why_tagline), Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+            style = TextStyle(fontFamily = serif, fontSize = 21.sp, lineHeight = 28.sp, color = c.ink, textAlign = TextAlign.Center),
+        )
+    }
+    // La parola, come in un dizionario
+    WhyCard(tr(R.string.why_word_t)) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text("sordina", style = TextStyle(fontFamily = serif, fontSize = 34.sp, color = c.ink))
+            Spacer(Modifier.width(10.dp))
+            Text("pp", Modifier.padding(bottom = 5.dp),
+                style = TextStyle(fontFamily = serif, fontStyle = FontStyle.Italic, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = c.accent))
+        }
+        Text(tr(R.string.why_word_pron), Modifier.padding(top = 2.dp, bottom = 12.dp),
+            style = TextStyle(fontFamily = serif, fontStyle = FontStyle.Italic, fontSize = 14.sp, color = c.soft))
+        WhyBody(tr(R.string.why_word))
+    }
+    WhyCard(tr(R.string.why_idea_t)) { WhyBody(tr(R.string.why_idea)) }
+    Topic(tr(R.string.why_rules_t))
+    Group {
+        listOf(
+            R.string.why_r1_t to R.string.why_r1, R.string.why_r2_t to R.string.why_r2, R.string.why_r3_t to R.string.why_r3,
+            R.string.why_r4_t to R.string.why_r4, R.string.why_r5_t to R.string.why_r5, R.string.why_r6_t to R.string.why_r6,
+        ).forEachIndexed { i, (t, b) ->
+            Row(Modifier.fillMaxWidth().background(c.card).padding(horizontal = 16.dp, vertical = 14.dp)) {
+                Text("${i + 1}", Modifier.width(28.dp), style = TextStyle(fontFamily = serif, fontSize = 22.sp, color = c.accent))
+                Column {
+                    Text(tr(t), style = TextStyle(fontSize = 16.sp, color = c.ink))
+                    Text(tr(b), Modifier.padding(top = 2.dp), style = TextStyle(fontSize = 14.sp, lineHeight = 19.sp, color = c.soft))
+                }
+            }
+        }
+    }
+    Text(
+        tr(R.string.why_end), Modifier.fillMaxWidth().padding(top = 32.dp),
+        style = TextStyle(fontFamily = serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = c.soft, textAlign = TextAlign.Center),
+    )
+}
+
+@Composable
+private fun WhyCard(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Column(Modifier.padding(top = 12.dp).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(S.c.card).padding(20.dp)) {
+        Text(title.uppercase(), Modifier.padding(bottom = 10.dp), style = TextStyle(fontSize = 12.sp, letterSpacing = 1.5.sp, color = S.c.accent))
+        content()
+    }
+}
+
+@Composable
+private fun WhyBody(text: String) =
+    Text(text, style = TextStyle(fontSize = 16.sp, lineHeight = 24.sp, color = S.c.ink))

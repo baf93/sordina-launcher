@@ -1052,4 +1052,25 @@
     <string name="access_consent_ok">Ich stimme zu, Einstellungen öffnen</string>
     <string name="s_instant_brake_hint">Mit den Bedienungshilfen greift die Bremse sofort, gilt auch für die Websites gebremster Apps, und Sordina muss nicht mehr alle paar Sekunden nachsehen. Wenn es sich nicht aktivieren lässt: App-Info › ⋮ › Eingeschränkte Einstellungen zulassen.</string>
     <string name="brake_recent">Vorhin schon gezählt</string>
+    <string name="why_title">Warum Sordina</string>
+    <string name="why_tagline">Dein Handy spielt weiter. Nur leiser.</string>
+    <string name="why_word_t">Das Wort</string>
+    <string name="why_word_pron">sor·dì·na · italienisch, von sordo, „taub“</string>
+    <string name="why_word">In der Musik ist die Sordina der Dämpfer: ein kleines Teil, das auf dem Steg der Geige sitzt oder im Schalltrichter der Trompete steckt. Das Instrument hört nicht auf zu spielen. Es klingt leiser, wärmer, näher. Auf Italienisch heißt „in sordina“: still und leise, ohne Aufhebens.</string>
+    <string name="why_idea_t">Die Idee</string>
+    <string name="why_idea">Ein Handy ist ein wunderbares Instrument, aber es spielt immer in voller Lautstärke. Sordina schaltet es nicht aus und nimmt es dir nicht weg: Es setzt einen Dämpfer darauf. Was zählt, kommt durch, der Rest wartet auf seinen Moment. Nichts geht verloren, es ist nur ruhiger.</string>
+    <string name="why_rules_t">Wie es denkt</string>
+    <string name="why_r1_t">Es beginnt leer</string>
+    <string name="why_r1">Eine dunkle Seite und ein Satz. Du rufst die Apps, nicht sie dich.</string>
+    <string name="why_r2_t">Erst die Absicht</string>
+    <string name="why_r2">Sag, was du tun willst, nicht welche App du öffnen willst.</string>
+    <string name="why_r3_t">Das Wichtige kommt durch</string>
+    <string name="why_r3">Wer zählt, erreicht dich immer. Der Rest wartet, gesammelt.</string>
+    <string name="why_r4_t">Reibung nur für das „einfach so“</string>
+    <string name="why_r4">Ein Atemzug vor den Apps, die dich hineinziehen. Nie eine Mauer.</string>
+    <string name="why_r5_t">Ein leichtes Spiel, nie Druck</string>
+    <string name="why_r5">Es feiert deine Entscheidungen und verlangt nie, dass du zurückkommst.</string>
+    <string name="why_r6_t">Alles bleibt hier</string>
+    <string name="why_r6">Was es über dich lernt, bleibt auf diesem Handy.</string>
+    <string name="why_end">Weniger Lärm, mehr Musik.</string>
 </resources>

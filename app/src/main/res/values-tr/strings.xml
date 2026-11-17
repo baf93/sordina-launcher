@@ -1048,4 +1048,25 @@
     <string name="access_consent_ok">Kabul ediyorum, ayarları aç</string>
     <string name="s_instant_brake_hint">Erişilebilirlikle fren hemen devreye girer, frenlenmiş uygulamaların web sitelerinde de geçerli olur ve Sordina birkaç saniyede bir kontrol etmeyi bırakır. Açılamıyorsa: Uygulama bilgileri › ⋮ › Kısıtlanmış ayarlara izin ver.</string>
     <string name="brake_recent">Az önce zaten sayıldı</string>
+    <string name="why_title">Neden Sordina</string>
+    <string name="why_tagline">Telefonun çalmaya devam ediyor. Sadece daha alçak sesle.</string>
+    <string name="why_word_t">Kelime</string>
+    <string name="why_word_pron">sor·dì·na · İtalyanca, “sağır” anlamındaki sordo kelimesinden</string>
+    <string name="why_word">Müzikte sordina, sürdindir: kemanın köprüsüne konan ya da trompetin kalağına takılan küçük parça. Çalgı susmaz. Daha yumuşak, daha sıcak, daha yakın çalar. İtalyancada “in sordina”, bir şeyi sessizce, gürültü yapmadan yapmak demektir.</string>
+    <string name="why_idea_t">Fikir</string>
+    <string name="why_idea">Telefon harika bir çalgı ama hep son ses çalıyor. Sordina onu kapatmaz, elinden de almaz: üstüne bir sürdin koyar. Önemli olan geçer, gerisi sırasını bekler. Hiçbir şey kaybolmaz, sadece daha sakindir.</string>
+    <string name="why_rules_t">Nasıl düşünür</string>
+    <string name="why_r1_t">Boş başlar</string>
+    <string name="why_r1">Karanlık bir sayfa ve tek bir cümle. Uygulamaları sen çağırırsın, onlar seni değil.</string>
+    <string name="why_r2_t">Önce niyet</string>
+    <string name="why_r2">Hangi uygulamayı açacağını değil, ne yapmak istediğini söylersin.</string>
+    <string name="why_r3_t">Önemli olan geçer</string>
+    <string name="why_r3">Önemli kişiler sana her zaman ulaşır. Gerisi toplanmış bekler.</string>
+    <string name="why_r4_t">Sürtünme sadece “öylesine” için</string>
+    <string name="why_r4">Seni içine çeken uygulamalardan önce bir nefes. Asla bir duvar değil.</string>
+    <string name="why_r5_t">Hafif bir oyun, asla baskı değil</string>
+    <string name="why_r5">Seçimlerini kutlar, geri dönmeni asla istemez.</string>
+    <string name="why_r6_t">Her şey burada kalır</string>
+    <string name="why_r6">Senin hakkında öğrendikleri telefonda kalır.</string>
+    <string name="why_end">Daha az gürültü, daha çok müzik.</string>
 </resources>

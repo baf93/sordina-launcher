@@ -1056,4 +1056,25 @@
     <string name="faults_none">Nessun errore registrato</string>
     <string name="faults_hint">Cosa è andato storto di recente. Resta su questo telefono.</string>
     <string name="brake_recent">Già contata poco fa</string>
+    <string name="why_title">Perché Sordina</string>
+    <string name="why_tagline">Il telefono continua a suonare. Solo, più piano.</string>
+    <string name="why_word_t">La parola</string>
+    <string name="why_word_pron">sor·dì·na · da «sordo»</string>
+    <string name="why_word">In musica la sordina è il piccolo pezzo che si appoggia sul ponticello del violino o si infila nella campana della tromba. Lo strumento non smette di suonare: suona più piano, più morbido, più vicino. Da qui «in sordina»: con discrezione, senza fare rumore.</string>
+    <string name="why_idea_t">L\'idea</string>
+    <string name="why_idea">Il telefono è uno strumento meraviglioso, ma suona sempre a tutto volume. Sordina non lo spegne e non te lo toglie: ci appoggia sopra una sordina. Quello che conta passa, il resto aspetta il suo momento. Non si perde niente, è solo più quieto.</string>
+    <string name="why_rules_t">Come la pensa</string>
+    <string name="why_r1_t">Parte vuoto</string>
+    <string name="why_r1">Una pagina scura e una frase. Le app le chiami tu, non loro te.</string>
+    <string name="why_r2_t">Prima l\'intenzione</string>
+    <string name="why_r2">Dici cosa vuoi fare, non quale app aprire.</string>
+    <string name="why_r3_t">L\'importante passa</string>
+    <string name="why_r3">Chi conta ti raggiunge sempre. Il resto aspetta, raccolto.</string>
+    <string name="why_r4_t">Attrito solo per il «tanto per»</string>
+    <string name="why_r4">Un respiro prima delle app che ti risucchiano. Mai un muro.</string>
+    <string name="why_r5_t">Un gioco leggero, mai una pressione</string>
+    <string name="why_r5">Festeggia le scelte che fai e non ti chiede di tornare.</string>
+    <string name="why_r6_t">Tutto resta qui</string>
+    <string name="why_r6">Quello che impara di te resta sul telefono.</string>
+    <string name="why_end">Meno rumore, più musica.</string>
 </resources>

@@ -1037,4 +1037,25 @@
     <string name="access_consent_ok">Tôi đồng ý, mở cài đặt</string>
     <string name="s_instant_brake_hint">Với trợ năng, phanh có tác dụng ngay, áp dụng cả cho trang web của ứng dụng bị phanh, và Sordina không cần kiểm tra mỗi vài giây nữa. Nếu không bật được: Thông tin ứng dụng › ⋮ › Cho phép cài đặt bị hạn chế.</string>
     <string name="brake_recent">Vừa được tính rồi</string>
+    <string name="why_title">Vì sao là Sordina</string>
+    <string name="why_tagline">Điện thoại vẫn tiếp tục chơi nhạc. Chỉ nhỏ hơn thôi.</string>
+    <string name="why_word_t">Từ ngữ</string>
+    <string name="why_word_pron">sor·dì·na · tiếng Ý, từ sordo, “điếc”</string>
+    <string name="why_word">Trong âm nhạc, sordina là bộ giảm âm: một miếng nhỏ đặt lên ngựa đàn violin hoặc gắn vào loa kèn trumpet. Nhạc cụ không ngừng chơi. Nó vang nhẹ hơn, ấm hơn, gần hơn. Trong tiếng Ý, “in sordina” nghĩa là làm điều gì đó lặng lẽ, không ồn ào.</string>
+    <string name="why_idea_t">Ý tưởng</string>
+    <string name="why_idea">Điện thoại là một nhạc cụ tuyệt vời, nhưng nó luôn chơi hết cỡ. Sordina không tắt nó và không lấy nó khỏi bạn: chỉ đặt lên đó một bộ giảm âm. Điều quan trọng vẫn đến, phần còn lại chờ đến lúc của nó. Không mất gì cả, chỉ yên tĩnh hơn.</string>
+    <string name="why_rules_t">Cách nó suy nghĩ</string>
+    <string name="why_r1_t">Bắt đầu trống trơn</string>
+    <string name="why_r1">Một trang tối và một câu. Bạn gọi ứng dụng, không phải chúng gọi bạn.</string>
+    <string name="why_r2_t">Ý định trước</string>
+    <string name="why_r2">Bạn nói muốn làm gì, không phải mở ứng dụng nào.</string>
+    <string name="why_r3_t">Điều quan trọng vẫn đến</string>
+    <string name="why_r3">Người quan trọng luôn liên lạc được với bạn. Phần còn lại chờ, gom lại một chỗ.</string>
+    <string name="why_r4_t">Chỉ cản trở những lần “cho vui”</string>
+    <string name="why_r4">Một hơi thở trước những ứng dụng cuốn bạn vào. Không bao giờ là bức tường.</string>
+    <string name="why_r5_t">Trò chơi nhẹ nhàng, không áp lực</string>
+    <string name="why_r5">Ăn mừng lựa chọn của bạn, không bao giờ đòi bạn quay lại.</string>
+    <string name="why_r6_t">Mọi thứ ở lại đây</string>
+    <string name="why_r6">Những gì nó học về bạn ở lại trên điện thoại.</string>
+    <string name="why_end">Bớt ồn ào, thêm âm nhạc.</string>
 </resources>

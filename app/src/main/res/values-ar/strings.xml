@@ -1092,4 +1092,25 @@
     <string name="access_consent_ok">أوافق، افتح الإعدادات</string>
     <string name="s_instant_brake_hint">مع إمكانية الوصول يعمل الكبح فورًا، ويشمل أيضًا مواقع التطبيقات المكبوحة، ويتوقف Sordina عن التحقق كل بضع ثوانٍ. إن تعذّر تفعيلها: معلومات التطبيق › ⋮ › السماح بالإعدادات المقيدة.</string>
     <string name="brake_recent">احتُسبت قبل قليل</string>
+    <string name="why_title">لماذا Sordina</string>
+    <string name="why_tagline">هاتفك يواصل العزف. لكن بهدوء أكثر.</string>
+    <string name="why_word_t">الكلمة</string>
+    <string name="why_word_pron">sor·dì·na · إيطالية، من sordo أي «أصم»</string>
+    <string name="why_word">في الموسيقى، السوردينا هي الكاتمة: قطعة صغيرة توضع على فرس الكمان أو تُدخل في بوق الترومبيت. الآلة لا تتوقف عن العزف، بل يصبح صوتها أهدأ وأدفأ وأقرب. ويقول الإيطاليون «in sordina» عن فعل شيء بهدوء ومن دون ضجة.</string>
+    <string name="why_idea_t">الفكرة</string>
+    <string name="why_idea">الهاتف آلة رائعة، لكنه يعزف دائمًا بأعلى صوت. Sordina لا يطفئه ولا يأخذه منك: بل يضع عليه كاتمة. ما يهم يصل إليك، والباقي ينتظر لحظته. لا شيء يضيع، فقط يصبح أهدأ.</string>
+    <string name="why_rules_t">كيف يفكر</string>
+    <string name="why_r1_t">يبدأ فارغًا</string>
+    <string name="why_r1">صفحة داكنة وجملة واحدة. أنت من يستدعي التطبيقات، لا هي من تستدعيك.</string>
+    <string name="why_r2_t">النية أولًا</string>
+    <string name="why_r2">تقول ماذا تريد أن تفعل، لا أي تطبيق تفتح.</string>
+    <string name="why_r3_t">المهم يصل</string>
+    <string name="why_r3">من يهمّك يصل إليك دائمًا. والباقي ينتظر، مجمّعًا.</string>
+    <string name="why_r4_t">مقاومة فقط لـ«بلا سبب»</string>
+    <string name="why_r4">نَفَس قبل التطبيقات التي تجذبك. لا جدار أبدًا.</string>
+    <string name="why_r5_t">لعبة خفيفة، بلا ضغط أبدًا</string>
+    <string name="why_r5">يحتفي باختياراتك ولا يطلب منك العودة أبدًا.</string>
+    <string name="why_r6_t">كل شيء يبقى هنا</string>
+    <string name="why_r6">ما يتعلمه عنك يبقى على هاتفك.</string>
+    <string name="why_end">ضجيج أقل، موسيقى أكثر.</string>
 </resources>

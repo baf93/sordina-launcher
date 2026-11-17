@@ -1057,4 +1057,25 @@
     <string name="faults_none">No errors recorded</string>
     <string name="faults_hint">What went wrong lately. It stays on this phone.</string>
     <string name="brake_recent">Already counted a moment ago</string>
+    <string name="why_title">Why Sordina</string>
+    <string name="why_tagline">Your phone keeps playing. Just softer.</string>
+    <string name="why_word_t">The word</string>
+    <string name="why_word_pron">sor·dì·na · Italian, from sordo, “deaf”</string>
+    <string name="why_word">In music, the sordina is the mute: a small piece resting on a violin’s bridge or slipped into a trumpet’s bell. The instrument doesn’t stop playing. It plays softer, warmer, closer. Italians say “in sordina” for doing something quietly, without fuss.</string>
+    <string name="why_idea_t">The idea</string>
+    <string name="why_idea">A phone is a wonderful instrument, but it always plays at full volume. Sordina doesn’t switch it off or take it away: it rests a mute on it. What matters gets through, the rest waits for its moment. Nothing is lost, it’s just quieter.</string>
+    <string name="why_rules_t">How it thinks</string>
+    <string name="why_r1_t">It starts empty</string>
+    <string name="why_r1">A dark page and one sentence. You call the apps, not the other way round.</string>
+    <string name="why_r2_t">Intention first</string>
+    <string name="why_r2">Say what you want to do, not which app to open.</string>
+    <string name="why_r3_t">What matters gets through</string>
+    <string name="why_r3">The people who count always reach you. Everything else waits, gathered.</string>
+    <string name="why_r4_t">Friction only for “just because”</string>
+    <string name="why_r4">A breath before the apps that pull you in. Never a wall.</string>
+    <string name="why_r5_t">A light game, never pressure</string>
+    <string name="why_r5">It celebrates your choices and never asks you to come back.</string>
+    <string name="why_r6_t">Everything stays here</string>
+    <string name="why_r6">What it learns about you stays on this phone.</string>
+    <string name="why_end">Less noise, more music.</string>
 </resources>

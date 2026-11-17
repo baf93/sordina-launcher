@@ -1037,4 +1037,25 @@
     <string name="access_consent_ok">동의하고 설정 열기</string>
     <string name="s_instant_brake_hint">접근성을 사용하면 브레이크가 즉시 걸리고, 브레이크를 건 앱의 웹사이트에도 적용되며, Sordina가 몇 초마다 확인할 필요가 없어집니다. 켤 수 없다면: 앱 정보 › ⋮ › 제한된 설정 허용.</string>
     <string name="brake_recent">조금 전에 이미 셌어요</string>
+    <string name="why_title">왜 Sordina인가요</string>
+    <string name="why_tagline">휴대폰은 계속 연주해요. 다만 더 조용히.</string>
+    <string name="why_word_t">단어</string>
+    <string name="why_word_pron">sor·dì·na · 이탈리아어, sordo(귀가 먹은)에서</string>
+    <string name="why_word">음악에서 소르디나는 약음기예요. 바이올린 브리지에 올리거나 트럼펫 벨에 끼우는 작은 도구죠. 악기는 연주를 멈추지 않아요. 더 부드럽고, 따뜻하고, 가깝게 울릴 뿐이에요. 이탈리아어로 ‘in sordina’는 조용히, 소란 없이라는 뜻이에요.</string>
+    <string name="why_idea_t">생각</string>
+    <string name="why_idea">휴대폰은 멋진 악기지만 늘 최대 음량으로 울려요. Sordina는 그걸 끄지도, 빼앗지도 않아요. 살며시 약음기를 얹을 뿐이에요. 중요한 건 전해지고, 나머지는 제 순서를 기다려요. 잃는 건 없어요. 그저 더 고요해질 뿐이에요.</string>
+    <string name="why_rules_t">이렇게 생각해요</string>
+    <string name="why_r1_t">비어 있는 데서 시작해요</string>
+    <string name="why_r1">어두운 화면과 한 문장. 앱을 부르는 건 당신이지, 앱이 당신을 부르지 않아요.</string>
+    <string name="why_r2_t">의도가 먼저</string>
+    <string name="why_r2">어떤 앱을 열지가 아니라 무엇을 하고 싶은지 말해요.</string>
+    <string name="why_r3_t">중요한 건 전해져요</string>
+    <string name="why_r3">소중한 사람은 언제나 닿을 수 있어요. 나머지는 모아서 기다려요.</string>
+    <string name="why_r4_t">‘그냥’일 때만 잠깐 멈춤</string>
+    <string name="why_r4">빠져들게 하는 앱 앞에서 한 번 숨 고르기. 벽은 절대 아니에요.</string>
+    <string name="why_r5_t">가벼운 놀이, 부담은 없이</string>
+    <string name="why_r5">당신의 선택을 축하하고, 돌아오라고 조르지 않아요.</string>
+    <string name="why_r6_t">모든 건 여기에</string>
+    <string name="why_r6">당신에 대해 배운 건 이 휴대폰에만 남아요.</string>
+    <string name="why_end">소음은 줄이고, 음악은 더.</string>
 </resources>

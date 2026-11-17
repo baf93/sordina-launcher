@@ -1037,4 +1037,25 @@
     <string name="access_consent_ok">我同意，開啟設定</string>
     <string name="s_instant_brake_hint">使用無障礙功能後，煞車會立即生效，也適用於被煞車應用程式的網站，Sordina 不再需要每隔幾秒檢查一次。如果無法開啟：應用程式資訊 › ⋮ › 允許受限制的設定。</string>
     <string name="brake_recent">剛才已經算過了</string>
+    <string name="why_title">為什麼叫 Sordina</string>
+    <string name="why_tagline">手機照常奏響，只是輕一點。</string>
+    <string name="why_word_t">這個詞</string>
+    <string name="why_word_pron">sor·dì·na · 義大利文，源自 sordo，「聾的」</string>
+    <string name="why_word">在音樂裡，sordina 就是弱音器：一個小小的配件，架在小提琴的琴橋上，或塞進小號的喇叭口。樂器並沒有停下，只是聲音更輕、更暖、更近。義大利文的「in sordina」意思是悄悄地，不張揚。</string>
+    <string name="why_idea_t">想法</string>
+    <string name="why_idea">手機是一件美妙的樂器，卻總是開到最大聲。Sordina 不關掉它，也不把它拿走，只是幫它裝上弱音器。重要的會傳到你這裡，其餘的等待自己的時刻。什麼都不會遺失，只是更安靜了。</string>
+    <string name="why_rules_t">它怎麼想</string>
+    <string name="why_r1_t">從空白開始</string>
+    <string name="why_r1">一頁暗色和一句話。是你召喚 App，而不是 App 召喚你。</string>
+    <string name="why_r2_t">先說意圖</string>
+    <string name="why_r2">說你想做什麼，而不是要開哪個 App。</string>
+    <string name="why_r3_t">重要的總能傳到</string>
+    <string name="why_r3">重要的人總能找到你。其餘的先收攏起來等著。</string>
+    <string name="why_r4_t">只給「隨便看看」加點阻力</string>
+    <string name="why_r4">在會把你吸進去的 App 前先深呼吸一下。從不是一道牆。</string>
+    <string name="why_r5_t">輕鬆的遊戲，絕無壓力</string>
+    <string name="why_r5">為你的選擇慶祝，從不催你回來。</string>
+    <string name="why_r6_t">一切都留在這裡</string>
+    <string name="why_r6">它了解到關於你的一切，都只留在這支手機上。</string>
+    <string name="why_end">少些噪音，多些音樂。</string>
 </resources>

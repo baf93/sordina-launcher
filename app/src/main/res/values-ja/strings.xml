@@ -1037,4 +1037,25 @@
     <string name="access_consent_ok">同意して設定を開く</string>
     <string name="s_instant_brake_hint">ユーザー補助を使うとブレーキがすぐにかかり、ブレーキをかけたアプリのサイトにも効き、Sordinaが数秒ごとに確認する必要がなくなります。オンにできない場合：アプリ情報 › ⋮ › 制限付き設定を許可。</string>
     <string name="brake_recent">少し前にカウント済み</string>
+    <string name="why_title">Sordinaという名前</string>
+    <string name="why_tagline">スマホは鳴りつづける。ただ、少し静かに。</string>
+    <string name="why_word_t">ことば</string>
+    <string name="why_word_pron">sor·dì·na ・ イタリア語、sordo（耳が聞こえない）から</string>
+    <string name="why_word">音楽でソルディーナは弱音器のこと。バイオリンの駒にのせたり、トランペットのベルに差しこんだりする小さな道具です。楽器は鳴りやみません。やわらかく、あたたかく、近い音になります。イタリア語の「in sordina」は、そっと、さわがずに、という意味です。</string>
+    <string name="why_idea_t">考え方</string>
+    <string name="why_idea">スマホはすばらしい楽器ですが、いつも最大音量で鳴っています。Sordinaはそれを消したり取り上げたりしません。そっと弱音器をのせるだけ。大切なものは届き、ほかは出番を待ちます。何も失われず、ただ静かになるだけです。</string>
+    <string name="why_rules_t">Sordinaの考え</string>
+    <string name="why_r1_t">空っぽから始まる</string>
+    <string name="why_r1">暗いページとひとこと。アプリを呼ぶのはあなたで、アプリがあなたを呼ぶのではありません。</string>
+    <string name="why_r2_t">まず、したいこと</string>
+    <string name="why_r2">開くアプリではなく、したいことを伝えます。</string>
+    <string name="why_r3_t">大切なものは届く</string>
+    <string name="why_r3">大切な人からは必ず届きます。ほかはまとめて待っています。</string>
+    <string name="why_r4_t">「なんとなく」にだけ、ひと呼吸</string>
+    <string name="why_r4">引きこまれるアプリの前にひと呼吸。壁ではありません。</string>
+    <string name="why_r5_t">軽いゲーム、プレッシャーなし</string>
+    <string name="why_r5">あなたの選択を祝い、戻ってこいとは言いません。</string>
+    <string name="why_r6_t">すべてここに残る</string>
+    <string name="why_r6">あなたについて学んだことは、このスマホに残ります。</string>
+    <string name="why_end">雑音は少なく、音楽を多く。</string>
 </resources>

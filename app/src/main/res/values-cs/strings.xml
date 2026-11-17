@@ -1070,4 +1070,25 @@
     <string name="access_consent_ok">Souhlasím, otevřít nastavení</string>
     <string name="s_instant_brake_hint">S usnadněním přístupu brzda zabere hned, platí i pro weby přibrzděných aplikací a Sordina přestane kontrolovat každých pár sekund. Pokud nejde zapnout: Informace o aplikaci › ⋮ › Povolit omezená nastavení.</string>
     <string name="brake_recent">Už započítáno před chvílí</string>
+    <string name="why_title">Proč Sordina</string>
+    <string name="why_tagline">Telefon hraje dál. Jen tišeji.</string>
+    <string name="why_word_t">Slovo</string>
+    <string name="why_word_pron">sor·dì·na · z italského sordo, „hluchý“</string>
+    <string name="why_word">V hudbě je sordina dusítko: malý díl, který se položí na kobylku houslí nebo zasune do korpusu trubky. Nástroj nepřestane hrát. Zní tišeji, tepleji, blíž. Italsky „in sordina“ znamená potichu, bez povyku.</string>
+    <string name="why_idea_t">Myšlenka</string>
+    <string name="why_idea">Telefon je nádherný nástroj, ale hraje pořád naplno. Sordina ho nevypne ani ti ho nevezme: nasadí na něj dusítko. Co je důležité, projde, zbytek počká na svou chvíli. Nic se neztratí, jen je klid.</string>
+    <string name="why_rules_t">Jak přemýšlí</string>
+    <string name="why_r1_t">Začíná prázdná</string>
+    <string name="why_r1">Tmavá stránka a jedna věta. Aplikace voláš ty, ne ony tebe.</string>
+    <string name="why_r2_t">Nejdřív záměr</string>
+    <string name="why_r2">Řekneš, co chceš udělat, ne jakou aplikaci otevřít.</string>
+    <string name="why_r3_t">Důležité projde</string>
+    <string name="why_r3">Kdo je důležitý, se k tobě vždy dostane. Zbytek počká, posbíraný.</string>
+    <string name="why_r4_t">Odpor jen pro „jen tak“</string>
+    <string name="why_r4">Nádech před aplikacemi, které tě vtáhnou. Nikdy zeď.</string>
+    <string name="why_r5_t">Lehká hra, nikdy tlak</string>
+    <string name="why_r5">Slaví tvoje rozhodnutí a nikdy nežádá, ať se vrátíš.</string>
+    <string name="why_r6_t">Všechno zůstává tady</string>
+    <string name="why_r6">Co se o tobě naučí, zůstane v telefonu.</string>
+    <string name="why_end">Méně hluku, víc hudby.</string>
 </resources>

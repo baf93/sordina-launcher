@@ -1048,4 +1048,25 @@
     <string name="access_consent_ok">Hyväksyn, avaa asetukset</string>
     <string name="s_instant_brake_hint">Esteettömyyden kanssa jarru tulee heti, koskee myös jarrutettujen sovellusten sivustoja, eikä Sordinan tarvitse tarkistaa muutaman sekunnin välein. Jos sitä ei voi ottaa käyttöön: Sovelluksen tiedot › ⋮ › Salli rajoitetut asetukset.</string>
     <string name="brake_recent">Laskettu jo hetki sitten</string>
+    <string name="why_title">Miksi Sordina</string>
+    <string name="why_tagline">Puhelin soi edelleen. Vain hiljempaa.</string>
+    <string name="why_word_t">Sana</string>
+    <string name="why_word_pron">sor·dì·na · italiaa, sanasta sordo, ”kuuro”</string>
+    <string name="why_word">Musiikissa sordiino on vaimennin: pieni kappale, joka lepää viulun tallalla tai istuu trumpetin kellossa. Soitin ei lakkaa soimasta. Se soi pehmeämmin, lämpimämmin, lähempänä. Italiaksi ”in sordina” tarkoittaa jonkin tekemistä hiljaa, ilman meteliä.</string>
+    <string name="why_idea_t">Ajatus</string>
+    <string name="why_idea">Puhelin on upea soitin, mutta se soi aina täysillä. Sordina ei sammuta sitä eikä vie sitä sinulta: se laittaa siihen sordiinon. Tärkeä pääsee läpi, muu odottaa hetkeään. Mitään ei katoa, kaikki on vain hiljaisempaa.</string>
+    <string name="why_rules_t">Miten se ajattelee</string>
+    <string name="why_r1_t">Se alkaa tyhjänä</string>
+    <string name="why_r1">Tumma sivu ja yksi lause. Sinä kutsut sovelluksia, eivät ne sinua.</string>
+    <string name="why_r2_t">Ensin aikomus</string>
+    <string name="why_r2">Sanot, mitä haluat tehdä, et sitä, mikä sovellus avataan.</string>
+    <string name="why_r3_t">Tärkeä pääsee läpi</string>
+    <string name="why_r3">Tärkeät ihmiset tavoittavat sinut aina. Muu odottaa koottuna.</string>
+    <string name="why_r4_t">Kitkaa vain ”ihan vaan” -hetkille</string>
+    <string name="why_r4">Hengähdys ennen sovelluksia, jotka imaisevat mukaansa. Ei koskaan muuri.</string>
+    <string name="why_r5_t">Kevyt peli, ei koskaan painetta</string>
+    <string name="why_r5">Se juhlii valintojasi eikä koskaan pyydä palaamaan.</string>
+    <string name="why_r6_t">Kaikki pysyy täällä</string>
+    <string name="why_r6">Mitä se oppii sinusta, pysyy puhelimessa.</string>
+    <string name="why_end">Vähemmän melua, enemmän musiikkia.</string>
 </resources>
