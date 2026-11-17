@@ -74,6 +74,8 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import app.sordina.data.Act
 import app.sordina.ui.AccessConsent
+import app.sordina.ui.SamsungSleepSheet
+import app.sordina.service.SamsungSleep
 import app.sordina.data.Actions
 import app.sordina.data.AppEntry
 import app.sordina.data.Candidate
@@ -258,6 +260,7 @@ class MainActivity : ComponentActivity(), Ops {
                         Bubble(bubble) { bubble = null }
                         HomeReplyTimer(reply) { reply = null }
                         AccessConsent()
+                        SamsungSleepSheet { checkHealth() }
                     }
                 }
             }
@@ -349,6 +352,7 @@ class MainActivity : ComponentActivity(), Ops {
         super.onResume()
         refreshPerms()
         SordinaListener.rebind(this)
+        SordinaAccess.revive(this)
         BrakeGuard.atHome(this, prefs)
         // Le app frenate possono essere cambiate: l'accessibilità ascolta solo quelle
         SordinaAccess.refresh()
@@ -795,6 +799,7 @@ class MainActivity : ComponentActivity(), Ops {
                 Health.NO_ACCESS -> openListenerSettings()
                 Health.STOPPED -> { SordinaListener.rebind(this); openListenerSettings() }
                 Health.BATTERY -> openBatterySettings()
+                Health.SAMSUNG -> SamsungSleep.ask()
                 null -> Unit
             }
             // Toccando "In sordina fino alle…" la si toglie
@@ -1129,6 +1134,8 @@ class MainActivity : ComponentActivity(), Ops {
             listOf(CardAction(tr(R.string.health_access_fix), CardOp.Fix)))
         Health.STOPPED -> Card("health:stopped", CardKind.HEALTH, tr(R.string.health_card_label), tr(R.string.health_stopped_title), tr(R.string.health_stopped_sub),
             listOf(CardAction(tr(R.string.health_stopped_fix), CardOp.Fix)))
+        Health.SAMSUNG -> Card("health:samsung", CardKind.HEALTH, tr(R.string.health_card_label), tr(R.string.health_samsung_title), tr(R.string.health_samsung_sub),
+            listOf(CardAction(tr(R.string.health_samsung_fix), CardOp.Fix)))
         Health.BATTERY -> Card("health:battery", CardKind.HEALTH, tr(R.string.health_card_label), tr(R.string.health_battery_title), tr(R.string.health_battery_sub),
             listOf(CardAction(tr(R.string.health_battery_fix), CardOp.Fix)))
     }

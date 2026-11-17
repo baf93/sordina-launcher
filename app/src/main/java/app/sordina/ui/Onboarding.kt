@@ -32,6 +32,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import app.sordina.service.SordinaListener
+import app.sordina.service.SamsungSleep
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -1054,6 +1056,13 @@ private fun AllSet(perms: PermState, ops: Ops, label: String, onGo: () -> Unit, 
         Column(Modifier.fillMaxWidth()) {
             Need(perms.home, tr(R.string.ob_home_l), tr(R.string.ob_home_why)) { ops.openHomeSettings() }
             Need(perms.battery, tr(R.string.ob_battery_l), tr(R.string.ob_perm_battery)) { ops.openBatterySettings() }
+            // Samsung spegne le app in background quando la memoria scarseggia: la strada per "App mai in sospensione"
+            if (SamsungSleep.isSamsung) {
+                val sctx = androidx.compose.ui.platform.LocalContext.current
+                val asking by SamsungSleep.asking.collectAsState()
+                val shown = remember(asking) { SordinaApp.of(sctx).prefs.samsungAsked > 0 }
+                Need(shown, tr(R.string.samsung_sleep_l), tr(R.string.samsung_sleep_why)) { SamsungSleep.ask() }
+            }
             if (Build.VERSION.SDK_INT >= 33) Need(perms.post, tr(R.string.onb_alerts), tr(R.string.ob_perm_post)) { ops.request(Manifest.permission.POST_NOTIFICATIONS) }
         }
         val ctx = androidx.compose.ui.platform.LocalContext.current

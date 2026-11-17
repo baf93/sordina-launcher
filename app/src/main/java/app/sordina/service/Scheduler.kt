@@ -21,6 +21,8 @@ object Scheduler {
     const val ACTION_TICK = "app.sordina.TICK"
     /** Il rinnovo di riserva: due ore prima che Android restituisca la notifica */
     private const val RENEW_MARGIN = 2 * 3_600_000L
+    /** Ogni quanto si riprova a svegliare un servizio che Android ha lasciato scollegato */
+    private const val HEAL_GAP = 2 * 60_000L
     /** Il promemoria impostato adesso (0 = nessuno), per non chiederlo di nuovo ad Android se non cambia */
     @Volatile private var scheduledAt = 0L
 
@@ -41,7 +43,11 @@ object Scheduler {
         val talkEnd = if (app.prefs.quietCar) Talking.lastUntil()?.let { it + 1_000 } else null
         val renew = app.store.held.value.values.filter { it.releaseAt > now }.minOfOrNull { it.releaseAt }
             ?.let { maxOf(now + 60_000, it - RENEW_MARGIN) }
-        val next = listOfNotNull(focusEnd, talkEnd, renew).filter { it > now }.minOrNull()
+        // Un servizio acceso ma scollegato (Android non l'ha riavviato): fra poco si riprova a svegliarlo
+        val asleep = (SordinaListener.instance == null && SordinaListener.isEnabled(context)) ||
+            (!SordinaAccess.active() && SordinaAccess.isEnabled(context))
+        val heal = if (asleep) now + HEAL_GAP else null
+        val next = listOfNotNull(focusEnd, talkEnd, renew, heal).filter { it > now }.minOrNull()
         val am = context.getSystemService(AlarmManager::class.java)
         val pi = PendingIntent.getBroadcast(
             context, 0, Intent(context, TickReceiver::class.java).setAction(ACTION_TICK),
@@ -70,6 +76,17 @@ class TickReceiver : BroadcastReceiver() {
             }
         }
         Scheduler.refresh(context)
+        // Anche senza toccare il telefono: se Android ha lasciato scollegati i servizi, si risvegliano qui.
+        // Il promemoria può aver appena avviato il processo: si lascia ad Android qualche secondo per collegarli da sé.
+        val pending = goAsync()
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            runCatching {
+                SordinaListener.rebind(context, waited = true)
+                SordinaAccess.revive(context, waited = true)
+                Scheduler.plan(context)
+            }
+            pending.finish()
+        }, 8_000)
     }
 
     private fun isDefaultHome(context: Context): Boolean {

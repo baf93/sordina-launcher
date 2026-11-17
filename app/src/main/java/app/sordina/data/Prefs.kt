@@ -305,6 +305,16 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("batteryAsked", false)
         set(v) = put { putBoolean("batteryAsked", v) }
 
+    /** L'ultima volta che Sordina ha dovuto risvegliare i suoi servizi (Android li aveva lasciati scollegati) */
+    var revivedAt: Long
+        get() = sp.getLong("revivedAt", 0L)
+        set(v) = put { putLong("revivedAt", v) }
+
+    /** Quando hai aperto la strada per "App mai in sospensione" di Samsung (0 = mai) */
+    var samsungAsked: Long
+        get() = sp.getLong("samsungAsked", 0L)
+        set(v) = put { putLong("samsungAsked", v) }
+
     // Attrito
     /** Il freno vale solo in questa fascia (minuti dalla mezzanotte); -1 = sempre */
     var brakeFrom: Int

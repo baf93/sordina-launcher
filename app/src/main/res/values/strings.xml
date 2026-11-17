@@ -598,6 +598,14 @@
     <string name="health_battery_title">Android might put Sordina to sleep</string>
     <string name="health_battery_sub">Take it out of battery saving: it uses very little and stays awake.</string>
     <string name="health_battery_fix">Keep it awake</string>
+    <string name="health_samsung_title">Samsung switched Sordina off</string>
+    <string name="health_samsung_sub">To free up memory. It\'s awake again: here\'s how to prevent it.</string>
+    <string name="health_samsung_fix">Show me how</string>
+    <string name="samsung_sleep_l">Never sleeping</string>
+    <string name="samsung_sleep_why">Samsung sometimes switches me off at night</string>
+    <string name="samsung_sleep_title">Don\'t let Sordina be put to sleep</string>
+    <string name="samsung_sleep_steps">When memory runs low, Samsung switches off apps in the background, and Sordina stops sorting your notifications until it wakes up again.\n\nOn the Battery page: Background usage limits → Never sleeping apps → + → Sordina.</string>
+    <string name="samsung_sleep_open">Open Battery</string>
     <string name="s_car_quiet">Do Not Disturb in the car</string>
     <string name="s_car_quiet_hint">With Android Auto</string>
     <string name="s_car_quiet_access">Tap to grant access</string>

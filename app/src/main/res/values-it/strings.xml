@@ -597,6 +597,14 @@
     <string name="health_battery_title">Android potrebbe addormentare Sordina</string>
     <string name="health_battery_sub">Toglila dal risparmio batteria: consuma pochissimo e resta sveglia.</string>
     <string name="health_battery_fix">Tienila sveglia</string>
+    <string name="health_samsung_title">Samsung ha spento Sordina</string>
+    <string name="health_samsung_sub">Per liberare memoria. Ora è sveglia: ecco come evitarlo.</string>
+    <string name="health_samsung_fix">Mostrami come</string>
+    <string name="samsung_sleep_l">Mai in sospensione</string>
+    <string name="samsung_sleep_why">Samsung a volte mi spegne di notte</string>
+    <string name="samsung_sleep_title">Non far addormentare Sordina</string>
+    <string name="samsung_sleep_steps">Quando la memoria scarseggia, Samsung spegne le app in background e Sordina smette di smistare le notifiche finché non si risveglia.\n\nNella pagina Batteria: Limiti utilizzo in background → App mai in sospensione → + → Sordina.</string>
+    <string name="samsung_sleep_open">Apri Batteria</string>
     <string name="s_car_quiet">Non disturbare in auto</string>
     <string name="s_car_quiet_hint">Con Android Auto</string>
     <string name="s_car_quiet_access">Tocca per dare il permesso</string>

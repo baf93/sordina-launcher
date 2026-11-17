@@ -335,6 +335,8 @@ class SordinaListener : NotificationListenerService() {
             !isEnabled(context) -> Health.NO_ACCESS
             // Appena avviata, Android collega il servizio dopo qualche secondo: non è un guasto
             instance == null && android.os.SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime() > 20_000 -> Health.STOPPED
+            // Samsung l'ha spenta e lei si è dovuta risvegliare (dopo l'ultima volta che hai visto la strada)
+            SamsungSleep.isSamsung && SordinaApp.of(context).prefs.let { it.revivedAt > it.samsungAsked } -> Health.SAMSUNG
             !batteryFree(context) -> Health.BATTERY
             else -> null
         }
@@ -381,9 +383,11 @@ class SordinaListener : NotificationListenerService() {
             }
         }
 
-        fun rebind(context: Context) {
+        /** Acceso nelle impostazioni ma scollegato: si chiede ad Android di ricollegarlo e, se non basta, lo si risveglia ([Revive]). */
+        fun rebind(context: Context, waited: Boolean = false) {
             if (instance == null && isEnabled(context)) {
                 runCatching { requestRebind(ComponentName(context, SordinaListener::class.java)) }
+                Revive.kick(context, SordinaListener::class.java, waited)
             }
         }
 
@@ -508,4 +512,4 @@ class SordinaListener : NotificationListenerService() {
 }
 
 /** Cosa impedisce al motore di Sordina di lavorare. */
-enum class Health { NO_ACCESS, STOPPED, BATTERY }
+enum class Health { NO_ACCESS, STOPPED, SAMSUNG, BATTERY }

@@ -211,6 +211,11 @@ class SordinaAccess : AccessibilityService() {
             return flat.split(':').any { android.content.ComponentName.unflattenFromString(it)?.packageName == context.packageName }
         }
 
+        /** Accesa nelle impostazioni ma scollegata (Android non l'ha riavviata dopo aver chiuso Sordina): la si risveglia. */
+        fun revive(context: Context, waited: Boolean = false) {
+            if (instance == null && isEnabled(context)) Revive.kick(context, SordinaAccess::class.java, waited)
+        }
+
         /** Le app frenate (o l'opzione) sono cambiate: si aggiorna cosa ascoltare. */
         fun refresh() { instance?.let { s -> runCatching { s.watch() } } }
 
