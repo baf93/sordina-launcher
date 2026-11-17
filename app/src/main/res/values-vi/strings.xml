@@ -815,7 +815,7 @@
     <string name="ach_skip_1000">Một nghìn lần không</string>
     <string name="ach_skip_1000_d">Chạm \"Thôi\" tổng cộng 1000 lần.</string>
     <string name="ach_perfect">Ngày hoàn hảo</string>
-    <string name="ach_perfect_d">Trong cùng một ngày, chạm \"Thôi\" ít nhất 5 lần và không bao giờ chạm \"Vẫn mở\".</string>
+    <string name="ach_perfect_d">Trong cùng một ngày, chạm \"Thôi\" ít nhất 5 lần và ở trong ngân sách: +5 phút cho cấp độ.</string>
     <string name="ach_loyal">Chung thủy</string>
     <string name="ach_loyal_d">Chạm \"Thôi\" 25 lần trong cùng một ứng dụng. Mất bao lâu cũng được.</string>
     <string name="ach_skip_run">Năm lần liên tiếp</string>
@@ -851,11 +851,11 @@
     <string name="ach_clean_365">Một năm ngày</string>
     <string name="ach_clean_365_d">Gom đủ 365 ngày không cám dỗ, liên tiếp hay không.</string>
     <string name="ach_hour">Một giờ tìm lại</string>
-    <string name="ach_hour_d">Lấy lại 60 phút trong cùng một ngày: mỗi lần \"Thôi\" trả lại thời gian của một lần ghé, mỗi lần \"Vẫn mở\" lấy mất nó.</string>
+    <string name="ach_hour_d">Kiếm 60 phút trong cùng một tuần, từ thứ Hai đến Chủ nhật: mỗi ngày trong ngân sách cho tối đa 20.</string>
     <string name="ach_day_2h">Hai giờ cho bạn</string>
-    <string name="ach_day_2h_d">Lấy lại 2 giờ trong cùng một ngày, trừ thời gian mất vì \"Vẫn mở\".</string>
+    <string name="ach_day_2h_d">Kiếm 2 giờ trong cùng một tuần, từ thứ Hai đến Chủ nhật.</string>
     <string name="ach_week_3h">Một buổi chiều</string>
-    <string name="ach_week_3h_d">Lấy lại 3 giờ trong cùng một tuần, từ thứ Hai đến Chủ nhật.</string>
+    <string name="ach_week_3h_d">Kiếm 3 giờ trong cùng một tháng.</string>
     <string name="ach_month_6h">Cuốn sách</string>
     <string name="ach_month_6h_d">Lấy lại 6 giờ trong cùng một tháng: đủ thời gian để đọc một cuốn sách.</string>
     <string name="ach_total_10h">Mười giờ</string>
@@ -1062,4 +1062,21 @@
         <item quantity="one">Đã đọc</item>
         <item quantity="other">Đã đọc %d</item>
     </plurals>
+    <string name="brake_left">Hôm nay còn %1$s</string>
+    <string name="brake_used_up">Đã hết ngân sách hôm nay</string>
+    <string name="brake_over">Vượt ngân sách %1$s</string>
+    <string name="budget_title">Ngân sách mỗi ngày</string>
+    <string name="budget_hint">Số phút mỗi ngày cho từng ứng dụng bị phanh. Giảm có hiệu lực ngay, tăng từ ngày mai.</string>
+    <string name="budget_used">%1$s / %2$s hôm nay</string>
+    <string name="budget_next">từ ngày mai: %1$s</string>
+    <string name="budget_label">Ngân sách phanh</string>
+    <string name="budget_ask_lower">Tuần này %1$s chỉ cần khoảng %2$s mỗi ngày. Giảm ngân sách từ %3$s xuống %2$s từ thứ Hai nhé?</string>
+    <string name="budget_ask_raise">Tuần này bạn hay vượt ngân sách với %1$s. Đặt ngân sách thực tế hơn từ thứ Hai: %2$s thay vì %3$s?</string>
+    <string name="budget_yes">Có</string>
+    <string name="budget_keep">Cứ để vậy</string>
+    <string name="budget_from_monday">Xong: từ thứ Hai %1$s mỗi ngày</string>
+    <string name="budget_done_title">%1$s: đã hết ngân sách hôm nay</string>
+    <string name="budget_done_text">Bạn đã dùng %1$s. Tiếp tục hay không là do bạn.</string>
+    <string name="ch_budget">Ngân sách phanh</string>
+    <string name="ch_budget_desc">Khi ngân sách hằng ngày của một ứng dụng bị phanh hết trong lúc bạn đang dùng</string>
 </resources>

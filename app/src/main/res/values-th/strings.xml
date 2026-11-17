@@ -815,7 +815,7 @@
     <string name="ach_skip_1000">ปฏิเสธพันครั้ง</string>
     <string name="ach_skip_1000_d">แตะ \"ช่างมัน\" รวม 1000 ครั้ง</string>
     <string name="ach_perfect">วันที่สมบูรณ์แบบ</string>
-    <string name="ach_perfect_d">ในวันเดียวกัน แตะ \"ช่างมัน\" อย่างน้อย 5 ครั้งและไม่แตะ \"เปิดเลย\" เลย</string>
+    <string name="ach_perfect_d">ในวันเดียวกัน แตะ \"ช่างมัน\" อย่างน้อย 5 ครั้งและอยู่ในงบ: +5 นาทีให้เลเวลของคุณ</string>
     <string name="ach_loyal">มั่นคง</string>
     <string name="ach_loyal_d">แตะ \"ช่างมัน\" 25 ครั้งในแอปเดียวกัน ใช้เวลานานแค่ไหนก็ได้</string>
     <string name="ach_skip_run">ห้าครั้งติด</string>
@@ -851,11 +851,11 @@
     <string name="ach_clean_365">หนึ่งปีแห่งวันดี ๆ</string>
     <string name="ach_clean_365_d">สะสม 365 วันที่ไม่มีสิ่งยั่วใจ จะติดต่อกันหรือไม่ก็ได้</string>
     <string name="ach_hour">หนึ่งชั่วโมงที่ได้คืน</string>
-    <string name="ach_hour_d">ได้คืน 60 นาทีในวันเดียวกัน: ทุก \"ช่างมัน\" คืนเวลาของการเข้าหนึ่งครั้ง ทุก \"เปิดเลย\" เอามันไป</string>
+    <string name="ach_hour_d">สะสม 60 นาทีในสัปดาห์เดียวกัน จันทร์ถึงอาทิตย์: แต่ละวันที่อยู่ในงบให้ได้ถึง 20</string>
     <string name="ach_day_2h">สองชั่วโมงเพื่อคุณ</string>
-    <string name="ach_day_2h_d">ได้คืน 2 ชั่วโมงในวันเดียวกัน หักเวลาที่เสียไปกับ \"เปิดเลย\"</string>
+    <string name="ach_day_2h_d">สะสม 2 ชั่วโมงในสัปดาห์เดียวกัน จันทร์ถึงอาทิตย์</string>
     <string name="ach_week_3h">หนึ่งบ่าย</string>
-    <string name="ach_week_3h_d">ได้คืน 3 ชั่วโมงในสัปดาห์เดียวกัน จันทร์ถึงอาทิตย์</string>
+    <string name="ach_week_3h_d">สะสม 3 ชั่วโมงในเดือนเดียวกัน</string>
     <string name="ach_month_6h">หนังสือ</string>
     <string name="ach_month_6h_d">ได้คืน 6 ชั่วโมงในเดือนเดียวกัน: พอจะอ่านหนังสือได้หนึ่งเล่ม</string>
     <string name="ach_total_10h">สิบชั่วโมง</string>
@@ -1062,4 +1062,21 @@
         <item quantity="one">อ่านแล้ว</item>
         <item quantity="other">อ่านแล้ว %d</item>
     </plurals>
+    <string name="brake_left">วันนี้เหลือ %1$s</string>
+    <string name="brake_used_up">งบของวันนี้หมดแล้ว</string>
+    <string name="brake_over">เกินงบ %1$s</string>
+    <string name="budget_title">งบรายวัน</string>
+    <string name="budget_hint">นาทีต่อวันสำหรับแต่ละแอปที่ถูกเบรก ลดแล้วมีผลทันที เพิ่มแล้วมีผลพรุ่งนี้</string>
+    <string name="budget_used">วันนี้ %1$s จาก %2$s</string>
+    <string name="budget_next">ตั้งแต่พรุ่งนี้: %1$s</string>
+    <string name="budget_label">งบของเบรก</string>
+    <string name="budget_ask_lower">สัปดาห์นี้ %1$s ใช้ไปราว %2$s ต่อวันก็พอ ลดงบจาก %3$s เป็น %2$s ตั้งแต่วันจันทร์ไหม</string>
+    <string name="budget_ask_raise">สัปดาห์นี้คุณใช้ %1$s เกินงบบ่อย ตั้งงบที่สมจริงขึ้นตั้งแต่วันจันทร์: %2$s แทน %3$s ไหม</string>
+    <string name="budget_yes">ใช่</string>
+    <string name="budget_keep">ปล่อยไว้แบบนี้</string>
+    <string name="budget_from_monday">เรียบร้อย: ตั้งแต่วันจันทร์ วันละ %1$s</string>
+    <string name="budget_done_title">%1$s: งบของวันนี้หมดแล้ว</string>
+    <string name="budget_done_text">คุณใช้ไป %1$s แล้ว จะใช้ต่อหรือไม่ คุณเป็นคนตัดสินใจ</string>
+    <string name="ch_budget">งบของเบรก</string>
+    <string name="ch_budget_desc">เมื่องบรายวันของแอปที่ถูกเบรกหมดระหว่างที่คุณใช้อยู่</string>
 </resources>

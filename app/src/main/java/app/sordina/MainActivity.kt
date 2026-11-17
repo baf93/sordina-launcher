@@ -500,8 +500,9 @@ class MainActivity : ComponentActivity(), Ops {
 
     /** L'attesa: quella scelta, più 5 secondi per ogni volta che l'hai aperta comunque nell'ultima ora (al massimo un minuto). */
     internal fun brakeWait(pkg: String): Int {
-        val base = prefs.brakeSeconds
-        if (!prefs.brakeGrow) return base
+        // Budget di oggi finito: l'attesa raddoppia
+        val base = prefs.brakeSeconds * (if ((app.habits.leftToday(pkg) ?: 1) <= 0) 2 else 1)
+        if (!prefs.brakeGrow) return base.coerceAtMost(60)
         return (base + 5 * app.habits.opensLastHour(pkg)).coerceAtMost(60)
     }
 

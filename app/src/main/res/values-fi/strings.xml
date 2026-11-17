@@ -826,7 +826,7 @@
     <string name="ach_skip_1000">Tuhat ei:tä</string>
     <string name="ach_skip_1000_d">Napauta \"Anna olla\" yhteensä 1000 kertaa.</string>
     <string name="ach_perfect">Täydellinen päivä</string>
-    <string name="ach_perfect_d">Napauta saman päivän aikana \"Anna olla\" vähintään 5 kertaa etkä koskaan \"Avaa silti\".</string>
+    <string name="ach_perfect_d">Napauta saman päivän aikana ”Anna olla” vähintään 5 kertaa ja pysy budjetissa: +5 min tasollesi.</string>
     <string name="ach_loyal">Uskollinen</string>
     <string name="ach_loyal_d">Napauta \"Anna olla\" 25 kertaa samassa sovelluksessa. Ota aikaa niin paljon kuin haluat.</string>
     <string name="ach_skip_run">Viisi peräkkäin</string>
@@ -862,11 +862,11 @@
     <string name="ach_clean_365">Vuoden verran päiviä</string>
     <string name="ach_clean_365_d">Kerää 365 päivää ilman kiusausta, peräkkäin tai ei.</string>
     <string name="ach_hour">Löydetty tunti</string>
-    <string name="ach_hour_d">Saa takaisin 60 minuuttia saman päivän aikana: jokainen \"Anna olla\" antaa takaisin yhden käynnin ajan, jokainen \"Avaa silti\" vie sen.</string>
+    <string name="ach_hour_d">Kerää 60 minuuttia saman viikon aikana, maanantaista sunnuntaihin: jokainen budjetissa pysynyt päivä antaa enintään 20.</string>
     <string name="ach_day_2h">Kaksi tuntia sinulle</string>
-    <string name="ach_day_2h_d">Saa takaisin 2 tuntia saman päivän aikana, miinus \"Avaa silti\" -napautuksilla menetetty aika.</string>
+    <string name="ach_day_2h_d">Kerää 2 tuntia saman viikon aikana, maanantaista sunnuntaihin.</string>
     <string name="ach_week_3h">Iltapäivä</string>
-    <string name="ach_week_3h_d">Saa takaisin 3 tuntia saman viikon aikana, maanantaista sunnuntaihin.</string>
+    <string name="ach_week_3h_d">Kerää 3 tuntia saman kuukauden aikana.</string>
     <string name="ach_month_6h">Kirja</string>
     <string name="ach_month_6h_d">Saa takaisin 6 tuntia saman kuukauden aikana: tarpeeksi aikaa lukea kirja.</string>
     <string name="ach_total_10h">Kymmenen tuntia</string>
@@ -1073,4 +1073,21 @@
         <item quantity="one">Luettu</item>
         <item quantity="other">%d luettu</item>
     </plurals>
+    <string name="brake_left">Tänään jäljellä %1$s</string>
+    <string name="brake_used_up">Tämän päivän budjetti on käytetty</string>
+    <string name="brake_over">%1$s yli budjetin</string>
+    <string name="budget_title">Päiväbudjetti</string>
+    <string name="budget_hint">Minuutteja päivässä jokaiselle jarrutetulle sovellukselle. Lasku pätee heti, nosto huomisesta.</string>
+    <string name="budget_used">%1$s / %2$s tänään</string>
+    <string name="budget_next">huomisesta: %1$s</string>
+    <string name="budget_label">Jarrun budjetti</string>
+    <string name="budget_ask_lower">Tällä viikolla sovellukseen %1$s riitti noin %2$s päivässä. Lasketaanko budjetti maanantaista alkaen %3$s → %2$s?</string>
+    <string name="budget_ask_raise">Tällä viikolla ylitit usein budjetin sovelluksessa %1$s. Realistisempi budjetti maanantaista: %2$s eikä %3$s?</string>
+    <string name="budget_yes">Kyllä</string>
+    <string name="budget_keep">Anna olla näin</string>
+    <string name="budget_from_monday">Valmis: maanantaista alkaen %1$s päivässä</string>
+    <string name="budget_done_title">%1$s: tämän päivän budjetti on käytetty</string>
+    <string name="budget_done_text">Olet käyttänyt %1$s. Sinä päätät, jatkatko.</string>
+    <string name="ch_budget">Jarrun budjetti</string>
+    <string name="ch_budget_desc">Kun jarrutetun sovelluksen päiväbudjetti loppuu käytön aikana</string>
 </resources>

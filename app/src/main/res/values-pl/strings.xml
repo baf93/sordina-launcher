@@ -848,7 +848,7 @@
     <string name="ach_skip_1000">Tysiąc razy nie</string>
     <string name="ach_skip_1000_d">Dotknij \"Odpuść\" łącznie 1000 razy.</string>
     <string name="ach_perfect">Idealny dzień</string>
-    <string name="ach_perfect_d">W ciągu jednego dnia dotknij \"Odpuść\" co najmniej 5 razy i ani razu \"Otwórz mimo to\".</string>
+    <string name="ach_perfect_d">W ciągu jednego dnia dotknij „Odpuść” co najmniej 5 razy i zmieść się w budżecie: +5 min do poziomu.</string>
     <string name="ach_loyal">Wierność</string>
     <string name="ach_loyal_d">Dotknij \"Odpuść\" 25 razy w tej samej aplikacji. Nie spiesz się.</string>
     <string name="ach_skip_run">Pięć z rzędu</string>
@@ -884,11 +884,11 @@
     <string name="ach_clean_365">Rok dni</string>
     <string name="ach_clean_365_d">Zbierz 365 dni bez pokusy, z rzędu lub nie.</string>
     <string name="ach_hour">Odnaleziona godzina</string>
-    <string name="ach_hour_d">Odzyskaj 60 minut w ciągu jednego dnia: każde \"Odpuść\" oddaje czas jednej wizyty, każde \"Otwórz mimo to\" go zabiera.</string>
+    <string name="ach_hour_d">Zdobądź 60 minut w tym samym tygodniu, od poniedziałku do niedzieli: każdy dzień w budżecie daje do 20.</string>
     <string name="ach_day_2h">Dwie godziny dla ciebie</string>
-    <string name="ach_day_2h_d">Odzyskaj 2 godziny w ciągu jednego dnia, minus czas stracony przez \"Otwórz mimo to\".</string>
+    <string name="ach_day_2h_d">Zdobądź 2 godziny w tym samym tygodniu, od poniedziałku do niedzieli.</string>
     <string name="ach_week_3h">Popołudnie</string>
-    <string name="ach_week_3h_d">Odzyskaj 3 godziny w tym samym tygodniu, od poniedziałku do niedzieli.</string>
+    <string name="ach_week_3h_d">Zdobądź 3 godziny w tym samym miesiącu.</string>
     <string name="ach_month_6h">Książka</string>
     <string name="ach_month_6h_d">Odzyskaj 6 godzin w tym samym miesiącu: dość czasu, by przeczytać książkę.</string>
     <string name="ach_total_10h">Dziesięć godzin</string>
@@ -1095,4 +1095,21 @@
         <item quantity="one">Przeczytane</item>
         <item quantity="other">Przeczytane: %d</item>
     </plurals>
+    <string name="brake_left">Zostało %1$s na dziś</string>
+    <string name="brake_used_up">Dzisiejszy budżet wykorzystany</string>
+    <string name="brake_over">%1$s ponad budżet</string>
+    <string name="budget_title">Budżet dzienny</string>
+    <string name="budget_hint">Minuty dziennie dla każdej hamowanej aplikacji. Obniżenie działa od razu, podniesienie od jutra.</string>
+    <string name="budget_used">%1$s z %2$s dziś</string>
+    <string name="budget_next">od jutra: %1$s</string>
+    <string name="budget_label">Budżet hamulca</string>
+    <string name="budget_ask_lower">W tym tygodniu %1$s wystarczało ci około %2$s dziennie. Obniżyć budżet od poniedziałku z %3$s do %2$s?</string>
+    <string name="budget_ask_raise">W tym tygodniu często przekraczałeś budżet w %1$s. Bardziej realny budżet od poniedziałku: %2$s zamiast %3$s?</string>
+    <string name="budget_yes">Tak</string>
+    <string name="budget_keep">Zostaw tak</string>
+    <string name="budget_from_monday">Gotowe: od poniedziałku %1$s dziennie</string>
+    <string name="budget_done_title">%1$s: dzisiejszy budżet wykorzystany</string>
+    <string name="budget_done_text">Wykorzystano %1$s. Ty decydujesz, czy kontynuować.</string>
+    <string name="ch_budget">Budżet hamulca</string>
+    <string name="ch_budget_desc">Gdy dzienny budżet hamowanej aplikacji kończy się w trakcie używania</string>
 </resources>

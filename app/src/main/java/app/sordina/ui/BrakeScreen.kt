@@ -96,8 +96,8 @@ internal val LOSS = Color(0xFFE5484D)
 internal fun signed(m: Int): String = (if (m > 0) "+" else if (m < 0) "−" else "") + shortDuration(kotlin.math.abs(m))
 
 /**
- * Attrito come una partita, con un saldo di giornata: "Lascia stare" ti fa riprendere i minuti di una visita,
- * "Apri comunque" (solo a fine attesa) te ne fa perdere di più. In positivo la giornata è tua, in negativo la perdi.
+ * Il freno: un respiro prima di un'app frenata. Ogni app ha un budget di minuti al giorno: il freno dice quanto ne
+ * resta, e aprire dentro il budget va bene. La giornata (e i minuti del livello) li decide il budget, non le scelte qui.
  */
 @Composable
 fun BrakeScreen(
@@ -107,10 +107,10 @@ fun BrakeScreen(
     today: Pair<Int, Int>?,
     seconds: Int,
     streak: Habits.Streak,
-    /** Minuti in palio: quanto dura di solito una visita */
+    /** 1 se "Lascia stare" conta per le imprese, 0 se ne hai appena contata una (vedi [Habits.skipGain]) */
     gain: Int,
-    /** Minuti persi aprendo comunque (vedi [Habits.openCost]) */
-    cost: Int,
+    /** I minuti che restano oggi a quest'app (negativo: quanto sei oltre); null senza accesso all'utilizzo */
+    left: Int?,
     onOpen: (habit: Boolean) -> Unit,
     /** Registra la rinuncia e dà il punteggio aggiornato */
     onSkip: () -> Pair<Habits.Streak, List<app.sordina.data.Medal>>,
@@ -120,11 +120,11 @@ fun BrakeScreen(
     val feel = LocalFeel.current
     run {
     AnimatedContent(after, transitionSpec = { fadeIn(tween(if (feel.animations) 300 else 0)) togetherWith fadeOut(tween(if (feel.animations) 200 else 0)) }, label = "brake") { a ->
-        if (a == null) Playing(app, icon, today, seconds, streak, gain, cost, onOpen) {
+        if (a == null) Playing(app, icon, today, seconds, streak, left, onOpen) {
             val s = onSkip()
             feel.confirm()
             after = s
-        } else Won(gain, streak, a.first, a.second, onDone)
+        } else Won(left, streak, a.first, a.second, onDone)
     }
     }
 }
@@ -132,7 +132,7 @@ fun BrakeScreen(
 
 @Composable
 private fun Playing(
-    app: AppEntry, icon: ImageBitmap?, today: Pair<Int, Int>?, seconds: Int, streak: Habits.Streak, gain: Int, cost: Int,
+    app: AppEntry, icon: ImageBitmap?, today: Pair<Int, Int>?, seconds: Int, streak: Habits.Streak, budget: Int?,
     onOpen: (Boolean) -> Unit, onSkip: () -> Unit,
 ) {
     val c = S.c
@@ -148,7 +148,7 @@ private fun Playing(
         feel.tick()
     }
     // Il numero cambia una volta al secondo; l'anello legge il tempo solo quando si disegna (niente ricomposizione a ogni fotogramma)
-    val left by remember { androidx.compose.runtime.derivedStateOf { ((total - elapsed + 999) / 1000).toInt() } }
+    val wait by remember { androidx.compose.runtime.derivedStateOf { ((total - elapsed + 999) / 1000).toInt() } }
     val pulse = rememberInfiniteTransition(label = "pulse")
     val p by pulse.animateFloat(0f, 1f, infiniteRepeatable(tween(1400, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "p")
     // "Apri comunque": prima il sospiro della sordina, poi l'app
@@ -189,7 +189,7 @@ private fun Playing(
             textAlign = TextAlign.Center, style = TextStyle(fontSize = 24.sp, lineHeight = 31.sp, fontWeight = FontWeight.Medium, color = c.ink),
         )
         Spacer(Modifier.weight(1f))
-        // Al centro la sordina, grande, dentro l'anello del tempo che manca ad "Apri"; subito sotto, il premio in palio
+        // Al centro la sordina, grande, dentro l'anello del tempo che manca ad "Apri"; subito sotto, quanto resta del budget
         Box(Modifier.size(if (short) 200.dp else 250.dp), contentAlignment = Alignment.Center) {
             Canvas(Modifier.fillMaxSize()) {
                 val w = 4.dp.toPx()
@@ -202,48 +202,35 @@ private fun Playing(
                     style = Stroke(w, cap = StrokeCap.Round))
             }
             Mascot(
-                when { leaving -> Mood.SIGH; left > 0 -> Mood.WAIT; else -> Mood.READY },
+                when { leaving -> Mood.SIGH; wait > 0 -> Mood.WAIT; else -> Mood.READY },
                 Modifier.fillMaxSize(0.76f),
-                breath = if (left > 0 && !leaving) ::phaseAt else null,
+                breath = if (wait > 0 && !leaving) ::phaseAt else null,
             )
         }
-        Row(
-            Modifier.padding(top = 10.dp).clip(RoundedCornerShape(20.dp)).background(GOLD.copy(alpha = 0.16f)).padding(horizontal = 16.dp, vertical = 7.dp),
+        if (budget != null) Row(
+            Modifier.padding(top = 10.dp).clip(RoundedCornerShape(20.dp)).background((if (budget > 0) GOLD else LOSS).copy(alpha = 0.16f))
+                .padding(horizontal = 16.dp, vertical = 7.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Già premiato poco fa: niente "+0", si dice com'è
-            if (gain > 0) {
-                Text("+$gain ", style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = c.ink))
-                Text(tr(R.string.brake_minutes_for_you), style = TextStyle(fontSize = 14.sp, color = c.soft))
-            } else Text(tr(R.string.brake_recent), style = TextStyle(fontSize = 14.sp, color = c.soft))
+            Text(budgetLine(budget), style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Medium, color = c.ink))
         }
         Spacer(Modifier.weight(1f))
-        // Il tasto che vince: grande, vivo, dice cosa incassi
+        // Il tasto in evidenza: lasciare stare
         Box(
             Modifier.fillMaxWidth().scale(if (anim) 1f + 0.025f * p else 1f).height(68.dp).clip(RoundedCornerShape(34.dp))
                 .background(c.accent).clickable { onSkip() },
             contentAlignment = Alignment.Center,
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(tr(R.string.leave_it), style = TextStyle(fontSize = 19.sp, fontWeight = FontWeight.SemiBold, color = c.bg))
-                // Se riporta la giornata in positivo, lo dice
-                Text(
-                    when {
-                        gain == 0 -> tr(R.string.brake_recent)
-                        streak.balance <= 0 && streak.balance + gain > 0 -> tr(R.string.brake_win_day, gain)
-                        else -> tr(R.string.brake_win, gain)
-                    },
-                    style = TextStyle(fontSize = 12.sp, color = c.bg.copy(alpha = 0.8f)),
-                )
-            }
+            Text(tr(R.string.leave_it), style = TextStyle(fontSize = 19.sp, fontWeight = FontWeight.SemiBold, color = c.bg))
         }
-        // Il costo si vede prima di scegliere
+        // Aprire dentro il budget è normale: "Apri"; finito il budget, "Apri comunque"
+        val over = budget != null && budget <= 0
         Text(
-            if (left > 0) tr(R.string.open_in, left) else tr(R.string.open_cost, cost),
+            if (wait > 0) tr(R.string.open_in, wait) else if (over) tr(R.string.open_anyway) else tr(R.string.open),
             Modifier.padding(top = 6.dp).clip(RoundedCornerShape(16.dp))
-                .then(if (left > 0) Modifier else Modifier.clickableNoRipple { open() })
+                .then(if (wait > 0) Modifier else Modifier.clickableNoRipple { open() })
                 .padding(horizontal = 16.dp, vertical = 12.dp),
-            style = TextStyle(fontSize = 14.sp, color = if (left > 0) c.dot else c.soft),
+            style = TextStyle(fontSize = 14.sp, color = if (wait > 0) c.dot else c.soft),
         )
     }
 }
@@ -313,14 +300,12 @@ private fun Week(week: List<Int>) {
     }
 }
 
-/** Hai vinto: coriandoli, quello che hai incassato, il livello che sale. Poi Casa. */
+/** Hai lasciato stare: coriandoli, quanto resta del budget, le imprese appena vinte. Poi Casa. */
 @Composable
-private fun Won(gain: Int, before: Habits.Streak, s: Habits.Streak, medals: List<app.sordina.data.Medal>, onDone: () -> Unit) {
+private fun Won(left: Int?, before: Habits.Streak, s: Habits.Streak, medals: List<app.sordina.data.Medal>, onDone: () -> Unit) {
     val c = S.c
     val feel = LocalFeel.current
     val levelUp = s.level > before.level
-    // Questa rinuncia ha riportato la giornata in positivo
-    val dayWon = before.balance <= 0 && s.balance > 0
     val pop = remember { Animatable(if (feel.animations) 0f else 1f) }
     val burst = remember { Animatable(if (feel.animations) 0f else 1f) }
     LaunchedEffect(Unit) { pop.animateTo(1f, spring(dampingRatio = 0.4f, stiffness = 260f)) }
@@ -356,28 +341,22 @@ private fun Won(gain: Int, before: Habits.Streak, s: Habits.Streak, medals: List
                     }
                 }
             }
-            // La sordina salta e ride; accanto, il premio che hai incassato
+            // La sordina salta e ride; accanto, la coppa se sei salito di livello
             Mascot(Mood.WON, Modifier.size(160.dp))
-            if (levelUp || gain > 0) Box(
+            if (levelUp) Box(
                 Modifier.align(Alignment.Center).padding(start = 116.dp, top = 84.dp).size(58.dp).scale(pop.value)
                     .clip(CircleShape).background(if (levelUp) GOLD else c.accent),
                 contentAlignment = Alignment.Center,
             ) {
-                if (levelUp) Icon(Icons.Rounded.EmojiEvents, null, Modifier.size(30.dp), tint = c.bg)
-                else if (gain > 0) Text("+$gain", style = TextStyle(fontSize = 19.sp, fontWeight = FontWeight.Bold, color = c.bg))
+                Icon(Icons.Rounded.EmojiEvents, null, Modifier.size(30.dp), tint = c.bg)
             }
         }
         Text(
             if (levelUp) tr(R.string.brake_level_up, s.level) else tr(R.string.well_done),
             Modifier.padding(top = 8.dp), style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.SemiBold, color = c.ink),
         )
-        Text(
-            when {
-                dayWon && s.days > 1 -> tr(R.string.brake_streak_up, "${s.days} ${trn(R.plurals.n_days_row, s.days)}")
-                dayWon -> tr(R.string.brake_day_won)
-                gain == 0 -> tr(R.string.brake_recent)
-                else -> tr(R.string.time_back, shortDuration(gain))
-            },
+        if (left != null) Text(
+            budgetLine(left),
             Modifier.padding(top = 6.dp), textAlign = TextAlign.Center, style = TextStyle(fontSize = 16.sp, color = c.soft),
         )
         // Le medaglie appena vinte: arrivano con un piccolo salto
@@ -413,6 +392,13 @@ private fun Stat(value: String, label: String, modifier: Modifier = Modifier) {
         Text(value, style = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = c.accent))
         Text(label, style = TextStyle(fontSize = 11.sp, color = c.soft))
     }
+}
+
+/** Quanto resta del budget di oggi: "Ti restano 12 min oggi", "Budget di oggi finito", "Oltre il budget di 6 min". */
+internal fun budgetLine(left: Int): String = when {
+    left > 0 -> tr(R.string.brake_left, shortDuration(left))
+    left == 0 -> tr(R.string.brake_used_up)
+    else -> tr(R.string.brake_over, shortDuration(-left))
 }
 
 /** "45 min", "2 h", "7 h 20 min" */

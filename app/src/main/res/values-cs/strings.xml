@@ -848,7 +848,7 @@
     <string name="ach_skip_1000">Tisíc ne</string>
     <string name="ach_skip_1000_d">Klepni na \"Nech to být\" celkem 1000krát.</string>
     <string name="ach_perfect">Dokonalý den</string>
-    <string name="ach_perfect_d">Během jednoho dne klepni na \"Nech to být\" alespoň 5krát a nikdy na \"Přesto otevřít\".</string>
+    <string name="ach_perfect_d">Během jednoho dne klepni na „Nech to být“ alespoň 5krát a vejdi se do rozpočtu: +5 min k úrovni.</string>
     <string name="ach_loyal">Věrný</string>
     <string name="ach_loyal_d">Klepni na \"Nech to být\" 25krát ve stejné aplikaci. Klidně si dej na čas.</string>
     <string name="ach_skip_run">Pět v řadě</string>
@@ -884,11 +884,11 @@
     <string name="ach_clean_365">Rok dní</string>
     <string name="ach_clean_365_d">Nasbírej 365 dní bez pokušení, po sobě nebo ne.</string>
     <string name="ach_hour">Nalezená hodina</string>
-    <string name="ach_hour_d">Získej zpět 60 minut během jednoho dne: každé \"Nech to být\" vrátí čas jedné návštěvy, každé \"Přesto otevřít\" ho vezme.</string>
+    <string name="ach_hour_d">Získej 60 minut ve stejném týdnu, od pondělí do neděle: každý den v rozpočtu dá až 20.</string>
     <string name="ach_day_2h">Dvě hodiny pro tebe</string>
-    <string name="ach_day_2h_d">Získej zpět 2 hodiny během jednoho dne, minus čas ztracený přes \"Přesto otevřít\".</string>
+    <string name="ach_day_2h_d">Získej 2 hodiny ve stejném týdnu, od pondělí do neděle.</string>
     <string name="ach_week_3h">Odpoledne</string>
-    <string name="ach_week_3h_d">Získej zpět 3 hodiny během jednoho týdne, od pondělí do neděle.</string>
+    <string name="ach_week_3h_d">Získej 3 hodiny ve stejném měsíci.</string>
     <string name="ach_month_6h">Kniha</string>
     <string name="ach_month_6h_d">Získej zpět 6 hodin během jednoho měsíce: dost času na přečtení knihy.</string>
     <string name="ach_total_10h">Deset hodin</string>
@@ -1095,4 +1095,21 @@
         <item quantity="one">Přečteno</item>
         <item quantity="other">Přečteno: %d</item>
     </plurals>
+    <string name="brake_left">Dnes zbývá %1$s</string>
+    <string name="brake_used_up">Dnešní rozpočet je vyčerpán</string>
+    <string name="brake_over">%1$s nad rozpočet</string>
+    <string name="budget_title">Denní rozpočet</string>
+    <string name="budget_hint">Minuty denně pro každou brzděnou aplikaci. Snížení platí hned, zvýšení od zítřka.</string>
+    <string name="budget_used">%1$s z %2$s dnes</string>
+    <string name="budget_next">od zítřka: %1$s</string>
+    <string name="budget_label">Rozpočet brzdy</string>
+    <string name="budget_ask_lower">Tento týden ti na %1$s stačilo asi %2$s denně. Snížit rozpočet od pondělí z %3$s na %2$s?</string>
+    <string name="budget_ask_raise">Tento týden jsi u %1$s často přetáhl. Reálnější rozpočet od pondělí: %2$s místo %3$s?</string>
+    <string name="budget_yes">Ano</string>
+    <string name="budget_keep">Nechat tak</string>
+    <string name="budget_from_monday">Hotovo: od pondělí %1$s denně</string>
+    <string name="budget_done_title">%1$s: dnešní rozpočet je vyčerpán</string>
+    <string name="budget_done_text">Využil(a) jsi %1$s. Je na tobě, jestli pokračovat.</string>
+    <string name="ch_budget">Rozpočet brzdy</string>
+    <string name="ch_budget_desc">Když se denní rozpočet brzděné aplikace vyčerpá během používání</string>
 </resources>

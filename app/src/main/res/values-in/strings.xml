@@ -815,7 +815,7 @@
     <string name="ach_skip_1000">Seribu kali tidak</string>
     <string name="ach_skip_1000_d">Ketuk \"Biarkan saja\" total 1000 kali.</string>
     <string name="ach_perfect">Hari sempurna</string>
-    <string name="ach_perfect_d">Dalam satu hari, ketuk \"Biarkan saja\" minimal 5 kali dan tidak pernah \"Tetap buka\".</string>
+    <string name="ach_perfect_d">Dalam satu hari, ketuk \"Biarkan saja\" minimal 5 kali dan tetap dalam anggaran: +5 mnt untuk levelmu.</string>
     <string name="ach_loyal">Setia</string>
     <string name="ach_loyal_d">Ketuk \"Biarkan saja\" 25 kali di aplikasi yang sama. Butuh waktu berapa lama pun tak apa.</string>
     <string name="ach_skip_run">Lima beruntun</string>
@@ -851,11 +851,11 @@
     <string name="ach_clean_365">Setahun penuh hari</string>
     <string name="ach_clean_365_d">Kumpulkan 365 hari tanpa godaan, berturut-turut atau tidak.</string>
     <string name="ach_hour">Satu jam yang ditemukan</string>
-    <string name="ach_hour_d">Dapatkan kembali 60 menit dalam satu hari: setiap \"Biarkan saja\" mengembalikan waktu satu kunjungan, setiap \"Tetap buka\" mengambilnya.</string>
+    <string name="ach_hour_d">Kumpulkan 60 menit dalam minggu yang sama, Senin sampai Minggu: setiap hari dalam anggaran memberi hingga 20.</string>
     <string name="ach_day_2h">Dua jam untukmu</string>
-    <string name="ach_day_2h_d">Dapatkan kembali 2 jam dalam satu hari, dikurangi waktu yang hilang lewat \"Tetap buka\".</string>
+    <string name="ach_day_2h_d">Kumpulkan 2 jam dalam minggu yang sama, Senin sampai Minggu.</string>
     <string name="ach_week_3h">Satu sore</string>
-    <string name="ach_week_3h_d">Dapatkan kembali 3 jam dalam minggu yang sama, Senin sampai Minggu.</string>
+    <string name="ach_week_3h_d">Kumpulkan 3 jam dalam bulan yang sama.</string>
     <string name="ach_month_6h">Buku</string>
     <string name="ach_month_6h_d">Dapatkan kembali 6 jam dalam bulan yang sama: cukup waktu untuk membaca sebuah buku.</string>
     <string name="ach_total_10h">Sepuluh jam</string>
@@ -1062,4 +1062,21 @@
         <item quantity="one">Dibaca</item>
         <item quantity="other">%d dibaca</item>
     </plurals>
+    <string name="brake_left">Sisa %1$s hari ini</string>
+    <string name="brake_used_up">Anggaran hari ini sudah habis</string>
+    <string name="brake_over">%1$s melebihi anggaran</string>
+    <string name="budget_title">Anggaran harian</string>
+    <string name="budget_hint">Menit per hari untuk setiap aplikasi yang direm. Menurunkan berlaku langsung, menaikkan mulai besok.</string>
+    <string name="budget_used">%1$s dari %2$s hari ini</string>
+    <string name="budget_next">mulai besok: %1$s</string>
+    <string name="budget_label">Anggaran rem</string>
+    <string name="budget_ask_lower">Minggu ini %1$s cukup sekitar %2$s per hari. Turunkan anggaran dari %3$s ke %2$s mulai Senin?</string>
+    <string name="budget_ask_raise">Minggu ini kamu sering melewati anggaran di %1$s. Anggaran yang lebih realistis mulai Senin: %2$s, bukan %3$s?</string>
+    <string name="budget_yes">Ya</string>
+    <string name="budget_keep">Biarkan begini</string>
+    <string name="budget_from_monday">Beres: mulai Senin %1$s per hari</string>
+    <string name="budget_done_title">%1$s: anggaran hari ini sudah habis</string>
+    <string name="budget_done_text">Kamu sudah memakai %1$s. Kamu yang memutuskan mau lanjut atau tidak.</string>
+    <string name="ch_budget">Anggaran rem</string>
+    <string name="ch_budget_desc">Saat anggaran harian aplikasi yang direm habis ketika kamu memakainya</string>
 </resources>

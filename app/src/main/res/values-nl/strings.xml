@@ -826,7 +826,7 @@
     <string name="ach_skip_1000">Duizend keer nee</string>
     <string name="ach_skip_1000_d">Tik in totaal 1000 keer op \"Laat maar\".</string>
     <string name="ach_perfect">Perfecte dag</string>
-    <string name="ach_perfect_d">Tik op één dag minstens 5 keer op \"Laat maar\" en nooit op \"Toch openen\".</string>
+    <string name="ach_perfect_d">Tik op één dag minstens 5 keer op ‘Laat maar’ en blijf binnen je budget: +5 min voor je level.</string>
     <string name="ach_loyal">Trouw</string>
     <string name="ach_loyal_d">Tik 25 keer op \"Laat maar\" bij dezelfde app. Neem er de tijd voor.</string>
     <string name="ach_skip_run">Vijf op rij</string>
@@ -862,11 +862,11 @@
     <string name="ach_clean_365">Een jaar aan dagen</string>
     <string name="ach_clean_365_d">Verzamel 365 dagen zonder verleiding, op rij of niet.</string>
     <string name="ach_hour">Een gevonden uur</string>
-    <string name="ach_hour_d">Win op één dag 60 minuten terug: elke \"Laat maar\" geeft de tijd van een bezoek terug, elke \"Toch openen\" neemt hem weg.</string>
+    <string name="ach_hour_d">Verdien 60 minuten in dezelfde week, maandag tot zondag: elke dag binnen budget levert tot 20 op.</string>
     <string name="ach_day_2h">Twee uur voor jou</string>
-    <string name="ach_day_2h_d">Win op één dag 2 uur terug, min de tijd die je verliest met \"Toch openen\".</string>
+    <string name="ach_day_2h_d">Verdien 2 uur in dezelfde week, maandag tot zondag.</string>
     <string name="ach_week_3h">Een middag</string>
-    <string name="ach_week_3h_d">Win in dezelfde week, maandag tot zondag, 3 uur terug.</string>
+    <string name="ach_week_3h_d">Verdien 3 uur in dezelfde maand.</string>
     <string name="ach_month_6h">Het boek</string>
     <string name="ach_month_6h_d">Win in dezelfde maand 6 uur terug: genoeg tijd om een boek te lezen.</string>
     <string name="ach_total_10h">Tien uur</string>
@@ -1073,4 +1073,21 @@
         <item quantity="one">Gelezen</item>
         <item quantity="other">%d gelezen</item>
     </plurals>
+    <string name="brake_left">Nog %1$s vandaag</string>
+    <string name="brake_used_up">Budget van vandaag is op</string>
+    <string name="brake_over">%1$s boven budget</string>
+    <string name="budget_title">Dagbudget</string>
+    <string name="budget_hint">Minuten per dag voor elke geremde app. Verlagen telt meteen, verhogen vanaf morgen.</string>
+    <string name="budget_used">%1$s van %2$s vandaag</string>
+    <string name="budget_next">vanaf morgen: %1$s</string>
+    <string name="budget_label">Rembudget</string>
+    <string name="budget_ask_lower">Deze week had je aan ongeveer %2$s per dag %1$s genoeg. Budget vanaf maandag verlagen van %3$s naar %2$s?</string>
+    <string name="budget_ask_raise">Deze week ging je met %1$s vaak over je budget. Vanaf maandag een realistischer budget: %2$s in plaats van %3$s?</string>
+    <string name="budget_yes">Ja</string>
+    <string name="budget_keep">Zo laten</string>
+    <string name="budget_from_monday">Klaar: vanaf maandag %1$s per dag</string>
+    <string name="budget_done_title">%1$s: budget van vandaag is op</string>
+    <string name="budget_done_text">Je hebt %1$s gebruikt. Jij beslist of je doorgaat.</string>
+    <string name="ch_budget">Rembudget</string>
+    <string name="ch_budget_desc">Als het dagbudget van een geremde app op is terwijl je haar gebruikt</string>
 </resources>

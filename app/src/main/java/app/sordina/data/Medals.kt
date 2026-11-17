@@ -94,6 +94,10 @@ enum class Medal(val group: Group, val tier: Int, val n: Int = 0) {
         val carTrips: Int = 0, val handsFree: Int = 0, val longDrive: Boolean = false, val nightDrive: Boolean = false, val arrived: Boolean = false,
         val daysWithSordina: Int = 0,
         val phone: Map<LocalDate, PhoneDay> = emptyMap(),
+        /** I punti delle giornate col budget (oggi compreso), da [budgetFrom]; [ledgerBank]: quelli già usciti dal registro */
+        val ledger: Map<LocalDate, Int> = emptyMap(), val budgetFrom: LocalDate? = null, val ledgerBank: Int = 0,
+        /** Le giornate senza tentazioni che regalano minuti al livello (null: tutte, come prima del budget) */
+        val bonusDays: Int? = null,
     )
 
     /** Dove sei arrivato: [now] su [goal]. Le serie tornano a zero quando si interrompono. */
@@ -101,9 +105,16 @@ enum class Medal(val group: Group, val tier: Int, val n: Int = 0) {
 
     /** Il calcolo di tutte le imprese su una fotografia dei dati: quali sono vinte e a che punto sei con le altre. */
     class Score(private val all: List<Habits.Skip>, private val today: LocalDate, bank: Int = 0, private val ev: Evidence = Evidence()) {
-        private val st = Habits.summarize(all, today, bank, ev.brakeSince, ev.lastLost, cleanBonus(ev.cleanTotal))
+        private val st = Habits.summarize(all, today, bank, ev.brakeSince, ev.lastLost, cleanBonus(ev.bonusDays ?: ev.cleanTotal), ev.ledger, ev.budgetFrom, ev.ledgerBank)
         private val byDay = all.groupBy { it.day }
-        private val balance = byDay.mapValues { (_, v) -> v.sumOf { it.minutes } }
+        /** Il saldo di ogni giornata: dalle scelte prima del budget, dal budget dopo */
+        private val balance = Habits.balances(all, ev.ledger, ev.budgetFrom)
+        /** Giornata perfetta: 5 "Lascia stare", e nessun "Apri comunque" (prima del budget) o dentro il budget (dopo) */
+        private fun spotless(d: LocalDate, v: List<Habits.Skip>): Boolean =
+            if (ev.budgetFrom == null || d.isBefore(ev.budgetFrom)) v.none { it.minutes < 0 } else bal(d) >= 0
+        private fun perfect(d: LocalDate, v: List<Habits.Skip>): Boolean = v.count { it.minutes > 0 } >= Habits.PERFECT_SKIPS && spotless(d, v)
+        private fun weekSum(mon: LocalDate) = (0L..6L).sumOf { bal(mon.plusDays(it)) }
+        private fun monthSum(ym: YearMonth) = balance.filterKeys { YearMonth.from(it) == ym }.values.sum()
         private fun bal(d: LocalDate) = balance[d] ?: 0
         /** Una giornata non persa: con le app frenate, e senza finire in negativo */
         private fun kept(d: LocalDate) = ev.brakeSince != null && !d.isBefore(ev.brakeSince) && !d.isAfter(today) && bal(d) >= 0
@@ -141,15 +152,14 @@ enum class Medal(val group: Group, val tier: Int, val n: Int = 0) {
         fun progress(m: Medal): Progress? = when (m) {
             TEN -> Progress(byDay[today].orEmpty().count { it.minutes > 0 }, m.n)
             SKIP_100, SKIP_500, SKIP_1000 -> Progress(skipsEver, m.n)
-            PERFECT -> Progress(byDay[today].orEmpty().let { v -> if (v.any { it.minutes < 0 }) 0 else v.count { it.minutes > 0 } }, m.n)
+            PERFECT -> Progress(byDay[today].orEmpty().let { v -> if (spotless(today, v)) v.count { it.minutes > 0 } else 0 }, m.n)
             LOYAL -> Progress(all.filter { it.minutes > 0 }.groupingBy { it.pkg }.eachCount().values.maxOrNull() ?: 0, m.n)
             SKIP_RUN -> Progress(runs.second, m.n)
             ALL_OF_THEM -> if (ev.braked.size < 2) null else Progress(byDay[today].orEmpty().filter { it.minutes > 0 && it.pkg in ev.braked }.map { it.pkg }.toSet().size, ev.braked.size)
             CLEAN_3, CLEAN_7, CLEAN_14, CLEAN_30 -> Progress(ev.cleanRun, m.n)
             CLEAN_10, CLEAN_50, CLEAN_100, CLEAN_365 -> Progress(ev.cleanTotal, m.n)
-            HOUR, DAY_2H -> Progress(bal(today).coerceAtLeast(0), m.n)
-            WEEK_3H -> Progress((0L..6L).sumOf { bal(monday(today).plusDays(it)) }.coerceAtLeast(0), m.n)
-            MONTH_6H -> Progress(balance.filterKeys { YearMonth.from(it) == YearMonth.from(today) }.values.sum().coerceAtLeast(0), m.n)
+            HOUR, DAY_2H -> Progress(weekSum(monday(today)).coerceAtLeast(0), m.n)
+            WEEK_3H, MONTH_6H -> Progress(monthSum(YearMonth.from(today)).coerceAtLeast(0), m.n)
             TOTAL_10H, TOTAL_24H, TOTAL_50H, TOTAL_100H -> Progress(st.totalMinutes, m.n)
             SERIES_3, SERIES_7, SERIES_14, SERIES_30, SERIES_100, SERIES_365 -> Progress(st.days, m.n)
             WEEK -> Progress(keptSince(monday(today)), 7)
@@ -187,7 +197,7 @@ enum class Medal(val group: Group, val tier: Int, val n: Int = 0) {
             FIRST -> skipsEver > 0
             TEN -> byDay.values.any { v -> v.count { it.minutes > 0 } >= m.n }
             SKIP_100, SKIP_500, SKIP_1000 -> skipsEver >= m.n
-            PERFECT -> byDay.values.any { v -> v.count { it.minutes > 0 } >= m.n && v.none { it.minutes < 0 } }
+            PERFECT -> byDay.any { (d, v) -> perfect(d, v) }
             LOYAL -> all.filter { it.minutes > 0 }.groupingBy { it.pkg }.eachCount().values.any { it >= m.n }
             SKIP_RUN -> runs.first >= m.n
             MORNING -> ev.braked.isNotEmpty() && days.values.any { !it.brakedMorning }
@@ -202,9 +212,9 @@ enum class Medal(val group: Group, val tier: Int, val n: Int = 0) {
             CLEAN_3, CLEAN_7, CLEAN_14, CLEAN_30 -> ev.cleanBest >= m.n
             CLEAN_WEEKEND -> ev.cleanWeekend
             // ── Tempo ripreso
-            HOUR, DAY_2H -> balance.values.any { it >= m.n }
-            WEEK_3H -> balance.keys.map { monday(it) }.toSet().any { mon -> (0L..6L).sumOf { bal(mon.plusDays(it)) } >= m.n }
-            MONTH_6H -> balance.entries.groupBy({ YearMonth.from(it.key) }, { it.value }).values.any { it.sum() >= m.n }
+            // Dal budget una giornata vale al massimo 20 minuti: un'ora e due ore in una settimana, tre e sei ore in un mese
+            HOUR, DAY_2H -> balance.keys.map { monday(it) }.toSet().any { mon -> weekSum(mon) >= m.n }
+            WEEK_3H, MONTH_6H -> balance.keys.map { YearMonth.from(it) }.toSet().any { ym -> monthSum(ym) >= m.n }
             TOTAL_10H, TOTAL_24H, TOTAL_50H, TOTAL_100H -> st.totalMinutes >= m.n
             // ── Serie
             SERIES_3, SERIES_7, SERIES_14, SERIES_30, SERIES_100, SERIES_365 -> maxOf(st.best, ev.bestEver) >= m.n

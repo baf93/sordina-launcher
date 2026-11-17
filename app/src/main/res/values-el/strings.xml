@@ -826,7 +826,7 @@
     <string name="ach_skip_1000">Χίλια όχι</string>
     <string name="ach_skip_1000_d">Πάτα \"Άσ\' το\" 1000 φορές συνολικά.</string>
     <string name="ach_perfect">Τέλεια μέρα</string>
-    <string name="ach_perfect_d">Μέσα στην ίδια μέρα πάτα \"Άσ\' το\" τουλάχιστον 5 φορές και ποτέ \"Άνοιγμα παρ\' όλα αυτά\".</string>
+    <string name="ach_perfect_d">Μέσα στην ίδια μέρα πάτα «Άσ\' το» τουλάχιστον 5 φορές και μείνε στον προϋπολογισμό: +5 λεπτά στο επίπεδό σου.</string>
     <string name="ach_loyal">Πιστός</string>
     <string name="ach_loyal_d">Πάτα \"Άσ\' το\" 25 φορές στην ίδια εφαρμογή. Πάρε όσο χρόνο θέλεις.</string>
     <string name="ach_skip_run">Πέντε στη σειρά</string>
@@ -862,11 +862,11 @@
     <string name="ach_clean_365">Ένας χρόνος από μέρες</string>
     <string name="ach_clean_365_d">Μάζεψε 365 μέρες χωρίς πειρασμό, συνεχόμενες ή όχι.</string>
     <string name="ach_hour">Μια ώρα που βρέθηκε</string>
-    <string name="ach_hour_d">Κέρδισε πίσω 60 λεπτά μέσα στην ίδια μέρα: κάθε \"Άσ\' το\" επιστρέφει τον χρόνο μιας επίσκεψης, κάθε \"Άνοιγμα παρ\' όλα αυτά\" τον παίρνει.</string>
+    <string name="ach_hour_d">Κέρδισε 60 λεπτά την ίδια εβδομάδα, Δευτέρα έως Κυριακή: κάθε μέρα εντός προϋπολογισμού δίνει έως 20.</string>
     <string name="ach_day_2h">Δύο ώρες για σένα</string>
-    <string name="ach_day_2h_d">Κέρδισε πίσω 2 ώρες μέσα στην ίδια μέρα, μείον τον χρόνο που χάνεις με το \"Άνοιγμα παρ\' όλα αυτά\".</string>
+    <string name="ach_day_2h_d">Κέρδισε 2 ώρες την ίδια εβδομάδα, Δευτέρα έως Κυριακή.</string>
     <string name="ach_week_3h">Ένα απόγευμα</string>
-    <string name="ach_week_3h_d">Κέρδισε πίσω 3 ώρες μέσα στην ίδια εβδομάδα, Δευτέρα έως Κυριακή.</string>
+    <string name="ach_week_3h_d">Κέρδισε 3 ώρες τον ίδιο μήνα.</string>
     <string name="ach_month_6h">Το βιβλίο</string>
     <string name="ach_month_6h_d">Κέρδισε πίσω 6 ώρες μέσα στον ίδιο μήνα: αρκετό χρόνο για να διαβάσεις ένα βιβλίο.</string>
     <string name="ach_total_10h">Δέκα ώρες</string>
@@ -1073,4 +1073,21 @@
         <item quantity="one">Διαβάστηκε</item>
         <item quantity="other">%d διαβάστηκαν</item>
     </plurals>
+    <string name="brake_left">Σου μένουν %1$s σήμερα</string>
+    <string name="brake_used_up">Ο σημερινός προϋπολογισμός τελείωσε</string>
+    <string name="brake_over">%1$s πάνω από τον προϋπολογισμό</string>
+    <string name="budget_title">Ημερήσιος προϋπολογισμός</string>
+    <string name="budget_hint">Λεπτά την ημέρα για κάθε εφαρμογή στο φρένο. Αν τον μειώσεις ισχύει αμέσως, αν τον αυξήσεις από αύριο.</string>
+    <string name="budget_used">%1$s από %2$s σήμερα</string>
+    <string name="budget_next">από αύριο: %1$s</string>
+    <string name="budget_label">Προϋπολογισμός φρένου</string>
+    <string name="budget_ask_lower">Αυτή την εβδομάδα στο %1$s σου έφταναν περίπου %2$s την ημέρα. Να μειώσουμε τον προϋπολογισμό από %3$s σε %2$s από Δευτέρα;</string>
+    <string name="budget_ask_raise">Αυτή την εβδομάδα ξεπέρασες συχνά το όριο στο %1$s. Πιο ρεαλιστικός προϋπολογισμός από Δευτέρα: %2$s αντί για %3$s;</string>
+    <string name="budget_yes">Ναι</string>
+    <string name="budget_keep">Άφησέ το έτσι</string>
+    <string name="budget_from_monday">Έγινε: από Δευτέρα %1$s την ημέρα</string>
+    <string name="budget_done_title">%1$s: ο σημερινός προϋπολογισμός τελείωσε</string>
+    <string name="budget_done_text">Χρησιμοποίησες %1$s. Εσύ αποφασίζεις αν θα συνεχίσεις.</string>
+    <string name="ch_budget">Προϋπολογισμός φρένου</string>
+    <string name="ch_budget_desc">Όταν τελειώνει ο ημερήσιος προϋπολογισμός μιας εφαρμογής στο φρένο ενώ τη χρησιμοποιείς</string>
 </resources>

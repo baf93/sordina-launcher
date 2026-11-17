@@ -830,7 +830,7 @@
     <string name="ach_skip_1000">Mille non</string>
     <string name="ach_skip_1000_d">Touche \"Laisser tomber\" 1000 fois au total.</string>
     <string name="ach_perfect">Journée parfaite</string>
-    <string name="ach_perfect_d">En une seule journée, touche \"Laisser tomber\" au moins 5 fois et jamais \"Ouvrir quand même\".</string>
+    <string name="ach_perfect_d">En une seule journée, touche « Laisser tomber » au moins 5 fois et reste dans ton budget : +5 min à ton niveau.</string>
     <string name="ach_loyal">Fidèle</string>
     <string name="ach_loyal_d">Touche \"Laisser tomber\" 25 fois sur la même appli. Prends tout ton temps.</string>
     <string name="ach_skip_run">Cinq d\'affilée</string>
@@ -866,11 +866,11 @@
     <string name="ach_clean_365">Une année de jours</string>
     <string name="ach_clean_365_d">Accumule 365 jours sans tentation, d\'affilée ou non.</string>
     <string name="ach_hour">Une heure retrouvée</string>
-    <string name="ach_hour_d">Regagne 60 minutes en une seule journée : chaque \"Laisser tomber\" rend le temps d\'une visite, chaque \"Ouvrir quand même\" le reprend.</string>
+    <string name="ach_hour_d">Gagne 60 minutes dans la même semaine, du lundi au dimanche : chaque jour dans le budget en vaut jusqu\'à 20.</string>
     <string name="ach_day_2h">Deux heures pour toi</string>
-    <string name="ach_day_2h_d">Regagne 2 heures en une seule journée, moins le temps perdu avec \"Ouvrir quand même\".</string>
+    <string name="ach_day_2h_d">Gagne 2 heures dans la même semaine, du lundi au dimanche.</string>
     <string name="ach_week_3h">Un après-midi</string>
-    <string name="ach_week_3h_d">Regagne 3 heures dans la même semaine, du lundi au dimanche.</string>
+    <string name="ach_week_3h_d">Gagne 3 heures dans le même mois.</string>
     <string name="ach_month_6h">Le livre</string>
     <string name="ach_month_6h_d">Regagne 6 heures dans le même mois : de quoi lire un livre.</string>
     <string name="ach_total_10h">Dix heures</string>
@@ -1077,4 +1077,21 @@
         <item quantity="one">Lue</item>
         <item quantity="other">%d lues</item>
     </plurals>
+    <string name="brake_left">Il te reste %1$s aujourd\'hui</string>
+    <string name="brake_used_up">Budget du jour épuisé</string>
+    <string name="brake_over">%1$s au-delà du budget</string>
+    <string name="budget_title">Budget quotidien</string>
+    <string name="budget_hint">Minutes par jour pour chaque app freinée. Le baisser compte tout de suite, l\'augmenter dès demain.</string>
+    <string name="budget_used">%1$s sur %2$s aujourd\'hui</string>
+    <string name="budget_next">dès demain : %1$s</string>
+    <string name="budget_label">Budget du frein</string>
+    <string name="budget_ask_lower">Cette semaine, %1$s t\'a pris environ %2$s par jour. On baisse le budget de %3$s à %2$s dès lundi ?</string>
+    <string name="budget_ask_raise">Cette semaine, tu as souvent dépassé avec %1$s. Un budget plus réaliste dès lundi : %2$s au lieu de %3$s ?</string>
+    <string name="budget_yes">Oui</string>
+    <string name="budget_keep">Laisser comme ça</string>
+    <string name="budget_from_monday">C\'est fait : dès lundi, %1$s par jour</string>
+    <string name="budget_done_title">%1$s : budget du jour épuisé</string>
+    <string name="budget_done_text">Tu as utilisé %1$s. À toi de décider si tu continues.</string>
+    <string name="ch_budget">Budget du frein</string>
+    <string name="ch_budget_desc">Quand le budget quotidien d\'une app freinée est épuisé pendant que tu l\'utilises</string>
 </resources>

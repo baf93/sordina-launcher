@@ -848,7 +848,7 @@
     <string name="ach_skip_1000">Тысяча «нет»</string>
     <string name="ach_skip_1000_d">Нажми \"Не надо\" 1000 раз всего.</string>
     <string name="ach_perfect">Идеальный день</string>
-    <string name="ach_perfect_d">За один день нажми \"Не надо\" минимум 5 раз и ни разу \"Всё равно открыть\".</string>
+    <string name="ach_perfect_d">За один день нажми «Не надо» минимум 5 раз и уложись в бюджет: +5 мин к уровню.</string>
     <string name="ach_loyal">Верный</string>
     <string name="ach_loyal_d">Нажми \"Не надо\" 25 раз в одном и том же приложении. Не торопись.</string>
     <string name="ach_skip_run">Пять подряд</string>
@@ -884,11 +884,11 @@
     <string name="ach_clean_365">Год из дней</string>
     <string name="ach_clean_365_d">Собери 365 дней без соблазна, подряд или нет.</string>
     <string name="ach_hour">Найденный час</string>
-    <string name="ach_hour_d">Верни 60 минут за один день: каждое \"Не надо\" возвращает время одного визита, каждое \"Всё равно открыть\" его забирает.</string>
+    <string name="ach_hour_d">Заработай 60 минут за одну неделю, с понедельника по воскресенье: каждый день в бюджете даёт до 20.</string>
     <string name="ach_day_2h">Два часа для тебя</string>
-    <string name="ach_day_2h_d">Верни 2 часа за один день, за вычетом времени, потерянного через \"Всё равно открыть\".</string>
+    <string name="ach_day_2h_d">Заработай 2 часа за одну неделю, с понедельника по воскресенье.</string>
     <string name="ach_week_3h">Полдня</string>
-    <string name="ach_week_3h_d">Верни 3 часа за одну неделю, с понедельника по воскресенье.</string>
+    <string name="ach_week_3h_d">Заработай 3 часа за один месяц.</string>
     <string name="ach_month_6h">Книга</string>
     <string name="ach_month_6h_d">Верни 6 часов за один месяц: достаточно, чтобы прочитать книгу.</string>
     <string name="ach_total_10h">Десять часов</string>
@@ -1095,4 +1095,21 @@
         <item quantity="one">Прочитано</item>
         <item quantity="other">Прочитано: %d</item>
     </plurals>
+    <string name="brake_left">Сегодня осталось %1$s</string>
+    <string name="brake_used_up">Бюджет на сегодня исчерпан</string>
+    <string name="brake_over">%1$s сверх бюджета</string>
+    <string name="budget_title">Дневной бюджет</string>
+    <string name="budget_hint">Минуты в день для каждого приложения на тормозе. Уменьшение действует сразу, увеличение — с завтрашнего дня.</string>
+    <string name="budget_used">%1$s из %2$s сегодня</string>
+    <string name="budget_next">с завтрашнего дня: %1$s</string>
+    <string name="budget_label">Бюджет тормоза</string>
+    <string name="budget_ask_lower">На этой неделе на %1$s хватало примерно %2$s в день. Снизить бюджет с понедельника с %3$s до %2$s?</string>
+    <string name="budget_ask_raise">На этой неделе ты часто превышал бюджет в %1$s. Более реальный бюджет с понедельника: %2$s вместо %3$s?</string>
+    <string name="budget_yes">Да</string>
+    <string name="budget_keep">Оставить так</string>
+    <string name="budget_from_monday">Готово: с понедельника %1$s в день</string>
+    <string name="budget_done_title">%1$s: бюджет на сегодня исчерпан</string>
+    <string name="budget_done_text">Ты провёл здесь %1$s. Продолжать или нет — решать тебе.</string>
+    <string name="ch_budget">Бюджет тормоза</string>
+    <string name="ch_budget_desc">Когда дневной бюджет приложения на тормозе заканчивается во время использования</string>
 </resources>

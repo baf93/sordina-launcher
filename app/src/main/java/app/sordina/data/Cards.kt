@@ -36,6 +36,10 @@ sealed interface CardOp {
     data class Later(val key: String) : CardOp
     /** "Ok": toglie la scheda e chiude le notifiche da cui nasce */
     data object Dismiss : CardOp
+    /** La proposta della domenica accettata: il budget di [pkg] diventa [minutes] da lunedì */
+    data class Budget(val pkg: String, val minutes: Int) : CardOp
+    /** "Lascia così": per due settimane Sordina non lo richiede */
+    data class BudgetKeep(val pkg: String) : CardOp
     /** Pressione lunga: toglie solo la scheda, per oggi */
     data object Hide : CardOp
     data object Weather : CardOp
@@ -83,6 +87,8 @@ data class Card(
     val startsAt: Long? = null,
     /** L'immagine della notifica (la telecamera di casa, una foto): solo in memoria, si vede allargando il fumetto */
     val image: android.graphics.Bitmap? = null,
+    /** L'app da cui viene (la sua icona nel fumetto); null se è di Sordina o da un'app nascosta */
+    val pkg: String? = null,
 ) {
     /** Una cosa da vedere una volta: aperta o usata, la scheda ha fatto il suo lavoro. */
     val oneShot: Boolean get() = kind in ONE_SHOT
@@ -212,6 +218,7 @@ class Signals(context: android.content.Context) {
             ),
             // In pausa resta 2 minuti, poi sparisce
             expiresAt = if (playing) Long.MAX_VALUE else pausedAt + 2 * 60_000,
+            pkg = pkg,
         )
     }
 

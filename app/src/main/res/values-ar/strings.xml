@@ -870,7 +870,7 @@
     <string name="ach_skip_1000">ألف «لا»</string>
     <string name="ach_skip_1000_d">انقر على \"اتركه\" 1000 مرة إجمالًا.</string>
     <string name="ach_perfect">يوم مثالي</string>
-    <string name="ach_perfect_d">خلال اليوم نفسه انقر على \"اتركه\" 5 مرات على الأقل ولا تنقر أبدًا على \"افتح على أي حال\".</string>
+    <string name="ach_perfect_d">خلال اليوم نفسه انقر على \"اتركه\" 5 مرات على الأقل وابقَ ضمن الميزانية: +5 دقائق لمستواك.</string>
     <string name="ach_loyal">وفيّ</string>
     <string name="ach_loyal_d">انقر على \"اتركه\" 25 مرة في التطبيق نفسه. خذ وقتك كما تشاء.</string>
     <string name="ach_skip_run">خمس متتالية</string>
@@ -906,11 +906,11 @@
     <string name="ach_clean_365">سنة من الأيام</string>
     <string name="ach_clean_365_d">اجمع 365 يومًا بلا إغراء، متتالية أو لا.</string>
     <string name="ach_hour">ساعة مستعادة</string>
-    <string name="ach_hour_d">استعد 60 دقيقة خلال اليوم نفسه: كل \"اتركه\" يعيد وقت زيارة، وكل \"افتح على أي حال\" يأخذه.</string>
+    <string name="ach_hour_d">اكسب 60 دقيقة في الأسبوع نفسه، من الاثنين إلى الأحد: كل يوم ضمن الميزانية يمنح حتى 20.</string>
     <string name="ach_day_2h">ساعتان لك</string>
-    <string name="ach_day_2h_d">استعد ساعتين خلال اليوم نفسه، مطروحًا منهما الوقت الذي تخسره بـ \"افتح على أي حال\".</string>
+    <string name="ach_day_2h_d">اكسب ساعتين في الأسبوع نفسه، من الاثنين إلى الأحد.</string>
     <string name="ach_week_3h">فترة بعد الظهر</string>
-    <string name="ach_week_3h_d">استعد 3 ساعات خلال الأسبوع نفسه، من الاثنين إلى الأحد.</string>
+    <string name="ach_week_3h_d">اكسب 3 ساعات في الشهر نفسه.</string>
     <string name="ach_month_6h">الكتاب</string>
     <string name="ach_month_6h_d">استعد 6 ساعات خلال الشهر نفسه: وقت يكفي لقراءة كتاب.</string>
     <string name="ach_total_10h">عشر ساعات</string>
@@ -1117,4 +1117,21 @@
         <item quantity="one">مقروء</item>
         <item quantity="other">%d مقروءة</item>
     </plurals>
+    <string name="brake_left">تبقّى لك %1$s اليوم</string>
+    <string name="brake_used_up">انتهت ميزانية اليوم</string>
+    <string name="brake_over">تجاوزت الميزانية بـ %1$s</string>
+    <string name="budget_title">الميزانية اليومية</string>
+    <string name="budget_hint">دقائق يوميًا لكل تطبيق مكبوح. التخفيض يسري فورًا، والزيادة من الغد.</string>
+    <string name="budget_used">%1$s من %2$s اليوم</string>
+    <string name="budget_next">من الغد: %1$s</string>
+    <string name="budget_label">ميزانية المكابح</string>
+    <string name="budget_ask_lower">هذا الأسبوع كفاك نحو %2$s يوميًا من %1$s. هل نخفض الميزانية من %3$s إلى %2$s بدءًا من الاثنين؟</string>
+    <string name="budget_ask_raise">هذا الأسبوع تجاوزت الميزانية كثيرًا مع %1$s. ميزانية أكثر واقعية من الاثنين: %2$s بدلًا من %3$s؟</string>
+    <string name="budget_yes">نعم</string>
+    <string name="budget_keep">اتركها كما هي</string>
+    <string name="budget_from_monday">تم: من الاثنين %1$s يوميًا</string>
+    <string name="budget_done_title">%1$s: انتهت ميزانية اليوم</string>
+    <string name="budget_done_text">استخدمت %1$s. القرار لك إن أردت المتابعة.</string>
+    <string name="ch_budget">ميزانية المكابح</string>
+    <string name="ch_budget_desc">عندما تنتهي الميزانية اليومية لتطبيق مكبوح أثناء استخدامه</string>
 </resources>

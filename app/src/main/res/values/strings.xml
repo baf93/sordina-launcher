@@ -846,7 +846,7 @@
     <string name="ach_skip_1000">A thousand noes</string>
     <string name="ach_skip_1000_d">Tap \"Leave it\" 1000 times in total.</string>
     <string name="ach_perfect">Perfect day</string>
-    <string name="ach_perfect_d">In a single day tap \"Leave it\" at least 5 times, and never tap \"Open anyway\".</string>
+    <string name="ach_perfect_d">In a single day tap “Leave it” at least 5 times and stay within your budget: +5 min to your level.</string>
     <string name="ach_loyal">Loyal</string>
     <string name="ach_loyal_d">Tap \"Leave it\" 25 times on the same app. Take as long as you like.</string>
     <string name="ach_skip_run">Five in a row</string>
@@ -882,11 +882,11 @@
     <string name="ach_clean_365">A year of days</string>
     <string name="ach_clean_365_d">Collect 365 temptation-free days, in a row or not.</string>
     <string name="ach_hour">An hour found</string>
-    <string name="ach_hour_d">Win back 60 minutes in a single day: each \"Leave it\" gives back the time of a visit, each \"Open anyway\" takes it away.</string>
+    <string name="ach_hour_d">Earn 60 minutes in the same week, Monday to Sunday: each day within budget gives up to 20.</string>
     <string name="ach_day_2h">Two hours for you</string>
-    <string name="ach_day_2h_d">Win back 2 hours in a single day, minus the time lost with \"Open anyway\".</string>
+    <string name="ach_day_2h_d">Earn 2 hours in the same week, Monday to Sunday.</string>
     <string name="ach_week_3h">An afternoon</string>
-    <string name="ach_week_3h_d">Win back 3 hours in the same week, Monday to Sunday.</string>
+    <string name="ach_week_3h_d">Earn 3 hours in the same month.</string>
     <string name="ach_month_6h">The book</string>
     <string name="ach_month_6h_d">Win back 6 hours in the same month: time enough to read a book.</string>
     <string name="ach_total_10h">Ten hours</string>
@@ -1082,4 +1082,21 @@
         <item quantity="one">Read</item>
         <item quantity="other">%d read</item>
     </plurals>
+    <string name="brake_left">%1$s left today</string>
+    <string name="brake_used_up">Today\'s budget is used up</string>
+    <string name="brake_over">%1$s over budget</string>
+    <string name="budget_title">Daily budget</string>
+    <string name="budget_hint">Minutes a day for each braked app. Lowering it counts right away, raising it from tomorrow.</string>
+    <string name="budget_used">%1$s of %2$s today</string>
+    <string name="budget_next">from tomorrow: %1$s</string>
+    <string name="budget_label">Brake budget</string>
+    <string name="budget_ask_lower">This week %1$s took you about %2$s a day. Lower the budget from %3$s to %2$s, starting Monday?</string>
+    <string name="budget_ask_raise">This week you often went over on %1$s. Set a more realistic budget from Monday: %2$s instead of %3$s?</string>
+    <string name="budget_yes">Yes</string>
+    <string name="budget_keep">Leave it as is</string>
+    <string name="budget_from_monday">Done: from Monday, %1$s a day</string>
+    <string name="budget_done_title">%1$s: today\'s budget is used up</string>
+    <string name="budget_done_text">You\'ve used %1$s. It\'s up to you whether to keep going.</string>
+    <string name="ch_budget">Brake budget</string>
+    <string name="ch_budget_desc">When a braked app\'s daily budget runs out while you\'re using it</string>
 </resources>

@@ -826,7 +826,7 @@
     <string name="ach_skip_1000">हज़ार बार ना</string>
     <string name="ach_skip_1000_d">कुल 1000 बार \"रहने दें\" पर टैप करें।</string>
     <string name="ach_perfect">परफ़ेक्ट दिन</string>
-    <string name="ach_perfect_d">एक ही दिन में कम से कम 5 बार \"रहने दें\" पर टैप करें और कभी भी \"फिर भी खोलें\" पर नहीं।</string>
+    <string name="ach_perfect_d">एक ही दिन में कम से कम 5 बार \"रहने दें\" पर टैप करें और बजट में रहें: आपके लेवल में +5 मिनट।</string>
     <string name="ach_loyal">वफ़ादार</string>
     <string name="ach_loyal_d">एक ही ऐप में 25 बार \"रहने दें\" पर टैप करें। जितना समय चाहें लें।</string>
     <string name="ach_skip_run">लगातार पाँच</string>
@@ -862,11 +862,11 @@
     <string name="ach_clean_365">एक साल के दिन</string>
     <string name="ach_clean_365_d">बिना लालच के 365 दिन जमा करें, लगातार हों या नहीं।</string>
     <string name="ach_hour">मिला हुआ एक घंटा</string>
-    <string name="ach_hour_d">एक ही दिन में 60 मिनट वापस पाएँ: हर \"रहने दें\" एक विज़िट का समय लौटाता है, हर \"फिर भी खोलें\" उसे ले लेता है।</string>
+    <string name="ach_hour_d">एक ही हफ़्ते में, सोमवार से रविवार, 60 मिनट कमाएँ: बजट में रहा हर दिन 20 तक देता है।</string>
     <string name="ach_day_2h">आपके लिए दो घंटे</string>
-    <string name="ach_day_2h_d">एक ही दिन में 2 घंटे वापस पाएँ, \"फिर भी खोलें\" से गँवाया समय घटाकर।</string>
+    <string name="ach_day_2h_d">एक ही हफ़्ते में, सोमवार से रविवार, 2 घंटे कमाएँ।</string>
     <string name="ach_week_3h">एक दोपहर</string>
-    <string name="ach_week_3h_d">एक ही हफ़्ते में, सोमवार से रविवार, 3 घंटे वापस पाएँ।</string>
+    <string name="ach_week_3h_d">एक ही महीने में 3 घंटे कमाएँ।</string>
     <string name="ach_month_6h">किताब</string>
     <string name="ach_month_6h_d">एक ही महीने में 6 घंटे वापस पाएँ: एक किताब पढ़ने लायक समय।</string>
     <string name="ach_total_10h">दस घंटे</string>
@@ -1073,4 +1073,21 @@
         <item quantity="one">पढ़ ली</item>
         <item quantity="other">%d पढ़ ली गईं</item>
     </plurals>
+    <string name="brake_left">आज %1$s बाकी हैं</string>
+    <string name="brake_used_up">आज का बजट खत्म हो गया</string>
+    <string name="brake_over">बजट से %1$s ज़्यादा</string>
+    <string name="budget_title">रोज़ का बजट</string>
+    <string name="budget_hint">हर ब्रेक लगे ऐप के लिए रोज़ के मिनट। घटाने पर तुरंत लागू, बढ़ाने पर कल से।</string>
+    <string name="budget_used">आज %2$s में से %1$s</string>
+    <string name="budget_next">कल से: %1$s</string>
+    <string name="budget_label">ब्रेक का बजट</string>
+    <string name="budget_ask_lower">इस हफ़्ते %1$s के लिए रोज़ लगभग %2$s काफ़ी रहे। सोमवार से बजट %3$s से घटाकर %2$s कर दें?</string>
+    <string name="budget_ask_raise">इस हफ़्ते %1$s पर आप अक्सर बजट से आगे गए। सोमवार से ज़्यादा व्यावहारिक बजट: %3$s की जगह %2$s?</string>
+    <string name="budget_yes">हाँ</string>
+    <string name="budget_keep">ऐसे ही रहने दें</string>
+    <string name="budget_from_monday">हो गया: सोमवार से रोज़ %1$s</string>
+    <string name="budget_done_title">%1$s: आज का बजट खत्म हो गया</string>
+    <string name="budget_done_text">आपने %1$s इस्तेमाल किए। आगे जारी रखना है या नहीं, आप तय करें।</string>
+    <string name="ch_budget">ब्रेक का बजट</string>
+    <string name="ch_budget_desc">जब किसी ब्रेक लगे ऐप का रोज़ का बजट इस्तेमाल के दौरान खत्म हो जाए</string>
 </resources>

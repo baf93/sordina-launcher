@@ -830,7 +830,7 @@
     <string name="ach_skip_1000">Mil noes</string>
     <string name="ach_skip_1000_d">Toca \"Déjalo\" 1000 veces en total.</string>
     <string name="ach_perfect">Día perfecto</string>
-    <string name="ach_perfect_d">En un solo día toca \"Déjalo\" al menos 5 veces y nunca \"Abrir igualmente\".</string>
+    <string name="ach_perfect_d">En un solo día toca “Déjalo” al menos 5 veces y quédate dentro del presupuesto: +5 min a tu nivel.</string>
     <string name="ach_loyal">Fiel</string>
     <string name="ach_loyal_d">Toca \"Déjalo\" 25 veces en la misma app. Tómate el tiempo que quieras.</string>
     <string name="ach_skip_run">Cinco seguidos</string>
@@ -866,11 +866,11 @@
     <string name="ach_clean_365">Un año de días</string>
     <string name="ach_clean_365_d">Acumula 365 días sin tentaciones, seguidos o no.</string>
     <string name="ach_hour">Una hora encontrada</string>
-    <string name="ach_hour_d">Recupera 60 minutos en un solo día: cada \"Déjalo\" devuelve el tiempo de una visita, cada \"Abrir igualmente\" lo quita.</string>
+    <string name="ach_hour_d">Gana 60 minutos en la misma semana, de lunes a domingo: cada día dentro del presupuesto vale hasta 20.</string>
     <string name="ach_day_2h">Dos horas para ti</string>
-    <string name="ach_day_2h_d">Recupera 2 horas en un solo día, menos el tiempo perdido con \"Abrir igualmente\".</string>
+    <string name="ach_day_2h_d">Gana 2 horas en la misma semana, de lunes a domingo.</string>
     <string name="ach_week_3h">Una tarde</string>
-    <string name="ach_week_3h_d">Recupera 3 horas en la misma semana, de lunes a domingo.</string>
+    <string name="ach_week_3h_d">Gana 3 horas en el mismo mes.</string>
     <string name="ach_month_6h">El libro</string>
     <string name="ach_month_6h_d">Recupera 6 horas en el mismo mes: tiempo suficiente para leer un libro.</string>
     <string name="ach_total_10h">Diez horas</string>
@@ -1077,4 +1077,21 @@
         <item quantity="one">Leída</item>
         <item quantity="other">%d leídas</item>
     </plurals>
+    <string name="brake_left">Te quedan %1$s hoy</string>
+    <string name="brake_used_up">Presupuesto de hoy agotado</string>
+    <string name="brake_over">%1$s por encima del presupuesto</string>
+    <string name="budget_title">Presupuesto diario</string>
+    <string name="budget_hint">Minutos al día para cada app frenada. Si lo bajas cuenta ya, si lo subes desde mañana.</string>
+    <string name="budget_used">%1$s de %2$s hoy</string>
+    <string name="budget_next">desde mañana: %1$s</string>
+    <string name="budget_label">Presupuesto del freno</string>
+    <string name="budget_ask_lower">Esta semana te bastaron unos %2$s al día de %1$s. ¿Bajamos el presupuesto de %3$s a %2$s desde el lunes?</string>
+    <string name="budget_ask_raise">Esta semana te pasaste a menudo con %1$s. ¿Ponemos un presupuesto más realista desde el lunes: %2$s en vez de %3$s?</string>
+    <string name="budget_yes">Sí</string>
+    <string name="budget_keep">Dejarlo así</string>
+    <string name="budget_from_monday">Hecho: desde el lunes, %1$s al día</string>
+    <string name="budget_done_title">%1$s: presupuesto de hoy agotado</string>
+    <string name="budget_done_text">Has usado %1$s. Tú decides si seguir.</string>
+    <string name="ch_budget">Presupuesto del freno</string>
+    <string name="ch_budget_desc">Cuando se agota el presupuesto diario de una app frenada mientras la usas</string>
 </resources>

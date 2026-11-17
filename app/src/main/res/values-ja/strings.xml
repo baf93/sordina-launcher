@@ -815,7 +815,7 @@
     <string name="ach_skip_1000">1000回のノー</string>
     <string name="ach_skip_1000_d">「やめておく」を合計1000回タップ。</string>
     <string name="ach_perfect">完璧な一日</string>
-    <string name="ach_perfect_d">同じ日に「やめておく」を5回以上タップし、「それでも開く」は一度もタップしない。</string>
+    <string name="ach_perfect_d">同じ日に「やめておく」を5回以上タップし、予算内に収める：レベルに+5分。</string>
     <string name="ach_loyal">一途</string>
     <string name="ach_loyal_d">同じアプリで「やめておく」を25回タップ。時間はいくらかかってもOK。</string>
     <string name="ach_skip_run">5連続</string>
@@ -851,11 +851,11 @@
     <string name="ach_clean_365">1年分の日々</string>
     <string name="ach_clean_365_d">誘惑なしの日を365日集める（連続でもそうでなくても）。</string>
     <string name="ach_hour">見つけた1時間</string>
-    <string name="ach_hour_d">同じ日に60分取り戻す：「やめておく」は1回分の時間を返し、「それでも開く」はそれを奪います。</string>
+    <string name="ach_hour_d">同じ週（月曜〜日曜）に60分を獲得：予算内の日は1日最大20分。</string>
     <string name="ach_day_2h">あなたに2時間</string>
-    <string name="ach_day_2h_d">同じ日に2時間取り戻す（「それでも開く」で失った時間を差し引いて）。</string>
+    <string name="ach_day_2h_d">同じ週（月曜〜日曜）に2時間を獲得。</string>
     <string name="ach_week_3h">午後ひとつ</string>
-    <string name="ach_week_3h_d">同じ週（月曜から日曜）に3時間取り戻す。</string>
+    <string name="ach_week_3h_d">同じ月に3時間を獲得。</string>
     <string name="ach_month_6h">一冊の本</string>
     <string name="ach_month_6h_d">同じ月に6時間取り戻す：本を一冊読めるだけの時間。</string>
     <string name="ach_total_10h">10時間</string>
@@ -1062,4 +1062,21 @@
         <item quantity="one">既読</item>
         <item quantity="other">%d 件既読</item>
     </plurals>
+    <string name="brake_left">今日はあと%1$s</string>
+    <string name="brake_used_up">今日の予算を使い切りました</string>
+    <string name="brake_over">予算を%1$s超過</string>
+    <string name="budget_title">1日の予算</string>
+    <string name="budget_hint">ブレーキ中の各アプリの1日あたりの分数。下げるとすぐに、上げると明日から反映されます。</string>
+    <string name="budget_used">今日 %2$s中 %1$s</string>
+    <string name="budget_next">明日から：%1$s</string>
+    <string name="budget_label">ブレーキの予算</string>
+    <string name="budget_ask_lower">今週、%1$sは1日約%2$sで足りました。月曜から予算を%3$sから%2$sに下げますか？</string>
+    <string name="budget_ask_raise">今週は%1$sで予算をよく超えました。月曜からもっと現実的な予算にしますか：%3$sではなく%2$s？</string>
+    <string name="budget_yes">はい</string>
+    <string name="budget_keep">このままにする</string>
+    <string name="budget_from_monday">完了：月曜から1日%1$s</string>
+    <string name="budget_done_title">%1$s：今日の予算を使い切りました</string>
+    <string name="budget_done_text">%1$s使いました。続けるかどうかはあなた次第です。</string>
+    <string name="ch_budget">ブレーキの予算</string>
+    <string name="ch_budget_desc">ブレーキ中のアプリの1日の予算が使用中に尽きたとき</string>
 </resources>

@@ -837,7 +837,7 @@
     <string name="ach_skip_1000">O mie de nu</string>
     <string name="ach_skip_1000_d">Atinge \"Las-o baltă\" de 1000 de ori în total.</string>
     <string name="ach_perfect">Zi perfectă</string>
-    <string name="ach_perfect_d">În aceeași zi atinge \"Las-o baltă\" de cel puțin 5 ori și niciodată \"Deschide oricum\".</string>
+    <string name="ach_perfect_d">În aceeași zi atinge „Las-o baltă” de cel puțin 5 ori și rămâi în buget: +5 min la nivel.</string>
     <string name="ach_loyal">Fidel</string>
     <string name="ach_loyal_d">Atinge \"Las-o baltă\" de 25 de ori în aceeași aplicație. Ia-ți tot timpul de care ai nevoie.</string>
     <string name="ach_skip_run">Cinci la rând</string>
@@ -873,11 +873,11 @@
     <string name="ach_clean_365">Un an de zile</string>
     <string name="ach_clean_365_d">Adună 365 de zile fără tentație, la rând sau nu.</string>
     <string name="ach_hour">O oră regăsită</string>
-    <string name="ach_hour_d">Recuperează 60 de minute în aceeași zi: fiecare \"Las-o baltă\" îți dă înapoi timpul unei vizite, fiecare \"Deschide oricum\" ți-l ia.</string>
+    <string name="ach_hour_d">Câștigă 60 de minute în aceeași săptămână, de luni până duminică: fiecare zi în buget aduce până la 20.</string>
     <string name="ach_day_2h">Două ore pentru tine</string>
-    <string name="ach_day_2h_d">Recuperează 2 ore în aceeași zi, minus timpul pierdut cu \"Deschide oricum\".</string>
+    <string name="ach_day_2h_d">Câștigă 2 ore în aceeași săptămână, de luni până duminică.</string>
     <string name="ach_week_3h">O după-amiază</string>
-    <string name="ach_week_3h_d">Recuperează 3 ore în aceeași săptămână, de luni până duminică.</string>
+    <string name="ach_week_3h_d">Câștigă 3 ore în aceeași lună.</string>
     <string name="ach_month_6h">Cartea</string>
     <string name="ach_month_6h_d">Recuperează 6 ore în aceeași lună: destul timp cât să citești o carte.</string>
     <string name="ach_total_10h">Zece ore</string>
@@ -1084,4 +1084,21 @@
         <item quantity="one">Citită</item>
         <item quantity="other">%d citite</item>
     </plurals>
+    <string name="brake_left">Îți mai rămân %1$s azi</string>
+    <string name="brake_used_up">Bugetul de azi s-a terminat</string>
+    <string name="brake_over">%1$s peste buget</string>
+    <string name="budget_title">Buget zilnic</string>
+    <string name="budget_hint">Minute pe zi pentru fiecare aplicație frânată. Dacă îl scazi contează imediat, dacă îl crești de mâine.</string>
+    <string name="budget_used">%1$s din %2$s azi</string>
+    <string name="budget_next">de mâine: %1$s</string>
+    <string name="budget_label">Bugetul frânei</string>
+    <string name="budget_ask_lower">Săptămâna asta ți-au ajuns cam %2$s pe zi pentru %1$s. Scădem bugetul de la %3$s la %2$s de luni?</string>
+    <string name="budget_ask_raise">Săptămâna asta ai depășit des cu %1$s. Un buget mai realist de luni: %2$s în loc de %3$s?</string>
+    <string name="budget_yes">Da</string>
+    <string name="budget_keep">Las-o așa</string>
+    <string name="budget_from_monday">Gata: de luni, %1$s pe zi</string>
+    <string name="budget_done_title">%1$s: bugetul de azi s-a terminat</string>
+    <string name="budget_done_text">Ai folosit %1$s. Tu decizi dacă mai continui.</string>
+    <string name="ch_budget">Bugetul frânei</string>
+    <string name="ch_budget_desc">Când bugetul zilnic al unei aplicații frânate se termină în timp ce o folosești</string>
 </resources>

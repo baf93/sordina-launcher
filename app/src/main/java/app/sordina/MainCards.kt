@@ -1,5 +1,7 @@
 package app.sordina
 
+import app.sordina.ui.shortDuration
+
 import app.sordina.ui.Celebration
 import app.sordina.data.Backup
 import app.sordina.data.Signals
@@ -242,6 +244,13 @@ internal fun MainActivity.cardAction(card: Card, a: CardAction) {
         is CardOp.Done -> { SordinaListener.done(op.key); dismissCard(card) }
         is CardOp.Later -> { SordinaListener.later(op.key); app.signals.remove(card.key) }
         CardOp.Weather -> openWeather()
+        is CardOp.Budget -> {
+            app.habits.acceptProposal(op.pkg, op.minutes)
+            dismissCard(card)
+            say(tr(R.string.budget_from_monday, shortDuration(op.minutes)))
+            changed()
+        }
+        is CardOp.BudgetKeep -> { app.habits.keepBudget(op.pkg); dismissCard(card); changed() }
         CardOp.Dismiss -> {
             if (card.kind == CardKind.HABIT || card.kind == CardKind.BIRTHDAY) doneHabits = doneHabits + card.key
             // "Ok" toglie la scheda e chiude anche la notifica (o le notifiche) da cui è nata
@@ -256,31 +265,45 @@ internal fun MainActivity.cardAction(card: Card, a: CardAction) {
 /** Sordina non funziona (o rischia): una scheda in cima, gentile, con un tasto solo che porta dove si sistema. */
 /** Solo nella versione di prova: un fumetto finto per vedere com'è, senza aspettare che succeda davvero. */
 internal fun MainActivity.demoCard(k: String): Card? {
+    val HA = "io.homeassistant.companion.android"
     val t = System.currentTimeMillis()
     val open = CardAction(tr(R.string.open), CardOp.Dismiss)
     return when (k) {
         "otp" -> Card("demo:otp", CardKind.OTP, tr(R.string.code_x, "Intesa"), "482 913", actions = listOf(CardAction(tr(R.string.copy), CardOp.Copy("482913"))),
-            expiresAt = t + 8 * 60_000, look = CardLook.CODE, bar = Bar(t - 2 * 60_000, t + 8 * 60_000, drain = true))
+            expiresAt = t + 8 * 60_000, look = CardLook.CODE, bar = Bar(t - 2 * 60_000, t + 8 * 60_000, drain = true), pkg = "com.latuabancaperandroid")
         "ask" -> Card("demo:ask", CardKind.ASK, "Home Assistant", "Hai lasciato la finestra aperta. Accendo comunque il riscaldamento?",
-            actions = listOf(CardAction("Sì", CardOp.Dismiss), CardAction("No", CardOp.Dismiss)))
+            actions = listOf(CardAction("Sì", CardOp.Dismiss), CardAction("No", CardOp.Dismiss)), pkg = HA)
         "ask3" -> Card("demo:ask3", CardKind.ASK, "Home Assistant", "La lavatrice ha finito. Cosa faccio?",
-            actions = listOf(CardAction("Asciugatrice", CardOp.Dismiss), CardAction("Ricordamelo", CardOp.Dismiss), CardAction("Niente", CardOp.Dismiss)))
+            actions = listOf(CardAction("Asciugatrice", CardOp.Dismiss), CardAction("Ricordamelo", CardOp.Dismiss), CardAction("Niente", CardOp.Dismiss)), pkg = HA)
         "call" -> Card("demo:call", CardKind.CALL, tr(R.string.missed_call), "Marta",
-            actions = listOf(CardAction(tr(R.string.call_back), CardOp.Query("chiama Marta")), CardAction(tr(R.string.write), CardOp.Query("scrivi a Marta"))), avatar = true)
-        "ride" -> Card("demo:ride", CardKind.RIDE, "Glovo", "Il rider arriva tra 8 min", "Sushi Zen · 2 articoli", listOf(open), bar = Bar(value = 0.65f))
-        "timer" -> Card("demo:timer", CardKind.TIMER, "Orologio", "Timer · 4:32", "Pasta", listOf(open))
-        "alarm" -> Card("demo:alarm", CardKind.TIMER, "Orologio", "Sveglia in arrivo", "Lun 07:15", listOf(CardAction("Ignora", CardOp.Fire("demo:alarm", 0))))
+            actions = listOf(CardAction(tr(R.string.call_back), CardOp.Query("chiama Marta")), CardAction(tr(R.string.write), CardOp.Query("scrivi a Marta"))), avatar = true, pkg = "com.samsung.android.dialer")
+        "ride" -> Card("demo:ride", CardKind.RIDE, "Glovo", "Il rider arriva tra 8 min", "Sushi Zen · 2 articoli", listOf(open), bar = Bar(value = 0.65f), pkg = "com.glovo")
+        "timer" -> Card("demo:timer", CardKind.TIMER, "Orologio", "Timer · 4:32", "Pasta", listOf(open), pkg = "com.sec.android.app.clockpackage")
+        "alarm" -> Card("demo:alarm", CardKind.TIMER, "Orologio", "Sveglia in arrivo", "Lun 07:15", listOf(CardAction("Ignora", CardOp.Fire("demo:alarm", 0))), pkg = "com.sec.android.app.clockpackage")
         "music" -> Card("demo:music", CardKind.MUSIC, "Spotify", "Tutto bene", "Cosmo", listOf(
-            CardAction(tr(R.string.prev), CardOp.MusicPrev, "prev"), CardAction(tr(R.string.pause), CardOp.MusicToggle, "pause"), CardAction(tr(R.string.next_track), CardOp.MusicNext, "next")))
+            CardAction(tr(R.string.prev), CardOp.MusicPrev, "prev"), CardAction(tr(R.string.pause), CardOp.MusicToggle, "pause"), CardAction(tr(R.string.next_track), CardOp.MusicNext, "next")), pkg = "com.spotify.music")
         "event" -> Card("demo:event", CardKind.EVENT, "Teams", "Riunione di progetto", "Microsoft Teams", listOf(CardAction(tr(R.string.join), CardOp.OpenUrl("https://teams.microsoft.com"))),
-            time = t + 10 * 60_000, expiresAt = t + 70 * 60_000, startsAt = t + 10 * 60_000)
+            time = t + 10 * 60_000, expiresAt = t + 70 * 60_000, startsAt = t + 10 * 60_000, pkg = "com.microsoft.teams")
         "eventnow" -> Card("demo:eventnow", CardKind.EVENT, "Teams", "Riunione di progetto", "Microsoft Teams", listOf(CardAction(tr(R.string.join), CardOp.OpenUrl("https://teams.microsoft.com"))),
-            time = t - 20 * 60_000, expiresAt = t + 40 * 60_000, startsAt = t - 20 * 60_000, bar = Bar(t - 20 * 60_000, t + 40 * 60_000))
+            time = t - 20 * 60_000, expiresAt = t + 40 * 60_000, startsAt = t - 20 * 60_000, bar = Bar(t - 20 * 60_000, t + 40 * 60_000), pkg = "com.microsoft.teams")
         "plan" -> Card("demo:plan", CardKind.PLAN, "WhatsApp", "Cena da Luca", "Via Roma 12, Torino", listOf(CardAction(tr(R.string.navigate), CardOp.Navigate("Via Roma 12, Torino"))),
-            time = t, expiresAt = t + 3 * 3_600_000, startsAt = t + 14 * 60_000)
+            time = t, expiresAt = t + 3 * 3_600_000, startsAt = t + 14 * 60_000, pkg = "com.whatsapp")
         "health" -> healthCard(Health.STOPPED).copy(key = "demo:health")
         else -> null
     }
+}
+
+/** La domenica la sordina propone il budget della settimana dopo: più basso se ti è bastato meno, realistico se sfori spesso. */
+internal fun MainActivity.budgetCard(p: Habits.Proposal): Card {
+    val label = apps.firstOrNull { it.packageName == p.pkg }?.label
+        ?: runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(p.pkg, 0)).toString() }.getOrDefault(p.pkg)
+    val to = shortDuration(p.to)
+    val from = shortDuration(p.from)
+    return Card(
+        "budget:${p.pkg}:${p.to}", CardKind.ASK, tr(R.string.budget_label),
+        if (p.lower) tr(R.string.budget_ask_lower, label, to, from) else tr(R.string.budget_ask_raise, label, to, from),
+        actions = listOf(CardAction(tr(R.string.budget_yes), CardOp.Budget(p.pkg, p.to)), CardAction(tr(R.string.budget_keep), CardOp.BudgetKeep(p.pkg))),
+    )
 }
 
 internal fun MainActivity.healthCard(h: Health): Card = when (h) {

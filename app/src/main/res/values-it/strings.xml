@@ -845,7 +845,7 @@
     <string name="ach_skip_1000">Mille no</string>
     <string name="ach_skip_1000_d">Tocca «Lascio stare» 1000 volte in tutto.</string>
     <string name="ach_perfect">Giornata perfetta</string>
-    <string name="ach_perfect_d">In un solo giorno tocca «Lascio stare» almeno 5 volte, senza mai toccare «Apri comunque».</string>
+    <string name="ach_perfect_d">In un solo giorno tocca «Lascio stare» almeno 5 volte e resta nel budget: +5 min al livello.</string>
     <string name="ach_loyal">Fedele</string>
     <string name="ach_loyal_d">Tocca «Lascio stare» 25 volte sulla stessa app. Puoi metterci tutto il tempo che vuoi.</string>
     <string name="ach_skip_run">Cinque di fila</string>
@@ -881,11 +881,11 @@
     <string name="ach_clean_365">Un anno di giornate</string>
     <string name="ach_clean_365_d">Colleziona 365 giornate senza tentazioni, anche non di fila.</string>
     <string name="ach_hour">Un\'ora ritrovata</string>
-    <string name="ach_hour_d">Riprenditi 60 minuti in un solo giorno: ogni «Lascio stare» ti ridà il tempo di una visita, ogni «Apri comunque» lo toglie.</string>
+    <string name="ach_hour_d">Guadagna 60 minuti nella stessa settimana, da lunedì a domenica: ogni giornata nel budget ne vale fino a 20.</string>
     <string name="ach_day_2h">Due ore per te</string>
-    <string name="ach_day_2h_d">Riprenditi 2 ore in un solo giorno, tolto il tempo perso con «Apri comunque».</string>
+    <string name="ach_day_2h_d">Guadagna 2 ore nella stessa settimana, da lunedì a domenica.</string>
     <string name="ach_week_3h">Un pomeriggio</string>
-    <string name="ach_week_3h_d">Riprenditi 3 ore nella stessa settimana, da lunedì a domenica.</string>
+    <string name="ach_week_3h_d">Guadagna 3 ore nello stesso mese.</string>
     <string name="ach_month_6h">Il libro</string>
     <string name="ach_month_6h_d">Riprenditi 6 ore nello stesso mese: il tempo per leggere un libro.</string>
     <string name="ach_total_10h">Dieci ore</string>
@@ -1081,4 +1081,21 @@
         <item quantity="one">Letta</item>
         <item quantity="other">%d lette</item>
     </plurals>
+    <string name="brake_left">Ti restano %1$s oggi</string>
+    <string name="brake_used_up">Budget di oggi finito</string>
+    <string name="brake_over">Oltre il budget di %1$s</string>
+    <string name="budget_title">Budget giornaliero</string>
+    <string name="budget_hint">Minuti al giorno per ogni app frenata. Se lo abbassi vale subito, se lo alzi da domani.</string>
+    <string name="budget_used">%1$s su %2$s oggi</string>
+    <string name="budget_next">da domani: %1$s</string>
+    <string name="budget_label">Budget del freno</string>
+    <string name="budget_ask_lower">Questa settimana %1$s ti è bastato circa %2$s al giorno. Abbassiamo il budget da %3$s a %2$s, da lunedì?</string>
+    <string name="budget_ask_raise">Questa settimana con %1$s hai sforato spesso. Mettiamo un budget più realistico da lunedì: %2$s invece di %3$s?</string>
+    <string name="budget_yes">Sì</string>
+    <string name="budget_keep">Lascia così</string>
+    <string name="budget_from_monday">Fatto: da lunedì %1$s al giorno</string>
+    <string name="budget_done_title">%1$s: budget di oggi finito</string>
+    <string name="budget_done_text">Hai usato %1$s. Decidi tu se continuare.</string>
+    <string name="ch_budget">Budget del freno</string>
+    <string name="ch_budget_desc">Quando finisce il budget giornaliero di un\'app frenata mentre la usi</string>
 </resources>

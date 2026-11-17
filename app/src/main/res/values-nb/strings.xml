@@ -826,7 +826,7 @@
     <string name="ach_skip_1000">Tusen nei</string>
     <string name="ach_skip_1000_d">Trykk på \"La være\" 1000 ganger totalt.</string>
     <string name="ach_perfect">Perfekt dag</string>
-    <string name="ach_perfect_d">Trykk på én dag på \"La være\" minst 5 ganger og aldri på \"Åpne likevel\".</string>
+    <string name="ach_perfect_d">Trykk på én dag på «La være» minst 5 ganger og hold deg innenfor budsjettet: +5 min til nivået ditt.</string>
     <string name="ach_loyal">Trofast</string>
     <string name="ach_loyal_d">Trykk på \"La være\" 25 ganger i samme app. Bruk den tiden du vil.</string>
     <string name="ach_skip_run">Fem på rad</string>
@@ -862,11 +862,11 @@
     <string name="ach_clean_365">Et år med dager</string>
     <string name="ach_clean_365_d">Samle 365 dager uten fristelse, på rad eller ikke.</string>
     <string name="ach_hour">En funnet time</string>
-    <string name="ach_hour_d">Vinn tilbake 60 minutter på én dag: hvert \"La være\" gir tilbake tiden for et besøk, hvert \"Åpne likevel\" tar den.</string>
+    <string name="ach_hour_d">Tjen 60 minutter i samme uke, mandag til søndag: hver dag innenfor budsjettet gir opptil 20.</string>
     <string name="ach_day_2h">To timer til deg</string>
-    <string name="ach_day_2h_d">Vinn tilbake 2 timer på én dag, minus tiden du mister med \"Åpne likevel\".</string>
+    <string name="ach_day_2h_d">Tjen 2 timer i samme uke, mandag til søndag.</string>
     <string name="ach_week_3h">En ettermiddag</string>
-    <string name="ach_week_3h_d">Vinn tilbake 3 timer i samme uke, mandag til søndag.</string>
+    <string name="ach_week_3h_d">Tjen 3 timer i samme måned.</string>
     <string name="ach_month_6h">Boka</string>
     <string name="ach_month_6h_d">Vinn tilbake 6 timer i samme måned: nok tid til å lese en bok.</string>
     <string name="ach_total_10h">Ti timer</string>
@@ -1073,4 +1073,21 @@
         <item quantity="one">Lest</item>
         <item quantity="other">%d lest</item>
     </plurals>
+    <string name="brake_left">%1$s igjen i dag</string>
+    <string name="brake_used_up">Dagens budsjett er brukt opp</string>
+    <string name="brake_over">%1$s over budsjettet</string>
+    <string name="budget_title">Dagsbudsjett</string>
+    <string name="budget_hint">Minutter per dag for hver bremset app. Senker du det, gjelder det med en gang, øker du det, fra i morgen.</string>
+    <string name="budget_used">%1$s av %2$s i dag</string>
+    <string name="budget_next">fra i morgen: %1$s</string>
+    <string name="budget_label">Bremsebudsjett</string>
+    <string name="budget_ask_lower">Denne uken klarte du deg med omtrent %2$s om dagen på %1$s. Skal budsjettet senkes fra %3$s til %2$s fra mandag?</string>
+    <string name="budget_ask_raise">Denne uken gikk du ofte over med %1$s. Et mer realistisk budsjett fra mandag: %2$s i stedet for %3$s?</string>
+    <string name="budget_yes">Ja</string>
+    <string name="budget_keep">La det være</string>
+    <string name="budget_from_monday">Ferdig: fra mandag %1$s om dagen</string>
+    <string name="budget_done_title">%1$s: dagens budsjett er brukt opp</string>
+    <string name="budget_done_text">Du har brukt %1$s. Det er opp til deg om du fortsetter.</string>
+    <string name="ch_budget">Bremsebudsjett</string>
+    <string name="ch_budget_desc">Når dagsbudsjettet til en bremset app er brukt opp mens du bruker den</string>
 </resources>

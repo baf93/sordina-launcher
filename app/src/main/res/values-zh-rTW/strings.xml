@@ -815,7 +815,7 @@
     <string name="ach_skip_1000">一千次拒絕</string>
     <string name="ach_skip_1000_d">累計輕觸「算了」1000 次。</string>
     <string name="ach_perfect">完美的一天</string>
-    <string name="ach_perfect_d">在同一天內輕觸「算了」至少 5 次，且一次也不輕觸「仍然開啟」。</string>
+    <string name="ach_perfect_d">在同一天內輕觸「算了」至少 5 次，並保持在額度內：等級 +5 分鐘。</string>
     <string name="ach_loyal">專一</string>
     <string name="ach_loyal_d">在同一個應用程式中輕觸「算了」25 次。花多久都行。</string>
     <string name="ach_skip_run">連續五次</string>
@@ -851,11 +851,11 @@
     <string name="ach_clean_365">一年的日子</string>
     <string name="ach_clean_365_d">累計 365 天無誘惑，連續與否皆可。</string>
     <string name="ach_hour">找回的一小時</string>
-    <string name="ach_hour_d">在同一天內找回 60 分鐘：每次「算了」找回一次造訪的時間，每次「仍然開啟」把它拿走。</string>
+    <string name="ach_hour_d">在同一週（週一至週日）內賺到 60 分鐘：每個在額度內的日子最多 20 分鐘。</string>
     <string name="ach_day_2h">給你的兩小時</string>
-    <string name="ach_day_2h_d">在同一天內找回 2 小時，扣除「仍然開啟」損失的時間。</string>
+    <string name="ach_day_2h_d">在同一週（週一至週日）內賺到 2 小時。</string>
     <string name="ach_week_3h">一個下午</string>
-    <string name="ach_week_3h_d">在同一週內（週一至週日）找回 3 小時。</string>
+    <string name="ach_week_3h_d">在同一個月內賺到 3 小時。</string>
     <string name="ach_month_6h">一本書</string>
     <string name="ach_month_6h_d">在同一個月內找回 6 小時：足夠讀完一本書。</string>
     <string name="ach_total_10h">十小時</string>
@@ -1062,4 +1062,21 @@
         <item quantity="one">已讀</item>
         <item quantity="other">已讀 %d 則</item>
     </plurals>
+    <string name="brake_left">今天還剩 %1$s</string>
+    <string name="brake_used_up">今天的額度已用完</string>
+    <string name="brake_over">超出額度 %1$s</string>
+    <string name="budget_title">每日額度</string>
+    <string name="budget_hint">每個被煞車的 App 每天可用的分鐘數。調低立即生效，調高從明天起生效。</string>
+    <string name="budget_used">今天 %1$s / %2$s</string>
+    <string name="budget_next">明天起：%1$s</string>
+    <string name="budget_label">煞車額度</string>
+    <string name="budget_ask_lower">這週 %1$s 每天大約 %2$s 就夠了。從週一起把額度從 %3$s 降到 %2$s 嗎？</string>
+    <string name="budget_ask_raise">這週你在 %1$s 上常常超出額度。從週一起換個更實際的額度：%2$s，而不是 %3$s？</string>
+    <string name="budget_yes">好</string>
+    <string name="budget_keep">維持不變</string>
+    <string name="budget_from_monday">好了：從週一起每天 %1$s</string>
+    <string name="budget_done_title">%1$s：今天的額度已用完</string>
+    <string name="budget_done_text">你已使用 %1$s。要不要繼續，由你決定。</string>
+    <string name="ch_budget">煞車額度</string>
+    <string name="ch_budget_desc">被煞車的 App 在使用中用完每日額度時</string>
 </resources>

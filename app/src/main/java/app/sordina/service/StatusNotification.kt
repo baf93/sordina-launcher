@@ -35,8 +35,14 @@ class StatusNotification(private val context: Context) {
             setBypassDnd(true)
             lockscreenVisibility = Notification.VISIBILITY_PRIVATE
         }
+        // Il budget di un'app frenata è finito: in alto, una volta, perché lo vedi mentre sei dentro l'app
+        val budget = NotificationChannel(CH_BUDGET, tr(R.string.ch_budget), NotificationManager.IMPORTANCE_HIGH).apply {
+            description = tr(R.string.ch_budget_desc)
+            setShowBadge(false)
+            lockscreenVisibility = Notification.VISIBILITY_PRIVATE
+        }
         runCatching { nm.deleteNotificationChannel("status") }
-        nm.createNotificationChannels(listOf(status, always))
+        nm.createNotificationChannels(listOf(status, always, budget))
         // La vecchia scheda fissa, se è rimasta da una versione precedente: si toglie una volta, all'avvio
         runCatching { nm.cancel(ID_STATUS) }
     }
@@ -74,6 +80,25 @@ class StatusNotification(private val context: Context) {
         if (alerted.remove(key.hashCode())) runCatching { nm.cancel(key.hashCode()) }
     }
 
+    /** Il budget di oggi di [pkg] è finito mentre la usi. Decide sempre l'utente: è solo un avviso. */
+    fun budgetDone(pkg: String, used: Int) {
+        val label = runCatching { context.packageManager.getApplicationLabel(context.packageManager.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg)
+        val i = PendingIntent.getActivity(
+            context, 4, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_IMMUTABLE,
+        )
+        val n = Notification.Builder(context, CH_BUDGET)
+            .setSmallIcon(R.drawable.ic_stat)
+            .setContentTitle(tr(R.string.budget_done_title, label))
+            .setContentText(tr(R.string.budget_done_text, app.sordina.ui.shortDuration(used)))
+            .apply { appIcon(pkg)?.let { setLargeIcon(it) } }
+            .setAutoCancel(true)
+            .setTimeoutAfter(30 * 60_000L)
+            .setCategory(Notification.CATEGORY_REMINDER)
+            .setContentIntent(i)
+            .build()
+        runCatching { nm.notify(ID_BUDGET, n) }
+    }
+
     /** Avviso unico: Android ha rimesso un'altra Home. */
     fun homeLost() {
         val i = PendingIntent.getActivity(
@@ -92,8 +117,10 @@ class StatusNotification(private val context: Context) {
     companion object {
         const val CH_STATUS = "status2"
         const val CH_ALWAYS = "sempre"
+        const val CH_BUDGET = "budget"
         const val ID_STATUS = 1
         const val ID_HOME = 2
+        const val ID_BUDGET = 5
         /** Quanto resta il ri-avviso: il tempo del suono e del banner, poi resta solo l'originale */
         private const val ALERT_MILLIS = 8_000L
 

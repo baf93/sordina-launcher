@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -81,6 +82,9 @@ fun ColumnScope.ProgressPage(habits: Habits, jump: Medal? = null) {
             tr(R.string.p_total), Modifier.weight(1f),
         )
     }
+
+    // ── Il budget: minuti al giorno per ogni app frenata
+    BudgetList(habits)
 
     // ── Le giornate: un mese alla volta, fin dove arriva lo storico
     Topic(tr(R.string.p_days), tr(R.string.p_days_hint))
@@ -209,6 +213,54 @@ fun ColumnScope.ProgressPage(habits: Habits, jump: Medal? = null) {
             }
         }
     }
+}
+
+/**
+ * Il budget di ogni app frenata, con − e + (a 5 minuti). Sotto: quanto l'hai usata oggi e, se l'hai alzato,
+ * da quando vale il nuovo (un aumento vale da domani, una diminuzione subito).
+ */
+@Composable
+private fun BudgetList(habits: Habits) {
+    val c = S.c
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val braked = remember { app.sordina.SordinaApp.of(ctx).prefs.braked.sorted() }
+    if (braked.isEmpty()) return
+    val used = remember { habits.today().minutes }
+    var version by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    Topic(tr(R.string.budget_title), tr(R.string.budget_hint))
+    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(c.card).padding(horizontal = 16.dp, vertical = 6.dp)) {
+        braked.forEach { pkg ->
+            val label = remember(pkg) {
+                runCatching { ctx.packageManager.getApplicationLabel(ctx.packageManager.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg)
+            }
+            val now = remember(pkg, version) { habits.budget(pkg) }
+            val next = remember(pkg, version) { habits.nextBudget(pkg) }
+            val shown = next?.first ?: now
+            Row(Modifier.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 15.sp, color = c.ink))
+                    val sub = listOfNotNull(
+                        tr(R.string.budget_used, tr(R.string.minutes_short, used[pkg] ?: 0), tr(R.string.minutes_short, now)),
+                        next?.let { tr(R.string.budget_next, tr(R.string.minutes_short, it.first)) },
+                    ).joinToString(" · ")
+                    Text(sub, style = TextStyle(fontSize = 12.sp, color = c.soft))
+                }
+                Step("−", shown > 0) { habits.setBudget(pkg, shown - 5); version++ }
+                Text(tr(R.string.minutes_short, shown), Modifier.width(64.dp), textAlign = TextAlign.Center,
+                    style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = c.accent))
+                Step("+", shown < Habits.MAX_BUDGET) { habits.setBudget(pkg, shown + 5); version++ }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Step(sign: String, enabled: Boolean, onClick: () -> Unit) {
+    val c = S.c
+    Box(
+        Modifier.size(36.dp).clip(CircleShape).background(c.line).then(if (enabled) Modifier.clickableNoRipple(onClick) else Modifier),
+        contentAlignment = Alignment.Center,
+    ) { Text(sign, style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Medium, color = if (enabled) c.ink else c.soft.copy(alpha = 0.4f))) }
 }
 
 /** Il verde delle imprese vinte. */

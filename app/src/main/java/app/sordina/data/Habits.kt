@@ -34,12 +34,6 @@ class Habits(private val context: Context) {
     /** Quante volte hai aperto comunque quest'app nell'ultima ora. */
     fun opensLastHour(pkg: String): Int = recentOpens(pkg, System.currentTimeMillis()).size
 
-    /**
-     * Quanto costa aprire comunque: il doppio di una visita, e una visita in più per ogni volta che l'hai già
-     * aperta comunque nell'ultima ora (×2, ×3, ×4…). Per un detox, cedere costa più di quanto rende resistere.
-     */
-    fun openCost(pkg: String, gain: Int): Int = gain * (2 + opensLastHour(pkg))
-
     /** (pacchetto, per abitudine) di oggi. */
     fun brakesToday(): List<Pair<String, Boolean>> =
         sp.getString(todayKey(), "").orEmpty().split('|').filter { it.contains(':') }
@@ -87,6 +81,9 @@ class Habits(private val context: Context) {
         if (!ok) return Day(null, emptyMap())
         return Day(if (Build.VERSION.SDK_INT >= 28) unlocks else null, fg.mapValues { (it.value / 60_000).toInt() })
     }
+
+    /** Come [appToday], ma letto adesso (senza la copia di un minuto fa): per l'avviso di budget finito. */
+    fun appTodayFresh(pkg: String): Pair<Int, Int>? = readAppToday(pkg)
 
     /** Aperture e minuti di oggi per una sola app (tutte le aperture, non solo da Sordina). null senza accesso all'utilizzo. */
     fun appToday(pkg: String): Pair<Int, Int>? {
@@ -140,42 +137,214 @@ class Habits(private val context: Context) {
         }.getOrNull()
     }
 
-    /** Minuti che una rinuncia fa tornare: la durata media di una visita a quell'app oggi (tra 2 e 30). */
-    fun minutesPerVisit(pkg: String): Int {
-        val (opens, minutes) = appToday(pkg) ?: return 5
-        return if (opens == 0) 5 else (minutes / opens).coerceIn(2, 30)
-    }
-
     /**
-     * Quanto vale adesso lasciare stare: i minuti di una visita, ma una volta sola per ogni tentazione.
-     * Entro [WIN_COOLDOWN] da un "Lascia stare" premiato (qualunque app frenata) vale 0: aprire e lasciare stare
-     * di continuo non fa punti, né minuti né imprese.
+     * Vale adesso lasciare stare? 1 sì, 0 no: una volta sola per ogni tentazione. Entro [WIN_COOLDOWN] da un
+     * "Lascia stare" contato (qualunque app frenata) vale 0: aprire e lasciare stare di continuo non fa imprese.
+     * Dal budget le scelte non danno più minuti: contano per le imprese del freno, i minuti li dà la giornata.
      */
-    fun skipGain(visit: Int, now: Long = System.currentTimeMillis()): Int =
+    fun skipGain(visit: Int = 1, now: Long = System.currentTimeMillis()): Int =
         if (rewarded(sp.getLong("lastWin", 0L), now)) visit else 0
 
     fun logSkip(pkg: String, minutes: Int) {
         // Una rinuncia che non vale niente (appena dopo un'altra) non entra nello storico: non conta per le imprese
         if (minutes == 0) return
         if (minutes > 0) { Tally.add("skips"); sp.edit().putLong("lastWin", System.currentTimeMillis()).apply() }
+        val from = budgetFrom()
         val keep = LocalDate.now().minusDays(60)
         val (old, recent) = skips().partition { !it.day.isAfter(keep) }
         val e = sp.edit()
-        // Le voci più vecchie di 60 giorni escono dall'elenco, ma i loro minuti restano nel totale (il livello non scende da solo)
-        if (old.isNotEmpty()) e.putInt("bank", sp.getInt("bank", 0) + old.sumOf { it.minutes })
+        // Le voci più vecchie di 60 giorni escono dall'elenco, ma i loro minuti restano nel totale (il livello non scende da solo).
+        // Dal budget in poi le scelte non hanno minuti: solo il segno, per le imprese
+        // Le giornate perfette che escono dall'elenco tengono il loro premio
+        val led = ledgerRaw()
+        val perfectGone = old.filter { !it.day.isBefore(from) }.groupBy { it.day }
+            .count { (d, v) -> v.count { it.minutes > 0 } >= PERFECT_SKIPS && (led[d]?.let(::dayPoints) ?: 0) >= 0 }
+        val gone = old.filter { it.day.isBefore(from) }.sumOf { it.minutes } + perfectGone * PERFECT_BONUS
+        if (gone != 0) e.putInt("bank", sp.getInt("bank", 0) + gone)
         val list = recent + Skip(LocalDate.now(), pkg, minutes, java.time.LocalTime.now().hour)
         e.putString("skips", list.joinToString("|") { if (it.hour < 0) "${it.day},${it.pkg},${it.minutes}" else "${it.day},${it.pkg},${it.minutes},${it.hour}" }).apply()
     }
 
-    /** Aperta comunque dal freno: perdi i minuti di una visita (una voce negativa nel saldo di oggi). */
-    fun logOpen(pkg: String, minutes: Int) {
-        if (minutes > 0) logSkip(pkg, -minutes)
-    }
+    /** Aperta dal freno: una voce negativa, solo per le imprese (interrompe le "Lascia stare" di fila). Non toglie minuti. */
+    fun logOpen(pkg: String) = logSkip(pkg, -1)
+
+    // ── Il budget: minuti al giorno per ogni app frenata. La giornata si giudica sul totale delle app frenate
+
+    private val prefs get() = app.sordina.SordinaApp.of(context).prefs
 
     /**
-     * Il punteggio. Ogni "Lascia stare" vale +minuti di una visita, ogni "Apri comunque" −gli stessi minuti.
-     * Il saldo di una giornata decide com'è andata: in positivo è tua, in negativo la perdi e la serie si azzera,
-     * a zero (nessuna scelta) è neutra e non conta né in un senso né nell'altro.
+     * Il giorno da cui la giornata si misura col budget (prima: col saldo delle scelte nel freno). Si fissa la prima
+     * volta; da lì le giornate senza tentazioni smettono di regalare minuti al livello (li dà già il budget).
+     */
+    fun budgetFrom(): LocalDate {
+        Tally.text("budgetFrom").takeIf { it.isNotEmpty() }?.let { s -> runCatching { LocalDate.parse(s) }.getOrNull()?.let { return it } }
+        val today = LocalDate.now()
+        Tally.putInt("cleanAtBudget", Tally.get("cleanDays"))
+        Tally.putText("budgetFrom", today.toString())
+        return today
+    }
+
+    /** Le giornate senza tentazioni che regalano minuti al livello: solo quelle di prima del budget. */
+    private fun bonusDays(): Int { budgetFrom(); return minOf(Tally.get("cleanDays"), Tally.get("cleanAtBudget")) }
+
+    /**
+     * Il budget di [pkg] nel giorno [day], in minuti. Un cambio in attesa vale dal suo giorno (e da lì diventa il
+     * budget di sempre). Il primo budget lo propone l'utilizzo degli ultimi 7 giorni.
+     */
+    fun budget(pkg: String, day: LocalDate = LocalDate.now()): Int {
+        val p = prefs
+        p.budgetsNext[pkg]?.let { s ->
+            val m = s.substringBefore('@').toIntOrNull()
+            val d = runCatching { LocalDate.parse(s.substringAfter('@')) }.getOrNull()
+            if (m == null || d == null) p.budgetsNext = p.budgetsNext - pkg
+            else if (!d.isAfter(LocalDate.now())) { p.budgets = p.budgets + (pkg to m); p.budgetsNext = p.budgetsNext - pkg }
+            else if (!day.isBefore(d)) return m
+        }
+        p.budgets[pkg]?.let { return it }
+        val m = suggestedBudget(pkg)
+        p.budgets = p.budgets + (pkg to m)
+        return m
+    }
+
+    /** Il budget in arrivo, se c'è: minuti e giorno da cui vale. */
+    fun nextBudget(pkg: String): Pair<Int, LocalDate>? {
+        budget(pkg)
+        val s = prefs.budgetsNext[pkg] ?: return null
+        val m = s.substringBefore('@').toIntOrNull() ?: return null
+        val d = runCatching { LocalDate.parse(s.substringAfter('@')) }.getOrNull() ?: return null
+        return m to d
+    }
+
+    /** Cambiato a mano: se scende vale subito, se sale da domani (stasera non lo allarghi per rientrarci). */
+    fun setBudget(pkg: String, minutes: Int) {
+        val m = minutes.coerceIn(0, MAX_BUDGET)
+        val now = budget(pkg)
+        val p = prefs
+        if (m <= now) { p.budgets = p.budgets + (pkg to m); p.budgetsNext = p.budgetsNext - pkg }
+        else p.budgetsNext = p.budgetsNext + (pkg to "$m@${LocalDate.now().plusDays(1)}")
+    }
+
+    /** Il primo budget: tre quarti dell'uso medio degli ultimi 7 giorni, a 5 minuti. Senza dati, [DEFAULT_BUDGET]. */
+    private fun suggestedBudget(pkg: String): Int {
+        val usm = context.getSystemService(UsageStatsManager::class.java) ?: return DEFAULT_BUDGET
+        val zone = ZoneId.systemDefault()
+        val start = LocalDate.now().minusDays(7).atStartOfDay(zone).toInstant().toEpochMilli()
+        val end = LocalDate.now().atStartOfDay(zone).toInstant().toEpochMilli()
+        val ms = runCatching { usm.queryAndAggregateUsageStats(start, end)[pkg]?.totalTimeInForeground }.getOrNull() ?: return DEFAULT_BUDGET
+        return suggest(ms / 60_000.0 / 7)
+    }
+
+    /** Quanto resta oggi a [pkg] (negativo: quanto sei oltre). null senza accesso all'utilizzo. */
+    fun leftToday(pkg: String): Int? = appToday(pkg)?.let { budget(pkg) - it.second }
+
+    /** Un'app frenata in una giornata: minuti usati e budget di quel giorno. */
+    data class Use(val pkg: String, val used: Int, val budget: Int)
+
+    /** Le giornate finite col budget, app per app (60 giorni). */
+    private fun ledgerRaw(): Map<LocalDate, List<Use>> = sp.getString("ledger", "").orEmpty().split('|').mapNotNull { e ->
+        val d = runCatching { LocalDate.parse(e.substringBefore('=')) }.getOrNull() ?: return@mapNotNull null
+        d to e.substringAfter('=', "").split(';').mapNotNull { u ->
+            val p = u.split(':')
+            if (p.size != 3) null else runCatching { Use(p[0], p[1].toInt(), p[2].toInt()) }.getOrNull()
+        }
+    }.toMap()
+
+    /**
+     * Chiude le giornate finite: una lettura dell'utilizzo per giornata, una volta al giorno (fino a 7 giorni indietro,
+     * quanto tiene Android). Legge l'utilizzo: meglio non sul thread principale.
+     */
+    fun closeDays() {
+        val today = LocalDate.now()
+        if (Tally.text("ledgerAt") == today.toString()) return
+        val from = budgetFrom()
+        val braked = prefs.braked
+        val led = ledgerRaw().toMutableMap()
+        var d = maxOf(from, today.minusDays(7))
+        while (d.isBefore(today)) {
+            if (d !in led && braked.isNotEmpty()) readDayMinutes(d, braked)?.let { m -> led[d] = braked.sorted().map { Use(it, m[it] ?: 0, budget(it, d)) } }
+            d = d.plusDays(1)
+        }
+        val keep = today.minusDays(60)
+        val (old, recent) = led.entries.partition { !it.key.isAfter(keep) }
+        val e = sp.edit()
+        if (old.isNotEmpty()) e.putInt("ledgerBank", sp.getInt("ledgerBank", 0) + old.sumOf { dayPoints(it.value) })
+        e.putString("ledger", recent.sortedBy { it.key }.joinToString("|") { (day, v) -> "$day=" + v.joinToString(";") { "${it.pkg}:${it.used}:${it.budget}" } }).apply()
+        Tally.putText("ledgerAt", today.toString())
+    }
+
+    /** Oggi, finora: le app frenate con i minuti usati e il loro budget. null senza accesso all'utilizzo. */
+    private fun todayUse(): List<Use>? {
+        val braked = prefs.braked
+        if (braked.isEmpty()) return emptyList()
+        val m = today().minutes
+        if (m.isEmpty()) return null
+        return braked.sorted().map { Use(it, m[it] ?: 0, budget(it)) }
+    }
+
+    /** I punti di ogni giornata col budget, oggi compreso (finora). */
+    fun ledger(): Map<LocalDate, Int> {
+        val m = ledgerRaw().mapValues { (_, v) -> dayPoints(v) }.toMutableMap()
+        todayUse()?.takeIf { it.isNotEmpty() }?.let { m[LocalDate.now()] = dayPoints(it) }
+        return m
+    }
+
+    /** I minuti in primo piano di alcune app in una giornata intera. null se non c'è niente (senza accesso o telefono spento). */
+    private fun readDayMinutes(day: LocalDate, pkgs: Set<String>): Map<String, Int>? {
+        val usm = context.getSystemService(UsageStatsManager::class.java) ?: return null
+        val zone = ZoneId.systemDefault()
+        val start = day.atStartOfDay(zone).toInstant().toEpochMilli()
+        val end = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+        return runCatching {
+            val ev = usm.queryEvents(start, end)
+            val e = UsageEvents.Event()
+            var events = 0
+            val fg = HashMap<String, Long>()
+            val open = HashMap<String, Long>()
+            while (ev.hasNextEvent()) {
+                ev.getNextEvent(e)
+                events++
+                if (e.packageName !in pkgs) continue
+                when (e.eventType) {
+                    UsageEvents.Event.MOVE_TO_FOREGROUND -> open[e.packageName] = e.timeStamp
+                    UsageEvents.Event.MOVE_TO_BACKGROUND -> open.remove(e.packageName)?.let { s -> fg[e.packageName] = (fg[e.packageName] ?: 0) + (e.timeStamp - s) }
+                }
+            }
+            open.forEach { (p, s) -> fg[p] = (fg[p] ?: 0) + (end - s) }
+            if (events == 0) null else fg.mapValues { (it.value / 60_000).toInt() }
+        }.getOrNull()
+    }
+
+    /** La proposta della domenica: abbassare (o rendere realistico) il budget di un'app, da lunedì. */
+    data class Proposal(val pkg: String, val from: Int, val to: Int) { val lower: Boolean get() = to < from }
+
+    /** Solo la domenica, un'app alla volta, guardando la settimana appena passata. Legge solo il registro. */
+    fun proposal(today: LocalDate = LocalDate.now()): Proposal? {
+        if (today.dayOfWeek != java.time.DayOfWeek.SUNDAY) return null
+        val led = ledgerRaw()
+        for (pkg in prefs.braked.sorted()) {
+            if (nextBudget(pkg) != null) continue
+            val snooze = runCatching { LocalDate.parse(Tally.text("budgetSnooze_$pkg")) }.getOrNull()
+            if (snooze != null && snooze.isAfter(today)) continue
+            val week = (1L..7L).mapNotNull { led[today.minusDays(it)]?.firstOrNull { u -> u.pkg == pkg } }
+            val now = budget(pkg)
+            weekly(week, now)?.let { return Proposal(pkg, now, it) }
+        }
+        return null
+    }
+
+    /** "Sì": il nuovo budget vale da domani (lunedì). */
+    fun acceptProposal(pkg: String, minutes: Int) {
+        budget(pkg)
+        prefs.budgetsNext = prefs.budgetsNext + (pkg to "${minutes.coerceIn(0, MAX_BUDGET)}@${LocalDate.now().plusDays(1)}")
+    }
+
+    /** "Lascia così": per due settimane non si chiede più per quest'app. */
+    fun keepBudget(pkg: String) = Tally.putText("budgetSnooze_$pkg", LocalDate.now().plusDays(14).toString())
+
+    /**
+     * Il punteggio. Dal budget: ogni giornata vale fino a +20 minuti se resti nel budget (la parte che avanza) e fino a
+     * −20 se lo sfori (la parte in più). Prima del budget: ogni "Lascia stare" valeva +minuti di una visita, ogni
+     * "Apri comunque" li toglieva. In positivo la giornata è tua, in negativo la perdi e la serie si azzera.
      */
     data class Streak(
         /** Quante volte hai lasciato stare oggi */
@@ -198,8 +367,12 @@ class Habits(private val context: Context) {
     }
 
     fun streak(): Streak {
+        closeDays()
         val list = skips()
-        return summarize(list, LocalDate.now(), sp.getInt("bank", 0), brakeSince(list), lastLost(list), Medal.cleanBonus(Tally.get("cleanDays")))
+        val from = budgetFrom()
+        val ledger = ledger()
+        return summarize(list, LocalDate.now(), sp.getInt("bank", 0), brakeSince(list), lastLost(balances(list, ledger, from)),
+            Medal.cleanBonus(bonusDays()), ledger, from, sp.getInt("ledgerBank", 0))
     }
 
     /** Il giorno della prima app frenata (per chi c'era già: la prima scelta nello storico). null senza app frenate. */
@@ -212,16 +385,16 @@ class Habits(private val context: Context) {
     }
 
     /** L'ultima giornata finita in negativo: si ricorda anche quando esce dallo storico (oggi non è ancora finita). */
-    private fun lastLost(list: List<Skip>): LocalDate? {
+    private fun lastLost(byDay: Map<LocalDate, Int>): LocalDate? {
         val today = LocalDate.now()
-        val seen = list.groupBy { it.day }.filter { (d, v) -> d.isBefore(today) && v.sumOf { it.minutes } < 0 }.keys.maxOrNull()
+        val seen = byDay.filter { (d, v) -> d.isBefore(today) && v < 0 }.keys.maxOrNull()
         val stored = Tally.text("lastLost").takeIf { it.isNotEmpty() }?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
         if (seen != null && (stored == null || seen.isAfter(stored))) { Tally.putText("lastLost", seen.toString()); return seen }
         return stored
     }
 
-    /** Il saldo di ogni giornata con almeno una scelta, negli ultimi 60 giorni. */
-    fun days(): Map<LocalDate, Int> = skips().groupBy { it.day }.mapValues { (_, v) -> v.sumOf { it.minutes } }
+    /** Il saldo di ogni giornata, negli ultimi 60 giorni: col budget dal suo primo giorno, prima dalle scelte nel freno. */
+    fun days(): Map<LocalDate, Int> = balances(skips(), ledger(), budgetFrom())
 
     /**
      * Le imprese vinte, con il giorno. Una volta vinta, un'impresa resta: anche quando lo storico la dimentica.
@@ -232,6 +405,7 @@ class Habits(private val context: Context) {
     /** Le imprese vinte e il calcolo completo (per vedere a che punto sono le altre). */
     fun score(fresh: Boolean = false): Pair<Map<Medal, LocalDate>, Medal.Score> {
         val have = storedMedals()
+        closeDays()
         val score = Medal.Score(skips(), LocalDate.now(), sp.getInt("bank", 0), evidence(fresh))
         val now = score.earned - have.keys
         if (now.isEmpty()) return have to score
@@ -251,11 +425,13 @@ class Habits(private val context: Context) {
         val prefs = app.sordina.SordinaApp.of(context).prefs
         val list = skips()
         val since = brakeSince(list)
-        val lost = lastLost(list)
+        val from = budgetFrom()
+        val ledger = ledger()
+        val lost = lastLost(balances(list, ledger, from))
         val today = LocalDate.now()
         // I conteggi di sempre partono da quello che c'è nello storico (per chi c'era già)
         Tally.raise("skips", list.count { it.minutes > 0 })
-        Tally.raise("best", summarize(list, today, sp.getInt("bank", 0), since, lost).best)
+        Tally.raise("best", summarize(list, today, sp.getInt("bank", 0), since, lost, 0, ledger, from).best)
         var run = 0
         list.forEach { if (it.minutes > 0) { run++; Tally.raise("skipRun", run) } else if (it.minutes < 0) run = 0 }
         val installed = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).firstInstallTime }.getOrDefault(System.currentTimeMillis())
@@ -275,6 +451,7 @@ class Habits(private val context: Context) {
             nightDrive = Tally.has("nightDrive"), arrived = Tally.has("arrived"),
             daysWithSordina = ((System.currentTimeMillis() - installed) / 86_400_000L).toInt(),
             phone = phone,
+            ledger = ledger, budgetFrom = from, ledgerBank = sp.getInt("ledgerBank", 0), bonusDays = bonusDays(),
         )
     }
 
@@ -400,6 +577,57 @@ class Habits(private val context: Context) {
         /** Premiato se l'ultimo premio è più vecchio di [WIN_COOLDOWN] (o nel futuro: orologio spostato indietro). */
         fun rewarded(lastWin: Long, now: Long): Boolean = now - lastWin !in 0 until WIN_COOLDOWN
 
+        /** Il budget più alto che si può dare a un'app (4 ore) */
+        const val MAX_BUDGET = 240
+        /** Il budget di un'app frenata quando l'utilizzo non dice niente */
+        const val DEFAULT_BUDGET = 15
+        /** I minuti che una giornata può dare (o togliere) al massimo */
+        const val MAX_POINTS = 20
+        /** Giornata perfetta (almeno [PERFECT_SKIPS] "Lascio stare" e dentro il budget): minuti in più al livello */
+        const val PERFECT_BONUS = 5
+        const val PERFECT_SKIPS = 5
+
+        /** Le giornate perfette col budget: almeno 5 "Lascio stare" e la giornata dentro il budget. */
+        fun perfectDays(all: List<Skip>, byDay: Map<LocalDate, Int>, from: LocalDate?): Int =
+            if (from == null) 0
+            else all.filter { !it.day.isBefore(from) }.groupBy { it.day }
+                .count { (d, v) -> v.count { it.minutes > 0 } >= PERFECT_SKIPS && (byDay[d] ?: 0) >= 0 }
+
+        private fun roundUp5(m: Double): Int = (kotlin.math.ceil(m / 5) * 5).toInt()
+
+        /** Il budget proposto per un'app usata [perDay] minuti al giorno: tre quarti, a 5 minuti, almeno 5. */
+        fun suggest(perDay: Double): Int = if (perDay < 1) DEFAULT_BUDGET else roundUp5(perDay * 0.75).coerceIn(5, MAX_BUDGET)
+
+        /**
+         * I minuti di una giornata: nel budget la parte che avanza (tutto avanzato = +20), fuori la parte in più
+         * (30% oltre = −6, il doppio o più = −20). Una percentuale: alzare il budget non fa più punti.
+         * Con budget 0 ogni minuto conta come su un budget di 5.
+         */
+        fun points(used: Int, budget: Int): Int =
+            if (used <= budget) { if (budget == 0) MAX_POINTS else Math.round(MAX_POINTS * (budget - used) / budget.toDouble()).toInt() }
+            else -minOf(MAX_POINTS, kotlin.math.ceil(MAX_POINTS * (used - budget) / maxOf(budget, 5).toDouble()).toInt())
+
+        /** Una giornata si giudica sul totale delle app frenate: se una sfora un po' e le altre avanzano, va bene. */
+        fun dayPoints(v: List<Use>): Int = points(v.sumOf { it.used }, v.sumOf { it.budget })
+
+        /**
+         * La proposta su una settimana di un'app ([week]: le giornate registrate, ne servono almeno 5). Quasi sempre
+         * sotto l'80% → il budget scende a quanto ti è bastato; sforato spesso → sale a quanto la usi davvero.
+         */
+        fun weekly(week: List<Use>, current: Int): Int? {
+            if (week.size < 5) return null
+            val avg = week.map { it.used }.average()
+            if (week.count { it.used <= it.budget * 0.8 } >= 5) return maxOf(5, roundUp5(avg)).takeIf { it < current }
+            if (week.count { it.used > it.budget } >= 4) return roundUp5(avg).coerceAtMost(MAX_BUDGET).takeIf { it > current }
+            return null
+        }
+
+        /** Il saldo di ogni giornata: prima di [from] dalle scelte nel freno, da [from] dal budget ([ledger]). */
+        fun balances(all: List<Skip>, ledger: Map<LocalDate, Int>, from: LocalDate?): Map<LocalDate, Int> {
+            val old = all.filter { from == null || it.day.isBefore(from) }.groupBy { it.day }.mapValues { (_, v) -> v.sumOf { it.minutes } }
+            return if (from == null) old else old + ledger.filterKeys { !it.isBefore(from) }
+        }
+
         /** Minuti ripresi per arrivare al livello [l]. */
         fun levelStart(l: Int): Int = 15 * (l - 1) * l / 2
         fun levelOf(minutes: Int): Int { var l = 1; while (levelStart(l + 1) <= minutes) l++; return l }
@@ -409,9 +637,13 @@ class Habits(private val context: Context) {
          * [since]: il giorno della prima app frenata. Da lì ogni giornata non persa conta nella serie, anche senza
          * tentativi (non provarci neanche è il risultato migliore). [lastLost]: l'ultima giornata persa, anche se è già
          * uscita dall'elenco. [bonus]: i minuti regalati al livello (le giornate senza tentazioni).
+         * [ledger], [from], [ledgerBank]: i punti delle giornate col budget, da quando c'è, e quelli già usciti dal registro.
          */
-        fun summarize(all: List<Skip>, today: LocalDate, bank: Int = 0, since: LocalDate? = null, lastLost: LocalDate? = null, bonus: Int = 0): Streak {
-            val byDay = all.groupBy { it.day }.mapValues { (_, v) -> v.sumOf { it.minutes } }
+        fun summarize(
+            all: List<Skip>, today: LocalDate, bank: Int = 0, since: LocalDate? = null, lastLost: LocalDate? = null, bonus: Int = 0,
+            ledger: Map<LocalDate, Int> = emptyMap(), from: LocalDate? = null, ledgerBank: Int = 0,
+        ): Streak {
+            val byDay = balances(all, ledger, from)
             fun state(d: LocalDate) = Integer.signum(byDay[d] ?: 0)
             var run = 0
             var best = 0
@@ -439,9 +671,9 @@ class Habits(private val context: Context) {
                 today = all.count { it.day == today && it.minutes > 0 },
                 balance = byDay[today] ?: 0,
                 days = run,
-                weekMinutes = all.filter { !it.day.isBefore(today.minusDays(6)) }.sumOf { it.minutes },
+                weekMinutes = byDay.filterKeys { !it.isBefore(today.minusDays(6)) && !it.isAfter(today) }.values.sum(),
                 week = (0..6).map { weekStart.plusDays(it.toLong()).let { d -> if (d.isAfter(today)) 0 else state(d) } },
-                totalMinutes = (bank + bonus + all.sumOf { it.minutes }).coerceAtLeast(0),
+                totalMinutes = (bank + bonus + ledgerBank + byDay.values.sum() + PERFECT_BONUS * perfectDays(all, byDay, from)).coerceAtLeast(0),
             )
         }
 

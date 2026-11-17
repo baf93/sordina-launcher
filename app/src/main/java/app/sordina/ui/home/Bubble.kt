@@ -157,7 +157,7 @@ internal fun SordinaZone(
 
     // Il fumetto con l'immagine aperta: cresce verso l'alto, sopra la barra, col fondo fermo dov'era
     var open by remember { mutableStateOf<String?>(null) }
-    val tall = card != null && card.image != null && card.key == open && heard == null && reply == null
+    val tall = card != null && (card.image != null || card.kind == CardKind.ASK) && card.key == open && heard == null && reply == null
 
     Box(Modifier.fillMaxWidth().height(ZONE).padding(horizontal = 16.dp)) {
         if (shown > 0f) {
@@ -307,12 +307,16 @@ private fun CardBubble(
     val primary = primaryOf(card)
     val ask = card.kind == CardKind.ASK
     val picture = remember(card.image) { card.image?.asImageBitmap() }
+    // La casa che chiede: se la domanda o una risposta non ci stanno, il fumetto si può allargare verso l'alto
+    var cut by remember(card.key) { mutableStateOf(false) }
+    var chipsCut by remember(card.key) { mutableStateOf(setOf<Int>()) }
+    val grows = ask && (expanded || cut || chipsCut.isNotEmpty())
     Steppable(count, enter, onStep) { swipe ->
         Box(swipe) {
             Column(
                 Modifier.fillMaxWidth().clip(BubbleShape).background(surface())
-                    // Con l'immagine: trascina in su per allargare, in giù per richiudere (di lato resta il passare alla scheda dopo)
-                    .then(if (picture == null) Modifier else Modifier.pointerInput(expanded) {
+                    // Con l'immagine (o la domanda tagliata): trascina in su per allargare, in giù per richiudere (di lato resta il passare alla scheda dopo)
+                    .then(if (picture == null && !grows) Modifier else Modifier.pointerInput(expanded) {
                         val need = 32.dp.toPx()
                         var dy = 0f
                         detectVerticalDragGestures(
@@ -325,10 +329,11 @@ private fun CardBubble(
                     })
                     .combinedClickable(onClick = { feel.tick(); onCard(card) }, onLongClick = { feel.tick(); menu = true })
                     .animateContentSize(Motion.enter(260))
-                    .heightIn(min = 84.dp).padding(start = TAIL + 16.dp, end = 12.dp, top = if (picture != null) 0.dp else 12.dp, bottom = 12.dp),
+                    // A destra 15 + 1 di aria nel tondo = 16, come il testo a sinistra
+                    .heightIn(min = 84.dp).padding(start = TAIL + 16.dp, end = 15.dp, top = if (picture != null || grows) 0.dp else 12.dp, bottom = 12.dp),
             ) {
-            // C'è un'immagine: una freccetta al centro in alto la apre verso l'alto (e, girata, la richiude)
-            if (picture != null) Box(
+            // C'è un'immagine (o la domanda della casa non ci sta): una freccetta al centro in alto la apre verso l'alto (e, girata, la richiude)
+            if (picture != null || grows) Box(
                 Modifier.align(Alignment.CenterHorizontally).size(width = 56.dp, height = 20.dp)
                     .clickableNoRipple { feel.tick(); onExpand(!expanded) }.semantics { contentDescription = tr(R.string.open) },
                 contentAlignment = Alignment.Center,
@@ -341,12 +346,13 @@ private fun CardBubble(
                     .clip(RoundedCornerShape(14.dp)),
                 contentScale = ContentScale.Crop,
             )
-            Row(Modifier.fillMaxWidth().heightIn(min = 60.dp), verticalAlignment = Alignment.CenterVertically) {
+            // In testa la firma: l'icona piccola dell'app e il suo nome (la domanda della casa no: le serve tutto lo spazio).
+            // I tondi stanno a destra, centrati su tutto il fumetto e non solo sul testo
+            if (card.kind == CardKind.MUSIC) MusicRow(card, at, count, onAction)
+            else Row(Modifier.fillMaxWidth().heightIn(min = 60.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    if (!ask) Text(
-                        if (count > 1) "${card.label} · ${at + 1}/$count" else card.label,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 13.sp, color = c.soft),
-                    )
+                    Signature(card, at, count)
+                    Spacer(Modifier.height(4.dp))
                     when (card.look) {
                         CardLook.CODE -> {
                             // Il codice si vede solo toccandolo (chi guarda il telefono non lo legge); "Copia" non ha bisogno di vederlo
@@ -354,45 +360,45 @@ private fun CardBubble(
                             Text(
                                 if (shown) card.title else card.title.map { if (it.isLetterOrDigit()) '•' else it }.joinToString(""),
                                 maxLines = 1, modifier = Modifier.clickableNoRipple { shown = !shown },
-                                style = TextStyle(fontSize = 28.sp, color = c.ink, fontFamily = FontFamily.Monospace, letterSpacing = 3.sp),
+                                style = TextStyle(fontSize = 26.sp, color = c.ink, fontFamily = FontFamily.Monospace, letterSpacing = 3.sp),
                             )
                         }
-                        CardLook.AMOUNT -> Text(card.title, maxLines = 1, style = TextStyle(fontSize = 24.sp, color = c.ink))
-                        else -> Text(card.title, maxLines = if (!ask) 2 else if (card.actions.size > 2) 2 else 3, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = if (ask) 16.sp else 19.sp, lineHeight = if (ask) 21.sp else 24.sp, color = c.ink))
+                        CardLook.AMOUNT -> Text(card.title, maxLines = 1, style = TextStyle(fontSize = 22.sp, color = c.ink))
+                        else -> Text(
+                            card.title, maxLines = if (ask && expanded) 12 else 2, overflow = TextOverflow.Ellipsis,
+                            onTextLayout = { if (ask && !expanded) cut = it.hasVisualOverflow },
+                            style = TextStyle(fontSize = 16.sp, lineHeight = 21.sp, color = c.ink),
+                        )
                     }
-                    if (!ask) card.subtitle?.let { Text(it, maxLines = 2, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 15.sp, color = c.soft)) }
+                    if (!ask) card.subtitle?.let { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 13.sp, lineHeight = 18.sp, color = c.soft)) }
                     // La casa chiede: le sue risposte (fino a tre, col testo di Home Assistant) si dividono tutta la larghezza
-                    if (ask) androidx.compose.foundation.layout.FlowRow(
-                        Modifier.fillMaxWidth().padding(top = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp),
-                        ) {
-                        card.actions.take(3).forEachIndexed { i, a ->
-                            // Ognuna larga quanto le serve, poi si allargano a riempire la riga; se non ci stanno vanno a capo
-                            Chip(a.label, filled = i == 0, Modifier.weight(1f)) { feel.confirm(); onAction(card, a) }
+                    // Compatto: su una riga sola, così il fumetto sta nella sua zona anche con tre risposte;
+                    // ognuna larga in proporzione al suo testo (con un minimo), in tre un po' più piccole.
+                    // Allargato: per intero; se qualcuna era tagliata, una per riga
+                    val few = card.actions.take(3)
+                    if (ask && expanded && chipsCut.isNotEmpty()) Column(Modifier.fillMaxWidth().padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        few.forEachIndexed { i, a -> Chip(a.label, filled = i == 0, Modifier.fillMaxWidth()) { feel.confirm(); onAction(card, a) } }
+                    }
+                    else if (ask && expanded) Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        few.forEachIndexed { i, a -> Chip(a.label, filled = i == 0, Modifier.weight(1f)) { feel.confirm(); onAction(card, a) } }
+                    }
+                    else if (ask) Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        few.forEachIndexed { i, a ->
+                            Chip(
+                                a.label, filled = i == 0, Modifier.weight(a.label.length.coerceIn(3, 14) + 4f), tight = few.size > 2,
+                                onCut = { off -> chipsCut = if (off) chipsCut + i else chipsCut - i },
+                            ) { feel.confirm(); onAction(card, a) }
                         }
                     }
                     card.bar?.let { b ->
                         Spacer(Modifier.height(10.dp))
                         Track(listOf(b.at(ticking(b.value == null))))
                     }
-                    card.step?.let { s -> Spacer(Modifier.height(6.dp)); Track(List(4) { if (it < s) 1f else 0f }) }
+                    card.step?.let { s -> Spacer(Modifier.height(8.dp)); Track(List(4) { if (it < s) 1f else 0f }) }
                 }
                 primary?.let { a ->
-                    Spacer(Modifier.width(8.dp))
-                    Box(
-                        Modifier.size(48.dp).clip(CircleShape).background(c.accent).clickable { feel.confirm(); onAction(card, a) }
-                            .semantics { contentDescription = a.label },
-                        contentAlignment = Alignment.Center,
-                    ) { Icon(iconOf(a), null, Modifier.size(24.dp), tint = c.bg) }
-                }
-                // La musica ha anche il brano dopo, accanto alla pausa: più quieto, si usa meno
-                if (card.kind == CardKind.MUSIC) card.actions.firstOrNull { it.op == CardOp.MusicNext }?.let { a ->
-                    Spacer(Modifier.width(6.dp))
-                    Box(
-                        Modifier.size(48.dp).clip(CircleShape).background(c.line).clickable { feel.tick(); onAction(card, a) }
-                            .semantics { contentDescription = a.label },
-                        contentAlignment = Alignment.Center,
-                    ) { Icon(Icons.Rounded.SkipNext, null, Modifier.size(26.dp), tint = c.ink) }
+                    Spacer(Modifier.width(4.dp))
+                    Round(iconOf(a), a.label, main = true) { feel.confirm(); onAction(card, a) }
                 }
             }
             }
@@ -408,15 +414,93 @@ private fun CardBubble(
     }
 }
 
+/**
+ * La firma del fumetto: l'icona piccola dell'app e il suo nome, quieti, in testa. Se sono più d'uno, "2/3".
+ */
 @Composable
-private fun Chip(label: String, filled: Boolean, modifier: Modifier, tight: Boolean = false, onClick: () -> Unit) {
+private fun Signature(card: Card, at: Int, count: Int) {
+    val c = S.c
+    Row(Modifier.fillMaxWidth().height(18.dp), verticalAlignment = Alignment.CenterVertically) {
+        appIcon(card.pkg, 14.dp)?.let { ic ->
+            Image(ic, null, Modifier.size(14.dp))
+            Spacer(Modifier.width(6.dp))
+        }
+        Text(card.label, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false),
+            style = TextStyle(fontSize = 12.sp, letterSpacing = 0.2.sp, color = c.soft))
+        if (count > 1) Text(" · ${at + 1}/$count", maxLines = 1, style = TextStyle(fontSize = 12.sp, color = c.soft))
+    }
+}
+
+/**
+ * Un comando del fumetto, tondo: quello principale pieno col colore di Sordina, gli altri più piccoli su fondo chiaro.
+ * Lo spazio per il pollice è sempre 44.
+ */
+@Composable
+private fun Round(icon: ImageVector, label: String, main: Boolean, onClick: () -> Unit) {
+    val c = S.c
+    Box(Modifier.size(44.dp).clickableNoRipple(onClick).semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
+        Box(
+            Modifier.size(if (main) 42.dp else 34.dp).clip(CircleShape).background(if (main) c.accent else c.line),
+            contentAlignment = Alignment.Center,
+        ) { Icon(icon, null, Modifier.size(if (main) 22.dp else 18.dp), tint = if (main) c.bg else c.ink) }
+    }
+}
+
+/**
+ * La musica: il brano (fino a due righe, i titoli possono essere lunghi) e l'artista su una riga;
+ * pausa nel tondo pieno, il brano dopo in quello chiaro. In pausa il brano si fa più quieto.
+ */
+@Composable
+private fun MusicRow(card: Card, at: Int, count: Int, onAction: (Card, CardAction) -> Unit) {
+    val c = S.c
+    val feel = LocalFeel.current
+    val toggle = card.actions.firstOrNull { it.op == CardOp.MusicToggle }
+    val next = card.actions.firstOrNull { it.op == CardOp.MusicNext }
+    val paused = toggle?.icon == "play"
+    Row(Modifier.fillMaxWidth().heightIn(min = 60.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Signature(card, at, count)
+            Spacer(Modifier.height(4.dp))
+            Text(card.title, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                style = TextStyle(fontSize = 16.sp, lineHeight = 21.sp, color = if (paused) c.soft else c.ink))
+            card.subtitle?.takeIf { it.isNotBlank() }?.let {
+                Spacer(Modifier.height(1.dp))
+                Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 13.sp, lineHeight = 18.sp, color = c.soft))
+            }
+        }
+        Spacer(Modifier.width(4.dp))
+        toggle?.let { a -> Round(if (paused) Icons.Rounded.PlayArrow else Icons.Rounded.Pause, a.label, main = true) { feel.confirm(); onAction(card, a) } }
+        next?.let { a -> Round(Icons.Rounded.SkipNext, a.label, main = false) { feel.tick(); onAction(card, a) } }
+    }
+}
+
+/** Icone delle app nei fumetti, già pronte: tornando a Casa si vedono subito. */
+private val ICONS = java.util.concurrent.ConcurrentHashMap<String, ImageBitmap>()
+
+/** L'icona dell'app [pkg], caricata fuori dal thread principale; null finché non c'è (o se l'app non esiste). */
+@Composable
+private fun appIcon(pkg: String?, size: androidx.compose.ui.unit.Dp): ImageBitmap? {
+    if (pkg == null) return null
+    val pm = androidx.compose.ui.platform.LocalContext.current.packageManager
+    val px = with(androidx.compose.ui.platform.LocalDensity.current) { size.roundToPx() }
+    val key = "$pkg@$px"
+    val icon by androidx.compose.runtime.produceState(ICONS[key], key) {
+        if (value == null) value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            app.sordina.data.AppIcons.forPackage(pm, pkg, px)
+        }?.also { ICONS[key] = it }
+    }
+    return icon
+}
+
+@Composable
+private fun Chip(label: String, filled: Boolean, modifier: Modifier, tight: Boolean = false, onCut: (Boolean) -> Unit = {}, onClick: () -> Unit) {
     val c = S.c
     Box(
-        modifier.height(36.dp).clip(RoundedCornerShape(18.dp))
-            .then(if (filled) Modifier.background(c.accent) else Modifier.border(1.dp, c.line, RoundedCornerShape(18.dp)))
-            .clickable(onClick = onClick).padding(horizontal = if (tight) 6.dp else 14.dp),
+        modifier.height(34.dp).clip(RoundedCornerShape(17.dp))
+            .then(if (filled) Modifier.background(c.accent) else Modifier.border(1.dp, c.line, RoundedCornerShape(17.dp)))
+            .clickable(onClick = onClick).padding(horizontal = if (tight) 8.dp else 14.dp),
         contentAlignment = Alignment.Center,
-    ) { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 15.sp, color = if (filled) c.bg else c.ink)) }
+    ) { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis, onTextLayout = { onCut(it.hasVisualOverflow) }, style = TextStyle(fontSize = if (tight) 14.sp else 15.sp, color = if (filled) c.bg else c.ink)) }
 }
 
 /** L'azione del tondo: quella che fai senza aprire niente. Timer, corse e riunioni non ne hanno: il tocco le apre. */

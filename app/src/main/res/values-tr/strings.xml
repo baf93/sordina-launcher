@@ -826,7 +826,7 @@
     <string name="ach_skip_1000">Bin hayır</string>
     <string name="ach_skip_1000_d">Toplamda 1000 kez \"Boş ver\"e dokun.</string>
     <string name="ach_perfect">Mükemmel gün</string>
-    <string name="ach_perfect_d">Aynı gün içinde en az 5 kez \"Boş ver\"e dokun ve hiç \"Yine de aç\"a dokunma.</string>
+    <string name="ach_perfect_d">Aynı gün içinde en az 5 kez “Boş ver”a dokun ve bütçede kal: seviyene +5 dk.</string>
     <string name="ach_loyal">Sadık</string>
     <string name="ach_loyal_d">Aynı uygulamada 25 kez \"Boş ver\"e dokun. İstediğin kadar zaman al.</string>
     <string name="ach_skip_run">Üst üste beş</string>
@@ -862,11 +862,11 @@
     <string name="ach_clean_365">Bir yıllık gün</string>
     <string name="ach_clean_365_d">Art arda olsun olmasın, ayartmasız 365 gün biriktir.</string>
     <string name="ach_hour">Bulunmuş bir saat</string>
-    <string name="ach_hour_d">Aynı gün içinde 60 dakika geri kazan: her \"Boş ver\" bir ziyaretin süresini geri verir, her \"Yine de aç\" onu alır.</string>
+    <string name="ach_hour_d">Aynı hafta içinde, pazartesiden pazara 60 dakika kazan: bütçede kalan her gün 20\'ye kadar verir.</string>
     <string name="ach_day_2h">Sana iki saat</string>
-    <string name="ach_day_2h_d">Aynı gün içinde 2 saat geri kazan, \"Yine de aç\" ile kaybettiğin süre düşülerek.</string>
+    <string name="ach_day_2h_d">Aynı hafta içinde, pazartesiden pazara 2 saat kazan.</string>
     <string name="ach_week_3h">Bir öğleden sonra</string>
-    <string name="ach_week_3h_d">Aynı hafta içinde, pazartesiden pazara, 3 saat geri kazan.</string>
+    <string name="ach_week_3h_d">Aynı ay içinde 3 saat kazan.</string>
     <string name="ach_month_6h">Kitap</string>
     <string name="ach_month_6h_d">Aynı ay içinde 6 saat geri kazan: bir kitap okumaya yetecek kadar.</string>
     <string name="ach_total_10h">On saat</string>
@@ -1073,4 +1073,21 @@
         <item quantity="one">Okundu</item>
         <item quantity="other">%d okundu</item>
     </plurals>
+    <string name="brake_left">Bugün %1$s kaldı</string>
+    <string name="brake_used_up">Bugünün bütçesi bitti</string>
+    <string name="brake_over">Bütçenin %1$s üstünde</string>
+    <string name="budget_title">Günlük bütçe</string>
+    <string name="budget_hint">Frenlenen her uygulama için günlük dakika. Düşürmek hemen, artırmak yarından itibaren geçerli.</string>
+    <string name="budget_used">Bugün %1$s / %2$s</string>
+    <string name="budget_next">yarından itibaren: %1$s</string>
+    <string name="budget_label">Fren bütçesi</string>
+    <string name="budget_ask_lower">Bu hafta %1$s için günde yaklaşık %2$s yetti. Bütçeyi pazartesiden itibaren %3$s yerine %2$s yapalım mı?</string>
+    <string name="budget_ask_raise">Bu hafta %1$s ile sık sık bütçeyi aştın. Pazartesiden itibaren daha gerçekçi bir bütçe: %3$s yerine %2$s?</string>
+    <string name="budget_yes">Evet</string>
+    <string name="budget_keep">Böyle kalsın</string>
+    <string name="budget_from_monday">Tamam: pazartesiden itibaren günde %1$s</string>
+    <string name="budget_done_title">%1$s: bugünün bütçesi bitti</string>
+    <string name="budget_done_text">%1$s kullandın. Devam edip etmemek sana kalmış.</string>
+    <string name="ch_budget">Fren bütçesi</string>
+    <string name="ch_budget_desc">Frenlenen bir uygulamanın günlük bütçesi sen kullanırken bittiğinde</string>
 </resources>

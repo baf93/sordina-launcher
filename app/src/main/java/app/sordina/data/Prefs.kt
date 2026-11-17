@@ -305,6 +305,16 @@ class Prefs(context: Context) {
         }
         set(v) = put { putString("personRules", JSONObject(v.mapValues { it.value.name }).toString()); remove("holdAlways") }
 
+    /** Il budget giornaliero di ogni app frenata, in minuti (vedi [Habits.budget]) */
+    var budgets: Map<String, Int>
+        get() = runCatching { JSONObject(str("budgets", "{}")).let { o -> o.keys().asSequence().associateWith { o.getInt(it) } } }.getOrDefault(emptyMap())
+        set(v) = put { putString("budgets", JSONObject(v).toString()) }
+
+    /** I budget in arrivo: app → "minuti@giorno da cui valgono" (un aumento vale da domani, una proposta da lunedì) */
+    var budgetsNext: Map<String, String>
+        get() = runCatching { JSONObject(str("budgetsNext", "{}")).let { o -> o.keys().asSequence().associateWith { o.getString(it) } } }.getOrDefault(emptyMap())
+        set(v) = put { putString("budgetsNext", JSONObject(v).toString()) }
+
     /** Il nome da mostrare per una regola (tipo di notifica o persona), per l'elenco in Impostazioni */
     var ruleNames: Map<String, String>
         get() = runCatching { JSONObject(str("ruleNames", "{}")).let { o -> o.keys().asSequence().associateWith { o.getString(it) } } }.getOrDefault(emptyMap())

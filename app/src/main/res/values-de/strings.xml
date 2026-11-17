@@ -830,7 +830,7 @@
     <string name="ach_skip_1000">Tausend Neins</string>
     <string name="ach_skip_1000_d">Tippe insgesamt 1000-mal auf \"Lass es\".</string>
     <string name="ach_perfect">Perfekter Tag</string>
-    <string name="ach_perfect_d">Tippe an einem einzigen Tag mindestens 5-mal auf \"Lass es\" und nie auf \"Trotzdem öffnen\".</string>
+    <string name="ach_perfect_d">Tippe an einem einzigen Tag mindestens 5-mal auf „Lass es“ und bleib im Budget: +5 Min. für dein Level.</string>
     <string name="ach_loyal">Treu</string>
     <string name="ach_loyal_d">Tippe 25-mal bei derselben App auf \"Lass es\". Lass dir so viel Zeit, wie du willst.</string>
     <string name="ach_skip_run">Fünf am Stück</string>
@@ -866,11 +866,11 @@
     <string name="ach_clean_365">Ein Jahr voller Tage</string>
     <string name="ach_clean_365_d">Sammle 365 Tage ohne Versuchung, am Stück oder nicht.</string>
     <string name="ach_hour">Eine gefundene Stunde</string>
-    <string name="ach_hour_d">Gewinne an einem einzigen Tag 60 Minuten zurück: Jedes \"Lass es\" gibt die Zeit eines Besuchs zurück, jedes \"Trotzdem öffnen\" nimmt sie weg.</string>
+    <string name="ach_hour_d">Sammle 60 Minuten in derselben Woche, Montag bis Sonntag: Jeder Tag im Budget bringt bis zu 20.</string>
     <string name="ach_day_2h">Zwei Stunden für dich</string>
-    <string name="ach_day_2h_d">Gewinne an einem einzigen Tag 2 Stunden zurück, abzüglich der Zeit, die du mit \"Trotzdem öffnen\" verlierst.</string>
+    <string name="ach_day_2h_d">Sammle 2 Stunden in derselben Woche, Montag bis Sonntag.</string>
     <string name="ach_week_3h">Ein Nachmittag</string>
-    <string name="ach_week_3h_d">Gewinne in derselben Woche, Montag bis Sonntag, 3 Stunden zurück.</string>
+    <string name="ach_week_3h_d">Sammle 3 Stunden im selben Monat.</string>
     <string name="ach_month_6h">Das Buch</string>
     <string name="ach_month_6h_d">Gewinne im selben Monat 6 Stunden zurück: genug Zeit, um ein Buch zu lesen.</string>
     <string name="ach_total_10h">Zehn Stunden</string>
@@ -1077,4 +1077,21 @@
         <item quantity="one">Gelesen</item>
         <item quantity="other">%d gelesen</item>
     </plurals>
+    <string name="brake_left">Heute noch %1$s</string>
+    <string name="brake_used_up">Budget für heute aufgebraucht</string>
+    <string name="brake_over">%1$s über dem Budget</string>
+    <string name="budget_title">Tagesbudget</string>
+    <string name="budget_hint">Minuten pro Tag für jede gebremste App. Senken gilt sofort, Erhöhen ab morgen.</string>
+    <string name="budget_used">%1$s von %2$s heute</string>
+    <string name="budget_next">ab morgen: %1$s</string>
+    <string name="budget_label">Bremsbudget</string>
+    <string name="budget_ask_lower">Diese Woche reichten dir bei %1$s etwa %2$s pro Tag. Budget ab Montag von %3$s auf %2$s senken?</string>
+    <string name="budget_ask_raise">Diese Woche hast du bei %1$s oft überzogen. Ab Montag ein realistischeres Budget: %2$s statt %3$s?</string>
+    <string name="budget_yes">Ja</string>
+    <string name="budget_keep">So lassen</string>
+    <string name="budget_from_monday">Erledigt: ab Montag %1$s pro Tag</string>
+    <string name="budget_done_title">%1$s: Budget für heute aufgebraucht</string>
+    <string name="budget_done_text">Du hast %1$s genutzt. Ob du weitermachst, entscheidest du.</string>
+    <string name="ch_budget">Bremsbudget</string>
+    <string name="ch_budget_desc">Wenn das Tagesbudget einer gebremsten App aufgebraucht ist, während du sie nutzt</string>
 </resources>

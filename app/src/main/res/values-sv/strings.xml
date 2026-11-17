@@ -826,7 +826,7 @@
     <string name="ach_skip_1000">Tusen nej</string>
     <string name="ach_skip_1000_d">Tryck på \"Låt bli\" 1000 gånger totalt.</string>
     <string name="ach_perfect">Perfekt dag</string>
-    <string name="ach_perfect_d">Tryck under en och samma dag på \"Låt bli\" minst 5 gånger och aldrig på \"Öppna ändå\".</string>
+    <string name="ach_perfect_d">Tryck under en och samma dag på ”Låt bli” minst 5 gånger och håll dig inom budgeten: +5 min till din nivå.</string>
     <string name="ach_loyal">Trogen</string>
     <string name="ach_loyal_d">Tryck på \"Låt bli\" 25 gånger i samma app. Ta den tid du vill.</string>
     <string name="ach_skip_run">Fem i rad</string>
@@ -862,11 +862,11 @@
     <string name="ach_clean_365">Ett år av dagar</string>
     <string name="ach_clean_365_d">Samla 365 dagar utan frestelse, i rad eller inte.</string>
     <string name="ach_hour">En hittad timme</string>
-    <string name="ach_hour_d">Vinn tillbaka 60 minuter under en och samma dag: varje \"Låt bli\" ger tillbaka tiden för ett besök, varje \"Öppna ändå\" tar den.</string>
+    <string name="ach_hour_d">Tjäna 60 minuter under samma vecka, måndag till söndag: varje dag inom budget ger upp till 20.</string>
     <string name="ach_day_2h">Två timmar för dig</string>
-    <string name="ach_day_2h_d">Vinn tillbaka 2 timmar under en och samma dag, minus tiden du förlorar med \"Öppna ändå\".</string>
+    <string name="ach_day_2h_d">Tjäna 2 timmar under samma vecka, måndag till söndag.</string>
     <string name="ach_week_3h">En eftermiddag</string>
-    <string name="ach_week_3h_d">Vinn tillbaka 3 timmar under samma vecka, måndag till söndag.</string>
+    <string name="ach_week_3h_d">Tjäna 3 timmar under samma månad.</string>
     <string name="ach_month_6h">Boken</string>
     <string name="ach_month_6h_d">Vinn tillbaka 6 timmar under samma månad: tid nog att läsa en bok.</string>
     <string name="ach_total_10h">Tio timmar</string>
@@ -1073,4 +1073,21 @@
         <item quantity="one">Läst</item>
         <item quantity="other">%d lästa</item>
     </plurals>
+    <string name="brake_left">%1$s kvar i dag</string>
+    <string name="brake_used_up">Dagens budget är slut</string>
+    <string name="brake_over">%1$s över budget</string>
+    <string name="budget_title">Dagsbudget</string>
+    <string name="budget_hint">Minuter per dag för varje bromsad app. Sänker du den gäller det direkt, höjer du den från i morgon.</string>
+    <string name="budget_used">%1$s av %2$s i dag</string>
+    <string name="budget_next">från i morgon: %1$s</string>
+    <string name="budget_label">Bromsbudget</string>
+    <string name="budget_ask_lower">Den här veckan räckte ungefär %2$s om dagen för %1$s. Ska budgeten sänkas från %3$s till %2$s från måndag?</string>
+    <string name="budget_ask_raise">Den här veckan gick du ofta över med %1$s. En mer realistisk budget från måndag: %2$s i stället för %3$s?</string>
+    <string name="budget_yes">Ja</string>
+    <string name="budget_keep">Låt det vara</string>
+    <string name="budget_from_monday">Klart: från måndag %1$s om dagen</string>
+    <string name="budget_done_title">%1$s: dagens budget är slut</string>
+    <string name="budget_done_text">Du har använt %1$s. Det är du som bestämmer om du fortsätter.</string>
+    <string name="ch_budget">Bromsbudget</string>
+    <string name="ch_budget_desc">När en bromsad apps dagsbudget tar slut medan du använder den</string>
 </resources>

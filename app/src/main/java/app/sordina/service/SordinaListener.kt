@@ -291,7 +291,8 @@ class SordinaListener : NotificationListenerService() {
         Faults.guard("card") {
             CardDetector.detect(sbn.key, sbn.packageName, label(sbn.packageName), info.category, info.title, info.text,
                 info.ongoing, Classifier.isOtp(info.title + " " + info.text), buttons(sbn), progress(sbn), sbn.postTime)
-                ?.let { k -> if (k.kind == CardKind.MUSIC) k else NotifImages.bitmap(this, sbn)?.let { k.copy(image = it) } ?: k }.let { c ->
+                ?.let { k -> if (k.kind == CardKind.MUSIC) k else NotifImages.bitmap(this, sbn)?.let { k.copy(image = it) } ?: k }
+                ?.copy(pkg = sbn.packageName).let { c ->
                 val signals = SordinaApp.of(this).signals
                 // Aggiornata e non serve più una scheda (la corsa è finita, il codice è stato sostituito): via quella di prima
                 if (c == null) signals.remove(sbn.key) else signals.put(c)

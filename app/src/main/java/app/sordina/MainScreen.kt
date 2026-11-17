@@ -1,5 +1,7 @@
 package app.sordina
 
+import app.sordina.service.BudgetWatch
+
 import app.sordina.ui.Celebration
 import app.sordina.data.Backup
 import app.sordina.data.Signals
@@ -247,7 +249,13 @@ internal fun MainActivity.Root() {
                 Screen.HOME -> {
                     val waiting = groups.sumOf { g -> g.sumOf { it.count } }
                     val ms = now.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
-                    val cards = remember(health, signalCards, planMap, music, events, now, scene, dismissedCards) {
+                    // La domenica: la proposta del budget per la settimana dopo (prima si chiudono le giornate, fuori dal thread principale)
+                    val budgetAsk by androidx.compose.runtime.produceState<app.sordina.data.Habits.Proposal?>(null, prefsVersion, now.toLocalDate()) {
+                        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            runCatching { app.habits.closeDays(); app.habits.proposal() }.getOrNull()
+                        }
+                    }
+                    val cards = remember(health, signalCards, planMap, music, events, now, scene, dismissedCards, budgetAsk) {
                         val calendar = events.map { eventCard(it, ms) }
                         val calendarTitles = calendar.map { Search.normalize(it.title) }.toSet()
                         // Riunioni avvisate da un'app: l'etichetta "Tra 10 min" si aggiorna; se il calendario ce l'ha già, basta quella
@@ -258,7 +266,7 @@ internal fun MainActivity.Root() {
                             // Lo stesso piano letto due volte (dal modello e dalle regole, o da due notifiche): una scheda, la più ricca
                             .filter { !Signals.hidden(it, dismissedCards) }
                             .sortedByDescending { it.actions.size }.distinctBy { if (it.kind == CardKind.PLAN) "plan|${it.label}|${it.title}" else it.key }
-                        (listOfNotNull(health?.let(::healthCard)) + fromNotifs + listOfNotNull(music) + calendar)
+                        (listOfNotNull(health?.let(::healthCard), budgetAsk?.let(::budgetCard)) + fromNotifs + listOfNotNull(music) + calendar)
                             // Una scheda senza titolo non dice niente: mai in Casa
                             .filter { it.expiresAt > ms && !Signals.hidden(it, dismissedCards) && it.title.isNotBlank() }
                             // Ogni Casa tiene solo le schede che le servono: in auto e di notte quasi nulla
@@ -435,11 +443,9 @@ internal fun MainActivity.Root() {
                     },
                 )
                 Screen.BRAKE -> brakeTarget?.let { a ->
-                    // Quanto vale lasciare stare e quanto costa aprire: fissati all'arrivo, uguali a quelli mostrati
-                    // Lasciare stare vale una volta per tentazione (subito dopo un altro premio vale 0); aprire costa sempre
-                    val visit = remember(a.key) { app.habits.minutesPerVisit(a.packageName) }
-                    val gain = remember(a.key) { app.habits.skipGain(visit) }
-                    val cost = remember(a.key) { app.habits.openCost(a.packageName, visit) }
+                    // Lasciare stare conta una volta per tentazione (subito dopo un'altra vale 0); il budget si legge all'arrivo
+                    val gain = remember(a.key) { app.habits.skipGain() }
+                    val left = remember(a.key) { app.habits.leftToday(a.packageName) }
                     BrakeScreen(
                         app = a,
                         icon = remember(a.key) { catalog.icon(a) },
@@ -447,12 +453,13 @@ internal fun MainActivity.Root() {
                         seconds = remember(a.key) { brakeWait(a.packageName) },
                         streak = remember(a.key) { app.habits.streak() },
                         gain = gain,
-                        cost = cost,
+                        left = left,
                         onOpen = { habit ->
-                            // Prima il costo (conta le aperture precedenti), poi si registra questa
-                            app.habits.logOpen(a.packageName, cost)
+                            app.habits.logOpen(a.packageName)
                             app.habits.logBrake(a.packageName, habit)
                             BrakeGuard.passed(a.packageName)
+                            // Quando finisce il budget mentre la usi, Sordina lo dice una volta
+                            BudgetWatch.opened(this@Root, a.packageName)
                             val via = brakeVia?.let { packageManager.getLaunchIntentForPackage(it) }
                             if (via != null) runCatching { startActivity(via.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.onFailure { catalog.launch(a) } else catalog.launch(a)
                         },
