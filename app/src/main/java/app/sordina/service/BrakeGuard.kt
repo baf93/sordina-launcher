@@ -129,7 +129,7 @@ object BrakeGuard {
     private fun brake(context: Context, prefs: Prefs, pkg: String, via: String? = null): Boolean {
         if (pkg == context.packageName || pkg == allowed || pkg !in prefs.braked || !brakeNow(prefs)) return false
         context.startActivity(
-            Intent(context, MainActivity::class.java).putExtra(EXTRA, pkg).putExtra(VIA, via)
+            Intent(context, MainActivity::class.java).putExtra(EXTRA, pkg).putExtra(VIA, via).putExtra(TOKEN, token)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT),
         )
         return true
@@ -151,4 +151,12 @@ object BrakeGuard {
 
     const val EXTRA = "brake"
     const val VIA = "brakeVia"
+    const val TOKEN = "brakeToken"
+
+    /**
+     * Un segreto che vive solo in memoria: la schermata del freno si apre solo se l'ha chiesta Sordina,
+     * non un'altra app che conosce il nome dell'extra (e potrebbe far ripartire un'app a sua scelta).
+     */
+    private val token: String = java.util.UUID.randomUUID().toString()
+    fun genuine(t: String?) = t != null && t == token
 }

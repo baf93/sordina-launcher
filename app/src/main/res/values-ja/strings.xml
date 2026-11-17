@@ -411,8 +411,8 @@
     <string name="health_stopped_title">Sordina が眠ってしまいました</string>
     <string name="lv_always">常に届く</string>
     <string name="lv_always_hint">音あり、常に</string>
-    <string name="lv_silent">静かに届く</string>
-    <string name="lv_silent_hint">通知シェードに、音なし</string>
+    <string name="lv_silent">通す</string>
+    <string name="lv_silent_hint">アプリが送るとおり通知シェードに</string>
     <string name="lv_summary">待たせる</string>
     <string name="lv_summary_hint">Sordina で待つ</string>
     <string name="moment_focus_until">%1$s まで大事なものだけ · タップで終了</string>
@@ -708,7 +708,7 @@
     <string name="brake_balance">今日 %1$s</string>
     <string name="brake_day_won">今日はプラス</string>
     <string name="perm_location">位置情報</string>
-    <string name="h_p_location">自宅と職場の Wi-Fi を見分けて、場所に合わせて提案を変えるため</string>
+    <string name="h_p_location">天気のため：おおよその地域だけ。GPSは使いません</string>
     <string name="r_pass_title">常に通す</string>
     <string name="r_empty">まだありません</string>
     <string name="access_summary">即時ブレーキとダブルタップでロック</string>
@@ -1020,4 +1020,21 @@
     <string name="ach_locked">未獲得</string>
     <string name="usually_now">いつもこの時間は</string>
     <string name="hide_card">非表示</string>
+    <string name="pin_shortcut_q">%2$s の「%1$s」をアプリに追加しますか？</string>
+    <string name="faults_title">エラー</string>
+    <string name="faults_none">記録されたエラーはありません</string>
+    <string name="faults_hint">最近うまくいかなかったこと。この端末内にだけ残ります。</string>
+    <string name="health_samsung_title">SamsungがSordinaを停止しました</string>
+    <string name="health_samsung_sub">メモリを空けるためです。今は再び動いています。防ぐ方法はこちら。</string>
+    <string name="health_samsung_fix">方法を見る</string>
+    <string name="samsung_sleep_l">スリープさせない</string>
+    <string name="samsung_sleep_why">Samsungが夜に私を止めることがあります</string>
+    <string name="samsung_sleep_title">Sordinaをスリープさせない</string>
+    <string name="samsung_sleep_steps">メモリが不足すると、Samsungはバックグラウンドのアプリを停止し、Sordinaは再び起動するまで通知を仕分けられなくなります。\n\n［バッテリー］ページで：バックグラウンドでの使用制限 → スリープさせないアプリ → ＋ → Sordina。</string>
+    <string name="samsung_sleep_open">バッテリーを開く</string>
+    <string name="access_desc">Sordinaがユーザー補助を使うのは次の3つだけです：ブレーキをかけたアプリが前面に来た瞬間に止めること（ブラウザでのそのサイトも）、ダブルタップで画面をロックすること、外部からの入力を受け付けないアプリ（Home AssistantのAssist、Signal）であなたの代わりに文を入力すること。聞くのはブレーキをかけたアプリと、サイトがある場合はブラウザだけで、ブラウザでは前面にある間アドレスバーだけを読みます。画面を見るのは数秒だけ、そのアプリの中だけです。何も端末の外には出ません。</string>
+    <string name="access_consent_title">ユーザー補助を使いますか？</string>
+    <string name="access_consent_ok">同意して設定を開く</string>
+    <string name="s_instant_brake_hint">ユーザー補助を使うとブレーキがすぐにかかり、ブレーキをかけたアプリのサイトにも効き、Sordinaが数秒ごとに確認する必要がなくなります。オンにできない場合：アプリ情報 › ⋮ › 制限付き設定を許可。</string>
+    <string name="brake_recent">少し前にカウント済み</string>
 </resources>

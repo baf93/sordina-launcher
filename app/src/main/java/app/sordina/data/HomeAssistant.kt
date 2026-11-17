@@ -69,19 +69,45 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
     /** L'ultima strada usata: true in casa, false da fuori, null se non si è ancora parlato con casa. */
     val local: Boolean? get() = route?.second?.let { it == prefs.haLocalUrl && it != prefs.haUrl }
 
+    /**
+     * L'impronta della rete di adesso: gateway, sottorete, server DHCP e dominio. Non è una prova
+     * (una rete ostile può imitarla), ma basta perché il token non parta in chiaro verso
+     * un 192.168.1.10 qualunque di un bar o di un albergo.
+     */
+    private fun netPrint(): String? = runCatching {
+        val cm = context.getSystemService(android.net.ConnectivityManager::class.java) ?: return null
+        val lp = cm.getLinkProperties(cm.activeNetwork ?: return null) ?: return null
+        val gw = lp.routes.firstOrNull { it.isDefaultRoute && it.gateway != null }?.gateway?.hostAddress ?: return null
+        val sub = lp.linkAddresses.firstOrNull { it.address is java.net.Inet4Address }?.let { "${it.address.hostAddress}".substringBeforeLast('.') + "/" + it.prefixLength }
+        val dhcp = if (android.os.Build.VERSION.SDK_INT >= 30) lp.dhcpServerAddress?.hostAddress else null
+        listOf(gw, sub, dhcp, lp.domains).joinToString("|") { it ?: "" }
+    }.getOrNull()
+
+    /** Siamo su una rete di casa già riconosciuta (imparata quando la prova di collegamento è riuscita in chiaro). */
+    private fun atHome(): Boolean = netPrint()?.let { it in prefs.haHomeNets } == true
+
+    /**
+     * Durante la prova chiesta da te nelle impostazioni si può parlare in chiaro: è così che casa si impara.
+     * Vale solo per il thread della prova: una richiesta in parallelo (il calendario) resta sulle regole di sempre.
+     */
+    private val trusting = ThreadLocal.withInitial { false }
+
     private fun bases(): List<Pair<String, Int>> {
+        // In chiaro (http) solo su una rete di casa riconosciuta; fuori serve https
+        val safe = trusting.get() || atHome()
+        fun ok(u: String) = u.isNotBlank() && (u.startsWith("https://") || safe)
         val out = prefs.haUrl
         val home = prefs.haLocalUrl
-        if (home.isBlank() || home == out) return listOfNotNull(out.takeIf { it.isNotBlank() }?.let { it to 4000 })
+        if (home.isBlank() || home == out) return listOfNotNull(out.takeIf(::ok)?.let { it to 4000 })
         val cm = context.getSystemService(android.net.ConnectivityManager::class.java)
         val net = cm?.activeNetwork
         val caps = net?.let { cm.getNetworkCapabilities(it) }
         val lan = caps?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) == true ||
             caps?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET) == true
         // Sulla rete mobile casa non si raggiunge: dritti fuori
-        if (!lan) return listOfNotNull(out.takeIf { it.isNotBlank() }?.let { it to 4000 })
+        if (!lan) return listOfNotNull(out.takeIf(::ok)?.let { it to 4000 })
         // Quello di casa ha un'attesa breve: se non risponde in un attimo non siamo a casa
-        val both = listOf(home to 1500, out to 4000).filter { it.first.isNotBlank() }
+        val both = listOf(home to 1500, out to 4000).filter { ok(it.first) }
         val known = route?.takeIf { it.first == net }?.second ?: return both
         return both.sortedBy { if (it.first == known) 0 else 1 }
     }
@@ -95,6 +121,8 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
             val code = try {
                 c.connectTimeout = wait
                 c.readTimeout = 6000
+                // Il token non segue i reindirizzamenti verso altri indirizzi
+                c.instanceFollowRedirects = false
                 c.setRequestProperty("Authorization", "Bearer $t")
                 c.setRequestProperty("Content-Type", "application/json")
                 if (body != null) {
@@ -120,25 +148,32 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
     fun test(): String {
         if (!configured) return tr(R.string.ha_missing)
         route = null
-        val r = request("/api/") ?: return tr(R.string.ha_unreachable)
-        // Gli indirizzi che Home Assistant conosce (Impostazioni › Sistema › Rete): quello di casa, e quello di fuori se manca
-        runCatching {
-            val cfg = JSONObject(request("/api/config") ?: return@runCatching)
-            val inside = cfg.optString("internal_url").takeIf { it.startsWith("http") && cfg.isNull("internal_url").not() }
-            val outside = cfg.optString("external_url").takeIf { it.startsWith("http") && cfg.isNull("external_url").not() }
-            // Hai scritto quello di casa: fuori si passa da quello esterno, se c'è
-            if (inside != null && prefs.haUrl.trimEnd('/') == inside.trimEnd('/') && outside != null) prefs.haUrl = outside
-            if (inside != null && prefs.haLocalUrl.isBlank()) {
-                prefs.haLocalUrl = inside
-                // Appena imparato: si riprova, così la strada di adesso è già quella giusta (in casa, se ci sei)
-                route = null
-                request("/api/")
+        trusting.set(true)
+        try {
+            val r = request("/api/") ?: return tr(R.string.ha_unreachable)
+            // Gli indirizzi che Home Assistant conosce (Impostazioni › Sistema › Rete): quello di casa, e quello di fuori se manca
+            runCatching {
+                val cfg = JSONObject(request("/api/config") ?: return@runCatching)
+                val inside = cfg.optString("internal_url").takeIf { it.startsWith("http") && cfg.isNull("internal_url").not() }
+                // Fuori casa il token viaggia solo cifrato: un indirizzo esterno in chiaro non si adotta
+                val outside = cfg.optString("external_url").takeIf { it.startsWith("https://") && cfg.isNull("external_url").not() }
+                // Hai scritto quello di casa: fuori si passa da quello esterno, se c'è
+                if (inside != null && prefs.haUrl.trimEnd('/') == inside.trimEnd('/') && outside != null) prefs.haUrl = outside
+                if (inside != null && prefs.haLocalUrl.isBlank()) {
+                    prefs.haLocalUrl = inside
+                    // Appena imparato: si riprova, così la strada di adesso è già quella giusta (in casa, se ci sei)
+                    route = null
+                    request("/api/")
+                }
             }
+            // Ha risposto in chiaro: questa è una rete di casa
+            if (route?.second?.startsWith("http://") == true) netPrint()?.let { prefs.haHomeNets = prefs.haHomeNets + it }
+            return runCatching { JSONObject(r).optString("message", tr(R.string.ha_connected)) }.getOrDefault(tr(R.string.ha_connected))
+        } finally {
+            trusting.set(false)
         }
-        return runCatching { JSONObject(r).optString("message", tr(R.string.ha_connected)) }.getOrDefault(tr(R.string.ha_connected))
     }
 
-    /** Entità (in cache per un minuto). */
     fun entities(force: Boolean = false): List<HaEntity> {
         if (!configured) return emptyList()
         if (!force && System.currentTimeMillis() - cacheAt < 60_000 && cache.isNotEmpty()) return cache

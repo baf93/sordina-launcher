@@ -78,11 +78,13 @@ class Intents(
     /** Quello che il telefono sa per capire le frasi libere: nomi, chi ti ha scritto, chi ti ha chiamato. */
     private fun hints(apps: List<AppEntry>) = object : Phrase.Hints {
         override fun isName(word: String) = word.length >= 3 && (
-            people.all().any { c -> c.normalized.split(' ').any { it == word } } || apps.any { a -> a.normalized.split(' ').any { it == word } })
+            word in people.nameWords() || apps.any { a -> a.normalized.split(' ').any { it == word } })
+        // "Rispondile": chi ti ha scritto prima che cominciassi a parlare, non il messaggio arrivato in quell'attimo
+        private val before = System.currentTimeMillis() - PRONOUN_SETTLE
         override fun lastWriter(): String? =
-            store.held.value.values.filter { it.isMessage && it.conversation == null && !it.person.isNullOrBlank() }
+            store.held.value.values.filter { it.isMessage && it.conversation == null && !it.person.isNullOrBlank() && it.time < before }
                 .maxByOrNull { it.time }?.person
-                ?: runCatching { app.sordina.service.SordinaListener.tray() }.getOrDefault(emptyList())
+                ?: runCatching { app.sordina.service.SordinaListener.tray(postedBefore = before) }.getOrDefault(emptyList())
                     .firstOrNull { !it.person.isNullOrBlank() && Via.ofPackage(it.pkg) != null }?.person
         override fun lastPerson(): String? = lastPerson?.takeIf { System.currentTimeMillis() - it.second < 15 * 60_000 }?.first?.name
         override fun lastCaller(): String? = runCatching {
@@ -90,12 +92,13 @@ class Intents(
         }.getOrNull()
     }
 
-    fun understand(query: String, apps: List<AppEntry>, usage: Map<String, Double>): Understanding {
+    /** [learn]: false per le prove che non sono una frase tua (le trascrizioni alternative della voce): non si impara niente. */
+    fun understand(query: String, apps: List<AppEntry>, usage: Map<String, Double>, learn: Boolean = true): Understanding {
         val raw = query.trim()
         if (raw.isEmpty()) return Understanding(emptyList(), false)
         // Le frasi dette in mille modi diventano quella che il motore conosce ("puoi chiamare Elisa?" → "chiama Elisa")
         val q = reorder(runCatching { Phrase.canonical(raw, hints(apps)) }.getOrDefault(raw).ifBlank { raw })
-        track(Search.normalize(raw))
+        if (learn) track(Search.normalize(raw))
         val ow = q.split(Regex("\\s+"))
         val nw = ow.map { Search.normalize(it) }
         val nq = nw.filter { it.isNotEmpty() }.joinToString(" ")
@@ -133,7 +136,7 @@ class Intents(
             val msg = MSG_VERBS.any { it.startsWith(nq) }
             // Senza storia: le persone importanti e i preferiti
             fun fallback(prefix: String) = people.all().filter { it.starred || people.isImportant(it.name) }.take(3).map { c ->
-                if (prefix == "call:") "call:${c.normalized}" else "msg:${c.normalized}:${viaFor(c, null).name}"
+                if (prefix == "call:") "call:${c.token}" else "msg:${c.token}:${viaFor(c, null).name}"
             }
             fun offer(prefix: String) = brain.likelyPeople(prefix, 3).ifEmpty { fallback(prefix) }
                 .forEachIndexed { i, item -> realize(item, apps, usage)?.let { out += it.copy(score = 72 - i * 3) } }
@@ -161,6 +164,7 @@ class Intents(
                 (top.kind == Kind.HOME && !(second.kind == Kind.SETTING && top.score - second.score < 10)))
         // Sicurezza bassa: "Cerca sul web" in cima
         val list = if (top == null || top.score < 45) listOf(web) + ranked else ranked + web
+        if (learn) found(Search.normalize(raw), ranked.any { it.kind != Kind.WEB && it.score >= 60 })
         return Understanding(list, confident)
     }
 
@@ -226,6 +230,8 @@ class Intents(
     private var peak = ""
     private var peakAt = 0L
     private var attempt: Pair<String, Long>? = null
+    /** L'ultima frase che ha trovato qualcosa (non solo il web): riscriverla non è una correzione */
+    private var peakFound: String? = null
 
     @Synchronized
     private fun track(nq: String) {
@@ -233,9 +239,13 @@ class Intents(
         val now = System.currentTimeMillis()
         if (nq.startsWith(peak)) { peak = nq; peakAt = now; return }
         // Una frase nuova che non continua la precedente: quella di prima non ha portato a niente
-        if (peak.length >= 3) attempt = peak to peakAt
+        // (se aveva trovato qualcosa, era solo un'altra ricerca: niente da imparare)
+        attempt = if (peak.length >= 3 && peak != peakFound) peak to peakAt else null
         peak = nq; peakAt = now
     }
+
+    @Synchronized
+    private fun found(nq: String, any: Boolean) { if (any && nq == peak) peakFound = nq }
 
     /**
      * Hai scritto "mamma", non è uscito niente, hai riscritto "maria" e l'hai scelta:
@@ -279,7 +289,11 @@ class Intents(
         peak = ""; attempt = null
         val nq = Search.normalize(query)
         if (nq.isEmpty() || c.kind == Kind.WEB) return
-        if (index > 0) prefs.aliases = prefs.aliases + (nq to c.id)
+        // Una scelta più in basso diventa la prima solo alla seconda volta uguale: una sola può essere un dito scivolato
+        if (index > 0) {
+            if (prefs.aliasPending[nq] == c.id) { prefs.aliases = prefs.aliases + (nq to c.id); prefs.aliasPending = prefs.aliasPending - nq }
+            else prefs.aliasPending = prefs.aliasPending + (nq to c.id)
+        }
     }
 
     // Frasi con struttura
@@ -394,7 +408,7 @@ class Intents(
             val target = restN.replace(Regex("(?:al|a|su|to|auf|sur|para|em) \\d{1,3} ?(%|percento|per cento|gradi|percent|degrees|grados|degres|grad|graus|prozent|por ciento|pour cent)?"), "").split(' ').filter { it !in setOf("on", "off", "the", "an", "aus", "ein") }.joinToString(" ").trim()
             if (ha.canAssist && target.isNotBlank()) {
                 // Casa: la frase va ad Assist, che conosce stanze, alias ed entità esposte (e la tua lingua: la frase resta com'è)
-                out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, if (first in OPEN) 80 else 90, false, Act.Assist(ow.joinToString(" ")))
+                out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, if (first in OPEN) 80 else 90, sensitive(nw), Act.Assist(ow.joinToString(" ")))
             }
             if (first in OPEN) {
                 Search.apps(restN, apps, emptyMap(), 2).forEach { a ->
@@ -411,12 +425,12 @@ class Intents(
         }
         // Un canale TV ("metti Rai 1", "guarda il 5"): a casa, non nella musica
         if (ha.canAssist && HomeTalk.channel(nw, prefs.homeWords + ha.names())) {
-            out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, 93, false, Act.Assist(ow.joinToString(" ")))
+            out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, 93, sensitive(nw), Act.Assist(ow.joinToString(" ")))
             return
         }
         // Casa senza comando: domande e stati ("che luci sono accese", "quanti gradi in salotto") vanno ad Assist, non sul web
         if (ha.canAssist) HomeTalk.score(nw, prefs.homeWords + ha.names())?.let { s ->
-            out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, s, false, Act.Assist(ow.joinToString(" ")))
+            out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, s, sensitive(nw), Act.Assist(ow.joinToString(" ")))
         }
         // Musica
         if (first in PLAY && restN.isNotBlank()) {
@@ -596,6 +610,22 @@ class Intents(
 
         private val TORCH = setOf("torcia", "flashlight", "torch", "linterna", "taschenlampe", "lanterna")
         /** Aprire: un'app o, per casa, una porta (la frase per Assist resta nella tua lingua). */
+        /**
+         * Comandi di casa che aprono o disarmano (porte, serrature, cancelli, garage, allarme): mai da soli,
+         * né dalla tastiera né dalla voce né da una proposta. Restano un tocco tuo.
+         */
+        private val SENSITIVE = setOf("porta", "portone", "portoncino", "cancello", "cancelletto", "garage", "basculante", "serratura", "serrature",
+            "allarme", "antifurto", "sblocca", "disarma", "lock", "unlock", "door", "gate", "garage", "alarm", "disarm",
+            "puerta", "cerradura", "alarma", "portail", "porte", "serrure", "alarme", "tur", "tuer", "tor", "schloss", "alarmanlage", "portao", "fechadura")
+        /** Le radici che si trovano anche dentro le parole composte ("haustur", "garagentor", "garagem", "eingangstuer") */
+        private val SENSITIVE_STEMS = listOf("garag", "serratur", "antifurt", "allarm", "alarm", "sblocc",
+            "disarm", "unlock", "door", "cerradur", "serrure", "schloss", "fechadur", "portao", "portail", "basculant",
+            "haustur", "haustuer", "wohnungstur", "eingangstur", "hintertur", "terrassentur", "balkontur", "gartentur", "kellertur")
+        fun sensitive(words: List<String>) = words.any { w ->
+            w in SENSITIVE || SENSITIVE_STEMS.any { st -> w.startsWith(st) || (st.length >= 3 && w.endsWith(st)) || (st.length >= 5 && st in w) }
+        }
+        /** I messaggi arrivati da meno di così non sono "lei" di "rispondile" */
+        private const val PRONOUN_SETTLE = 10_000L
         private val OPEN = setOf("apri", "open", "abre", "ouvre", "offne", "oeffne", "öffne", "abra")
         private val PLAY = setOf("metti", "ascolta", "riproduci", "suona", "play", "listen",
             "pon", "reproduce", "escucha", "mets", "joue", "ecoute", "spiel", "spiele", "toca", "ouvir", "reproduz", "coloca")

@@ -232,6 +232,7 @@ object CardDetector {
     private val TRAVEL = Regex("(\\bvolo\\b|flight|boarding|carta d.imbarco|check-in|\\btreno\\b|frecciarossa|italo|trenitalia|biglietto|e-ticket|prenotazione confermata|booking confirmed)", RegexOption.IGNORE_CASE)
     private val PARCEL = Regex("(\\bpacco\\b|consegn|spedizion|corriere|out for delivery|in arrivo oggi|arriva oggi|delivered|ritiro)", RegexOption.IGNORE_CASE)
     private val ROUTE = Regex("([A-ZÀ-Ý][\\p{L}. ]{1,20}?)\\s*(?:→|->|–|—| - | > )\\s*([A-ZÀ-Ý][\\p{L}. ]{1,20})")
+    private val PHONE = Regex("""\+?[\d\s()./-]{6,}""")
     private val MISSED = Regex("(chiamata persa|chiamate perse|missed call)", RegexOption.IGNORE_CASE)
     private val PAY_WORDS = Regex("(pagament|pagato|addebit|autorizzat|transazion|acquisto|\\bspes[ao]\\b|payment|paid|purchase|charged|spent|\\bvisa\\b|mastercard|maestro|\\bamex\\b|contactless)", RegexOption.IGNORE_CASE)
     private val AMOUNT = Regex("(?:€|EUR)\\s?(\\d{1,3}(?:\\.\\d{3})*,\\d{2}|\\d+[.,]\\d{2})(?!\\d)|(?<![\\d.,])(\\d{1,3}(?:\\.\\d{3})*,\\d{2}|\\d+[.,]\\d{2})\\s?(?:€|EUR)")
@@ -259,7 +260,8 @@ object CardDetector {
     /** "15:30 - 16:00" o "15.30–16.00": l'orario di una riunione. */
     private val SPAN = Regex("(?<![\\d:.])([01]?\\d|2[0-3])[:.]([0-5]\\d)\\s*[-–—]\\s*([01]?\\d|2[0-3])[:.]([0-5]\\d)(?![\\d:.])")
     /** Il link per entrare in una riunione online (Teams, Zoom, Meet, Webex) */
-    val MEETING_LINK = Regex("https://(meet\\.google\\.com|[\\w.-]*zoom\\.us|teams\\.microsoft\\.com|teams\\.live\\.com|[\\w.-]*webex\\.com)/\\S+")
+    // Solo i domini veri o i loro sottodomini ("acme.zoom.us"), mai i sosia ("evilzoom.us", "fakewebex.com")
+    val MEETING_LINK = Regex("https://(meet\\.google\\.com|(?:[\\w-]+\\.)*zoom\\.us|teams\\.microsoft\\.com|teams\\.live\\.com|(?:[\\w-]+\\.)*webex\\.com)/\\S+")
     /** "Microsoft Teams Meeting", "Riunione di Microsoft Teams", "Zoom", "Google Meet": si entra online */
     internal val ONLINE_MEETING = Regex("\\b(teams|zoom|google meet|webex)\\b", RegexOption.IGNORE_CASE)
 
@@ -328,8 +330,12 @@ object CardDetector {
         }
         if (category == "missed_call" || (pkg in DIALER_PKGS && MISSED.containsMatchIn(all))) {
             val who = title.replace(MISSED, "").trim(' ', ':', '-').ifBlank { text }.ifBlank { tr(R.string.missed_call) }
+            // Un numero si richiama col compositore (mai a voce sbagliata); un nome passa dalla ricerca,
+            // che chiede conferma se non è sicura
+            val number = who.takeIf { PHONE.matches(it) }?.filter { it.isDigit() || it == '+' }
+            val call = if (number != null) CardOp.Dial(number) else CardOp.Query("chiama $who")
             return Card(key, CardKind.CALL, tr(R.string.missed_call), who,
-                actions = listOf(CardAction(tr(R.string.call_back), CardOp.Query("chiama $who")), CardAction(tr(R.string.write), CardOp.Query("scrivi a $who"))),
+                actions = listOf(CardAction(tr(R.string.call_back), call), CardAction(tr(R.string.write), CardOp.Query("scrivi a $who"))),
                 expiresAt = now + 3 * 3600_000, avatar = true)
         }
         if (pkg in CLOCK_PKGS && (ongoing || category == "alarm")) {

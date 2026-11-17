@@ -422,8 +422,8 @@
     <string name="health_stopped_title">Sordina uyudu</string>
     <string name="lv_always">Her zaman geçer</string>
     <string name="lv_always_hint">Sesli, her zaman</string>
-    <string name="lv_silent">Sessizce geçer</string>
-    <string name="lv_silent_hint">Bildirim panelinde, sessiz</string>
+    <string name="lv_silent">Geçsin</string>
+    <string name="lv_silent_hint">Panelde, uygulamanın gönderdiği gibi</string>
     <string name="lv_summary">Bekletilir</string>
     <string name="lv_summary_hint">Sordina\'da bekler</string>
     <string name="moment_focus_until">%1$s saatine kadar sadece önemli olan · bitirmek için dokun</string>
@@ -719,7 +719,7 @@
     <string name="brake_balance">Bugün %1$s</string>
     <string name="brake_day_won">Bugün artıdasın</string>
     <string name="perm_location">Konum</string>
-    <string name="h_p_location">Evdeki ve işteki wifi\'yi tanımak için, böylece öneriler yere göre değişir</string>
+    <string name="h_p_location">Hava durumu için: yalnızca yaklaşık bölgen, asla GPS değil</string>
     <string name="r_pass_title">Her zaman geçir</string>
     <string name="r_empty">Henüz bir şey yok</string>
     <string name="access_summary">Anında fren ve kilitlemek için çift dokunma</string>
@@ -1031,4 +1031,21 @@
     <string name="ach_locked">Henüz kazanılmadı</string>
     <string name="usually_now">Genelde şimdi</string>
     <string name="hide_card">Gizle</string>
+    <string name="pin_shortcut_q">%2$s içinden “%1$s” uygulamalarına eklensin mi?</string>
+    <string name="faults_title">Hatalar</string>
+    <string name="faults_none">Kayıtlı hata yok</string>
+    <string name="faults_hint">Son zamanlarda ters gidenler. Bu telefonda kalır.</string>
+    <string name="health_samsung_title">Samsung Sordina\'yı kapattı</string>
+    <string name="health_samsung_sub">Bellek açmak için. Şimdi yeniden uyanık: bunu nasıl önleyeceğiniz burada.</string>
+    <string name="health_samsung_fix">Nasıl yapılacağını göster</string>
+    <string name="samsung_sleep_l">Hiç uyumayan</string>
+    <string name="samsung_sleep_why">Samsung bazen geceleri beni kapatıyor</string>
+    <string name="samsung_sleep_title">Sordina\'nın uyutulmasına izin verme</string>
+    <string name="samsung_sleep_steps">Bellek azaldığında Samsung arka plandaki uygulamaları kapatır ve Sordina yeniden uyanana kadar bildirimlerinizi ayırmayı bırakır.\n\nPil sayfasında: Arka plan kullanım sınırları → Hiç uyumayan uygulamalar → + → Sordina.</string>
+    <string name="samsung_sleep_open">Pil\'i aç</string>
+    <string name="access_desc">Sordina erişilebilirliği yalnızca üç şey için kullanır: frenlenmiş bir uygulamayı öne geldiği anda durdurmak (tarayıcıdaki web sitesini de), ekranı çift dokunuşla kilitlemek ve uygulamaların dışarıdan kabul etmediği yerlerde sizin yerinize bir cümle yazmak (Home Assistant Assist, Signal). Yalnızca frenlediğiniz uygulamaları ve web siteleri varsa tarayıcıları dinler: bunlardan yalnızca öndeyken adres çubuğunu okur. Ekrana yalnızca birkaç saniye, yalnızca o uygulamada bakar. Telefondan hiçbir şey çıkmaz.</string>
+    <string name="access_consent_title">Erişilebilirlik kullanılsın mı?</string>
+    <string name="access_consent_ok">Kabul ediyorum, ayarları aç</string>
+    <string name="s_instant_brake_hint">Erişilebilirlikle fren hemen devreye girer, frenlenmiş uygulamaların web sitelerinde de geçerli olur ve Sordina birkaç saniyede bir kontrol etmeyi bırakır. Açılamıyorsa: Uygulama bilgileri › ⋮ › Kısıtlanmış ayarlara izin ver.</string>
+    <string name="brake_recent">Az önce zaten sayıldı</string>
 </resources>

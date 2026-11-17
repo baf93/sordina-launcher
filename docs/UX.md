@@ -59,14 +59,16 @@ In auto il fumetto è lo stesso, sotto "Tocca e parla"; il "di solito" non c'è,
 - Sotto, sei app: quelle che usi a quell'ora. Pressione lunga: tieni qui, togli.
 - Scrivendo: app, persone ("chiama Anna", "scrivi a Paolo che arrivo"), timer, sveglie, impegni ("calcetto domani alle 17"), calcoli, impostazioni.
 - Comandi di casa ("spegni luci sala"): passati ad **Assist** di Home Assistant, che conosce stanze e alias. Solo le entità che esponi ad Assist.
-- Verso altre persone serve sempre il tuo tocco.
+- Verso altre persone serve sempre il tuo tocco. Anche per i comandi di casa che aprono o disarmano (porte, serrature, cancelli, garage, allarme): mai da soli, né a voce né dalle schede.
 
 ## 4. Notifiche
 
-- **Subito:** persone importanti, codici, chiamate, sveglie, app scelte da te.
-- **Aspetta:** tutto il resto, fino al riepilogo (8, 13, 19).
-- Al riepilogo ricompaiono nella tendina **originali** (icona, pulsanti, apertura nel punto giusto): Sordina le posticipa con la funzione standard di Android, non le copia.
-- Nulla si perde: se Sordina si ferma, Android le rimette comunque all'ora prevista.
+- **Passa:** persone importanti, codici, avvisi di pagamento sospetti, chiamate, sveglie, app scelte da te. Nella tendina, come le manda l'app.
+- **In sordina:** tutto il resto, nella pagina Sordina finché non la apri. Niente riepiloghi a orario.
+- Sordina le sospende con la funzione standard di Android, non le copia: aperte dalla pagina Sordina si aprono **originali**, nel punto giusto.
+- Nulla si perde: se Sordina si ferma, Android le rimette nella tendina entro un giorno.
+- Le app nascoste sono una riga sola ("App nascoste · N"): chi e cosa si vedono solo dopo lo sblocco.
+- Urgenze e insistenza contano solo dai tuoi contatti: un SMS "URGENTE" da un numero sconosciuto resta in sordina.
 - In Casa la frase dice quante aspettano; toccandola, la lista.
 
 Notte (orario) e auto (Android Auto): passano solo le persone importanti, da sole, senza menu.

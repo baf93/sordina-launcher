@@ -411,8 +411,8 @@
     <string name="health_stopped_title">Sordina 睡著了</string>
     <string name="lv_always">總是通過</string>
     <string name="lv_always_hint">有聲音，總是</string>
-    <string name="lv_silent">靜默通過</string>
-    <string name="lv_silent_hint">在通知欄中，無聲音</string>
+    <string name="lv_silent">放行</string>
+    <string name="lv_silent_hint">依應用程式傳送的方式顯示在通知欄</string>
     <string name="lv_summary">暫留</string>
     <string name="lv_summary_hint">在 Sordina 中等待</string>
     <string name="moment_focus_until">%1$s 前只有重要的 · 輕觸結束</string>
@@ -708,7 +708,7 @@
     <string name="brake_balance">今天 %1$s</string>
     <string name="brake_day_won">今天你是正數</string>
     <string name="perm_location">位置資訊</string>
-    <string name="h_p_location">用來辨識家裡和公司的 Wi-Fi，讓建議隨地點變化</string>
+    <string name="h_p_location">用於天氣：只用你的大致區域，從不使用 GPS</string>
     <string name="r_pass_title">一律放行</string>
     <string name="r_empty">目前沒有內容</string>
     <string name="access_summary">即時減速和輕觸兩下鎖定</string>
@@ -1020,4 +1020,21 @@
     <string name="ach_locked">尚未獲得</string>
     <string name="usually_now">通常這時</string>
     <string name="hide_card">隱藏</string>
+    <string name="pin_shortcut_q">要將 %2$s 的「%1$s」加入你的應用程式嗎？</string>
+    <string name="faults_title">錯誤</string>
+    <string name="faults_none">沒有記錄的錯誤</string>
+    <string name="faults_hint">最近出錯的地方。只會保存在這支手機上。</string>
+    <string name="health_samsung_title">Samsung 關閉了 Sordina</string>
+    <string name="health_samsung_sub">為了釋放記憶體。現在已重新運作：以下是避免的方法。</string>
+    <string name="health_samsung_fix">告訴我怎麼做</string>
+    <string name="samsung_sleep_l">永不休眠</string>
+    <string name="samsung_sleep_why">Samsung 有時會在夜裡關閉我</string>
+    <string name="samsung_sleep_title">別讓 Sordina 被休眠</string>
+    <string name="samsung_sleep_steps">記憶體不足時，Samsung 會關閉背景應用程式，Sordina 會停止整理你的通知，直到再次運作。\n\n在「電池」頁面：背景使用限制 → 永不休眠的應用程式 → + → Sordina。</string>
+    <string name="samsung_sleep_open">開啟電池</string>
+    <string name="access_desc">Sordina 只在三件事上使用無障礙功能：在被煞車的應用程式來到前景的瞬間將其停下（包括它在瀏覽器中的網站）、輕觸兩下鎖定螢幕，以及在不接受外部輸入的應用程式（Home Assistant Assist、Signal）中替你輸入一句話。它只監聽你煞車的應用程式，以及（若這些應用程式有網站）瀏覽器：對瀏覽器只讀取網址列，且只在其位於前景時。它只看螢幕幾秒鐘，且只在那個應用程式中。任何內容都不會離開手機。</string>
+    <string name="access_consent_title">要使用無障礙功能嗎？</string>
+    <string name="access_consent_ok">我同意，開啟設定</string>
+    <string name="s_instant_brake_hint">使用無障礙功能後，煞車會立即生效，也適用於被煞車應用程式的網站，Sordina 不再需要每隔幾秒檢查一次。如果無法開啟：應用程式資訊 › ⋮ › 允許受限制的設定。</string>
+    <string name="brake_recent">剛才已經算過了</string>
 </resources>

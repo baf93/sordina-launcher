@@ -211,8 +211,11 @@ private fun Playing(
             Modifier.padding(top = 10.dp).clip(RoundedCornerShape(20.dp)).background(GOLD.copy(alpha = 0.16f)).padding(horizontal = 16.dp, vertical = 7.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("+$gain ", style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = c.ink))
-            Text(tr(R.string.brake_minutes_for_you), style = TextStyle(fontSize = 14.sp, color = c.soft))
+            // Già premiato poco fa: niente "+0", si dice com'è
+            if (gain > 0) {
+                Text("+$gain ", style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = c.ink))
+                Text(tr(R.string.brake_minutes_for_you), style = TextStyle(fontSize = 14.sp, color = c.soft))
+            } else Text(tr(R.string.brake_recent), style = TextStyle(fontSize = 14.sp, color = c.soft))
         }
         Spacer(Modifier.weight(1f))
         // Il tasto che vince: grande, vivo, dice cosa incassi
@@ -225,7 +228,11 @@ private fun Playing(
                 Text(tr(R.string.leave_it), style = TextStyle(fontSize = 19.sp, fontWeight = FontWeight.SemiBold, color = c.bg))
                 // Se riporta la giornata in positivo, lo dice
                 Text(
-                    if (streak.balance <= 0 && streak.balance + gain > 0) tr(R.string.brake_win_day, gain) else tr(R.string.brake_win, gain),
+                    when {
+                        gain == 0 -> tr(R.string.brake_recent)
+                        streak.balance <= 0 && streak.balance + gain > 0 -> tr(R.string.brake_win_day, gain)
+                        else -> tr(R.string.brake_win, gain)
+                    },
                     style = TextStyle(fontSize = 12.sp, color = c.bg.copy(alpha = 0.8f)),
                 )
             }
@@ -351,13 +358,13 @@ private fun Won(gain: Int, before: Habits.Streak, s: Habits.Streak, medals: List
             }
             // La sordina salta e ride; accanto, il premio che hai incassato
             Mascot(Mood.WON, Modifier.size(160.dp))
-            Box(
+            if (levelUp || gain > 0) Box(
                 Modifier.align(Alignment.Center).padding(start = 116.dp, top = 84.dp).size(58.dp).scale(pop.value)
                     .clip(CircleShape).background(if (levelUp) GOLD else c.accent),
                 contentAlignment = Alignment.Center,
             ) {
                 if (levelUp) Icon(Icons.Rounded.EmojiEvents, null, Modifier.size(30.dp), tint = c.bg)
-                else Text("+$gain", style = TextStyle(fontSize = 19.sp, fontWeight = FontWeight.Bold, color = c.bg))
+                else if (gain > 0) Text("+$gain", style = TextStyle(fontSize = 19.sp, fontWeight = FontWeight.Bold, color = c.bg))
             }
         }
         Text(
@@ -368,6 +375,7 @@ private fun Won(gain: Int, before: Habits.Streak, s: Habits.Streak, medals: List
             when {
                 dayWon && s.days > 1 -> tr(R.string.brake_streak_up, "${s.days} ${trn(R.plurals.n_days_row, s.days)}")
                 dayWon -> tr(R.string.brake_day_won)
+                gain == 0 -> tr(R.string.brake_recent)
                 else -> tr(R.string.time_back, shortDuration(gain))
             },
             Modifier.padding(top = 6.dp), textAlign = TextAlign.Center, style = TextStyle(fontSize = 16.sp, color = c.soft),

@@ -23,6 +23,10 @@ object Talking {
     fun active(pkg: String, who: String?, now: Long = System.currentTimeMillis()): Boolean =
         who != null && (until[key(pkg, who)] ?: 0L) > now
 
+    /** Le conversazioni in corso adesso (chiavi "pacchetto|persona"), per una fotografia delle regole. */
+    @Synchronized
+    fun activeKeys(now: Long = System.currentTimeMillis()): Set<String> = until.filterValues { it > now }.keys.toSet()
+
     /** C'è una conversazione in corso (qualunque) e quando finisce l'ultima. */
     @Synchronized
     fun lastUntil(now: Long = System.currentTimeMillis()): Long? = until.values.filter { it > now }.maxOrNull()

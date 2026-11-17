@@ -444,8 +444,8 @@
     <string name="health_stopped_title">Sordina usnula</string>
     <string name="lv_always">Projde vždy</string>
     <string name="lv_always_hint">Se zvukem, vždy</string>
-    <string name="lv_silent">Projde potichu</string>
-    <string name="lv_silent_hint">V liště, bez zvuku</string>
+    <string name="lv_silent">Propustit</string>
+    <string name="lv_silent_hint">V liště, jak ji aplikace pošle</string>
     <string name="lv_summary">Zadrženo</string>
     <string name="lv_summary_hint">Čeká v Sordině</string>
     <string name="moment_focus_until">Jen důležité do %1$s · klepni pro konec</string>
@@ -741,7 +741,7 @@
     <string name="brake_balance">Dnes %1$s</string>
     <string name="brake_day_won">Dnes jsi v plusu</string>
     <string name="perm_location">Poloha</string>
-    <string name="h_p_location">Abych poznala wifi doma a v práci a návrhy se měnily podle místa</string>
+    <string name="h_p_location">Pro počasí: jen přibližná oblast, nikdy GPS</string>
     <string name="r_pass_title">Vždy propustit</string>
     <string name="r_empty">Zatím nic</string>
     <string name="access_summary">Okamžitá brzda a dvojité klepnutí pro zamknutí</string>
@@ -1053,4 +1053,21 @@
     <string name="ach_locked">Ještě nezískané</string>
     <string name="usually_now">Obvykle teď</string>
     <string name="hide_card">Skrýt</string>
+    <string name="pin_shortcut_q">Přidat „%1$s“ z %2$s do aplikací?</string>
+    <string name="faults_title">Chyby</string>
+    <string name="faults_none">Žádné zaznamenané chyby</string>
+    <string name="faults_hint">Co se v poslední době pokazilo. Zůstává v tomto telefonu.</string>
+    <string name="health_samsung_title">Samsung vypnul Sordinu</string>
+    <string name="health_samsung_sub">Aby uvolnil paměť. Teď je zase vzhůru: takhle tomu zabráníte.</string>
+    <string name="health_samsung_fix">Ukaž mi jak</string>
+    <string name="samsung_sleep_l">Nikdy neuspávat</string>
+    <string name="samsung_sleep_why">Samsung mě někdy v noci vypne</string>
+    <string name="samsung_sleep_title">Nenechte Sordinu uspat</string>
+    <string name="samsung_sleep_steps">Když dochází paměť, Samsung vypíná aplikace na pozadí a Sordina přestane třídit vaše oznámení, dokud se znovu neprobudí.\n\nNa stránce Baterie: Limity využití na pozadí → Nikdy neuspávané aplikace → + → Sordina.</string>
+    <string name="samsung_sleep_open">Otevřít Baterii</string>
+    <string name="access_desc">Sordina používá usnadnění přístupu jen ke třem věcem: zastavit přibrzděnou aplikaci ve chvíli, kdy se dostane do popředí (i její web v prohlížeči), zamknout obrazovku dvojitým klepnutím a napsat za vás větu tam, kde ji aplikace zvenku nepřijmou (Assist v Home Assistant, Signal). Poslouchá jen aplikace, které jste přibrzdili, a pokud mají web, prohlížeče: z nich čte jen adresní řádek, dokud jsou v popředí. Na obrazovku se dívá jen pár sekund, jen v té aplikaci. Nic neopouští telefon.</string>
+    <string name="access_consent_title">Použít usnadnění přístupu?</string>
+    <string name="access_consent_ok">Souhlasím, otevřít nastavení</string>
+    <string name="s_instant_brake_hint">S usnadněním přístupu brzda zabere hned, platí i pro weby přibrzděných aplikací a Sordina přestane kontrolovat každých pár sekund. Pokud nejde zapnout: Informace o aplikaci › ⋮ › Povolit omezená nastavení.</string>
+    <string name="brake_recent">Už započítáno před chvílí</string>
 </resources>

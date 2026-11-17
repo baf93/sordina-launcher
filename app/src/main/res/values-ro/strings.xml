@@ -433,8 +433,8 @@
     <string name="health_stopped_title">Sordina a adormit</string>
     <string name="lv_always">Trece mereu</string>
     <string name="lv_always_hint">Cu sunet, mereu</string>
-    <string name="lv_silent">Trece în liniște</string>
-    <string name="lv_silent_hint">În panou, fără sunet</string>
+    <string name="lv_silent">Lasă să treacă</string>
+    <string name="lv_silent_hint">În bară, așa cum o trimite aplicația</string>
     <string name="lv_summary">Reținută</string>
     <string name="lv_summary_hint">Așteaptă în Sordina</string>
     <string name="moment_focus_until">Doar ce contează până la %1$s · atinge ca să termini</string>
@@ -730,7 +730,7 @@
     <string name="brake_balance">Azi %1$s</string>
     <string name="brake_day_won">Azi ești pe plus</string>
     <string name="perm_location">Locație</string>
-    <string name="h_p_location">Ca să recunosc wifi-ul de acasă și de la birou, astfel încât sugestiile să se schimbe după loc</string>
+    <string name="h_p_location">Pentru vreme: doar zona aproximativă, niciodată GPS</string>
     <string name="r_pass_title">Lasă să treacă mereu</string>
     <string name="r_empty">Nimic încă</string>
     <string name="access_summary">Frână instantanee și atingere dublă pentru blocare</string>
@@ -1042,4 +1042,21 @@
     <string name="ach_locked">Încă de câștigat</string>
     <string name="usually_now">De obicei acum</string>
     <string name="hide_card">Ascunde</string>
+    <string name="pin_shortcut_q">Adaugi „%1$s” din %2$s la aplicațiile tale?</string>
+    <string name="faults_title">Erori</string>
+    <string name="faults_none">Nicio eroare înregistrată</string>
+    <string name="faults_hint">Ce a mers prost recent. Rămâne pe acest telefon.</string>
+    <string name="health_samsung_title">Samsung a oprit Sordina</string>
+    <string name="health_samsung_sub">Ca să elibereze memorie. Acum e trează din nou: iată cum eviți asta.</string>
+    <string name="health_samsung_fix">Arată-mi cum</string>
+    <string name="samsung_sleep_l">Niciodată în repaus</string>
+    <string name="samsung_sleep_why">Samsung mă oprește uneori noaptea</string>
+    <string name="samsung_sleep_title">Nu lăsa Sordina să fie adormită</string>
+    <string name="samsung_sleep_steps">Când memoria e pe terminate, Samsung oprește aplicațiile din fundal, iar Sordina nu mai sortează notificările până nu se trezește.\n\nPe pagina Baterie: Limite utilizare în fundal → Aplicații niciodată în repaus → + → Sordina.</string>
+    <string name="samsung_sleep_open">Deschide Baterie</string>
+    <string name="access_desc">Sordina folosește accesibilitatea doar pentru trei lucruri: să oprească o aplicație frânată în clipa în care trece în față (și site-ul ei în browser), să blocheze ecranul cu o dublă atingere și să scrie pentru tine o frază acolo unde aplicațiile nu o acceptă din afară (Assist din Home Assistant, Signal). Ascultă doar aplicațiile pe care le-ai frânat și, dacă au un site, browserele: din acestea citește doar bara de adrese, cât timp sunt în față. Se uită la ecran doar câteva secunde, doar în acea aplicație. Nimic nu iese de pe telefon.</string>
+    <string name="access_consent_title">Folosești accesibilitatea?</string>
+    <string name="access_consent_ok">Accept, deschide setările</string>
+    <string name="s_instant_brake_hint">Cu accesibilitatea frâna vine imediat, se aplică și site-urilor aplicațiilor frânate, iar Sordina nu mai verifică la fiecare câteva secunde. Dacă nu se poate activa: Informații aplicație › ⋮ › Permite setările restricționate.</string>
+    <string name="brake_recent">Numărat deja acum puțin</string>
 </resources>

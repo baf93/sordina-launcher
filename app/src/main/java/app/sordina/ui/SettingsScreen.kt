@@ -7,6 +7,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import app.sordina.data.AppIcons
 import app.sordina.service.Talking
 import androidx.compose.material.icons.rounded.Forum
+import androidx.compose.material.icons.rounded.BugReport
+import app.sordina.data.Faults
 
 import app.sordina.R
 import app.sordina.tr
@@ -112,7 +114,7 @@ private enum class Sub(val parent: String?) {
     MAIN(null),
     NOTIF("MAIN"), HOME("MAIN"), BRAKE("MAIN"), SEARCH("MAIN"), THEMES("MAIN"), GENERAL("MAIN"), PROGRESS("MAIN"),
     PEOPLE("NOTIF"), ALWAYS("NOTIF"), RULES("NOTIF"), ORDER("HOME"), LEVELS("RULES"),
-    BRAKED("BRAKE"), HIDDEN("BRAKE"), MASCOTS("HOME"), PINNED("SEARCH"), EXCLUDED("SEARCH"), HA("MAIN"), CAR_APPS("HOME"), CAR_PEOPLE("HOME"), PERMS("GENERAL"), CREDITS("GENERAL"), LANG("GENERAL"),
+    BRAKED("BRAKE"), HIDDEN("BRAKE"), MASCOTS("HOME"), PINNED("SEARCH"), EXCLUDED("SEARCH"), HA("MAIN"), CAR_APPS("HOME"), CAR_PEOPLE("HOME"), PERMS("GENERAL"), CREDITS("GENERAL"), LANG("GENERAL"), FAULTS("GENERAL"),
 }
 
 private fun hm(min: Int) = Moments.fmt(min)
@@ -435,6 +437,26 @@ fun SettingsScreen(
                         Line(tr(R.string.s_version), version, icon = Icons.Rounded.Info)
                         Line(tr(R.string.s_source), "GitHub", null, Icons.Rounded.Code) { ops.openUrl(REPO) }
                         Line(tr(R.string.n_credits), icon = Icons.Rounded.Favorite) { sub = Sub.CREDITS }
+                        val faults = remember { Faults.recent().size }
+                        Line(tr(R.string.faults_title), if (faults == 0) "" else "$faults", null, Icons.Rounded.BugReport) { sub = Sub.FAULTS }
+                    }
+                }
+
+                // ── Gli errori recenti: quando, dove, cosa. Restano sul telefono
+                Sub.FAULTS -> Page(tr(R.string.faults_title), tr(R.string.faults_hint), back, scrollOf(page)) {
+                    var list by remember { mutableStateOf(Faults.recent()) }
+                    Spacer(Modifier.height(8.dp))
+                    if (list.isEmpty()) Group { Line(tr(R.string.faults_none)) }
+                    else {
+                        val fmt = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
+                        Group {
+                            list.take(100).forEach { f ->
+                                val at = java.time.Instant.ofEpochMilli(f.time).atZone(java.time.ZoneId.systemDefault()).format(fmt)
+                                Line(f.where, at, f.what)
+                            }
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        Group { Line(tr(R.string.clear), icon = Icons.Rounded.DeleteOutline, trailing = {}) { Faults.clear(); list = emptyList() } }
                     }
                 }
 
@@ -564,7 +586,7 @@ fun SettingsScreen(
                         PermLine(tr(R.string.perm_mic), tr(R.string.h_p_mic), perms.mic, Icons.Rounded.Mic) { ops.request(Manifest.permission.RECORD_AUDIO) }
                         PermLine(tr(R.string.perm_calls), tr(R.string.h_p_calls), perms.call, Icons.Rounded.Call) { ops.request(Manifest.permission.CALL_PHONE) }
                         PermLine(tr(R.string.s_calendar), tr(R.string.h_p_cal), perms.calendar, Icons.Rounded.CalendarToday) { ops.request(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR) }
-                        PermLine(tr(R.string.perm_location), tr(R.string.h_p_location), granted(Manifest.permission.ACCESS_FINE_LOCATION), Icons.Rounded.Wifi) { ops.request(Manifest.permission.ACCESS_FINE_LOCATION) }
+                        PermLine(tr(R.string.perm_location), tr(R.string.h_p_location), granted(Manifest.permission.ACCESS_COARSE_LOCATION), Icons.Rounded.WbSunny) { ops.request(Manifest.permission.ACCESS_COARSE_LOCATION) }
                         // Se Android addormenta Sordina, le notifiche non vengono più smistate
                         PermLine(tr(R.string.s_battery), tr(R.string.s_battery_hint), SordinaListener.batteryFree(ctx), Icons.Rounded.BatteryChargingFull) { ops.openBatterySettings() }
                         // Facoltativa: freno istantaneo e doppio tocco per spegnere

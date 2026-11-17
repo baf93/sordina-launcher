@@ -24,8 +24,6 @@ class Proposals(private val context: Context, private val brain: Brain, private 
         val needsPermission: Boolean,
         /** Fascia di mezz'ora: le proposte non cambiano finché non cambia la fascia */
         val slot: Long,
-        /** Il fumetto "di solito adesso": solo quello di cui il cervello è sicuro (spesso niente) */
-        val usual: List<app.sordina.data.brain.Suggestion> = emptyList(),
     ) {
         val apps: List<AppEntry> get() = items.mapNotNull { it.app }
     }
@@ -47,8 +45,6 @@ class Proposals(private val context: Context, private val brain: Brain, private 
         val apps = allApps.filter { it.key !in hidden }
         val slot = slotOf(nowMs)
         val permission = hasPermission()
-        // Dove sei senza Wi-Fi: la posizione che il telefono ha già (niente GPS)
-        runCatching { brain.samplePlace() }
         if (permission) runCatching { brain.ingest(apps.mapTo(HashSet()) { it.packageName }) }
         val usage = brain.usage()
 
@@ -101,9 +97,7 @@ class Proposals(private val context: Context, private val brain: Brain, private 
                 .distinctBy { it.packageName }.take(count - now.size).map(::appCandidate)
         }
         fixedC.forEach { why[it.id] = app.sordina.tr(app.sordina.R.string.why_pinned) }
-        val usual = runCatching { brain.usual(3, skip) { item -> intents.realize(item, apps.filter { it.key !in excluded }, usage) } }.getOrDefault(emptyList())
-        usual.forEach { brainItem[it.candidate.id] = it.item }
-        return Result((fixedC + now).take(COUNT), why, brainItem, usage, !permission, slot, usual)
+        return Result((fixedC + now).take(COUNT), why, brainItem, usage, !permission, slot)
     }
 
     /**

@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.provider.ContactsContract
 import android.telephony.TelephonyManager
-import app.sordina.service.SordinaListener
 import app.sordina.service.Talking
 
 /** Un contatto con almeno un numero. */
@@ -16,18 +15,34 @@ data class Contact(
     val number: String,
     val starred: Boolean,
     val timesContacted: Int,
+    /** La chiave stabile di Android (LOOKUP_KEY), già ripulita: resta la stessa se rinomini il contatto */
+    val lookup: String = "",
 ) {
     val normalized: String = Search.normalize(name)
+    /** Come il cervello e le regole chiamano questa persona: la chiave stabile se c'è, se no il nome */
+    val token: String get() = if (lookup.isNotEmpty()) "@$lookup" else normalized
 }
 
 /** Rubrica (solo lettura, tranne i preferiti) e persone importanti. */
+/** La chiave di Android ripulita: solo lettere, cifre, punto e trattino (finisce in file separati da tab e virgole). */
+internal fun cleanLookup(k: String?): String = k.orEmpty().filter { it.isLetterOrDigit() || it == '.' || it == '-' }
+
 class People(private val context: Context, private val prefs: Prefs) {
     @Volatile private var cache: List<Contact>? = null
 
     fun hasPermission() =
         context.checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
 
-    fun invalidate() { cache = null }
+    fun invalidate() { cache = null; names = null; nameWords = null }
+
+    @Volatile private var names: Set<String>? = null
+    @Volatile private var nameWords: Set<String>? = null
+
+    /** I nomi della rubrica, normalizzati (per riconoscere chi ti scrive). */
+    fun normalizedNames(): Set<String> = names ?: all().mapTo(HashSet()) { it.normalized }.also { names = it }
+
+    /** Le singole parole dei nomi della rubrica ("anna", "rossi"): per capire se una parola è un nome. */
+    fun nameWords(): Set<String> = nameWords ?: all().flatMapTo(HashSet()) { it.normalized.split(' ') }.also { nameWords = it }
 
     /** La foto piccola del contatto (quella della rubrica), già ridotta a [px]; null se non ce l'ha. */
     fun photo(id: Long, px: Int): android.graphics.Bitmap? = runCatching {
@@ -38,9 +53,23 @@ class People(private val context: Context, private val prefs: Prefs) {
         }
     }.getOrNull()
 
+    /** La rubrica cambia (un contatto rinominato, aggiunto, tolto): si rilegge alla prossima richiesta. */
+    @Volatile private var watching = false
+    private fun watch() {
+        if (watching) return
+        watching = true
+        runCatching {
+            context.contentResolver.registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true,
+                object : android.database.ContentObserver(android.os.Handler(android.os.Looper.getMainLooper())) {
+                    override fun onChange(selfChange: Boolean) { invalidate() }
+                })
+        }.onFailure { watching = false }
+    }
+
     fun all(): List<Contact> {
         cache?.let { return it }
         if (!hasPermission()) return emptyList()
+        watch()
         val out = LinkedHashMap<Long, Contact>()
         runCatching {
             context.contentResolver.query(
@@ -51,6 +80,7 @@ class People(private val context: Context, private val prefs: Prefs) {
                     ContactsContract.CommonDataKinds.Phone.NUMBER,
                     ContactsContract.CommonDataKinds.Phone.STARRED,
                     ContactsContract.CommonDataKinds.Phone.IS_SUPER_PRIMARY,
+                    ContactsContract.CommonDataKinds.Phone.LOOKUP_KEY,
                 ),
                 null, null, null,
             )?.use { c ->
@@ -60,11 +90,68 @@ class People(private val context: Context, private val prefs: Prefs) {
                     val number = c.getString(2) ?: continue
                     val primary = c.getInt(4) == 1
                     if (id in out && !primary) continue
-                    out[id] = Contact(id, name, number, c.getInt(3) == 1, 0)
+                    out[id] = Contact(id, name, number, c.getInt(3) == 1, 0, cleanLookup(c.getString(5)))
                 }
             }
         }
-        return out.values.toList().also { cache = it }
+        // Ordine fisso (per id): stessa rubrica, stesse risposte, qualunque ordine dia Android
+        val list = out.values.sortedBy { it.id }
+        cache = list
+        followRenames(list)
+        return list
+    }
+
+    /** Il contatto di un token ("@chiave" o nome normalizzato); per nome solo se è uno solo. */
+    fun byToken(token: String): Contact? =
+        if (token.startsWith("@")) all().firstOrNull { it.lookup == token.substring(1) }
+        else all().filter { it.normalized == token }.singleOrNull()
+
+    /** Il token di chi ha [name] (normalizzato): la chiave stabile se il nome è di un contatto solo, se no il nome. */
+    fun tokenOf(name: String): String {
+        if (name.startsWith("@")) return name
+        return all().filter { it.normalized == name }.singleOrNull()?.token ?: name
+    }
+
+    /**
+     * Le persone che segui per nome (importanti, regole per persona, soprannomi) restano loro anche se le rinomini
+     * in rubrica: Sordina ricorda la chiave stabile di ognuna e, se il nome è cambiato, sposta tutto sul nome nuovo.
+     */
+    @Synchronized
+    private fun followRenames(list: List<Contact>) {
+        if (list.isEmpty()) return
+        val byLookup = list.filter { it.lookup.isNotEmpty() }.associateBy { it.lookup }
+        val known = prefs.personLookups.toMutableMap()
+        val renames = HashMap<String, String>()
+        // Le chiavi già note: se il nome è cambiato, si sposta
+        for ((lookup, old) in known.toMap()) {
+            val c = byLookup[lookup] ?: continue
+            if (c.normalized != old) { renames[old] = c.normalized; known[lookup] = c.normalized }
+        }
+        // I nomi seguiti ma senza chiave ancora: la si impara (solo se il nome è di un contatto solo)
+        val followed = prefs.importantNames + prefs.importantInGroups + prefs.nicknames.values +
+            prefs.personRules.keys.filter { '|' !in it || it.substringBefore('|') in app.sordina.service.Classifier.CONTACT_NAMED }.map { it.substringAfter('|') }
+        val counts = list.groupingBy { it.normalized }.eachCount()
+        for (n in followed) {
+            if (n in known.values || n in renames.values || counts[n] != 1) continue
+            list.firstOrNull { it.normalized == n && it.lookup.isNotEmpty() }?.let { known[it.lookup] = n }
+        }
+        if (renames.isNotEmpty()) applyRenames(renames)
+        if (known != prefs.personLookups) prefs.personLookups = known
+    }
+
+    private fun applyRenames(r: Map<String, String>) {
+        fun n(x: String) = r[x] ?: x
+        prefs.importantNames = prefs.importantNames.mapTo(HashSet(), ::n)
+        prefs.importantInGroups = prefs.importantInGroups.mapTo(HashSet(), ::n)
+        prefs.nicknames = prefs.nicknames.mapValues { n(it.value) }
+        // Solo dove il nome viene dalla rubrica (WhatsApp, SMS, telefono…): su Telegram il nome lo sceglie chi scrive,
+        // e rinominarlo qui non cambia quello che arriva
+        val named = app.sordina.service.Classifier.CONTACT_NAMED
+        prefs.personRules = prefs.personRules.mapKeys { (k, _) ->
+            if ('|' in k) { val pkg = k.substringBefore('|'); if (pkg in named) pkg + "|" + n(k.substringAfter('|')) else k } else n(k)
+        }
+        prefs.passUntil = prefs.passUntil.mapKeys { (k, _) -> if (k.startsWith("p:")) "p:" + n(k.removePrefix("p:")) else k }
+        prefs.carHidden = prefs.carHidden.mapTo(HashSet(), ::n)
     }
 
     fun byId(id: Long): Contact? = all().firstOrNull { it.id == id }
@@ -86,23 +173,17 @@ class People(private val context: Context, private val prefs: Prefs) {
     fun isImportant(name: String?): Boolean = importantKey(name) != null
 
     /** Quale persona importante è [name] (il suo nome salvato), oppure null. */
-    fun importantKey(name: String?): String? {
-        if (name.isNullOrBlank()) return null
-        val n = Search.normalize(name)
-        val set = prefs.importantNames
-        if (n in set) return n
-        // "Anna Rossi" importante riconosce anche la notifica che dice solo "Anna"... ma non il contrario
-        // (Un importante salvato solo come "Marco" non fa passare ogni "Marco Bianchi")
-        return set.firstOrNull { it.startsWith("$n ") }
-    }
+    fun importantKey(name: String?): String? = app.sordina.service.Classifier.importantKey(name, prefs.importantNames, exact = false)
 
     fun importantList(): List<String> = prefs.importantNames.sorted()
 
     /** Rende importante una persona e, se possibile, la segna tra i preferiti di Android (le sue chiamate suonano anche con Non disturbare). */
     fun setImportant(contact: Contact, important: Boolean) {
         val n = contact.normalized
+        // Riaggiunta dopo averla messa "In sordina": quella regola vincerebbe sull'importante e i suoi messaggi resterebbero fermi
+        if (important) prefs.personRules.keys.filter { it == n || it.endsWith("|$n") }.takeIf { it.isNotEmpty() }?.let { ks -> prefs.personRules = prefs.personRules - ks.toSet() }
         prefs.importantNames = if (important) prefs.importantNames + n else prefs.importantNames - n
-        setStarred(contact.id, important)
+        setStarred(contact.id, important, wasStarred = contact.starred)
     }
 
     /**
@@ -115,18 +196,25 @@ class People(private val context: Context, private val prefs: Prefs) {
         prefs.importantInGroups = prefs.importantInGroups - n
         prefs.passUntil = prefs.passUntil - "p:$n"
         Talking.forget(n)
-        if (unstar) all().firstOrNull { it.normalized == n }?.let { setStarred(it.id, false) }
-        SordinaListener.reapply(context)
+        if (unstar) all().firstOrNull { it.normalized == n }?.let { setStarred(it.id, false, wasStarred = it.starred) }
     }
 
-    private fun setStarred(id: Long, starred: Boolean) {
+    /**
+     * La stella di Android: Sordina la mette solo se mancava, e toglie solo quelle che ha messo lei
+     * (si ricorda quali in [Prefs.starredBySordina]). Le stelle che avevi già restano tue.
+     */
+    private fun setStarred(id: Long, starred: Boolean, wasStarred: Boolean) {
         if (context.checkSelfPermission(Manifest.permission.WRITE_CONTACTS) != PackageManager.PERMISSION_GRANTED) return
-        runCatching {
+        val mine = id.toString() in prefs.starredBySordina
+        if (starred && wasStarred) return
+        if (!starred && !mine) return
+        val ok = runCatching {
             val v = ContentValues().apply { put(ContactsContract.Contacts.STARRED, if (starred) 1 else 0) }
             context.contentResolver.update(
                 ContactsContract.Contacts.CONTENT_URI, v, "${ContactsContract.Contacts._ID}=?", arrayOf(id.toString()),
-            )
-        }
+            ) > 0
+        }.getOrDefault(false)
+        if (ok) prefs.starredBySordina = if (starred) prefs.starredBySordina + id.toString() else prefs.starredBySordina - id.toString()
         invalidate()
     }
 

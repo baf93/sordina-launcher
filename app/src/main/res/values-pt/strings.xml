@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="moment_none">Nenhum</string>
     <string name="theme_auto">Automático</string>
     <string name="theme_light">Claro</string>
@@ -353,7 +353,7 @@
         <item quantity="one">%d vez</item>
         <item quantity="other">%d vezes</item>
     </plurals>
-    <plurals name="n_days_row">
+    <plurals name="n_days_row" tools:ignore="ImpliedQuantity">
         <item quantity="one">dia seguido</item>
         <item quantity="other">dias seguidos</item>
     </plurals>
@@ -422,8 +422,8 @@
     <string name="health_stopped_title">O Sordina adormeceu</string>
     <string name="lv_always">Passa sempre</string>
     <string name="lv_always_hint">Com som, sempre</string>
-    <string name="lv_silent">Passa em silêncio</string>
-    <string name="lv_silent_hint">Na cortina, sem som</string>
+    <string name="lv_silent">Deixar passar</string>
+    <string name="lv_silent_hint">Na barra, como o app envia</string>
     <string name="lv_summary">Retida</string>
     <string name="lv_summary_hint">Espera no Sordina</string>
     <string name="moment_focus_until">Só o importante até %1$s · toque para terminar</string>
@@ -719,7 +719,7 @@
     <string name="brake_balance">Hoje %1$s</string>
     <string name="brake_day_won">Hoje você está no positivo</string>
     <string name="perm_location">Localização</string>
-    <string name="h_p_location">Para reconhecer o Wi‑Fi de casa e do trabalho, e as sugestões mudarem conforme o lugar</string>
+    <string name="h_p_location">Para o tempo: só a tua zona aproximada, nunca o GPS</string>
     <string name="r_pass_title">Sempre deixar passar</string>
     <string name="r_empty">Nada ainda</string>
     <string name="access_summary">Freio instantâneo e toque duplo para bloquear</string>
@@ -1035,4 +1035,21 @@
     <string name="ach_locked">Ainda por ganhar</string>
     <string name="usually_now">Costuma agora</string>
     <string name="hide_card">Ocultar</string>
+    <string name="pin_shortcut_q">Adicionar “%1$s” de %2$s aos seus apps?</string>
+    <string name="faults_title">Erros</string>
+    <string name="faults_none">Nenhum erro registrado</string>
+    <string name="faults_hint">O que deu errado recentemente. Fica neste telefone.</string>
+    <string name="health_samsung_title">A Samsung desligou o Sordina</string>
+    <string name="health_samsung_sub">Para liberar memória. Já está ativo de novo: veja como evitar isso.</string>
+    <string name="health_samsung_fix">Mostre como</string>
+    <string name="samsung_sleep_l">Nunca em suspensão</string>
+    <string name="samsung_sleep_why">A Samsung às vezes me desliga à noite</string>
+    <string name="samsung_sleep_title">Não deixe o Sordina adormecer</string>
+    <string name="samsung_sleep_steps">Quando a memória está baixa, a Samsung desliga os apps em segundo plano e o Sordina para de organizar suas notificações até acordar de novo.\n\nNa página Bateria: Limites de uso em segundo plano → Apps que nunca entram em suspensão → + → Sordina.</string>
+    <string name="samsung_sleep_open">Abrir Bateria</string>
+    <string name="access_desc">O Sordina usa a acessibilidade só para três coisas: parar um app freado no instante em que ele vem para a frente (e também o site dele no navegador), bloquear a tela com um toque duplo e digitar uma frase por você onde os apps não a aceitam de fora (Assist do Home Assistant, Signal). Ele só escuta os apps que você freou e, se tiverem site, os navegadores: destes lê só a barra de endereço, enquanto estão na frente. Olha a tela só por alguns segundos, só naquele app. Nada sai do telefone.</string>
+    <string name="access_consent_title">Usar a acessibilidade?</string>
+    <string name="access_consent_ok">Aceito, abrir configurações</string>
+    <string name="s_instant_brake_hint">Com a acessibilidade o freio chega na hora, vale também para os sites dos apps freados e o Sordina deixa de verificar a cada poucos segundos. Se não der para ativar: Informações do app › ⋮ › Permitir configurações restritas.</string>
+    <string name="brake_recent">Já contado há pouco</string>
 </resources>

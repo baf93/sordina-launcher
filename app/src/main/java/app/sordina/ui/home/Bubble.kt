@@ -106,8 +106,6 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.sign
 
-/** "Di solito adesso": una cosa che il cervello ti porge, già pronta da toccare. */
-data class Usual(val id: String, val title: String, val kind: Kind, val icon: ImageBitmap?, val why: String? = null)
 
 /** Sotto la barra, sempre alta uguale: la barra non si sposta mai, qualunque cosa dica la sordina. */
 private val ZONE = 156.dp
@@ -141,12 +139,11 @@ internal fun SordinaZone(
     var enter by remember { mutableIntStateOf(0) }
     val at = live.indexOfFirst { it.key == pick }.coerceAtLeast(0)
     val card = live.getOrNull(at)
-    val usual = if (card == null) state.usual else emptyList()
     // La casa che risponde passa davanti a tutto: è la risposta a quello che hai appena chiesto
     // Mentre parli la sordina è già lì che ascolta, col fumetto di quello che dici; poi la ricerca o la risposta prendono il suo posto
     val heard = if (state.listening || state.partial.isNotEmpty()) state.partial else null
     val reply = if (heard != null) null else state.reply
-    val talking = heard != null || reply != null || card != null || usual.isNotEmpty()
+    val talking = heard != null || reply != null || card != null
     val mood = when {
         heard != null -> if (state.listening) app.sordina.ui.Mood.READY else app.sordina.ui.Mood.WAIT
         reply != null -> if (reply.text == null) app.sordina.ui.Mood.WAIT else if (reply.ok) app.sordina.ui.Mood.DONE else app.sordina.ui.Mood.SIGH
@@ -155,8 +152,8 @@ internal fun SordinaZone(
     val bias by animateFloatAsState(if (talking) -1f else 0f, Motion.enter(320), label = "mascot")
     val shown by animateFloatAsState(if (talking) 1f else 0f, Motion.enter(260), label = "bubble")
     // Mentre il fumetto se ne va si continua a vedere quello che diceva
-    val last = remember { mutableStateOf(Said(null, null, null, emptyList())) }
-    if (talking) last.value = Said(heard, reply, card, usual)
+    val last = remember { mutableStateOf(Said(null, null, null)) }
+    if (talking) last.value = Said(heard, reply, card)
 
     // Il fumetto con l'immagine aperta: cresce verso l'alto, sopra la barra, col fondo fermo dov'era
     var open by remember { mutableStateOf<String?>(null) }
@@ -164,7 +161,7 @@ internal fun SordinaZone(
 
     Box(Modifier.fillMaxWidth().height(ZONE).padding(horizontal = 16.dp)) {
         if (shown > 0f) {
-            val (hd, rp, k, u) = last.value
+            val (hd, rp, k) = last.value
             Box(
                 (if (tall) Modifier.align(Alignment.BottomStart).padding(bottom = 20.dp).wrapContentHeight(Alignment.Bottom, unbounded = true)
                 else Modifier.align(Alignment.CenterStart))
@@ -177,7 +174,7 @@ internal fun SordinaZone(
                     CardBubble(k, at, live.size, enter, onAction, onCard, expanded = tall, onExpand = { open = if (it) k.key else null },
                         onStep = { step -> if (live.size > 1) { enter = step; pick = live[(at + step).mod(live.size)].key } },
                         onHide = { pick = null; if (k.kind == CardKind.MUSIC) swiped = swiped + liveKey(k) else onAction(k, CardAction("", CardOp.Hide)) })
-                } else if (u.isNotEmpty()) UsualBubble(u, onScene)
+                }
             }
         }
         Box(Modifier.align(BiasAlignment(bias, 0f))) { Mascot(state, talking, mood, onSheet) }
@@ -185,7 +182,7 @@ internal fun SordinaZone(
 }
 
 /** Quello che il fumetto sta dicendo (resta mentre se ne va) */
-private data class Said(val heard: String?, val reply: app.sordina.ui.HomeReply?, val card: Card?, val usual: List<Usual>)
+private data class Said(val heard: String?, val reply: app.sordina.ui.HomeReply?, val card: Card?)
 
 /** Mentre parli: i puntini finché non dici niente, poi le tue parole come le sta capendo. */
 @Composable
@@ -351,7 +348,15 @@ private fun CardBubble(
                         maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 13.sp, color = c.soft),
                     )
                     when (card.look) {
-                        CardLook.CODE -> Text(card.title, maxLines = 1, style = TextStyle(fontSize = 28.sp, color = c.ink, fontFamily = FontFamily.Monospace, letterSpacing = 3.sp))
+                        CardLook.CODE -> {
+                            // Il codice si vede solo toccandolo (chi guarda il telefono non lo legge); "Copia" non ha bisogno di vederlo
+                            var shown by remember(card.key) { mutableStateOf(false) }
+                            Text(
+                                if (shown) card.title else card.title.map { if (it.isLetterOrDigit()) '•' else it }.joinToString(""),
+                                maxLines = 1, modifier = Modifier.clickableNoRipple { shown = !shown },
+                                style = TextStyle(fontSize = 28.sp, color = c.ink, fontFamily = FontFamily.Monospace, letterSpacing = 3.sp),
+                            )
+                        }
                         CardLook.AMOUNT -> Text(card.title, maxLines = 1, style = TextStyle(fontSize = 24.sp, color = c.ink))
                         else -> Text(card.title, maxLines = if (!ask) 2 else if (card.actions.size > 2) 2 else 3, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = if (ask) 16.sp else 19.sp, lineHeight = if (ask) 21.sp else 24.sp, color = c.ink))
                     }
@@ -398,70 +403,6 @@ private fun CardBubble(
                 }
                 // Scorrendo si passa alla prossima: nascondere si fa solo da qui (la musica torna col brano dopo)
                 app.sordina.ui.SheetRow(tr(R.string.hide_card), Icons.Rounded.VisibilityOff) { menu = false; onHide() }
-            }
-        }
-    }
-}
-
-/**
- * "Di solito adesso": una proposta alla volta, scritta per intero. Che è un suggerimento lo dice il simbolino
- * in alto a sinistra, non una scritta. Tocco o tondo: la fa. Scorri come le altre schede: a sinistra la prossima,
- * a destra quella prima, in giro (scorrere è guardare, non dire di no). Tieni premuto: il perché, "non ora"
- * (tace fino alla prossima fascia) e non propormela più.
- */
-@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
-@Composable
-private fun UsualBubble(usual: List<Usual>, onScene: (String) -> Unit) {
-    val c = S.c
-    val feel = LocalFeel.current
-    var at by remember(usual.map { it.id }) { mutableIntStateOf(0) }
-    var enter by remember { mutableIntStateOf(0) }
-    val u = usual.getOrNull(at) ?: return
-    var menu by remember { mutableStateOf(false) }
-    androidx.compose.runtime.key(u.id) {
-        // Il cervello impara dal fumetto: visto e non preso scende un po'; "non ora" scende in questa situazione
-        LaunchedEffect(Unit) { onScene("usual-seen:${u.id}") }
-        Steppable(usual.size, enter, { step -> enter = step; at = (at + step).mod(usual.size) }) { swipe ->
-            Box(swipe) {
-                Row(
-                    Modifier.fillMaxWidth().clip(BubbleShape).background(surface())
-                        .combinedClickable(onClick = { feel.tick(); onScene("usual:${u.id}") }, onLongClick = { feel.tick(); menu = true })
-                        .heightIn(min = 84.dp).padding(start = TAIL + 16.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        if (usual.size > 1) Text("${at + 1}/${usual.size}", maxLines = 1, style = TextStyle(fontSize = 13.sp, color = c.soft))
-                        Text(u.title, maxLines = 2, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 19.sp, lineHeight = 24.sp, color = c.ink))
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    // Il tondo: l'icona dell'app se è un'app, altrimenti che genere di cosa è
-                    Box(
-                        Modifier.size(48.dp).clip(CircleShape).background(if (u.icon != null) androidx.compose.ui.graphics.Color.Transparent else c.accent)
-                            .clickable { feel.confirm(); onScene("usual:${u.id}") }.semantics { contentDescription = u.title },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (u.icon != null) Image(u.icon, null, Modifier.size(48.dp).clip(CircleShape))
-                        else Icon(kindIcon(u.kind), null, Modifier.size(24.dp), tint = c.bg)
-                    }
-                }
-                // Il simbolino del suggerimento, a cavallo dell'angolo in alto a sinistra
-                Box(
-                    Modifier.align(Alignment.TopStart).offset(x = TAIL - 6.dp, y = (-6).dp).size(22.dp)
-                        .clip(CircleShape).background(c.accent).semantics { contentDescription = tr(R.string.usually_now) },
-                    contentAlignment = Alignment.Center,
-                ) { Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(13.dp), tint = c.bg) }
-                // Tieni premuto: il foglio di Sordina, col perché te la propone (si legge solo se lo chiedi)
-                if (menu) app.sordina.ui.Sheet(
-                    u.title, hint = u.why?.trimEnd('.') ?: tr(R.string.usually_now), onDismiss = { menu = false },
-                    leading = {
-                        Box(Modifier.size(28.dp).clip(CircleShape).background(c.accent), contentAlignment = Alignment.Center) {
-                            Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(16.dp), tint = c.bg)
-                        }
-                    },
-                ) {
-                    app.sordina.ui.SheetRow(tr(R.string.not_now), Icons.Rounded.Snooze) { menu = false; onScene("usual-no:${u.id}"); onScene("usual-hide") }
-                    app.sordina.ui.SheetRow(tr(R.string.dont_suggest), Icons.Rounded.Block) { menu = false; onScene("usual-drop:${u.id}") }
-                }
             }
         }
     }

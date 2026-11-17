@@ -113,7 +113,7 @@ private val PASS_OPTIONS: List<Pair<String, Int?>> =
     listOf(1, 2, 6, 12, 24).map { trn(R.plurals.for_hours, it) to it } + (tr(R.string.pass_always) to null)
 
 /** Una sezione della pagina: una categoria, oppure le app frenate (category = null). */
-private data class Section(val key: String, val label: String?, val groups: List<List<Held>>, val braked: Boolean = false) {
+private data class Section(val key: String, val label: String?, val groups: List<List<Held>>, val braked: Boolean = false, val locked: Boolean = false) {
     val total get() = groups.sumOf { g -> g.sumOf { it.count } }
 }
 
@@ -143,15 +143,26 @@ fun SordinaScreen(
     onRule: (RuleTarget, RuleScope, Level?) -> Unit,
     onMove: (key: String, Category) -> Unit,
     onBack: () -> Unit,
+    /** Le app nascoste: una riga sola finché non si sblocca */
+    hiddenRevealed: Boolean = false,
+    onRevealHidden: () -> Unit = {},
 ) {
     val c = S.c
     val feel = LocalFeel.current
-    val sections = remember(groups, overrides, braked, order) {
-        val (stopped, rest) = groups.partition { it.first().pkg in braked }
+    val sections = remember(groups, overrides, braked, order, hiddenRevealed) {
+        val (secret, visible) = groups.partition { it.first().reason == app.sordina.service.Classifier.REASON_HIDDEN }
+        val (stopped, rest) = visible.partition { it.first().pkg in braked }
         val main = if (order == null) listOf(Section("ALL", null, rest.recentFirst())).filter { it.groups.isNotEmpty() }
         else rest.groupBy { Categories.of(it.first(), overrides) }.toSortedMap(compareBy { order.indexOf(it) })
             .map { (cat, gs) -> Section(cat.name, cat.label, gs.recentFirst()) }
-        main + listOfNotNull(stopped.takeIf { it.isNotEmpty() }?.let { Section("FRENATE", tr(R.string.braked_section), it.recentFirst(), braked = true) })
+        main + listOfNotNull(
+            stopped.takeIf { it.isNotEmpty() }?.let { Section("FRENATE", tr(R.string.braked_section), it.recentFirst(), braked = true) },
+            // Nascoste: senza sblocco si vede solo quante sono, mai chi o cosa
+            secret.takeIf { it.isNotEmpty() }?.let {
+                if (hiddenRevealed) Section("NASCOSTE", tr(R.string.hidden_apps), it.recentFirst(), braked = true)
+                else Section("NASCOSTE", tr(R.string.hidden_apps), it, locked = true)
+            },
+        )
     }
     val total = groups.sumOf { g -> g.sumOf { it.count } }
     var expanded by remember { mutableStateOf(setOf<String>()) }
@@ -179,8 +190,12 @@ fun SordinaScreen(
             sections.forEach { s ->
                 if (s.label == null) item(key = "h_" + s.key) { Spacer(Modifier.height(10.dp)) }
                 else item(key = "h_" + s.key) {
-                    Row(Modifier.animateItem().padding(start = 28.dp, end = 28.dp, top = 18.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                        if (s.braked) Icon(Icons.Rounded.Lock, null, Modifier.padding(end = 6.dp).size(16.dp), tint = c.soft)
+                    Row(
+                        Modifier.animateItem().then(if (s.locked) Modifier.clickable { feel.tick(); onRevealHidden() } else Modifier)
+                            .padding(start = 28.dp, end = 28.dp, top = 18.dp, bottom = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (s.braked || s.locked) Icon(Icons.Rounded.Lock, null, Modifier.padding(end = 6.dp).size(16.dp), tint = c.soft)
                         Text(s.label, style = TextStyle(fontSize = 20.sp, color = c.ink))
                         Spacer(Modifier.width(8.dp))
                         Text(
@@ -189,7 +204,7 @@ fun SordinaScreen(
                         )
                     }
                 }
-                items(s.groups, key = { it.first().groupKey }) { g ->
+                if (!s.locked) items(s.groups, key = { it.first().groupKey }) { g ->
                     val key = g.first().groupKey
                     Box(Modifier.animateItem().padding(horizontal = 16.dp, vertical = 4.dp)) {
                         Block(

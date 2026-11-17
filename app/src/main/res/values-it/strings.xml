@@ -211,8 +211,8 @@
     <string name="lv_auto_hint">Decide Sordina</string>
     <string name="lv_always">Passa sempre</string>
     <string name="lv_always_hint">Suona subito, sempre</string>
-    <string name="lv_silent">Silenziosa</string>
-    <string name="lv_silent_hint">Nella tendina, senza suonare</string>
+    <string name="lv_silent">Passa</string>
+    <string name="lv_silent_hint">Nella tendina, come la manda l\'app</string>
     <string name="lv_summary_hint">Aspetta in Sordina</string>
     <string name="lv_summary">In sordina</string>
     <string name="s_braked_hint">Attendi qualche secondo prima di aprirle.</string>
@@ -667,7 +667,7 @@
     <string name="h_p_calls">Per chiamare dalla ricerca</string>
     <string name="h_p_cal">Per mostrare e aggiungere impegni</string>
     <string name="perm_location">Posizione</string>
-    <string name="h_p_location">Per riconoscere il Wi‑Fi di casa e del lavoro, così le proposte cambiano con il posto</string>
+    <string name="h_p_location">Per il meteo: solo la zona in cui sei, mai il GPS</string>
     <string name="ob_lapps">App</string>
     <string name="ob_apps_title">Quali app passano sempre?</string>
     <string name="ob_apps_sub">Le loro notifiche suonano subito, come prima. Tutto il resto ti aspetta in Sordina.</string>
@@ -1051,4 +1051,9 @@
     <string name="ach_locked">Ancora da vincere</string>
     <string name="usually_now">Di solito adesso</string>
     <string name="hide_card">Nascondi</string>
+    <string name="pin_shortcut_q">Aggiungere “%1$s” di %2$s alle tue app?</string>
+    <string name="faults_title">Errori</string>
+    <string name="faults_none">Nessun errore registrato</string>
+    <string name="faults_hint">Cosa è andato storto di recente. Resta su questo telefono.</string>
+    <string name="brake_recent">Già contata poco fa</string>
 </resources>

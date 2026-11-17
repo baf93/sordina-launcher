@@ -411,8 +411,8 @@
     <string name="health_stopped_title">Sordina가 잠들었어요</string>
     <string name="lv_always">항상 받기</string>
     <string name="lv_always_hint">소리와 함께, 항상</string>
-    <string name="lv_silent">조용히 받기</string>
-    <string name="lv_silent_hint">알림창에, 소리 없이</string>
+    <string name="lv_silent">통과</string>
+    <string name="lv_silent_hint">앱이 보낸 그대로 알림창에</string>
     <string name="lv_summary">보류</string>
     <string name="lv_summary_hint">Sordina에서 대기</string>
     <string name="moment_focus_until">%1$s까지 중요한 것만 · 탭하면 끝</string>
@@ -708,7 +708,7 @@
     <string name="brake_balance">오늘 %1$s</string>
     <string name="brake_day_won">오늘은 플러스예요</string>
     <string name="perm_location">위치</string>
-    <string name="h_p_location">집과 직장의 Wi-Fi를 알아보고 장소에 따라 제안을 바꾸기 위해</string>
+    <string name="h_p_location">날씨용: 대략적인 지역만, GPS는 사용하지 않아요</string>
     <string name="r_pass_title">항상 통과</string>
     <string name="r_empty">아직 없음</string>
     <string name="access_summary">즉시 브레이크와 두 번 탭해서 잠금</string>
@@ -1020,4 +1020,21 @@
     <string name="ach_locked">아직 얻지 못함</string>
     <string name="usually_now">이 시간엔 보통</string>
     <string name="hide_card">숨기기</string>
+    <string name="pin_shortcut_q">%2$s의 “%1$s”을(를) 앱에 추가할까요?</string>
+    <string name="faults_title">오류</string>
+    <string name="faults_none">기록된 오류 없음</string>
+    <string name="faults_hint">최근에 잘못된 일. 이 휴대폰에만 남습니다.</string>
+    <string name="health_samsung_title">Samsung이 Sordina를 껐습니다</string>
+    <string name="health_samsung_sub">메모리를 확보하기 위해서입니다. 지금은 다시 켜졌어요. 막는 방법은 이렇습니다.</string>
+    <string name="health_samsung_fix">방법 보기</string>
+    <string name="samsung_sleep_l">절대 절전 안 함</string>
+    <string name="samsung_sleep_why">Samsung이 가끔 밤에 저를 꺼요</string>
+    <string name="samsung_sleep_title">Sordina가 절전되지 않게 하기</string>
+    <string name="samsung_sleep_steps">메모리가 부족하면 Samsung은 백그라운드 앱을 끄고, Sordina는 다시 깨어날 때까지 알림을 정리하지 못합니다.\n\n배터리 페이지에서: 백그라운드 사용 제한 → 절전 예외 앱 → + → Sordina.</string>
+    <string name="samsung_sleep_open">배터리 열기</string>
+    <string name="access_desc">Sordina는 접근성을 세 가지에만 사용합니다: 브레이크를 건 앱이 앞으로 나오는 순간 멈추기(브라우저의 해당 웹사이트 포함), 두 번 탭으로 화면 잠그기, 외부 입력을 받지 않는 앱(Home Assistant Assist, Signal)에 대신 문장 입력하기. 브레이크를 건 앱과, 웹사이트가 있다면 브라우저만 듣고, 브라우저에서는 앞에 있는 동안 주소 표시줄만 읽습니다. 화면은 몇 초 동안만, 그 앱에서만 봅니다. 아무것도 휴대전화 밖으로 나가지 않습니다.</string>
+    <string name="access_consent_title">접근성을 사용할까요?</string>
+    <string name="access_consent_ok">동의하고 설정 열기</string>
+    <string name="s_instant_brake_hint">접근성을 사용하면 브레이크가 즉시 걸리고, 브레이크를 건 앱의 웹사이트에도 적용되며, Sordina가 몇 초마다 확인할 필요가 없어집니다. 켤 수 없다면: 앱 정보 › ⋮ › 제한된 설정 허용.</string>
+    <string name="brake_recent">조금 전에 이미 셌어요</string>
 </resources>

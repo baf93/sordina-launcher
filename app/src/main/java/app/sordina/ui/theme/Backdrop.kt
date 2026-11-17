@@ -98,10 +98,10 @@ object Backdrops {
                 val dark = wc != null && Build.VERSION.SDK_INT >= 31 && (wc.colorHints and WallpaperColors.HINT_SUPPORTS_DARK_TEXT) != 0
                 // Lo sfondo del telefono non si vede: Android dice solo i suoi colori principali. Si sceglie su quelli,
                 // e un velo minimo resta sempre, perché non si sa dove cadono
-                val colors = listOfNotNull(wc?.primaryColor, wc?.secondaryColor, wc?.tertiaryColor)
+                val colors = if (Build.VERSION.SDK_INT >= 27) listOfNotNull(wc?.primaryColor, wc?.secondaryColor, wc?.tertiaryColor) else emptyList()
                 val (top, scrim) = if (colors.isEmpty()) dark to PHONE_SCRIM
                     else Legibility.pick(colors.map { val a = it.toArgb(); Legibility.luminance((a shr 16) and 255, (a shr 8) and 255, a and 255) }.toDoubleArray(), PHONE_SCRIM)
-                Backdrop(mode = 1, topDark = top, bottomDark = top, accent = wc?.primaryColor?.toArgb(), topScrim = scrim)
+                Backdrop(mode = 1, topDark = top, bottomDark = top, accent = if (Build.VERSION.SDK_INT >= 27) wc?.primaryColor?.toArgb() else null, topScrim = scrim)
             }
             else -> Backdrop()
         }

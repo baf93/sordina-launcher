@@ -116,8 +116,6 @@ Intent first, app second. Type or speak like you'd talk to a person:
 
 Sordina does the right thing: places the call, writes the message in WhatsApp, Telegram, Signal or SMS, sets the timer without opening the Clock, puts the event in your calendar (with *Undo*). Voice is recognised **on the phone**, and Sordina learns from your corrections.
 
-Below the bar, one suggestion at a time: what you usually do at this hour and place, learned on the phone. Long-press to see *why*.
-
 <br clear="right">
 
 ---
@@ -174,12 +172,12 @@ All optional except notification access, which is the point of the app.
 | Permission | Why |
 |---|---|
 | Notification access | Decide what gets through and what waits; codes, meetings and pictures in the bubble |
-| Usage access | Suggestions and the evening recap |
+| Usage access | Ordering apps in search and the evening recap |
 | Do Not Disturb access | Timed silence: turns Do Not Disturb on and off |
 | Notifications | The quiet status card and alerts from Sordina itself |
 | Contacts | "Call Anna", "text Anna"; important people; the people shown in the car |
 | Calendar | Your next plans; "football tomorrow at 5pm" written straight in |
-| Location (while in use) | Weather and place-based suggestions |
+| Approximate location (while in use) | Weather only: no GPS, no Wi-Fi names |
 | Microphone | Voice, with Android's on-device recogniser (Android 12+) |
 | Phone | "Call Anna" places the call after your tap |
 | Accessibility service | Instant brake (and the braked app's website, reading only the address bar), double-tap to lock, typing a phrase into Home Assistant Assist or Signal. Explained in the app, with explicit consent, before Android's settings open |

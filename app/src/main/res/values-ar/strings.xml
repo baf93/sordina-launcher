@@ -466,8 +466,8 @@
     <string name="health_stopped_title">نامت Sordina</string>
     <string name="lv_always">يصل دائمًا</string>
     <string name="lv_always_hint">بصوت، دائمًا</string>
-    <string name="lv_silent">يصل بصمت</string>
-    <string name="lv_silent_hint">في لوحة الإشعارات، بلا صوت</string>
+    <string name="lv_silent">تمرير</string>
+    <string name="lv_silent_hint">في الشريط، كما يرسلها التطبيق</string>
     <string name="lv_summary">محتجز</string>
     <string name="lv_summary_hint">ينتظر في Sordina</string>
     <string name="moment_focus_until">المهم فقط حتى %1$s · المس للإنهاء</string>
@@ -763,7 +763,7 @@
     <string name="brake_balance">اليوم %1$s</string>
     <string name="brake_day_won">اليوم أنت في الموجب</string>
     <string name="perm_location">الموقع</string>
-    <string name="h_p_location">للتعرّف على wifi المنزل والعمل، كي تتغيّر الاقتراحات حسب المكان</string>
+    <string name="h_p_location">للطقس: منطقتك التقريبية فقط، دون GPS أبدًا</string>
     <string name="r_pass_title">السماح بالمرور دائمًا</string>
     <string name="r_empty">لا شيء بعد</string>
     <string name="access_summary">فرملة فورية ونقر مزدوج للقفل</string>
@@ -1075,4 +1075,21 @@
     <string name="ach_locked">لم يُكتسب بعد</string>
     <string name="usually_now">عادةً الآن</string>
     <string name="hide_card">إخفاء</string>
+    <string name="pin_shortcut_q">هل تريد إضافة “%1$s” من %2$s إلى تطبيقاتك؟</string>
+    <string name="faults_title">الأخطاء</string>
+    <string name="faults_none">لا أخطاء مسجّلة</string>
+    <string name="faults_hint">ما حدث من أخطاء مؤخرًا. يبقى على هذا الهاتف.</string>
+    <string name="health_samsung_title">أوقفت Samsung تطبيق Sordina</string>
+    <string name="health_samsung_sub">لتحرير الذاكرة. عاد للعمل الآن: إليك كيف تتجنب ذلك.</string>
+    <string name="health_samsung_fix">أرني كيف</string>
+    <string name="samsung_sleep_l">لا يدخل السكون أبدًا</string>
+    <string name="samsung_sleep_why">توقفني Samsung أحيانًا ليلًا</string>
+    <string name="samsung_sleep_title">لا تدع Sordina يدخل السكون</string>
+    <string name="samsung_sleep_steps">عندما تنخفض الذاكرة، توقف Samsung التطبيقات في الخلفية، ويتوقف Sordina عن فرز إشعاراتك حتى يستيقظ مجددًا.\n\nفي صفحة البطارية: حدود الاستخدام في الخلفية ← تطبيقات لا تدخل السكون أبدًا ← + ← Sordina.</string>
+    <string name="samsung_sleep_open">فتح البطارية</string>
+    <string name="access_desc">يستخدم Sordina إمكانية الوصول لثلاثة أشياء فقط: إيقاف تطبيق مكبوح لحظة ظهوره في المقدمة (وموقعه في المتصفح أيضًا)، وقفل الشاشة بنقرة مزدوجة، وكتابة عبارة نيابةً عنك حيث لا تقبلها التطبيقات من الخارج (Assist في Home Assistant، Signal). لا يستمع إلا للتطبيقات التي كبحتها، وإن كان لها موقع، للمتصفحات: ولا يقرأ منها إلا شريط العنوان ما دامت في المقدمة. ولا ينظر إلى الشاشة إلا لثوانٍ قليلة، وفي ذلك التطبيق فقط. لا شيء يغادر الهاتف.</string>
+    <string name="access_consent_title">استخدام إمكانية الوصول؟</string>
+    <string name="access_consent_ok">أوافق، افتح الإعدادات</string>
+    <string name="s_instant_brake_hint">مع إمكانية الوصول يعمل الكبح فورًا، ويشمل أيضًا مواقع التطبيقات المكبوحة، ويتوقف Sordina عن التحقق كل بضع ثوانٍ. إن تعذّر تفعيلها: معلومات التطبيق › ⋮ › السماح بالإعدادات المقيدة.</string>
+    <string name="brake_recent">احتُسبت قبل قليل</string>
 </resources>

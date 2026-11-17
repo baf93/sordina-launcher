@@ -124,7 +124,7 @@ class Moments(private val context: Context, private val prefs: Prefs) {
     fun phrase(m: Moment = current()): String =
         focusUntil()?.let { tr(R.string.moment_focus_until, clock(it)) } ?: m.phrase
 
-    private fun clock(ms: Long): String = java.time.Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault())
+    fun clock(ms: Long): String = java.time.Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault())
         .format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
 
     companion object {

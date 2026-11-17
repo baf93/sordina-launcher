@@ -422,8 +422,8 @@
     <string name="health_stopped_title">Sordina har somnat</string>
     <string name="lv_always">Alltid fram</string>
     <string name="lv_always_hint">Med ljud, alltid</string>
-    <string name="lv_silent">Tyst fram</string>
-    <string name="lv_silent_hint">I aviseringspanelen, utan ljud</string>
+    <string name="lv_silent">Släpp igenom</string>
+    <string name="lv_silent_hint">I panelen, som appen skickar den</string>
     <string name="lv_summary">Hålls kvar</string>
     <string name="lv_summary_hint">Väntar i Sordina</string>
     <string name="moment_focus_until">Bara det viktiga till %1$s · tryck för att avsluta</string>
@@ -719,7 +719,7 @@
     <string name="brake_balance">I dag %1$s</string>
     <string name="brake_day_won">I dag ligger du på plus</string>
     <string name="perm_location">Plats</string>
-    <string name="h_p_location">För att känna igen wifi hemma och på jobbet, så att förslagen ändras med platsen</string>
+    <string name="h_p_location">För vädret: bara ditt ungefärliga område, aldrig GPS</string>
     <string name="r_pass_title">Släpp alltid igenom</string>
     <string name="r_empty">Inget än</string>
     <string name="access_summary">Direktbroms och dubbeltryck för att låsa</string>
@@ -1031,4 +1031,21 @@
     <string name="ach_locked">Kvar att vinna</string>
     <string name="usually_now">Brukar nu</string>
     <string name="hide_card">Dölj</string>
+    <string name="pin_shortcut_q">Lägga till ”%1$s” från %2$s i dina appar?</string>
+    <string name="faults_title">Fel</string>
+    <string name="faults_none">Inga fel registrerade</string>
+    <string name="faults_hint">Vad som gick fel nyligen. Stannar på den här telefonen.</string>
+    <string name="health_samsung_title">Samsung stängde av Sordina</string>
+    <string name="health_samsung_sub">För att frigöra minne. Nu är den vaken igen: så här undviker du det.</string>
+    <string name="health_samsung_fix">Visa mig hur</string>
+    <string name="samsung_sleep_l">Aldrig i viloläge</string>
+    <string name="samsung_sleep_why">Samsung stänger ibland av mig på natten</string>
+    <string name="samsung_sleep_title">Låt inte Sordina försättas i viloläge</string>
+    <string name="samsung_sleep_steps">När minnet tar slut stänger Samsung av appar i bakgrunden, och Sordina slutar sortera dina aviseringar tills den vaknar igen.\n\nPå sidan Batteri: Gränser för bakgrundsanvändning → Appar som aldrig försätts i viloläge → + → Sordina.</string>
+    <string name="samsung_sleep_open">Öppna Batteri</string>
+    <string name="access_desc">Sordina använder tillgänglighet till bara tre saker: stoppa en bromsad app i samma stund som den kommer fram (även dess webbplats i webbläsaren), låsa skärmen med ett dubbeltryck och skriva en fras åt dig där appar inte tar emot den utifrån (Home Assistant Assist, Signal). Den lyssnar bara på apparna du har bromsat och, om de har en webbplats, på webbläsare: av dem läser den bara adressfältet medan de är framme. Skärmen tittar den på bara några sekunder, bara i den appen. Inget lämnar telefonen.</string>
+    <string name="access_consent_title">Använda tillgänglighet?</string>
+    <string name="access_consent_ok">Jag godkänner, öppna inställningar</string>
+    <string name="s_instant_brake_hint">Med tillgänglighet kommer bromsen direkt, gäller även webbplatserna för bromsade appar och Sordina slutar kontrollera med några sekunders mellanrum. Om det inte går att slå på: Appinfo › ⋮ › Tillåt begränsade inställningar.</string>
+    <string name="brake_recent">Räknades nyss</string>
 </resources>

@@ -422,8 +422,8 @@
     <string name="health_stopped_title">Sordina is in slaap gevallen</string>
     <string name="lv_always">Altijd door</string>
     <string name="lv_always_hint">Met geluid, altijd</string>
-    <string name="lv_silent">Stil door</string>
-    <string name="lv_silent_hint">In het meldingenpaneel, zonder geluid</string>
+    <string name="lv_silent">Doorlaten</string>
+    <string name="lv_silent_hint">In het paneel, zoals de app hem stuurt</string>
     <string name="lv_summary">Vastgehouden</string>
     <string name="lv_summary_hint">Wacht in Sordina</string>
     <string name="moment_focus_until">Alleen het belangrijke tot %1$s · tik om te stoppen</string>
@@ -719,7 +719,7 @@
     <string name="brake_balance">Vandaag %1$s</string>
     <string name="brake_day_won">Vandaag sta je in de plus</string>
     <string name="perm_location">Locatie</string>
-    <string name="h_p_location">Om de wifi van thuis en werk te herkennen, zodat de suggesties met de plek veranderen</string>
+    <string name="h_p_location">Voor het weer: alleen je globale omgeving, nooit gps</string>
     <string name="r_pass_title">Altijd doorlaten</string>
     <string name="r_empty">Nog niets</string>
     <string name="access_summary">Directe rem en dubbeltikken om te vergrendelen</string>
@@ -1031,4 +1031,21 @@
     <string name="ach_locked">Nog te winnen</string>
     <string name="usually_now">Meestal nu</string>
     <string name="hide_card">Verbergen</string>
+    <string name="pin_shortcut_q">“%1$s” van %2$s aan je apps toevoegen?</string>
+    <string name="faults_title">Fouten</string>
+    <string name="faults_none">Geen fouten vastgelegd</string>
+    <string name="faults_hint">Wat er onlangs misging. Blijft op deze telefoon.</string>
+    <string name="health_samsung_title">Samsung heeft Sordina uitgeschakeld</string>
+    <string name="health_samsung_sub">Om geheugen vrij te maken. Sordina is weer wakker: zo voorkom je het.</string>
+    <string name="health_samsung_fix">Laat zien hoe</string>
+    <string name="samsung_sleep_l">Nooit in slaapstand</string>
+    <string name="samsung_sleep_why">Samsung schakelt me \'s nachts soms uit</string>
+    <string name="samsung_sleep_title">Laat Sordina niet in slaap vallen</string>
+    <string name="samsung_sleep_steps">Als het geheugen bijna vol is, schakelt Samsung apps op de achtergrond uit en sorteert Sordina je meldingen pas weer als het wakker wordt.\n\nOp de pagina Batterij: Limieten voor achtergrondgebruik → Apps die nooit in slaapstand gaan → + → Sordina.</string>
+    <string name="samsung_sleep_open">Batterij openen</string>
+    <string name="access_desc">Sordina gebruikt toegankelijkheid voor maar drie dingen: een afgeremde app stoppen op het moment dat hij naar voren komt (ook de website ervan in de browser), het scherm vergrendelen met een dubbeltik, en voor jou een zin typen waar apps die niet van buitenaf accepteren (Home Assistant Assist, Signal). Het luistert alleen naar de apps die je hebt afgeremd en, als die een website hebben, naar browsers: daarvan leest het alleen de adresbalk, zolang ze vooraan staan. Het kijkt maar een paar seconden naar het scherm, alleen in die app. Niets verlaat de telefoon.</string>
+    <string name="access_consent_title">Toegankelijkheid gebruiken?</string>
+    <string name="access_consent_ok">Akkoord, instellingen openen</string>
+    <string name="s_instant_brake_hint">Met toegankelijkheid werkt de rem meteen, geldt hij ook voor de websites van afgeremde apps, en hoeft Sordina niet meer om de paar seconden te kijken. Lukt inschakelen niet: App-info › ⋮ › Beperkte instellingen toestaan.</string>
+    <string name="brake_recent">Net al geteld</string>
 </resources>

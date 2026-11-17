@@ -41,7 +41,6 @@ data class Situation(
             out += Feature("h", "${(slot + 2) % 48}", 0.25)
             out += Feature("h", "${(slot + 46) % 48}", 0.25)
         } else out += Feature("h", "$slot")
-        out += Feature("dw", "${t.dayOfWeek.value}")
         out += Feature("we", if (t.dayOfWeek == DayOfWeek.SATURDAY || t.dayOfWeek == DayOfWeek.SUNDAY) "1" else "0")
         wifi?.let { out += Feature("pl", it.ifEmpty { "-" }) }
         car?.let { out += Feature("car", if (it) "1" else "0") }

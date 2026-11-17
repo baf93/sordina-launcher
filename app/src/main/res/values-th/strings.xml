@@ -411,8 +411,8 @@
     <string name="health_stopped_title">Sordina หลับไปแล้ว</string>
     <string name="lv_always">ผ่านเสมอ</string>
     <string name="lv_always_hint">มีเสียง เสมอ</string>
-    <string name="lv_silent">ผ่านแบบเงียบ</string>
-    <string name="lv_silent_hint">ในแถบการแจ้งเตือน ไม่มีเสียง</string>
+    <string name="lv_silent">ให้ผ่าน</string>
+    <string name="lv_silent_hint">ในแถบแจ้งเตือน ตามที่แอปส่งมา</string>
     <string name="lv_summary">พักไว้</string>
     <string name="lv_summary_hint">รอใน Sordina</string>
     <string name="moment_focus_until">เฉพาะสิ่งสำคัญจนถึง %1$s · แตะเพื่อจบ</string>
@@ -708,7 +708,7 @@
     <string name="brake_balance">วันนี้ %1$s</string>
     <string name="brake_day_won">วันนี้คุณเป็นบวก</string>
     <string name="perm_location">ตำแหน่ง</string>
-    <string name="h_p_location">เพื่อจดจำ wifi ที่บ้านและที่ทำงาน ให้คำแนะนำเปลี่ยนไปตามสถานที่</string>
+    <string name="h_p_location">สำหรับสภาพอากาศ: เฉพาะพื้นที่โดยประมาณ ไม่ใช้ GPS</string>
     <string name="r_pass_title">ให้ผ่านเสมอ</string>
     <string name="r_empty">ยังไม่มีอะไร</string>
     <string name="access_summary">เบรกทันทีและแตะสองครั้งเพื่อล็อก</string>
@@ -1020,4 +1020,21 @@
     <string name="ach_locked">ยังไม่ได้รับ</string>
     <string name="usually_now">ปกติช่วงนี้</string>
     <string name="hide_card">ซ่อน</string>
+    <string name="pin_shortcut_q">เพิ่ม “%1$s” จาก %2$s ไปยังแอปของคุณไหม</string>
+    <string name="faults_title">ข้อผิดพลาด</string>
+    <string name="faults_none">ไม่มีข้อผิดพลาดที่บันทึกไว้</string>
+    <string name="faults_hint">สิ่งที่ผิดพลาดเมื่อเร็วๆ นี้ เก็บไว้ในโทรศัพท์เครื่องนี้</string>
+    <string name="health_samsung_title">Samsung ปิด Sordina</string>
+    <string name="health_samsung_sub">เพื่อคืนหน่วยความจำ ตอนนี้กลับมาทำงานแล้ว: นี่คือวิธีป้องกัน</string>
+    <string name="health_samsung_fix">บอกวิธี</string>
+    <string name="samsung_sleep_l">ไม่สลีปเลย</string>
+    <string name="samsung_sleep_why">บางครั้ง Samsung ปิดฉันตอนกลางคืน</string>
+    <string name="samsung_sleep_title">อย่าให้ Sordina ถูกสั่งให้สลีป</string>
+    <string name="samsung_sleep_steps">เมื่อหน่วยความจำเหลือน้อย Samsung จะปิดแอปในพื้นหลัง และ Sordina จะหยุดคัดแยกการแจ้งเตือนจนกว่าจะกลับมาทำงาน\n\nในหน้าแบตเตอรี่: ขีดจำกัดการใช้งานในพื้นหลัง → แอปที่ไม่สลีปเลย → + → Sordina</string>
+    <string name="samsung_sleep_open">เปิดแบตเตอรี่</string>
+    <string name="access_desc">Sordina ใช้การช่วยเหลือพิเศษเพียงสามอย่าง: หยุดแอปที่ถูกเบรกทันทีที่ขึ้นมาด้านหน้า (รวมถึงเว็บไซต์ของแอปในเบราว์เซอร์) ล็อกหน้าจอด้วยการแตะสองครั้ง และพิมพ์ประโยคแทนคุณในที่ที่แอปไม่รับจากภายนอก (Assist ของ Home Assistant, Signal) ฟังเฉพาะแอปที่คุณเบรกไว้ และเบราว์เซอร์หากแอปนั้นมีเว็บไซต์: จากเบราว์เซอร์จะอ่านเฉพาะแถบที่อยู่ขณะอยู่ด้านหน้า ดูหน้าจอเพียงไม่กี่วินาที เฉพาะในแอปนั้น ไม่มีอะไรออกจากโทรศัพท์</string>
+    <string name="access_consent_title">ใช้การช่วยเหลือพิเศษไหม</string>
+    <string name="access_consent_ok">ยอมรับ เปิดการตั้งค่า</string>
+    <string name="s_instant_brake_hint">เมื่อใช้การช่วยเหลือพิเศษ การเบรกจะทำงานทันที ใช้กับเว็บไซต์ของแอปที่ถูกเบรกด้วย และ Sordina ไม่ต้องตรวจทุกไม่กี่วินาทีอีก หากเปิดไม่ได้: ข้อมูลแอป › ⋮ › อนุญาตการตั้งค่าที่ถูกจำกัด</string>
+    <string name="brake_recent">นับไปแล้วเมื่อสักครู่</string>
 </resources>

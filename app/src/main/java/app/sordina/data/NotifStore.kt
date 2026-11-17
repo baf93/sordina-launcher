@@ -103,7 +103,7 @@ class NotifStore(private val context: Context) {
      * dopo la sospensione, o l'app che le ripubblica il giorno dopo) si chiudono subito, ogni volta.
      * Se sulla stessa notifica arriva un testo nuovo, è una notifica nuova e passa dalle regole.
      */
-    private val read = LinkedHashMap<String, Int>()
+    private val read = LinkedHashMap<String, Pair<Int, Long>>()
     /** Persona normalizzata → (pacchetto → quante notifiche) */
     private val personApps = HashMap<String, HashMap<String, Int>>()
 
@@ -111,11 +111,14 @@ class NotifStore(private val context: Context) {
         runCatching { load() }
         runCatching { loadLearn() }
         runCatching {
-            // "impronta<TAB>chiave"; le voci vecchie, senza impronta, valgono per il primo ritorno qualunque sia il testo
+            // "impronta<TAB>quando<TAB>chiave". I formati vecchi (senza quando, o senza impronta) si lasciano cadere:
+            // al peggio una notifica già letta torna una volta, mai il contrario
+            val now = System.currentTimeMillis()
             KeyList.read(dismissedFile).forEach { line ->
-                val tab = line.indexOf('\t')
-                val hash = if (tab > 0) line.substring(0, tab).toIntOrNull() else null
-                if (hash != null) read[line.substring(tab + 1)] = hash else read[line] = ANY
+                val p = line.split('\t', limit = 3)
+                val hash = p.getOrNull(0)?.toIntOrNull()
+                val at = p.getOrNull(1)?.toLongOrNull()
+                if (p.size == 3 && hash != null && at != null && now - at < READ_TTL) read[p[2]] = hash to at
             }
         }
     }
@@ -126,7 +129,7 @@ class NotifStore(private val context: Context) {
     @Synchronized
     fun markRead(key: String, text: String) {
         read.remove(key)
-        read[key] = text.hashCode()
+        read[key] = text.hashCode() to System.currentTimeMillis()
         while (read.size > 1000) read.remove(read.keys.first())
         saveRead()
     }
@@ -137,15 +140,14 @@ class NotifStore(private val context: Context) {
      */
     @Synchronized
     fun alreadyRead(key: String, text: () -> String): Boolean {
-        val hash = read[key] ?: return false
-        if (hash == ANY) { read.remove(key); saveRead(); return true }
-        if (hash == text().hashCode()) return true
+        val (hash, at) = read[key] ?: return false
+        if (System.currentTimeMillis() - at < READ_TTL && hash == text().hashCode()) return true
         read.remove(key); saveRead()
         return false
     }
 
     private fun saveRead() {
-        val snap = read.map { (k, h) -> "$h\t$k" }
+        val snap = read.map { (k, v) -> "${v.first}\t${v.second}\t$k" }
         io.execute { runCatching { KeyList.write(dismissedFile, snap) } }
     }
 
@@ -229,8 +231,8 @@ class NotifStore(private val context: Context) {
     private companion object {
         const val SAVE_DELAY = 1_500L
         const val MAX_PEOPLE = 400
-        /** Lettura senza impronta (salvata dalle versioni vecchie): vale per il primo ritorno */
-        const val ANY = Int.MIN_VALUE
+        /** Quanto vale una lettura: oltre, una notifica uguale è una notifica nuova (Android ne restituisce una posticipata entro un giorno) */
+        const val READ_TTL = 48L * 3_600_000
     }
 
     /** Le app con cui questa persona ti scrive, la più usata per prima. */

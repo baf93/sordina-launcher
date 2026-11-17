@@ -217,11 +217,13 @@ internal fun CarHome(
         }
         Spacer(Modifier.weight(1f))
         if (roomy && state.people.isNotEmpty()) {
-            // Quattro facce, sempre al loro posto: un tocco chiama, una pressione lunga la toglie da qui
-            Row(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                state.people.forEach { p -> CarFace(p, { feel.tick(); onScene("call:${p.full}") }) { feel.tick(); onScene("hide:${p.full}") } }
-                // Con meno di quattro persone le facce restano al loro posto, non si allargano
-                repeat(4 - state.people.size) { Spacer(Modifier.weight(1f)) }
+            // Fino a quattro facce, sempre al centro: un tocco chiama, una pressione lunga la toglie da qui.
+            // Con meno di quattro persone restano grandi uguali (la loro parte di quattro) e stanno in mezzo
+            val n = state.people.size.coerceAtMost(4)
+            Box(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Row(Modifier.fillMaxWidth(n / 4f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    state.people.take(4).forEach { p -> CarFace(p, { feel.tick(); onScene("call:${p.full}") }) { feel.tick(); onScene("hide:${p.full}") } }
+                }
             }
             Spacer(Modifier.height(14.dp))
         }

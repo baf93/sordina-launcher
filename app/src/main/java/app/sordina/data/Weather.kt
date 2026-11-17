@@ -26,6 +26,25 @@ class Weather(private val context: Context) {
     @Volatile var rain: Pair<Long, Int>? = null
         private set
 
+    @Volatile private var loc: android.location.Location? = null
+    @Volatile private var locAt = 0L
+
+    /**
+     * L'ultima posizione che il telefono conosce già (mai il GPS acceso da Sordina), per oggi e domani insieme.
+     * Ogni lettura è un accesso alla posizione che Android ti mostra: una sola, la passiva (quella di tutte le fonti),
+     * e le altre solo se manca; poi vale un'ora, il meteo non cambia per qualche chilometro.
+     */
+    private fun location(): android.location.Location? {
+        val now = System.currentTimeMillis()
+        if (now - locAt < 3600_000 && loc != null) return loc
+        if (context.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) return loc
+        val lm = context.getSystemService(LocationManager::class.java) ?: return loc
+        val found = listOf(LocationManager.PASSIVE_PROVIDER, LocationManager.NETWORK_PROVIDER, LocationManager.GPS_PROVIDER)
+            .firstNotNullOfOrNull { p -> runCatching { lm.getLastKnownLocation(p) }.getOrNull() }
+        if (found != null) { loc = found; locAt = now }
+        return found ?: loc
+    }
+
     fun hasPermission() =
         context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
@@ -36,12 +55,7 @@ class Weather(private val context: Context) {
         // Dopo un tentativo fallito (senza rete, senza posizione) si riprova fra 10 minuti, non a ogni ritorno a Casa
         if (System.currentTimeMillis() - failedAt < 600_000) return cached
         failedAt = System.currentTimeMillis()
-        val lm = context.getSystemService(LocationManager::class.java) ?: return cached
-        val loc = runCatching {
-            listOf(LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER, LocationManager.GPS_PROVIDER)
-                .mapNotNull { p -> runCatching { lm.getLastKnownLocation(p) }.getOrNull() }
-                .maxByOrNull { it.time }
-        }.getOrNull() ?: return cached
+        val loc = location() ?: return cached
         val lat = String.format(Locale.US, "%.1f", loc.latitude)
         val lon = String.format(Locale.US, "%.1f", loc.longitude)
         val text = runCatching {
@@ -70,12 +84,7 @@ class Weather(private val context: Context) {
         if (tomorrowDay == today) return tomorrowText
         if (System.currentTimeMillis() - tomorrowFailedAt < 600_000) return null
         tomorrowFailedAt = System.currentTimeMillis()
-        val lm = context.getSystemService(LocationManager::class.java) ?: return null
-        val loc = runCatching {
-            listOf(LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER, LocationManager.GPS_PROVIDER)
-                .mapNotNull { p -> runCatching { lm.getLastKnownLocation(p) }.getOrNull() }
-                .maxByOrNull { it.time }
-        }.getOrNull() ?: return null
+        val loc = location() ?: return null
         val lat = String.format(Locale.US, "%.1f", loc.latitude)
         val lon = String.format(Locale.US, "%.1f", loc.longitude)
         val text = runCatching {

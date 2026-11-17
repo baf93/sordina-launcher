@@ -38,9 +38,6 @@ Scorri di lato per passare alla cosa dopo. Se c'è un'immagine, trascina in su p
 • In auto: ora grande, le tue app di navigazione e musica, le persone che hai scelto e un microfono che si colpisce senza guardare
 Ogni modalità si accende e si spegne quando vuoi.
 
-★ SUGGERIMENTI CHE IMPARANO, SUL TELEFONO
-Sordina impara cosa fai di solito a quell'ora e in quel posto e te lo propone, una cosa alla volta. Tutto il ragionamento avviene sul telefono. Tieni premuto per sapere perché te lo propone, o per non vederlo più.
-
 ★ FRENA LE APP DEL "TANTO PER"
 Le app che apri per riflesso chiedono un attimo prima di aprirsi. Quelle che ti servono si aprono subito.
 
@@ -55,7 +52,7 @@ Chiara, scura o automatica, con sfondi a tinta unita, astratti o il tuo sfondo: 
 
 Sordina è gratuita, senza acquisti in app.
 
-Nota: Sordina usa l'accesso alle notifiche per decidere cosa passa e cosa aspetta, e l'accesso all'utilizzo per i suggerimenti e il riassunto della sera. Questi dati non lasciano mai il telefono.
+Nota: Sordina usa l'accesso alle notifiche per decidere cosa passa e cosa aspetta, e l'accesso all'utilizzo per ordinare le app nella ricerca e per il riassunto della sera. Questi dati non lasciano mai il telefono.
 
 ## Novità di questa versione (max 500)
 Prima versione di prova: Casa calma, notifiche in sordina, fumetti con codici, riunioni e immagini, modalità sera, notte e auto. Grazie per provarla: ogni commento è prezioso.

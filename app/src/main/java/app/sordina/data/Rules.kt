@@ -44,7 +44,7 @@ data class RuleTarget(
 object Rules {
     fun get(prefs: Prefs, t: RuleTarget, s: RuleScope): Level? = when (s) {
         RuleScope.TYPE -> prefs.channelRules[Classifier.channelKey(t.pkg, t.channel)]
-        RuleScope.PERSON -> t.person?.let { prefs.personRules[it] }
+        RuleScope.PERSON -> t.person?.let { prefs.personRules[Classifier.personRuleKey(t.pkg, it)] ?: prefs.personRules[it] }
         RuleScope.APP -> prefs.appLevels[t.pkg]
     }
 
@@ -62,8 +62,11 @@ object Rules {
                 if (level != null) prefs.ruleNames = prefs.ruleNames + (k to t.appLabel + " · " + t.name(s))
             }
             RuleScope.PERSON -> t.person?.let { p ->
-                prefs.personRules = if (level == null) prefs.personRules - p else prefs.personRules + (p to level)
-                if (level != null) prefs.ruleNames = prefs.ruleNames + (p to t.name(s))
+                // Una persona o un gruppo dentro questa app: "Famiglia" su WhatsApp non è "Famiglia" su Telegram.
+                // La regola vecchia (solo il nome, valida per tutte le app) si toglie: da qui in poi decide quella nuova
+                val k = Classifier.personRuleKey(t.pkg, p)
+                prefs.personRules = (prefs.personRules - p - k).let { if (level == null) it else it + (k to level) }
+                if (level != null) prefs.ruleNames = prefs.ruleNames + (k to t.appLabel + " · " + t.name(s))
                 prefs.passUntil = prefs.passUntil - "p:$p"
             }
             RuleScope.APP -> {
@@ -78,7 +81,7 @@ object Rules {
 
     fun all(prefs: Prefs): List<Saved> =
         prefs.channelRules.map { (k, v) -> Saved(RuleScope.TYPE, k, k.substringBefore('|'), v) } +
-            prefs.personRules.map { (k, v) -> Saved(RuleScope.PERSON, k, null, v) } +
+            prefs.personRules.map { (k, v) -> Saved(RuleScope.PERSON, k, k.substringBefore('|').takeIf { '|' in k }, v) } +
             prefs.appLevels.map { (k, v) -> Saved(RuleScope.APP, k, k, v) }
 
     fun remove(prefs: Prefs, r: Saved) = when (r.scope) {

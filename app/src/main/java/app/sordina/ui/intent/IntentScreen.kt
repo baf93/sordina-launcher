@@ -63,6 +63,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.asCoroutineDispatcher
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -155,7 +156,18 @@ fun IntentScreen(
     fun icon(cand: Candidate) = cand.app?.let { appIcon(it) }
     val focus = remember { FocusRequester() }
     val threshold = with(LocalDensity.current) { 64.dp.toPx() }
-    val result = remember(query) { understand(query) }
+    // Capire la frase legge rubrica, cervello e tendina: fuori dal thread dell'interfaccia, una alla volta e in ordine
+    // (così quello che si impara dalle riformulazioni non dipende da quale calcolo finisce prima)
+    var shown by remember { mutableStateOf("" to Understanding(emptyList(), false)) }
+    LaunchedEffect(query) {
+        // Un errore nel capire la frase non chiude l'app: resta "Cerca sul web" e l'errore va nel registro
+        val r = kotlinx.coroutines.withContext(SEARCH_THREAD) { app.sordina.data.Faults.guard("search") { understand(query) } }
+            ?: Understanding(emptyList(), false)
+        shown = query to r
+    }
+    val result = shown.second
+    /** Il risultato della frase scritta adesso: se il calcolo non è ancora arrivato (Invio subito), si fa qui */
+    fun current() = if (shown.first == query) shown.second else app.sordina.data.Faults.guard("search") { understand(query) } ?: Understanding(emptyList(), false)
     val feelTop = LocalFeel.current
     LaunchedEffect(Unit) { if (keyboardOnOpen) runCatching { focus.requestFocus() } }    // Lo stesso gesto anche sopra i risultati: quello che la lista non usa per scorrere (già in cima, o già in fondo) passa qui.
     // Solo se il gesto è partito con la lista ferma al bordo: scorrendo i risultati non si esce per sbaglio
@@ -287,7 +299,8 @@ fun IntentScreen(
                     textStyle = TextStyle(fontSize = 17.sp, color = c.ink),
                     cursorBrush = SolidColor(c.accent),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
-                    keyboardActions = KeyboardActions(onGo = { result.candidates.firstOrNull()?.let { onRun(it, 0) } }),
+                    // Invio: verso altri (chiamare, scrivere, aprire la porta) solo se la persona è sicura; se no restano le scelte
+                    keyboardActions = KeyboardActions(onGo = { val r = current(); r.candidates.firstOrNull()?.takeIf { !it.toOthers || r.confident }?.let { onRun(it, 0) } }),
                     modifier = Modifier.fillMaxWidth().focusRequester(focus),
                 )
             }
@@ -569,3 +582,6 @@ private fun NoticeBar(n: Notice) {
         }
     }
 }
+
+/** Il thread della ricerca: uno solo, così le frasi si capiscono nell'ordine in cui le scrivi */
+private val SEARCH_THREAD = java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "sordina-ricerca").apply { isDaemon = true } }.asCoroutineDispatcher()

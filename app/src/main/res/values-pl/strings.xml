@@ -444,8 +444,8 @@
     <string name="health_stopped_title">Sordina zasnęła</string>
     <string name="lv_always">Zawsze przechodzi</string>
     <string name="lv_always_hint">Z dźwiękiem, zawsze</string>
-    <string name="lv_silent">Przechodzi po cichu</string>
-    <string name="lv_silent_hint">W panelu, bez dźwięku</string>
+    <string name="lv_silent">Przepuść</string>
+    <string name="lv_silent_hint">Na pasku, tak jak wysyła ją aplikacja</string>
     <string name="lv_summary">Wstrzymane</string>
     <string name="lv_summary_hint">Czeka w Sordinie</string>
     <string name="moment_focus_until">Tylko ważne do %1$s · dotknij, by zakończyć</string>
@@ -741,7 +741,7 @@
     <string name="brake_balance">Dziś %1$s</string>
     <string name="brake_day_won">Dziś jesteś na plusie</string>
     <string name="perm_location">Lokalizacja</string>
-    <string name="h_p_location">Żeby rozpoznawać Wi‑Fi w domu i w pracy, aby podpowiedzi zmieniały się z miejscem</string>
+    <string name="h_p_location">Do pogody: tylko przybliżona okolica, nigdy GPS</string>
     <string name="r_pass_title">Zawsze przepuszczaj</string>
     <string name="r_empty">Jeszcze nic</string>
     <string name="access_summary">Natychmiastowy hamulec i podwójne dotknięcie, by zablokować</string>
@@ -1053,4 +1053,21 @@
     <string name="ach_locked">Do zdobycia</string>
     <string name="usually_now">Zwykle teraz</string>
     <string name="hide_card">Ukryj</string>
+    <string name="pin_shortcut_q">Dodać „%1$s” z %2$s do aplikacji?</string>
+    <string name="faults_title">Błędy</string>
+    <string name="faults_none">Brak zapisanych błędów</string>
+    <string name="faults_hint">Co ostatnio poszło nie tak. Zostaje na tym telefonie.</string>
+    <string name="health_samsung_title">Samsung wyłączył Sordinę</string>
+    <string name="health_samsung_sub">Aby zwolnić pamięć. Już działa ponownie: oto jak temu zapobiec.</string>
+    <string name="health_samsung_fix">Pokaż jak</string>
+    <string name="samsung_sleep_l">Nigdy w uśpieniu</string>
+    <string name="samsung_sleep_why">Samsung czasem wyłącza mnie w nocy</string>
+    <string name="samsung_sleep_title">Nie pozwól uśpić Sordiny</string>
+    <string name="samsung_sleep_steps">Gdy brakuje pamięci, Samsung wyłącza aplikacje w tle, a Sordina przestaje porządkować powiadomienia, dopóki się nie obudzi.\n\nNa stronie Bateria: Limity użycia w tle → Aplikacje nigdy nieusypiane → + → Sordina.</string>
+    <string name="samsung_sleep_open">Otwórz Baterię</string>
+    <string name="access_desc">Sordina używa ułatwień dostępu tylko do trzech rzeczy: zatrzymania przyhamowanej aplikacji w chwili, gdy wychodzi na pierwszy plan (także jej strony w przeglądarce), blokowania ekranu podwójnym dotknięciem i wpisania za ciebie zdania tam, gdzie aplikacje nie przyjmują go z zewnątrz (Assist w Home Assistant, Signal). Słucha tylko przyhamowanych aplikacji i, jeśli mają stronę, przeglądarek: z nich czyta tylko pasek adresu, gdy są na pierwszym planie. Na ekran patrzy tylko przez kilka sekund, tylko w tej aplikacji. Nic nie opuszcza telefonu.</string>
+    <string name="access_consent_title">Użyć ułatwień dostępu?</string>
+    <string name="access_consent_ok">Zgadzam się, otwórz ustawienia</string>
+    <string name="s_instant_brake_hint">Z ułatwieniami dostępu hamulec działa od razu, obejmuje też strony przyhamowanych aplikacji, a Sordina nie musi sprawdzać co kilka sekund. Jeśli nie da się włączyć: Informacje o aplikacji › ⋮ › Zezwól na ustawienia z ograniczeniami.</string>
+    <string name="brake_recent">Już policzone przed chwilą</string>
 </resources>

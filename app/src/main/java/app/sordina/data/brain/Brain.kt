@@ -4,10 +4,6 @@ import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
-import android.media.AudioDeviceInfo
-import android.media.AudioManager
-import android.os.BatteryManager
-import android.os.Build
 import app.sordina.R
 import app.sordina.data.Act
 import app.sordina.data.AppEntry
@@ -59,7 +55,6 @@ class Brain(
     private var lastUnlock = 0L
 
     /** Il Wi-Fi attuale, da Contexts ("" = nessuno, null = non si sa). */
-    @Volatile private var wifi: String? = null
 
     // Memoria
 
@@ -67,12 +62,17 @@ class Brain(
     private fun ensure() {
         if (loaded) return
         loaded = true
+        tokenMemo.clear()
         val now = System.currentTimeMillis()
         val keep = now - KEEP_DAYS * Model.DAY
         val m = Model(now = now)
         var stale = 0
+        var renamed = 0
         runCatching {
-            if (file.exists()) file.forEachLine { line ->
+            if (file.exists()) file.forEachLine { raw ->
+                // Le persone delle versioni di prima (per nome) diventano la loro chiave stabile di rubrica
+                val line = canonLine(raw)
+                if (line !== raw) renamed++
                 val p = line.split('\t')
                 val t = p.getOrNull(1)?.toLongOrNull() ?: return@forEachLine
                 if (t < keep) { stale++; return@forEachLine }
@@ -88,13 +88,38 @@ class Brain(
                     "X" -> if (p.size >= 9) m.refused(p[2], t, situationOf(t, p).features(false))
                     "C" -> if (p.size >= 4) m.addChoice(t, p[2], p[3])
                     "T" -> if (p.size >= 4) timeline += Triple(t, p[2], p[3])
+                "K" -> if (p.size >= 3) clicks += t to p[2]
                 }
             }
         }
         m.tune = savedTune()
         model = m
         lastIngestAt = sp.getLong("ingest", 0L)
-        if (stale > 200) compact(keep)
+        if (stale > 200 || renamed > 0) compact(keep)
+    }
+
+    private val tokenMemo = java.util.concurrent.ConcurrentHashMap<String, String>()
+    private fun tokenOf(name: String) = tokenMemo.getOrPut(name) { people.tokenOf(name) }
+
+    /** "call:nome" e "msg:nome:VIA" → "call:@chiave" e "msg:@chiave:VIA", se il nome è di un contatto solo. */
+    private fun canonItem(item: String): String = when {
+        item.startsWith("call:") -> item.removePrefix("call:").let { w -> if (w.startsWith("@")) item else "call:" + tokenOf(w) }
+        item.startsWith("msg:") -> {
+            val rest = item.removePrefix("msg:")
+            val w = rest.substringBeforeLast(':'); val via = rest.substringAfterLast(':', "")
+            if (w.startsWith("@") || via.isEmpty()) item else "msg:" + tokenOf(w) + ":" + via
+        }
+        else -> item
+    }
+
+    private fun canonLine(line: String): String {
+        if ("call:" !in line && "msg:" !in line) return line
+        val p = line.split('\t').toMutableList()
+        if (p.size < 3) return line
+        p[2] = if (p[0] == "I") p[2].split(',').joinToString(",") { canonItem(it) } else canonItem(p[2])
+        if (p[0] == "C" && p.size >= 4) p[3] = canonItem(p[3])
+        val out = p.joinToString("\t")
+        return if (out == line) line else out
     }
 
     private fun situationOf(t: Long, p: List<String>) = Situation(
@@ -110,7 +135,7 @@ class Brain(
 
     private fun compact(keep: Long) = io.execute {
         runCatching {
-            val lines = file.readLines().filter { (it.split('\t').getOrNull(1)?.toLongOrNull() ?: 0L) >= keep }
+            val lines = file.readLines().filter { (it.split('\t').getOrNull(1)?.toLongOrNull() ?: 0L) >= keep }.map(::canonLine)
             file.writeText(lines.joinToString("\n", postfix = "\n"))
         }
     }
@@ -118,6 +143,18 @@ class Brain(
     /** Quando hai preso una proposta o una scheda (P) e quando hai dovuto cercare (M): il numero da far scendere. */
     private val hits = ArrayList<Long>()
     private val misses = ArrayList<Long>()
+    /** Notifiche toccate (quando, pacchetto): l'apertura che segue non è un'abitudine, è la notifica che ti ha chiamato. */
+    private val clicks = ArrayList<Pair<Long, String>>()
+
+    /** Hai toccato una notifica di [pkg]: l'app che si apre subito dopo non si impara come abitudine. */
+    fun onNotificationClick(pkg: String) {
+        val now = System.currentTimeMillis()
+        synchronized(this) { ensure(); clicks += now to pkg; if (clicks.size > 500) clicks.subList(0, clicks.size - 500).clear() }
+        append("K\t$now\t${pkg.enc()}")
+    }
+
+    private fun fromNotification(pkg: String, ts: Long): Boolean = clicks.any { (t, p) -> p == pkg && ts - t in 0..CLICK_WINDOW }
+
     /** Le proposte in Casa adesso (cose del cervello). */
     @Volatile private var showing: Set<String> = emptySet()
     private val notifiedLog = HashMap<String, Long>()
@@ -131,65 +168,16 @@ class Brain(
 
     // Situazione
 
-    /** Contexts: il Wi-Fi è cambiato ("" = scollegato). */
-    fun onWifi(ssid: String?) {
-        val v = ssid ?: ""
-        if (v == wifi) return
-        wifi = v
-        mark("pl", v)
-    }
-
     // Regolarsi da soli
 
-    private val tuning = java.util.concurrent.atomic.AtomicBoolean(false)
-
-    private fun savedTune() = Tune(
-        sp.getFloat("t_r", Model.RECENT_GAIN.toFloat()).toDouble(),
-        sp.getFloat("t_n", Model.NOTIFY_GAIN.toFloat()).toDouble(),
-        sp.getFloat("t_i", Model.IGNORE_GAIN.toFloat()).toDouble(),
-    )
-
     /**
-     * In carica: una volta al giorno il cervello rigioca gli ultimi 60 giorni e regola i pesi dei segnali
-     * su come usi tu il telefono. Su un filo a priorità minima, mai a batteria.
+     * Pesi fissi: stessa storia, stesse proposte. Le regolazioni salvate dalle versioni di prima
+     * (che cambiavano da un giorno all'altro) si dimenticano.
      */
-    fun tuneIfDue(charging: Boolean) {
-        if (!charging || System.currentTimeMillis() - sp.getLong("tuned", 0L) < 20 * 3_600_000L) return
-        if (!tuning.compareAndSet(false, true)) return
-        Thread {
-            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_LOWEST)
-            runCatching {
-                val from = System.currentTimeMillis() - 60 * Model.DAY
-                val events = ArrayList<Tuner.Event>()
-                if (file.exists()) file.forEachLine { line ->
-                    val p = line.split('\t')
-                    val t = p.getOrNull(1)?.toLongOrNull() ?: return@forEachLine
-                    if (t < from) return@forEachLine
-                    when (p[0]) {
-                        "G", "M" -> if (p.size >= 9) events += Tuner.Event(p[0][0], t, p[2], situationOf(t, p))
-                        "N", "I" -> if (p.size >= 3) events += Tuner.Event(p[0][0], t, p[2], null)
-                    }
-                }
-                events.sortBy { it.time }
-                Tuner.tune(events, savedTune(), MISS_WEIGHT)?.let { r ->
-                    sp.edit().putFloat("t_r", r.tune.recent.toFloat()).putFloat("t_n", r.tune.notify.toFloat())
-                        .putFloat("t_i", r.tune.ignore.toFloat()).apply()
-                    synchronized(this) { model.tune = r.tune }
-                }
-            }
-            sp.edit().putLong("tuned", System.currentTimeMillis()).apply()
-            tuning.set(false)
-        }.start()
+    private fun savedTune(): Tune {
+        if (sp.contains("t_r") || sp.contains("t_n") || sp.contains("t_i")) sp.edit().remove("t_r").remove("t_n").remove("t_i").apply()
+        return Tune()
     }
-
-    /** Contexts: il dispositivo Bluetooth audio collegato ("" = nessuno). */
-    fun onDevice(name: String) = mark("bt", name)
-
-    /**
-     * Contexts/Casa: dove sei quando non c'è Wi-Fi, da una posizione che il telefono aveva già (nessuna richiesta in più).
-     * Una cella di qualche centinaio di metri: abbastanza per distinguere palestra, ufficio, supermercato.
-     */
-    fun onPlace(cell: String) { if (wifi.isNullOrEmpty()) mark("pl", cell) }
 
     /** Contexts: auto, cuffie, carica. */
     fun onState(group: String, on: Boolean) = mark(group, if (on) "1" else "0")
@@ -212,37 +200,21 @@ class Brain(
         return if (e.third.startsWith("@") && t - e.first > 45 * 60_000) "" else e.third
     }
 
-    /**
-     * Dove sei, senza Wi-Fi: l'ultima posizione che il telefono conosce già (Maps, meteo…), letta e mai chiesta.
-     * Nessun GPS acceso da Sordina, nessuna batteria in più. Solo se è recente e abbastanza precisa.
-     */
-    fun samplePlace() {
-        if (!wifi.isNullOrEmpty()) return
-        if (context.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) return
-        val loc = runCatching {
-            context.getSystemService(android.location.LocationManager::class.java).getLastKnownLocation(android.location.LocationManager.PASSIVE_PROVIDER)
-        }.getOrNull() ?: return
-        if (System.currentTimeMillis() - loc.time > 20 * 60_000 || (loc.hasAccuracy() && loc.accuracy > 400f)) return
-        onPlace(cellOf(loc.latitude, loc.longitude))
-    }
-
     /** Adesso. */
     fun now(): Situation {
         val t = System.currentTimeMillis()
-        val am = context.getSystemService(AudioManager::class.java)
-        val headset = runCatching {
-            am.getDevices(AudioManager.GET_DEVICES_OUTPUTS).any { it.type in HEADSETS }
-        }.getOrNull()
-        val charging = runCatching { context.getSystemService(BatteryManager::class.java).isCharging }.getOrNull()
+        // Solo i segnali che si ricordano anche nella storia: cuffie e carica non si registrano più,
+        // e un segnale che c'è adesso ma mai nel passato sposterebbe le proposte a caso
         return Situation(
             time = t,
-            wifi = wifi?.takeIf { it.isNotEmpty() } ?: placeAt(t) ?: wifi,
+            // Il luogo non si segue più (niente posizione né Wi-Fi in background solo per i suggerimenti)
+            wifi = null,
             car = stateAt(t, "car")?.let { it == "1" } ?: false,
-            headset = headset,
-            charging = charging,
+            headset = null,
+            charging = null,
             previous = if (prevApp.isNotEmpty() && t - lastAppAt < 10 * 60_000) "app:$prevApp" else "",
             fresh = lastUnlock > 0 && t - lastUnlock < 2 * 60_000,
-            device = stateAt(t, "bt"),
+            device = null,
         )
     }
 
@@ -272,12 +244,13 @@ class Brain(
                     if (pkg in skip) { lastApp = ""; continue }
                     if (pkg !in launchable) continue
                     if (pkg == lastApp) { lastAppAt = ts; continue }
-                    if (ts > from) {
+                    if (ts > from && !fromNotification(pkg, ts)) {
                         // L'app di prima: anche passando dalla Home in mezzo (Maps → Casa → Spotify)
                         val prev = if (prevApp.isNotEmpty() && prevApp != pkg && ts - lastAppAt < 10 * 60_000) "app:$prevApp" else ""
                         val s = Situation(
-                            ts, placeAt(ts), stateAt(ts, "car")?.let { it == "1" }, stateAt(ts, "hs")?.let { it == "1" },
-                            stateAt(ts, "chg")?.let { it == "1" }, prev, lastUnlock > 0 && ts - lastUnlock < 2 * 60_000, device = stateAt(ts, "bt"),
+                            // Gli stessi segnali di [now]: ora, auto, app di prima, appena sbloccato
+                            ts, null, stateAt(ts, "car")?.let { it == "1" }, null,
+                            null, prev, lastUnlock > 0 && ts - lastUnlock < 2 * 60_000, device = null,
                         )
                         remember("app:$pkg", s)
                     }
@@ -299,8 +272,8 @@ class Brain(
     /** La cosa nel linguaggio del modello: "app:pacchetto", "call:nome", "msg:nome:VIA", "set:…", "cmd:frase". */
     fun itemOf(c: Candidate, query: String): String? = when (val a = c.act) {
         is Act.OpenApp -> "app:${a.app.packageName}"
-        is Act.Call -> "call:${a.contact.normalized}"
-        is Act.Message -> "msg:${a.contact.normalized}:${a.via.name}"
+        is Act.Call -> "call:${a.contact.token}"
+        is Act.Message -> "msg:${a.contact.token}:${a.via.name}"
         Act.SordinaSettings -> "set:sordina"
         is Act.Setting -> "set:${a.action}"
         is Act.Timer, is Act.Alarm, Act.Torch, is Act.Media, is Act.Navigate, is Act.Music, is Act.Assist ->
@@ -388,7 +361,7 @@ class Brain(
         val via = Via.ofPackage(pkg) ?: return
         val n = Search.normalize(person)
         if (n.isEmpty()) return
-        remember("msg:$n:${via.name}", now())
+        remember("msg:${people.tokenOf(n)}:${via.name}", now())
     }
 
     @Synchronized
@@ -427,10 +400,13 @@ class Brain(
     private fun pending(): Map<String, String> {
         val out = HashMap<String, String>()
         for (h in store.held.value.values) {
+            // Quello che hai messo in sordina tu (app, persona, tipo, frenata, nascosta) non diventa una proposta:
+            // sarebbe riportarti davanti proprio quello che hai chiesto di tenere lontano
+            if (h.reason in app.sordina.service.Classifier.MUTED_BY_YOU) continue
             out["app:${h.pkg}"] = h.appLabel
             val via = Via.ofPackage(h.pkg)
             if (h.isMessage && h.conversation == null && h.person != null && via != null) {
-                out["msg:${Search.normalize(h.person)}:${via.name}"] = h.person
+                out["msg:${people.tokenOf(Search.normalize(h.person))}:${via.name}"] = h.person
             }
         }
         return out
@@ -440,6 +416,7 @@ class Brain(
      * Le proposte per adesso, la più probabile per prima. [realize] trasforma una cosa in un'azione
      * (null se non esiste più: app disinstallata, contatto sparito).
      */
+    @Synchronized
     fun suggest(
         count: Int, skip: (String) -> Boolean,
         /** Quello che succede adesso fuori dalle abitudini (una riunione tra poco): cosa → (spinta, perché) */
@@ -572,6 +549,7 @@ class Brain(
      * con queste lettere e quanto è probabile adesso. Restituisce anche cosa aggiungere (le scelte imparate
      * che il testo da solo non trova). [realize] come in [suggest].
      */
+    @Synchronized
     fun rerank(query: String, cands: List<Candidate>, realize: (String) -> Candidate?): List<Candidate> {
         ensure()
         val nq = Search.normalize(query)
@@ -598,6 +576,7 @@ class Brain(
     }
 
     /** Quanto sei sicuro che [query] porti a [c]: le scelte ripetute contano come una conferma. */
+    @Synchronized
     fun learnedFor(query: String, c: Candidate): Double {
         ensure()
         val item = itemOf(c, query) ?: return 0.0
@@ -606,6 +585,7 @@ class Brain(
     }
 
     /** Le persone che è più probabile che tu chiami o scriva adesso (per "chi…", "scr…"). */
+    @Synchronized
     fun likelyPeople(prefix: String, limit: Int): List<String> {
         ensure()
         val m = model
@@ -613,11 +593,20 @@ class Brain(
         return m.items.filter { it.startsWith(prefix) }.sortedByDescending { m.predict(it, f, System.currentTimeMillis()) }.take(limit)
     }
 
-    /** Il contatto con questo nome (normalizzato), se c'è in rubrica. */
-    fun contact(norm: String): Contact? = people.all().firstOrNull { it.normalized == norm }
+    /** Il contatto di un token del cervello ("@chiave", o un nome normalizzato delle versioni di prima). */
+    fun contact(token: String): Contact? = people.byToken(token)
+
+    /** La persona di una cosa del cervello ("call:…", "msg:…:VIA"), se c'è in rubrica. */
+    fun personOf(item: String): Contact? = when {
+        item.startsWith("call:") -> contact(item.removePrefix("call:"))
+        item.startsWith("msg:") -> contact(item.removePrefix("msg:").substringBeforeLast(':'))
+        else -> null
+    }
 
     companion object {
         private const val KEEP_DAYS = 120L
+        /** Un'app aperta entro questo tempo dal tocco su una sua notifica: aperta dalla notifica */
+        private const val CLICK_WINDOW = 5_000L
         /** Una cella di circa 280 × 200 metri (alle nostre latitudini): abbastanza per un posto, mai un indirizzo. */
         fun cellOf(lat: Double, lon: Double) = "@" + kotlin.math.round(lat * 400).toLong() + "_" + kotlin.math.round(lon * 400).toLong()
         const val MISS_WEIGHT = 1.0
@@ -630,9 +619,5 @@ class Brain(
         private const val KEYGUARD_HIDDEN = 18
         /** MOVE_TO_FOREGROUND / ACTIVITY_RESUMED */
         private const val FOREGROUND = 1
-        private val HEADSETS = setOf(
-            AudioDeviceInfo.TYPE_WIRED_HEADPHONES, AudioDeviceInfo.TYPE_WIRED_HEADSET,
-            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP, AudioDeviceInfo.TYPE_USB_HEADSET,
-        ) + if (Build.VERSION.SDK_INT >= 31) setOf(AudioDeviceInfo.TYPE_BLE_HEADSET) else emptySet()
     }
 }

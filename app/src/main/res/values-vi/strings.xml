@@ -411,8 +411,8 @@
     <string name="health_stopped_title">Sordina đã ngủ</string>
     <string name="lv_always">Luôn được qua</string>
     <string name="lv_always_hint">Có âm thanh, luôn luôn</string>
-    <string name="lv_silent">Qua im lặng</string>
-    <string name="lv_silent_hint">Trong ngăn thông báo, không âm thanh</string>
+    <string name="lv_silent">Cho qua</string>
+    <string name="lv_silent_hint">Trên thanh thông báo, như ứng dụng gửi</string>
     <string name="lv_summary">Giữ lại</string>
     <string name="lv_summary_hint">Chờ trong Sordina</string>
     <string name="moment_focus_until">Chỉ điều quan trọng đến %1$s · chạm để kết thúc</string>
@@ -708,7 +708,7 @@
     <string name="brake_balance">Hôm nay %1$s</string>
     <string name="brake_day_won">Hôm nay bạn đang dương</string>
     <string name="perm_location">Vị trí</string>
-    <string name="h_p_location">Để nhận ra wifi ở nhà và nơi làm việc, giúp gợi ý thay đổi theo nơi bạn ở</string>
+    <string name="h_p_location">Cho thời tiết: chỉ khu vực gần đúng của bạn, không bao giờ dùng GPS</string>
     <string name="r_pass_title">Luôn cho qua</string>
     <string name="r_empty">Chưa có gì</string>
     <string name="access_summary">Phanh tức thì và nhấn đúp để khóa</string>
@@ -915,7 +915,7 @@
     <string name="ach_half_day">Một nửa mọi khi</string>
     <string name="ach_half_day_d">Dùng điện thoại ít hơn một nửa mọi khi: dưới một nửa mức trung bình của 7 ngày trước đó.</string>
     <string name="ach_downhill">Xuống dốc</string>
-    <string name="ach_downhill_d">Dùng điện thoại ít hơn 20% so với tuần trước, từ thứ Hai đến Chủ nhật.</string>
+    <string name="ach_downhill_d" formatted="false">Dùng điện thoại ít hơn 20% so với tuần trước, từ thứ Hai đến Chủ nhật.</string>
     <string name="ach_slow_sunday">Chủ nhật thong thả</string>
     <string name="ach_slow_sunday_d">Dùng điện thoại dưới một giờ vào một ngày Chủ nhật.</string>
     <string name="ach_light_weekend">Cuối tuần nhẹ nhàng</string>
@@ -1020,4 +1020,21 @@
     <string name="ach_locked">Chưa đạt được</string>
     <string name="usually_now">Thường lúc này</string>
     <string name="hide_card">Ẩn</string>
+    <string name="pin_shortcut_q">Thêm “%1$s” từ %2$s vào ứng dụng của bạn?</string>
+    <string name="faults_title">Lỗi</string>
+    <string name="faults_none">Chưa ghi nhận lỗi nào</string>
+    <string name="faults_hint">Những gì gặp lỗi gần đây. Chỉ lưu trên điện thoại này.</string>
+    <string name="health_samsung_title">Samsung đã tắt Sordina</string>
+    <string name="health_samsung_sub">Để giải phóng bộ nhớ. Giờ đã hoạt động lại: đây là cách ngăn điều đó.</string>
+    <string name="health_samsung_fix">Chỉ cho tôi cách</string>
+    <string name="samsung_sleep_l">Không bao giờ ngủ</string>
+    <string name="samsung_sleep_why">Samsung đôi khi tắt tôi vào ban đêm</string>
+    <string name="samsung_sleep_title">Đừng để Sordina bị cho ngủ</string>
+    <string name="samsung_sleep_steps">Khi bộ nhớ sắp hết, Samsung tắt các ứng dụng chạy nền, và Sordina ngừng sắp xếp thông báo cho đến khi hoạt động lại.\n\nTrong trang Pin: Giới hạn sử dụng nền → Ứng dụng không bao giờ ngủ → + → Sordina.</string>
+    <string name="samsung_sleep_open">Mở Pin</string>
+    <string name="access_desc">Sordina chỉ dùng trợ năng cho ba việc: dừng ứng dụng bị phanh ngay khi nó hiện lên phía trước (cả trang web của nó trong trình duyệt), khóa màn hình bằng chạm hai lần, và gõ giúp bạn một câu ở nơi ứng dụng không nhận từ bên ngoài (Assist của Home Assistant, Signal). Nó chỉ lắng nghe các ứng dụng bạn đã phanh và, nếu có trang web, các trình duyệt: với trình duyệt chỉ đọc thanh địa chỉ khi đang ở phía trước. Nó chỉ nhìn màn hình vài giây, chỉ trong ứng dụng đó. Không có gì rời khỏi điện thoại.</string>
+    <string name="access_consent_title">Dùng trợ năng?</string>
+    <string name="access_consent_ok">Tôi đồng ý, mở cài đặt</string>
+    <string name="s_instant_brake_hint">Với trợ năng, phanh có tác dụng ngay, áp dụng cả cho trang web của ứng dụng bị phanh, và Sordina không cần kiểm tra mỗi vài giây nữa. Nếu không bật được: Thông tin ứng dụng › ⋮ › Cho phép cài đặt bị hạn chế.</string>
+    <string name="brake_recent">Vừa được tính rồi</string>
 </resources>

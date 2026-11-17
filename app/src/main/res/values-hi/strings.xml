@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="moment_none">कोई नहीं</string>
     <string name="theme_auto">अपने-आप</string>
     <string name="theme_light">हल्की</string>
@@ -353,7 +353,7 @@
         <item quantity="one">%d बार</item>
         <item quantity="other">%d बार</item>
     </plurals>
-    <plurals name="n_days_row">
+    <plurals name="n_days_row" tools:ignore="ImpliedQuantity">
         <item quantity="one">दिन लगातार</item>
         <item quantity="other">दिन लगातार</item>
     </plurals>
@@ -422,8 +422,8 @@
     <string name="health_stopped_title">Sordina सो गया</string>
     <string name="lv_always">हमेशा आए</string>
     <string name="lv_always_hint">आवाज़ के साथ, हमेशा</string>
-    <string name="lv_silent">चुपचाप आए</string>
-    <string name="lv_silent_hint">सूचना पैनल में, बिना आवाज़</string>
+    <string name="lv_silent">आने दें</string>
+    <string name="lv_silent_hint">शेड में, जैसे ऐप भेजता है</string>
     <string name="lv_summary">रोकी गई</string>
     <string name="lv_summary_hint">Sordina में इंतज़ार करती है</string>
     <string name="moment_focus_until">%1$s तक सिर्फ़ ज़रूरी · ख़त्म करने के लिए टैप करें</string>
@@ -719,7 +719,7 @@
     <string name="brake_balance">आज %1$s</string>
     <string name="brake_day_won">आज आप प्लस में हैं</string>
     <string name="perm_location">जगह</string>
-    <string name="h_p_location">घर और ऑफ़िस का wifi पहचानने के लिए, ताकि सुझाव जगह के हिसाब से बदलें</string>
+    <string name="h_p_location">मौसम के लिए: केवल आपका अनुमानित क्षेत्र, कभी GPS नहीं</string>
     <string name="r_pass_title">हमेशा आने दें</string>
     <string name="r_empty">अभी कुछ नहीं</string>
     <string name="access_summary">तुरंत ब्रेक और लॉक करने के लिए डबल टैप</string>
@@ -1031,4 +1031,21 @@
     <string name="ach_locked">अभी जीतना बाकी</string>
     <string name="usually_now">आमतौर पर अभी</string>
     <string name="hide_card">छिपाएँ</string>
+    <string name="pin_shortcut_q">%2$s से “%1$s” को अपने ऐप्स में जोड़ें?</string>
+    <string name="faults_title">त्रुटियाँ</string>
+    <string name="faults_none">कोई त्रुटि दर्ज नहीं</string>
+    <string name="faults_hint">हाल में क्या गड़बड़ हुआ। यह इसी फ़ोन पर रहता है।</string>
+    <string name="health_samsung_title">Samsung ने Sordina को बंद कर दिया</string>
+    <string name="health_samsung_sub">मेमोरी खाली करने के लिए। अब यह फिर से चालू है: इसे रोकने का तरीका यह है।</string>
+    <string name="health_samsung_fix">मुझे दिखाओ कैसे</string>
+    <string name="samsung_sleep_l">कभी स्लीप में नहीं</string>
+    <string name="samsung_sleep_why">Samsung कभी-कभी रात में मुझे बंद कर देता है</string>
+    <string name="samsung_sleep_title">Sordina को स्लीप में न जाने दें</string>
+    <string name="samsung_sleep_steps">जब मेमोरी कम होती है, Samsung बैकग्राउंड ऐप्स बंद कर देता है, और Sordina फिर से चालू होने तक आपकी सूचनाएँ छाँटना बंद कर देता है।\n\nबैटरी पेज पर: बैकग्राउंड उपयोग सीमाएँ → कभी स्लीप न होने वाले ऐप्स → + → Sordina.</string>
+    <string name="samsung_sleep_open">बैटरी खोलें</string>
+    <string name="access_desc">Sordina सुलभता का उपयोग केवल तीन कामों के लिए करता है: ब्रेक लगाए गए ऐप को उसी पल रोकना जब वह सामने आता है (और ब्राउज़र में उसकी वेबसाइट को भी), डबल टैप से स्क्रीन लॉक करना, और आपके लिए वहाँ वाक्य टाइप करना जहाँ ऐप्स उसे बाहर से स्वीकार नहीं करते (Home Assistant Assist, Signal)। यह केवल उन ऐप्स को सुनता है जिन पर आपने ब्रेक लगाया है और, अगर उनकी वेबसाइट है, तो ब्राउज़रों को: उनमें से केवल पता बार पढ़ता है, जब तक वे सामने हों। स्क्रीन को केवल कुछ सेकंड, केवल उसी ऐप में देखता है। फ़ोन से कुछ भी बाहर नहीं जाता।</string>
+    <string name="access_consent_title">सुलभता का उपयोग करें?</string>
+    <string name="access_consent_ok">मैं सहमत हूँ, सेटिंग्स खोलें</string>
+    <string name="s_instant_brake_hint">सुलभता के साथ ब्रेक तुरंत लगता है, ब्रेक वाले ऐप्स की वेबसाइटों पर भी लागू होता है, और Sordina को हर कुछ सेकंड में जाँचना नहीं पड़ता। अगर चालू न हो: ऐप जानकारी › ⋮ › प्रतिबंधित सेटिंग्स की अनुमति दें।</string>
+    <string name="brake_recent">अभी-अभी गिना जा चुका है</string>
 </resources>

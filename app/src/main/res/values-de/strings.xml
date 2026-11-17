@@ -422,8 +422,8 @@
     <string name="health_stopped_title">Sordina ist eingeschlafen</string>
     <string name="lv_always">Immer durchlassen</string>
     <string name="lv_always_hint">Mit Ton, immer</string>
-    <string name="lv_silent">Still durchlassen</string>
-    <string name="lv_silent_hint">In der Leiste, ohne Ton</string>
+    <string name="lv_silent">Durchlassen</string>
+    <string name="lv_silent_hint">In der Leiste, wie die App sie sendet</string>
     <string name="lv_summary">Gehalten</string>
     <string name="lv_summary_hint">Wartet in Sordina</string>
     <string name="moment_focus_until">Nur Wichtiges bis %1$s · tippen zum Beenden</string>
@@ -719,7 +719,7 @@
     <string name="brake_balance">Heute %1$s</string>
     <string name="brake_day_won">Heute bist du im Plus</string>
     <string name="perm_location">Standort</string>
-    <string name="h_p_location">Um dein WLAN zu Hause und bei der Arbeit zu erkennen, damit sich die Vorschläge mit dem Ort ändern</string>
+    <string name="h_p_location">Für das Wetter: nur deine ungefähre Gegend, nie GPS</string>
     <string name="r_pass_title">Immer durchlassen</string>
     <string name="r_empty">Noch nichts</string>
     <string name="access_summary">Sofortige Bremse und Doppeltippen zum Sperren</string>
@@ -1035,4 +1035,21 @@
     <string name="ach_locked">Noch zu gewinnen</string>
     <string name="usually_now">Sonst um diese Zeit</string>
     <string name="hide_card">Ausblenden</string>
+    <string name="pin_shortcut_q">„%1$s“ von %2$s zu deinen Apps hinzufügen?</string>
+    <string name="faults_title">Fehler</string>
+    <string name="faults_none">Keine Fehler aufgezeichnet</string>
+    <string name="faults_hint">Was zuletzt schiefging. Bleibt auf diesem Telefon.</string>
+    <string name="health_samsung_title">Samsung hat Sordina abgeschaltet</string>
+    <string name="health_samsung_sub">Um Speicher freizugeben. Jetzt ist Sordina wieder wach: So verhinderst du das.</string>
+    <string name="health_samsung_fix">Zeig mir wie</string>
+    <string name="samsung_sleep_l">Nie im Standby</string>
+    <string name="samsung_sleep_why">Samsung schaltet mich nachts manchmal ab</string>
+    <string name="samsung_sleep_title">Sordina nicht schlafen legen lassen</string>
+    <string name="samsung_sleep_steps">Wenn der Speicher knapp wird, schaltet Samsung Apps im Hintergrund ab, und Sordina sortiert deine Benachrichtigungen erst wieder, wenn es aufwacht.\n\nAuf der Seite Akku: Grenzwerte für Hintergrundnutzung → Apps, die nie in den Standby-Modus wechseln → + → Sordina.</string>
+    <string name="samsung_sleep_open">Akku öffnen</string>
+    <string name="access_desc">Sordina nutzt die Bedienungshilfen nur für drei Dinge: eine gebremste App in dem Moment anhalten, in dem sie nach vorne kommt (auch ihre Website im Browser), den Bildschirm mit einem Doppeltipp sperren und für dich einen Satz dort eintippen, wo Apps ihn nicht von außen annehmen (Home Assistant Assist, Signal). Es hört nur auf die Apps, die du gebremst hast, und, wenn sie eine Website haben, auf Browser: Von diesen liest es nur die Adressleiste, solange sie vorne sind. Den Bildschirm sieht es sich nur für ein paar Sekunden an, nur in dieser App. Nichts verlässt das Telefon.</string>
+    <string name="access_consent_title">Bedienungshilfen verwenden?</string>
+    <string name="access_consent_ok">Ich stimme zu, Einstellungen öffnen</string>
+    <string name="s_instant_brake_hint">Mit den Bedienungshilfen greift die Bremse sofort, gilt auch für die Websites gebremster Apps, und Sordina muss nicht mehr alle paar Sekunden nachsehen. Wenn es sich nicht aktivieren lässt: App-Info › ⋮ › Eingeschränkte Einstellungen zulassen.</string>
+    <string name="brake_recent">Vorhin schon gezählt</string>
 </resources>

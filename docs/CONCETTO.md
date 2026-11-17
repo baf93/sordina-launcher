@@ -22,7 +22,7 @@ Non è un launcher con meno icone. È un telefono che parte dall'intenzione e da
 4. **L'importante passa sempre, il resto aspetta.** Regole chiare, decise dall'utente, non un algoritmo che indovina.
 5. **Attrito solo per il "tanto per".** Le app usate per riflesso chiedono un momento prima di aprirsi. Quelle usate per uno scopo si aprono subito.
 6. **Fatto, e torna nero.** Finita l'azione, nessun percorso che porta altrove.
-7. **Uno specchio, non una pagella.** Una riga a fine giornata, nessun grafico, nessun punteggio.
+7. **Un gioco leggero, mai una pressione.** Una riga a fine giornata. Imprese, serie e adesivi della mascotte festeggiano le scelte fatte, non chiedono di tornare: nessuna notifica per non perdere la serie, un'impresa vinta resta tua. Quando ne vinci una la festa dura un attimo in Casa, poi resta nella pagina dei progressi.
 8. **Tutto resta sul telefono.** Niente account, niente server, niente tracciamento.
 
 ## L'esperienza
@@ -84,19 +84,34 @@ Le app si riconoscono dalla loro icona originale, piccola e ammorbidita, mai in 
 ### Specchio serale
 Una riga: "Oggi l'hai preso 34 volte, 27 per un motivo". Facoltativo, spegnibile.
 
+### Imprese e serie
+Cento adesivi della mascotte, tutti sul detox: le scelte del freno, le giornate senza tentazioni, il tempo ripreso, le serie di giorni, la guida, le notifiche. Le regole del gioco:
+- **Festeggiano, non chiedono.** Nessuna notifica, nessun promemoria per "non perdere la serie".
+- **Una tentazione vale una volta.** Dopo un "Lascia stare" premiato, per 20 minuti gli altri (anche su altre app frenate) non danno minuti né imprese: aprire e lasciare stare di continuo non fa punti. "Apri comunque" invece costa sempre.
+- **Quello che vinci resta.** Una serie che si interrompe non toglie le imprese già vinte.
+- **Un attimo e via.** Un'impresa nuova si festeggia una volta in Casa; il resto sta nella pagina dei progressi, dove vai tu.
+- **Tutto sul telefono.** Gli adesivi si condividono solo se scegli di farlo.
+
 ## Cosa passa e cosa aspetta
 
 Tre livelli, decisi dall'utente. I predefiniti:
 
 | Livello | Cosa contiene (predefinito) | Come arriva |
 |---|---|---|
-| Sempre | Chiamate delle persone importanti, allarmi di casa, sveglia | Subito con suono, anche di notte |
-| Subito in silenzio | Banche e pagamenti, messaggi delle persone vicine, lavoro in orario | Subito, senza suono |
-| Riepilogo | Tutto il resto | Agli orari dei riepiloghi |
+| Sempre | App scelte da te come "Sempre" (es. allarmi di casa) | Subito, anche in modalità e di notte |
+| Passa | Persone importanti, codici, avvisi di pagamento sospetti, chiamate perse, promemoria, app scelte da te | Nella tendina, come la manda l'app |
+| In sordina | Tutto il resto | Nella pagina Sordina, finché non la apri |
+
+La catena delle regole è fissa e deterministica (stessa notifica, stesse regole → stesso verdetto), in quest'ordine:
+regola per tipo di notifica (canale) → di sistema, chiamate, sveglie, media → "lascia passare per un po'" →
+regola per persona (per app) → app frenata → codici e avvisi di pagamento → app nascosta → conversazione in corso →
+app "Sempre" → persona importante → parole urgenti e insistenza (solo dai contatti, mai da numeri sconosciuti) →
+regola per app → pagamenti, chiamate perse, promemoria → predefinito (in sordina).
 
 Garanzie:
 - **Il segnale di calma è sempre visibile**, così si sa che non c'è niente invece di doverlo controllare.
-- **Nessuna perdita.** Ogni notifica trattenuta finisce nel riepilogo.
+- **Nessuna perdita.** Ogni notifica in sordina resta nella pagina Sordina finché non la apri o la segni letta.
+- **Le tue scelte vincono.** Quello che metti in sordina tu (app, persona, tipo, frenata, nascosta) non torna davanti come scheda o proposta.
 - **Prova delle regole.** Una schermata mostra cosa è passato e cosa è stato trattenuto oggi, per correggere le regole.
 
 ## Fonti di contesto

@@ -66,10 +66,10 @@
 <div class="wrap"><table>
   <tr><th>Cosa</th><th>Perché</th></tr>
   <tr><td>Accesso alle notifiche</td><td>Decidere quali notifiche passano subito e quali aspettano nella pagina Sordina; mostrare codici di verifica, riunioni, pacchi e immagini nel fumetto. Le notifiche in attesa e le loro immagini sono salvate nella memoria privata dell'app.</td></tr>
-  <tr><td>Accesso all'utilizzo delle app</td><td>Proporre le app e le azioni che usi di solito a quell'ora e in quel posto, e il riassunto della sera.</td></tr>
-  <tr><td>Contatti</td><td>Chiamare o scrivere alle persone per nome, riconoscere chi ti scrive, mostrare le persone scelte in auto. Sordina aggiunge un contatto solo se glielo chiedi.</td></tr>
+  <tr><td>Accesso all'utilizzo delle app</td><td>Ordinare le app e le azioni nella ricerca, e il riassunto della sera.</td></tr>
+  <tr><td>Contatti</td><td>Chiamare o scrivere alle persone per nome, riconoscere chi ti scrive, mostrare le persone scelte in auto. Sordina aggiunge un contatto solo se glielo chiedi. Quando segni una persona come importante, Sordina le mette la stella di Android (così le sue chiamate suonano anche con Non disturbare); togliendola, toglie solo le stelle che ha messo lei.</td></tr>
   <tr><td>Calendario</td><td>Mostrare i prossimi impegni e aggiungere quelli che scrivi o detti.</td></tr>
-  <tr><td>Posizione</td><td>Il meteo e i suggerimenti legati al luogo (casa, lavoro). Solo mentre usi l'app, mai in background.</td></tr>
+  <tr><td>Posizione</td><td>Solo il meteo, con la posizione approssimativa: niente GPS, niente nome del Wi-Fi. Solo mentre usi l'app, mai in background.</td></tr>
   <tr><td>Microfono</td><td>Dettare cosa ti serve. Il riconoscimento vocale avviene con il riconoscitore sul dispositivo di Android; l'audio non viene registrato né salvato da Sordina.</td></tr>
   <tr><td>Servizio di accessibilità (facoltativo)</td><td>Fermare subito un'app che hai deciso di frenare quando arriva in primo piano (e il suo sito nel browser: in quel caso legge solo la barra dell'indirizzo, solo mentre il browser è davanti); bloccare lo schermo con un doppio tocco; scrivere una frase per te in app che non la accettano dall'esterno (Assist di Home Assistant, Signal), per pochi secondi e solo in quell'app. Ascolta solo le app che hai frenato.</td></tr>
   <tr><td>Telefono, sveglie, sfondo</td><td>Fare le chiamate che chiedi, impostare timer e sveglie, applicare lo sfondo che scegli.</td></tr>
@@ -79,9 +79,9 @@
 <h3>Meteo · Open-Meteo</h3>
 <p>Se il meteo è acceso, Sordina invia a <a href="https://open-meteo.com">Open-Meteo</a> la posizione arrotondata a un decimale (circa 10 km), al massimo una volta all'ora, tramite HTTPS. Come per ogni richiesta su Internet, Open-Meteo riceve anche l'indirizzo IP del telefono. Non viene inviato nient'altro. Puoi spegnere il meteo nelle impostazioni.</p>
 <h3>Home Assistant (facoltativo)</h3>
-<p>Se colleghi la tua casa, i comandi che scrivi o detti e le relative risposte passano tra il telefono e <strong>il tuo</strong> server Home Assistant, all'indirizzo che inserisci tu. Lo sviluppatore non vi ha accesso. Il token di accesso resta sul telefono, cifrato, e non finisce mai nei backup.</p>
+<p>Se colleghi la tua casa, i comandi che scrivi o detti e le relative risposte passano tra il telefono e <strong>il tuo</strong> server Home Assistant, all'indirizzo che inserisci tu. Lo sviluppatore non vi ha accesso. Il token di accesso resta sul telefono, cifrato, e non finisce mai nei backup. Fuori casa Sordina parla con il tuo server solo su https; in chiaro (http) solo sulla rete di casa riconosciuta durante la prova di collegamento.</p>
 <h3>Backup di Android (Google)</h3>
-<p>Una volta al giorno Sordina prepara una copia delle impostazioni e di quello che ha imparato, che Android include nel backup del tuo account Google, se il backup è attivo sul telefono. La copia non contiene notifiche, immagini, sfondi né il token di Home Assistant. Il backup è gestito da Google secondo le impostazioni del tuo account e si può disattivare dalle impostazioni di Android.</p>
+<p>Una volta al giorno Sordina prepara una copia delle impostazioni e di quello che ha imparato, che Android include nel backup del tuo account Google, se il backup è attivo sul telefono. La copia non contiene notifiche, immagini, sfondi, risposte veloci, le reti di casa né il token di Home Assistant. Il backup è gestito da Google secondo le impostazioni del tuo account e si può disattivare dalle impostazioni di Android.</p>
 <h3>Google ML Kit</h3>
 <p>Sordina usa due librerie di Google: il riconoscimento di date, orari e indirizzi nei testi (per capire, ad esempio, "calcetto domani alle 17") e lo scanner di codici QR (per collegare Home Assistant). L'elaborazione avviene sul telefono e il testo o l'immagine non vengono inviati. Il modello linguistico si scarica dai server di Google la prima volta. Queste librerie inviano a Google alcuni dati tecnici per diagnostica e statistiche d'uso: produttore e modello del dispositivo, versione di Android, lingue configurate, codici di errore. Dettagli nella <a href="https://developers.google.com/ml-kit/android-data-disclosure">pagina di Google su ML Kit</a>.</p>
 <h3>Azioni che chiedi tu</h3>
@@ -122,10 +122,10 @@
 <div class="wrap"><table>
   <tr><th>What</th><th>Why</th></tr>
   <tr><td>Notification access</td><td>Deciding which notifications get through and which wait on the Sordina page; showing codes, meetings, parcels and pictures in the bubble. Waiting notifications and their pictures are saved in the app's private storage.</td></tr>
-  <tr><td>Usage access</td><td>Suggesting the apps and actions you usually use at that time and place, and the evening recap.</td></tr>
-  <tr><td>Contacts</td><td>Calling or texting people by name, recognising who's writing, showing the people you picked in the car. Sordina only adds a contact when you ask it to.</td></tr>
+  <tr><td>Usage access</td><td>Ordering apps and actions in search, and the evening recap.</td></tr>
+  <tr><td>Contacts</td><td>Calling or texting people by name, recognising who's writing, showing the people you picked in the car. Sordina only adds a contact when you ask it to. When you mark someone as important, Sordina stars them in Android (so their calls ring even in Do Not Disturb); when you remove them, it only removes the stars it added.</td></tr>
   <tr><td>Calendar</td><td>Showing your next plans and adding the ones you type or say.</td></tr>
-  <tr><td>Location</td><td>Weather and place-based suggestions (home, work). Only while you use the app, never in the background.</td></tr>
+  <tr><td>Location</td><td>Weather only, from your approximate location: no GPS, no Wi-Fi names. Only while you use the app, never in the background.</td></tr>
   <tr><td>Microphone</td><td>Saying what you need. Speech is recognised by Android's on-device recogniser; Sordina doesn't record or keep the audio.</td></tr>
   <tr><td>Accessibility service (optional)</td><td>Stopping an app you chose to slow down as soon as it comes to the front (and its website in the browser: there it reads only the address bar, only while the browser is in front); locking the screen with a double tap; typing a phrase for you in apps that don't accept it from outside (Home Assistant Assist, Signal), for a few seconds and only in that app. It only listens to the apps you chose to slow down.</td></tr>
   <tr><td>Phone, alarms, wallpaper</td><td>Placing the calls you ask for, setting timers and alarms, applying the wallpaper you choose.</td></tr>
@@ -135,9 +135,9 @@
 <h3>Weather · Open-Meteo</h3>
 <p>If weather is on, Sordina sends <a href="https://open-meteo.com">Open-Meteo</a> your location rounded to one decimal (about 10 km), at most once an hour, over HTTPS. Like any Internet request, Open-Meteo also sees your phone's IP address. Nothing else is sent. You can turn weather off in settings.</p>
 <h3>Home Assistant (optional)</h3>
-<p>If you connect your home, the commands you type or say and their answers travel between your phone and <strong>your own</strong> Home Assistant server, at the address you enter. The developer has no access to it. The access token stays on the phone, encrypted, and is never included in backups.</p>
+<p>If you connect your home, the commands you type or say and their answers travel between your phone and <strong>your own</strong> Home Assistant server, at the address you enter. The developer has no access to it. The access token stays on the phone, encrypted, and is never included in backups. Away from home Sordina only talks to your server over https; plain http is used only on the home network recognised during the connection test.</p>
 <h3>Android backup (Google)</h3>
-<p>Once a day Sordina prepares a copy of its settings and of what it has learned, which Android includes in your Google account backup if backup is on. It contains no notifications, pictures, wallpapers or Home Assistant token. The backup is handled by Google under your account settings and can be turned off in Android settings.</p>
+<p>Once a day Sordina prepares a copy of its settings and of what it has learned, which Android includes in your Google account backup if backup is on. It contains no notifications, pictures, wallpapers, quick replies, home networks or Home Assistant token. The backup is handled by Google under your account settings and can be turned off in Android settings.</p>
 <h3>Google ML Kit</h3>
 <p>Sordina uses two Google libraries: recognising dates, times and addresses in text (to understand, say, "football tomorrow at 5pm") and the QR code scanner (to connect Home Assistant). Processing happens on the phone and the text or image is not sent. The language model is downloaded from Google the first time. These libraries send Google some technical data for diagnostics and usage statistics: device manufacturer and model, Android version, configured languages, error codes. Details on <a href="https://developers.google.com/ml-kit/android-data-disclosure">Google's ML Kit page</a>.</p>
 <h3>Actions you ask for</h3>

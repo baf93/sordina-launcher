@@ -194,7 +194,6 @@ const T = {
     bank: 'Banca', code: 'codice', copy: 'Copia',
     homeLab: 'Casa · Campanello', homeTtl: 'È arrivato un pacco', homeSub: 'Sul tappetino davanti alla porta',
     typed: 'scrivi a giulia che arrivo', r1: 'Scrivi a Giulia', r1s: '«Arrivo» · messaggio', r2: 'Chiama Giulia', r2s: 'Cellulare', r3: 'Timer di 10 minuti', r3s: 'Parte subito, senza aprire l\'Orologio',
-    usual: 'Di solito adesso', usualT: 'Verso casa',
     carScene: 'In auto · passano solo le chiamate', carNext: '9:30', carEv: 'Riunione di progetto', mic: 'Tocca e parla',
     faces: ['Giulia', 'Marco', 'Mamma', 'Luca'], playing: 'In riproduzione', song: 'Onde lente', artist: 'Marea',
     promise: [['person_off', 'Niente account'], ['block', 'Niente pubblicità'], ['visibility_off', 'Niente tracciamento'], ['code', 'Open source']],
@@ -220,7 +219,6 @@ const T = {
     bank: 'Bank', code: 'code', copy: 'Copy',
     homeLab: 'Home · Doorbell', homeTtl: 'A parcel has arrived', homeSub: 'On the doormat by the front door',
     typed: "text julia i'm on my way", r1: 'Text Julia', r1s: '"I\'m on my way" · message', r2: 'Call Julia', r2s: 'Mobile', r3: '10 minute timer', r3s: 'Starts right away, no Clock app needed',
-    usual: 'Usually now', usualT: 'Head home',
     carScene: 'Driving · only calls get through', carNext: '9:30 AM', carEv: 'Project meeting', mic: 'Tap and speak',
     faces: ['Julia', 'Mark', 'Mom', 'Luke'], playing: 'Now playing', song: 'Slow waves', artist: 'Marea',
     promise: [['person_off', 'No account'], ['block', 'No ads'], ['visibility_off', 'No tracking'], ['code', 'Open source']],
@@ -313,7 +311,7 @@ function shot(lang, n) {
       ${res('chat', t.r1, t.r1s, true)}${res('call', t.r2, t.r2s, false)}${res('timer', t.r3, t.r3s, false)}
       <div class="grow"></div>
       <div class="search" style="margin-bottom:12px"><span class="typed">${t.typed}</span><span class="caret"></span><span class="mi" style="color:var(--usoft);font-size:20px;margin-left:auto">close</span>${mi('mic', 'margin-left:14px')}</div>
-      <div class="zone">${mascot(0)}<div class="bubble"><div class="col"><div class="lab">${mi('auto_awesome', 'font-size:13px;color:var(--uacc);vertical-align:-2px;margin-right:4px')}${t.usual}</div><div class="ttl">${t.usualT}</div></div><div class="round">${mi('navigation')}</div></div></div>`);
+      <div class="zone">${mascot(0)}</div>`);
   } else if (n === 6) {
     const faces = t.faces.map((f, k) => `<div class="face"><div class="c" style="background:${FACE[k]}">${f[0]}</div><div class="n">${f}</div></div>`).join('');
     const tile = (bg, ic) => `<div class="tile"><div class="appic" style="background:${bg}">${mi(ic)}</div></div>`;

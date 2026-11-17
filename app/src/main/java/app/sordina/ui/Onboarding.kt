@@ -422,8 +422,6 @@ private fun Faces(app: SordinaApp, perms: PermState, ops: Ops) {
         else app.people.setImportant(ct, true)
         chosen = app.prefs.importantNames
         ops.changed()
-        // Quello che è già in sordina da prima (l'accesso alle notifiche è arrivato un passo fa) si ricontrolla subito
-        SordinaListener.reapply(app)
     }
     var q by remember { mutableStateOf("") }
     var small by remember { mutableStateOf(false) }
@@ -716,10 +714,9 @@ private fun MiniHome(app: SordinaApp, perms: PermState, onFinished: () -> Unit) 
                 val fall = if (scene == 3) seg(u, 0.08f, 0.32f) else 0f
                 val n = if (scene == 3 && fall >= 1f) 3 else 2
                 val bump = if (scene == 3) seg(u, 0.32f, 0.37f) * (1f - seg(u, 0.37f, 0.5f)) else 0f
-                // Scena 4, poi: "di solito adesso" · scena 5: ascolta (i puntini), poi risponde
-                val usualB = if (scene == 3) seg(u, 0.52f, 0.62f) * (1f - seg(u, 0.92f, 1f)) else 0f
+                // Scena 5: ascolta (i puntini), poi risponde
                 val voiceB = if (scene == 4) seg(u, 0.14f, 0.22f) * (1f - seg(u, 0.93f, 1f)) else 0f
-                val talk = maxOf(usualB, voiceB)
+                val talk = voiceB
                 androidx.compose.foundation.layout.Box(Modifier.align(Alignment.BottomCenter).padding(start = 12.dp, end = 12.dp, bottom = 8.dp).fillMaxWidth().height(52.dp)) {
                     if (talk > 0f) Row(
                         Modifier.align(Alignment.CenterStart).padding(start = 30.dp).fillMaxWidth()
@@ -728,14 +725,8 @@ private fun MiniHome(app: SordinaApp, perms: PermState, onFinished: () -> Unit) 
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column(Modifier.weight(1f)) {
-                            if (usualB > 0f) {
-                                androidx.compose.material3.Text(tr(R.string.usually_now), maxLines = 1, style = androidx.compose.ui.text.TextStyle(fontSize = 8.sp, color = c.soft))
-                                androidx.compose.material3.Text(tr(R.string.ob6_a3), maxLines = 1, style = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, color = c.ink))
-                            } else if (u < 0.62f) androidx.compose.material3.Text("•••", style = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, letterSpacing = 2.sp, color = c.soft))
+                            if (u < 0.62f) androidx.compose.material3.Text("•••", style = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, letterSpacing = 2.sp, color = c.soft))
                             else androidx.compose.material3.Text(tr(R.string.obt_r4), maxLines = 2, style = androidx.compose.ui.text.TextStyle(fontSize = 11.sp, lineHeight = 14.sp, color = c.ink))
-                        }
-                        if (usualB > 0f) androidx.compose.foundation.layout.Box(Modifier.size(26.dp).clip(androidx.compose.foundation.shape.CircleShape).background(c.accent), contentAlignment = Alignment.Center) {
-                            androidx.compose.material3.Icon(Icons.Rounded.MusicNote, null, Modifier.size(14.dp), tint = c.bg)
                         }
                     }
                     Row(Modifier.align(androidx.compose.ui.BiasAlignment(-talk, 0f)).graphicsLayer { scaleX = 1f + 0.15f * bump; scaleY = scaleX },

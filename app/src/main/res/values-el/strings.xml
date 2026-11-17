@@ -422,8 +422,8 @@
     <string name="health_stopped_title">Το Sordina αποκοιμήθηκε</string>
     <string name="lv_always">Περνά πάντα</string>
     <string name="lv_always_hint">Με ήχο, πάντα</string>
-    <string name="lv_silent">Περνά αθόρυβα</string>
-    <string name="lv_silent_hint">Στο πλαίσιο ειδοποιήσεων, χωρίς ήχο</string>
+    <string name="lv_silent">Να περνάει</string>
+    <string name="lv_silent_hint">Στη γραμμή, όπως τη στέλνει η εφαρμογή</string>
     <string name="lv_summary">Κρατιέται</string>
     <string name="lv_summary_hint">Περιμένει στο Sordina</string>
     <string name="moment_focus_until">Μόνο τα σημαντικά ως τις %1$s · πάτα για τέλος</string>
@@ -719,7 +719,7 @@
     <string name="brake_balance">Σήμερα %1$s</string>
     <string name="brake_day_won">Σήμερα είσαι στο συν</string>
     <string name="perm_location">Τοποθεσία</string>
-    <string name="h_p_location">Για να αναγνωρίζω το wifi στο σπίτι και στη δουλειά, ώστε οι προτάσεις να αλλάζουν ανάλογα με το μέρος</string>
+    <string name="h_p_location">Για τον καιρό: μόνο η κατά προσέγγιση περιοχή σου, ποτέ GPS</string>
     <string name="r_pass_title">Να περνάνε πάντα</string>
     <string name="r_empty">Τίποτα ακόμα</string>
     <string name="access_summary">Άμεσο φρένο και διπλό πάτημα για κλείδωμα</string>
@@ -1031,4 +1031,21 @@
     <string name="ach_locked">Δεν έχει κερδηθεί ακόμα</string>
     <string name="usually_now">Συνήθως τώρα</string>
     <string name="hide_card">Απόκρυψη</string>
+    <string name="pin_shortcut_q">Προσθήκη του «%1$s» από %2$s στις εφαρμογές σας;</string>
+    <string name="faults_title">Σφάλματα</string>
+    <string name="faults_none">Δεν καταγράφηκαν σφάλματα</string>
+    <string name="faults_hint">Τι πήγε στραβά πρόσφατα. Μένει σε αυτό το τηλέφωνο.</string>
+    <string name="health_samsung_title">Η Samsung απενεργοποίησε το Sordina</string>
+    <string name="health_samsung_sub">Για να ελευθερώσει μνήμη. Τώρα λειτουργεί ξανά: δείτε πώς να το αποφύγετε.</string>
+    <string name="health_samsung_fix">Δείξε μου πώς</string>
+    <string name="samsung_sleep_l">Ποτέ σε αναστολή</string>
+    <string name="samsung_sleep_why">Η Samsung μερικές φορές με κλείνει τη νύχτα</string>
+    <string name="samsung_sleep_title">Μην αφήνετε το Sordina να τεθεί σε αναστολή</string>
+    <string name="samsung_sleep_steps">Όταν η μνήμη λιγοστεύει, η Samsung κλείνει εφαρμογές στο παρασκήνιο και το Sordina σταματά να ταξινομεί τις ειδοποιήσεις σας μέχρι να ξυπνήσει ξανά.\n\nΣτη σελίδα Μπαταρία: Όρια χρήσης στο παρασκήνιο → Εφαρμογές που δεν τίθενται ποτέ σε αναστολή → + → Sordina.</string>
+    <string name="samsung_sleep_open">Άνοιγμα Μπαταρίας</string>
+    <string name="access_desc">Το Sordina χρησιμοποιεί την προσβασιμότητα μόνο για τρία πράγματα: να σταματά μια φρεναρισμένη εφαρμογή τη στιγμή που έρχεται μπροστά (και τον ιστότοπό της στο πρόγραμμα περιήγησης), να κλειδώνει την οθόνη με διπλό πάτημα και να πληκτρολογεί για εσάς μια φράση εκεί όπου οι εφαρμογές δεν τη δέχονται απ\' έξω (Assist του Home Assistant, Signal). Ακούει μόνο τις εφαρμογές που φρενάρατε και, αν έχουν ιστότοπο, τα προγράμματα περιήγησης: από αυτά διαβάζει μόνο τη γραμμή διευθύνσεων, όσο είναι μπροστά. Κοιτάζει την οθόνη μόνο για λίγα δευτερόλεπτα, μόνο σε εκείνη την εφαρμογή. Τίποτα δεν φεύγει από το τηλέφωνο.</string>
+    <string name="access_consent_title">Χρήση προσβασιμότητας;</string>
+    <string name="access_consent_ok">Συμφωνώ, άνοιγμα ρυθμίσεων</string>
+    <string name="s_instant_brake_hint">Με την προσβασιμότητα το φρένο έρχεται αμέσως, ισχύει και για τους ιστότοπους των φρεναρισμένων εφαρμογών και το Sordina σταματά να ελέγχει κάθε λίγα δευτερόλεπτα. Αν δεν ενεργοποιείται: Πληροφορίες εφαρμογής › ⋮ › Να επιτρέπονται οι περιορισμένες ρυθμίσεις.</string>
+    <string name="brake_recent">Μετρήθηκε ήδη πριν από λίγο</string>
 </resources>

@@ -38,9 +38,6 @@ Swipe sideways to move to the next thing. If there's a picture, swipe up to see 
 • Car: a big clock, your navigation and music apps, the people you picked and a microphone you can hit without looking
 Each mode turns on and off whenever you like.
 
-★ SUGGESTIONS THAT LEARN, ON YOUR PHONE
-Sordina learns what you usually do at this time and place and offers it, one thing at a time. All the reasoning happens on the phone. Long-press to see why it's suggested, or to never see it again.
-
 ★ SLOW DOWN "JUST BECAUSE" APPS
 Apps you open out of habit ask for a moment before opening. The ones you need open straight away.
 
@@ -55,7 +52,7 @@ Light, dark or automatic, with solid, abstract or your own wallpaper: text alway
 
 Sordina is free, with no in-app purchases.
 
-Note: Sordina uses notification access to decide what gets through and what waits, and usage access for suggestions and the evening recap. This data never leaves your phone.
+Note: Sordina uses notification access to decide what gets through and what waits, and usage access to order apps in search and for the evening recap. This data never leaves your phone.
 
 ## What's new (max 500)
 First test release: a calm Home, muted notifications, bubbles with codes, meetings and pictures, evening, night and car modes. Thanks for trying it — every comment helps.

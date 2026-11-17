@@ -21,10 +21,7 @@
     <!-- Unico accesso a internet: l'indirizzo di Home Assistant scelto dall'utente -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <!-- Solo per leggere il nome del Wi-Fi (riconoscere casa). Chiesto solo se lo attivi. -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <!-- Posizione approssimativa per il meteo -->
+    <!-- Posizione approssimativa, solo per il meteo (niente posizione precisa: Sordina non usa il GPS né il nome del Wi-Fi) -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- Motore delle intenzioni: persone, impegni, timer, chiamate, voce sul telefono -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />

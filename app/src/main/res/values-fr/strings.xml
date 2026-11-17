@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="moment_none">Aucun</string>
     <string name="theme_auto">Automatique</string>
     <string name="theme_light">Clair</string>
@@ -353,7 +353,7 @@
         <item quantity="one">%d fois</item>
         <item quantity="other">%d fois</item>
     </plurals>
-    <plurals name="n_days_row">
+    <plurals name="n_days_row" tools:ignore="ImpliedQuantity">
         <item quantity="one">jour d\'affilée</item>
         <item quantity="other">jours d\'affilée</item>
     </plurals>
@@ -422,8 +422,8 @@
     <string name="health_stopped_title">Sordina s\'est endormie</string>
     <string name="lv_always">Passe toujours</string>
     <string name="lv_always_hint">Avec son, toujours</string>
-    <string name="lv_silent">Passe en silence</string>
-    <string name="lv_silent_hint">Dans le volet, sans son</string>
+    <string name="lv_silent">Laisser passer</string>
+    <string name="lv_silent_hint">Dans le volet, comme l\'app l\'envoie</string>
     <string name="lv_summary">Retenue</string>
     <string name="lv_summary_hint">Attend dans Sordina</string>
     <string name="moment_focus_until">Seulement l\'important jusqu\'à %1$s · touche pour finir</string>
@@ -719,7 +719,7 @@
     <string name="brake_balance">Aujourd\'hui %1$s</string>
     <string name="brake_day_won">Aujourd\'hui tu es dans le vert</string>
     <string name="perm_location">Position</string>
-    <string name="h_p_location">Pour reconnaître le Wi‑Fi de la maison et du travail, afin que les suggestions changent selon le lieu</string>
+    <string name="h_p_location">Pour la météo : seulement ta zone approximative, jamais le GPS</string>
     <string name="r_pass_title">Toujours laisser passer</string>
     <string name="r_empty">Rien pour l\'instant</string>
     <string name="access_summary">Frein instantané et double appui pour verrouiller</string>
@@ -1035,4 +1035,21 @@
     <string name="ach_locked">Encore à gagner</string>
     <string name="usually_now">D\'habitude, maintenant</string>
     <string name="hide_card">Masquer</string>
+    <string name="pin_shortcut_q">Ajouter « %1$s » de %2$s à vos apps ?</string>
+    <string name="faults_title">Erreurs</string>
+    <string name="faults_none">Aucune erreur enregistrée</string>
+    <string name="faults_hint">Ce qui a mal tourné récemment. Reste sur ce téléphone.</string>
+    <string name="health_samsung_title">Samsung a arrêté Sordina</string>
+    <string name="health_samsung_sub">Pour libérer de la mémoire. Elle est de nouveau active : voici comment l\'éviter.</string>
+    <string name="health_samsung_fix">Montre-moi comment</string>
+    <string name="samsung_sleep_l">Jamais en veille</string>
+    <string name="samsung_sleep_why">Samsung m\'arrête parfois la nuit</string>
+    <string name="samsung_sleep_title">Empêcher Sordina de s\'endormir</string>
+    <string name="samsung_sleep_steps">Quand la mémoire manque, Samsung arrête les apps en arrière-plan, et Sordina ne trie plus vos notifications jusqu\'à son réveil.\n\nDans la page Batterie : Limites d\'utilisation en arrière-plan → Applications jamais en veille → + → Sordina.</string>
+    <string name="samsung_sleep_open">Ouvrir Batterie</string>
+    <string name="access_desc">Sordina utilise l\'accessibilité pour trois choses seulement : arrêter une app freinée au moment où elle passe au premier plan (et aussi son site dans le navigateur), verrouiller l\'écran d\'un double appui et taper une phrase pour vous là où les apps ne l\'acceptent pas de l\'extérieur (Assist de Home Assistant, Signal). Elle n\'écoute que les apps que vous avez freinées et, si elles ont un site, les navigateurs : de ceux-ci elle ne lit que la barre d\'adresse, tant qu\'ils sont au premier plan. Elle ne regarde l\'écran que quelques secondes, seulement dans cette app. Rien ne quitte le téléphone.</string>
+    <string name="access_consent_title">Utiliser l\'accessibilité ?</string>
+    <string name="access_consent_ok">J\'accepte, ouvrir les paramètres</string>
+    <string name="s_instant_brake_hint">Avec l\'accessibilité, le frein arrive tout de suite, s\'applique aussi aux sites des apps freinées, et Sordina n\'a plus besoin de vérifier toutes les quelques secondes. Si l\'activation est impossible : Infos sur l\'app › ⋮ › Autoriser les paramètres restreints.</string>
+    <string name="brake_recent">Déjà compté il y a un instant</string>
 </resources>

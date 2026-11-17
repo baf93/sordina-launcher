@@ -25,8 +25,21 @@ import java.io.File
 class WhatsAppStickers : ContentProvider() {
     override fun onCreate() = true
 
+    /**
+     * Legge solo WhatsApp vero: chi chiama deve essere WhatsApp, e il permesso "com.whatsapp.sticker.READ"
+     * deve essere quello definito da WhatsApp. Senza WhatsApp installato un'altra app potrebbe definirlo lei
+     * e leggere quali imprese hai vinto.
+     */
+    private fun allowed(ctx: Context): Boolean = runCatching {
+        val caller = callingPackage ?: return false
+        if (caller !in WHATSAPP) return false
+        val owner = ctx.packageManager.getPermissionInfo(READ_PERMISSION, 0).packageName
+        owner in WHATSAPP
+    }.getOrDefault(false)
+
     override fun query(uri: Uri, projection: Array<out String>?, selection: String?, args: Array<out String>?, sort: String?): Cursor? {
         val ctx = context ?: return null
+        if (!allowed(ctx)) return null
         val seg = uri.pathSegments
         val packs = packs(ctx)
         return when {
@@ -51,6 +64,7 @@ class WhatsAppStickers : ContentProvider() {
 
     override fun openAssetFile(uri: Uri, mode: String): AssetFileDescriptor? {
         val ctx = context ?: return null
+        if (!allowed(ctx)) return null
         val seg = uri.pathSegments
         if (seg.size != 3 || seg[0] != "stickers_asset") return null
         val f = if (seg[2] == TRAY) tray(ctx) else Medal.entries.firstOrNull { file(it) == seg[2] }?.let { image(ctx, it) } ?: return null
@@ -70,6 +84,8 @@ class WhatsAppStickers : ContentProvider() {
     override fun update(uri: Uri, values: ContentValues?, selection: String?, args: Array<out String>?) = 0
 
     companion object {
+        private val WHATSAPP = setOf("com.whatsapp", "com.whatsapp.w4b")
+        private const val READ_PERMISSION = "com.whatsapp.sticker.READ"
         private const val TRAY = "tray.png"
         const val MIN = 3
         private const val MAX = 30

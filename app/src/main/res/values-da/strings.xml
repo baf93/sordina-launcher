@@ -422,8 +422,8 @@
     <string name="health_stopped_title">Sordina er faldet i søvn</string>
     <string name="lv_always">Altid igennem</string>
     <string name="lv_always_hint">Med lyd, altid</string>
-    <string name="lv_silent">Stille igennem</string>
-    <string name="lv_silent_hint">I notifikationspanelet, uden lyd</string>
+    <string name="lv_silent">Lad passere</string>
+    <string name="lv_silent_hint">I panelet, som appen sender den</string>
     <string name="lv_summary">Holdt tilbage</string>
     <string name="lv_summary_hint">Venter i Sordina</string>
     <string name="moment_focus_until">Kun det vigtige til %1$s · tryk for at stoppe</string>
@@ -719,7 +719,7 @@
     <string name="brake_balance">I dag %1$s</string>
     <string name="brake_day_won">I dag er du i plus</string>
     <string name="perm_location">Placering</string>
-    <string name="h_p_location">For at genkende wifi derhjemme og på arbejdet, så forslagene skifter med stedet</string>
+    <string name="h_p_location">Til vejret: kun dit omtrentlige område, aldrig GPS</string>
     <string name="r_pass_title">Lad altid komme igennem</string>
     <string name="r_empty">Intet endnu</string>
     <string name="access_summary">Øjeblikkelig bremse og dobbelttryk for at låse</string>
@@ -1031,4 +1031,21 @@
     <string name="ach_locked">Endnu ikke vundet</string>
     <string name="usually_now">Plejer nu</string>
     <string name="hide_card">Skjul</string>
+    <string name="pin_shortcut_q">Føj “%1$s” fra %2$s til dine apps?</string>
+    <string name="faults_title">Fejl</string>
+    <string name="faults_none">Ingen fejl registreret</string>
+    <string name="faults_hint">Hvad der gik galt for nylig. Bliver på denne telefon.</string>
+    <string name="health_samsung_title">Samsung slukkede Sordina</string>
+    <string name="health_samsung_sub">For at frigøre hukommelse. Nu er den vågen igen: sådan undgår du det.</string>
+    <string name="health_samsung_fix">Vis mig hvordan</string>
+    <string name="samsung_sleep_l">Aldrig i dvale</string>
+    <string name="samsung_sleep_why">Samsung slukker mig nogle gange om natten</string>
+    <string name="samsung_sleep_title">Lad ikke Sordina gå i dvale</string>
+    <string name="samsung_sleep_steps">Når hukommelsen er ved at slippe op, slukker Samsung apps i baggrunden, og Sordina holder op med at sortere dine notifikationer, til den vågner igen.\n\nPå siden Batteri: Grænser for baggrundsbrug → Apps, der aldrig går i dvale → + → Sordina.</string>
+    <string name="samsung_sleep_open">Åbn Batteri</string>
+    <string name="access_desc">Sordina bruger hjælpefunktioner til kun tre ting: at stoppe en bremset app i det øjeblik, den kommer frem (også dens websted i browseren), at låse skærmen med et dobbelttryk og at skrive en sætning for dig, hvor apps ikke tager imod den udefra (Home Assistant Assist, Signal). Den lytter kun til de apps, du har bremset, og hvis de har et websted, til browsere: af dem læser den kun adresselinjen, mens de er fremme. Skærmen ser den kun på i få sekunder, kun i den app. Intet forlader telefonen.</string>
+    <string name="access_consent_title">Brug hjælpefunktioner?</string>
+    <string name="access_consent_ok">Jeg accepterer, åbn indstillinger</string>
+    <string name="s_instant_brake_hint">Med hjælpefunktioner kommer bremsen med det samme, gælder også for webstederne for bremsede apps, og Sordina holder op med at tjekke med få sekunders mellemrum. Hvis den ikke kan slås til: Appinfo › ⋮ › Tillad begrænsede indstillinger.</string>
+    <string name="brake_recent">Talt for lidt siden</string>
 </resources>

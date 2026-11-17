@@ -54,8 +54,10 @@ object NotifImages {
     private fun picture(context: Context, n: Notification): Bitmap? {
         val e = n.extras ?: return null
         // BigPictureStyle: l'immagine grande (foto, telecamera, anteprima)
+        // getParcelable con la classe esiste da Android 13: prima si chiede senza (sui 12 era un crash)
         if (Build.VERSION.SDK_INT >= 31) {
-            e.getParcelable(Notification.EXTRA_PICTURE_ICON, Icon::class.java)?.let { icon ->
+            (if (Build.VERSION.SDK_INT >= 33) e.getParcelable(Notification.EXTRA_PICTURE_ICON, Icon::class.java)
+            else @Suppress("DEPRECATION") (e.getParcelable(Notification.EXTRA_PICTURE_ICON) as? Icon))?.let { icon ->
                 (icon.loadDrawable(context) as? BitmapDrawable)?.bitmap?.let { return it }
             }
         }

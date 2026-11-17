@@ -422,8 +422,8 @@
     <string name="health_stopped_title">Sordina nukahti</string>
     <string name="lv_always">Aina läpi</string>
     <string name="lv_always_hint">Äänellä, aina</string>
-    <string name="lv_silent">Hiljaa läpi</string>
-    <string name="lv_silent_hint">Ilmoituspaneelissa, ilman ääntä</string>
+    <string name="lv_silent">Päästä läpi</string>
+    <string name="lv_silent_hint">Ilmoituspaneelissa, kuten sovellus sen lähettää</string>
     <string name="lv_summary">Pidätetty</string>
     <string name="lv_summary_hint">Odottaa Sordinassa</string>
     <string name="moment_focus_until">Vain tärkeä klo %1$s asti · lopeta napauttamalla</string>
@@ -719,7 +719,7 @@
     <string name="brake_balance">Tänään %1$s</string>
     <string name="brake_day_won">Tänään olet plussalla</string>
     <string name="perm_location">Sijainti</string>
-    <string name="h_p_location">Tunnistaakseni kodin ja työpaikan wifin, jotta ehdotukset vaihtuvat paikan mukaan</string>
+    <string name="h_p_location">Säätä varten: vain likimääräinen alueesi, ei koskaan GPS:ää</string>
     <string name="r_pass_title">Päästä aina läpi</string>
     <string name="r_empty">Ei vielä mitään</string>
     <string name="access_summary">Välitön jarru ja lukitus kaksoisnapautuksella</string>
@@ -1031,4 +1031,21 @@
     <string name="ach_locked">Vielä ansaitsematta</string>
     <string name="usually_now">Yleensä nyt</string>
     <string name="hide_card">Piilota</string>
+    <string name="pin_shortcut_q">Lisätäänkö ”%1$s” (%2$s) sovelluksiisi?</string>
+    <string name="faults_title">Virheet</string>
+    <string name="faults_none">Ei kirjattuja virheitä</string>
+    <string name="faults_hint">Mikä meni viime aikoina pieleen. Pysyy tässä puhelimessa.</string>
+    <string name="health_samsung_title">Samsung sulki Sordinan</string>
+    <string name="health_samsung_sub">Muistin vapauttamiseksi. Nyt se on taas hereillä: näin estät sen.</string>
+    <string name="health_samsung_fix">Näytä miten</string>
+    <string name="samsung_sleep_l">Ei koskaan lepotilaan</string>
+    <string name="samsung_sleep_why">Samsung sulkee minut joskus yöllä</string>
+    <string name="samsung_sleep_title">Älä anna Sordinan mennä lepotilaan</string>
+    <string name="samsung_sleep_steps">Kun muisti käy vähiin, Samsung sulkee taustalla olevia sovelluksia, ja Sordina lakkaa lajittelemasta ilmoituksiasi, kunnes se herää taas.\n\nAkku-sivulla: Taustakäytön rajoitukset → Sovellukset, jotka eivät koskaan siirry lepotilaan → + → Sordina.</string>
+    <string name="samsung_sleep_open">Avaa Akku</string>
+    <string name="access_desc">Sordina käyttää esteettömyyttä vain kolmeen asiaan: jarrutetun sovelluksen pysäyttämiseen heti, kun se tulee etualalle (myös sen verkkosivuston selaimessa), näytön lukitsemiseen kaksoisnapautuksella ja lauseen kirjoittamiseen puolestasi sovelluksiin, jotka eivät ota sitä vastaan ulkopuolelta (Home Assistant Assist, Signal). Se kuuntelee vain jarruttamiasi sovelluksia ja, jos niillä on verkkosivusto, selaimia: niistä se lukee vain osoiterivin niiden ollessa edessä. Näyttöä se katsoo vain muutaman sekunnin, vain siinä sovelluksessa. Mikään ei lähde puhelimesta.</string>
+    <string name="access_consent_title">Käytetäänkö esteettömyyttä?</string>
+    <string name="access_consent_ok">Hyväksyn, avaa asetukset</string>
+    <string name="s_instant_brake_hint">Esteettömyyden kanssa jarru tulee heti, koskee myös jarrutettujen sovellusten sivustoja, eikä Sordinan tarvitse tarkistaa muutaman sekunnin välein. Jos sitä ei voi ottaa käyttöön: Sovelluksen tiedot › ⋮ › Salli rajoitetut asetukset.</string>
+    <string name="brake_recent">Laskettu jo hetki sitten</string>
 </resources>

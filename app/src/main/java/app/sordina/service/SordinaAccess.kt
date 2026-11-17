@@ -147,7 +147,10 @@ class SordinaAccess : AccessibilityService() {
         if (f.seenAt == 0L) { f.seenAt = now; main.postDelayed({ tryFill() }, 450); return }
         // Già scritto: se il testo è rimasto quello giusto si invia, se no si riscrive (al massimo tre volte)
         if (f.writes > 0 && box.text?.toString() == f.text) {
-            if (f.send && Build.VERSION.SDK_INT >= 30) {
+            // Si invia solo se la casella è una sola: con più caselle (un modulo, una ricerca e una chat)
+            // non si sa quale sia quella giusta, e la frase resta scritta per te
+            val many = roots.filter { it.packageName?.toString() == f.pkg }.sumOf { editables(it) } > 1
+            if (f.send && !many && Build.VERSION.SDK_INT >= 30) {
                 box.performAction(android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.id)
                 // La casella perde il fuoco: ridata la tastiera, non torna su da sola sopra la risposta
                 box.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLEAR_FOCUS)
@@ -175,6 +178,13 @@ class SordinaAccess : AccessibilityService() {
         keyboard(show = true)
         main.removeCallbacksAndMessages(null)
         watch()
+    }
+
+    private fun editables(n: android.view.accessibility.AccessibilityNodeInfo, depth: Int = 0): Int {
+        if (depth > 40) return 0
+        var k = if (n.isEditable && n.isVisibleToUser) 1 else 0
+        for (i in 0 until n.childCount) n.getChild(i)?.let { k += editables(it, depth + 1) }
+        return k
     }
 
     private fun editable(n: android.view.accessibility.AccessibilityNodeInfo): android.view.accessibility.AccessibilityNodeInfo? {

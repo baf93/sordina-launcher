@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">Sordina</string>
     <string name="moment_none">None</string>
     <string name="theme_auto">Automatic</string>
@@ -212,8 +212,8 @@
     <string name="lv_auto_hint">Sordina decides</string>
     <string name="lv_always">Always pass</string>
     <string name="lv_always_hint">Always rings, right away</string>
-    <string name="lv_silent">Pass silently</string>
-    <string name="lv_silent_hint">Shows up in the shade, without a sound</string>
+    <string name="lv_silent">Pass</string>
+    <string name="lv_silent_hint">In the shade, as the app sends it</string>
     <string name="lv_summary_hint">Waits on the Sordina page</string>
     <string name="lv_summary">Muted</string>
     <string name="s_braked_hint">You wait a few seconds before they open.</string>
@@ -668,7 +668,7 @@
     <string name="h_p_calls">To call from search</string>
     <string name="h_p_cal">To show and add events</string>
     <string name="perm_location">Location</string>
-    <string name="h_p_location">To recognize your home and work Wi‑Fi, so suggestions change with the place</string>
+    <string name="h_p_location">For the weather: only your rough area, never GPS</string>
     <string name="ob_lapps">Apps</string>
     <string name="ob_apps_title">Which apps always get through?</string>
     <string name="ob_apps_sub">Their notifications ring right away, as before. Everything else waits for you in Sordina.</string>
@@ -791,16 +791,16 @@
     <string name="obt_title">Just ask me</string>
     <string name="obt_sub">Type or talk the way you would to a person: I\'ll work out what to do.</string>
     <string name="obt_ha">Got Home Assistant? Connect it in settings and I\'ll look after the house too.</string>
-    <string name="obt_q1">pizza tonight at 10</string>
+    <string name="obt_q1" tools:ignore="MissingTranslation">pizza tonight at 10</string>
     <string name="obt_r1">Pizza</string>
     <string name="obt_s1">today at 22:00 · in your calendar</string>
-    <string name="obt_q2">text Mark be there in 5</string>
+    <string name="obt_q2" tools:ignore="MissingTranslation">text Mark be there in 5</string>
     <string name="obt_r2">Text Mark</string>
     <string name="obt_s2">“Be there in 5” · WhatsApp</string>
-    <string name="obt_q3">pasta timer 10 minutes</string>
+    <string name="obt_q3" tools:ignore="MissingTranslation">pasta timer 10 minutes</string>
     <string name="obt_r3">Timer 10 min · pasta</string>
     <string name="obt_s3">Starts now</string>
-    <string name="obt_q4">turn on the living room light</string>
+    <string name="obt_q4" tools:ignore="MissingTranslation">turn on the living room light</string>
     <string name="obt_r4">Living room light on</string>
     <string name="obt_s4">Home · Home Assistant</string>
     <string name="ob_home_l">Set as Home</string>
@@ -1052,4 +1052,9 @@
     <string name="ach_locked">Still to win</string>
     <string name="usually_now">Usually now</string>
     <string name="hide_card">Hide</string>
+    <string name="pin_shortcut_q">Add “%1$s” from %2$s to your apps?</string>
+    <string name="faults_title">Errors</string>
+    <string name="faults_none">No errors recorded</string>
+    <string name="faults_hint">What went wrong lately. It stays on this phone.</string>
+    <string name="brake_recent">Already counted a moment ago</string>
 </resources>

@@ -163,8 +163,6 @@ data class HomeState(
     val next: AgendaRow? = null,
     /** La sordina risponde per la casa: il suo fumetto in fondo dice "…" e poi la risposta */
     val reply: app.sordina.ui.HomeReply? = null,
-    /** Niente in corso: quello che di solito fai adesso, per il fumetto (al massimo tre) */
-    val usual: List<Usual> = emptyList(),
 )
 
 /** Casa: ora, data, meteo, evento; la barra; in fondo la sordina col suo fumetto. */

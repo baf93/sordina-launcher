@@ -411,8 +411,8 @@
     <string name="health_stopped_title">Sordina tertidur</string>
     <string name="lv_always">Selalu masuk</string>
     <string name="lv_always_hint">Dengan suara, selalu</string>
-    <string name="lv_silent">Masuk tanpa suara</string>
-    <string name="lv_silent_hint">Di panel notifikasi, tanpa suara</string>
+    <string name="lv_silent">Loloskan</string>
+    <string name="lv_silent_hint">Di panel, seperti yang dikirim aplikasi</string>
     <string name="lv_summary">Ditahan</string>
     <string name="lv_summary_hint">Menunggu di Sordina</string>
     <string name="moment_focus_until">Hanya yang penting sampai %1$s · ketuk untuk selesai</string>
@@ -708,7 +708,7 @@
     <string name="brake_balance">Hari ini %1$s</string>
     <string name="brake_day_won">Hari ini kamu plus</string>
     <string name="perm_location">Lokasi</string>
-    <string name="h_p_location">Untuk mengenali wifi di rumah dan di kantor, agar saran berubah sesuai tempat</string>
+    <string name="h_p_location">Untuk cuaca: hanya perkiraan area Anda, tidak pernah GPS</string>
     <string name="r_pass_title">Selalu loloskan</string>
     <string name="r_empty">Belum ada apa-apa</string>
     <string name="access_summary">Rem instan dan ketuk dua kali untuk mengunci</string>
@@ -1020,4 +1020,21 @@
     <string name="ach_locked">Belum didapat</string>
     <string name="usually_now">Biasanya sekarang</string>
     <string name="hide_card">Sembunyikan</string>
+    <string name="pin_shortcut_q">Tambahkan “%1$s” dari %2$s ke aplikasi Anda?</string>
+    <string name="faults_title">Kesalahan</string>
+    <string name="faults_none">Tidak ada kesalahan tercatat</string>
+    <string name="faults_hint">Apa yang salah belakangan ini. Tetap di ponsel ini.</string>
+    <string name="health_samsung_title">Samsung mematikan Sordina</string>
+    <string name="health_samsung_sub">Untuk mengosongkan memori. Sekarang sudah aktif lagi: begini cara mencegahnya.</string>
+    <string name="health_samsung_fix">Tunjukkan caranya</string>
+    <string name="samsung_sleep_l">Tidak pernah tidur</string>
+    <string name="samsung_sleep_why">Samsung kadang mematikan saya di malam hari</string>
+    <string name="samsung_sleep_title">Jangan biarkan Sordina ditidurkan</string>
+    <string name="samsung_sleep_steps">Saat memori hampir habis, Samsung mematikan aplikasi di latar belakang, dan Sordina berhenti memilah notifikasi Anda sampai aktif lagi.\n\nDi halaman Baterai: Batas penggunaan latar belakang → Aplikasi yang tidak pernah tidur → + → Sordina.</string>
+    <string name="samsung_sleep_open">Buka Baterai</string>
+    <string name="access_desc">Sordina memakai aksesibilitas hanya untuk tiga hal: menghentikan aplikasi yang direm saat ia muncul ke depan (juga situs webnya di browser), mengunci layar dengan ketuk dua kali, dan mengetik kalimat untuk Anda di tempat aplikasi tidak menerimanya dari luar (Assist Home Assistant, Signal). Ia hanya mendengarkan aplikasi yang Anda rem dan, jika punya situs web, browser: dari browser hanya membaca bilah alamat, selama berada di depan. Layar hanya dilihat beberapa detik, hanya di aplikasi itu. Tidak ada yang keluar dari ponsel.</string>
+    <string name="access_consent_title">Gunakan aksesibilitas?</string>
+    <string name="access_consent_ok">Saya setuju, buka setelan</string>
+    <string name="s_instant_brake_hint">Dengan aksesibilitas, rem langsung bekerja, juga berlaku untuk situs aplikasi yang direm, dan Sordina berhenti memeriksa setiap beberapa detik. Jika tidak bisa diaktifkan: Info aplikasi › ⋮ › Izinkan setelan terbatas.</string>
+    <string name="brake_recent">Sudah dihitung barusan</string>
 </resources>

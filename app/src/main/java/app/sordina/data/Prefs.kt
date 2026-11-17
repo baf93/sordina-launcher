@@ -391,6 +391,21 @@ class Prefs(context: Context) {
     var haLocalUrl: String
         get() = str("haLocalUrl", "")
         set(v) = put { putString("haLocalUrl", v.trim().trimEnd('/')) }
+    /** Le persone seguite per nome, con la loro chiave stabile di rubrica (chiave → nome normalizzato) */
+    var personLookups: Map<String, String>
+        get() = runCatching {
+            val o = JSONObject(str("personLookups", "{}"))
+            o.keys().asSequence().associateWith { o.getString(it) }
+        }.getOrDefault(emptyMap())
+        set(v) = put { putString("personLookups", JSONObject(v).toString()) }
+    /** I contatti a cui Sordina ha messo la stella (id): solo queste toglie */
+    var starredBySordina: Set<String>
+        get() = sp.getStringSet("starredBySordina", emptySet())!!.toSet()
+        set(v) = put { putStringSet("starredBySordina", v) }
+    /** Le reti di casa riconosciute (gateway, rete, dominio): solo su queste il token viaggia in chiaro (http) */
+    var haHomeNets: Set<String>
+        get() = sp.getStringSet("haHomeNets", emptySet())!!.toSet()
+        set(v) = put { putStringSet("haHomeNets", v.toList().takeLast(4).toSet()) }
     var haTokenEnc: String
         get() = str("haToken", "")
         set(v) = put { putString("haToken", v) }
@@ -413,6 +428,13 @@ class Prefs(context: Context) {
         set(v) = put { putString("personApp", v.entries.joinToString("|") { "${it.key}=${it.value}" }) }
 
     /** Il motore impara dalle correzioni: frase normalizzata → id della scelta. */
+    /** Una correzione vista una volta sola: diventa un alias solo alla seconda uguale (frase → scelta) */
+    var aliasPending: Map<String, String>
+        get() = runCatching {
+            val o = JSONObject(str("aliasPending", "{}"))
+            o.keys().asSequence().associateWith { o.getString(it) }
+        }.getOrDefault(emptyMap())
+        set(v) = put { putString("aliasPending", JSONObject(v.entries.toList().takeLast(100).associate { it.key to it.value }).toString()) }
     var aliases: Map<String, String>
         get() = runCatching {
             val o = JSONObject(str("aliases", "{}"))
@@ -458,12 +480,14 @@ class Prefs(context: Context) {
         val o = JSONObject(json)
         put {
             for (k in o.keys()) {
-                if (k == "haToken" || k == "haTokenEnc") continue
+                // Mai da un file: il collegamento con casa (indirizzi e reti), e quello che Sordina tiene per sé
+                if (k in NOT_IMPORTED) continue
                 when (val v = o.get(k)) {
                     is org.json.JSONArray -> putStringSet(k, (0 until v.length()).map { v.getString(it) }.toSet())
                     is Boolean -> putBoolean(k, v)
-                    is Int -> if (k == "calendarId" || k == "quietUntil") putLong(k, v.toLong()) else putInt(k, v)
-                    is Long -> if (k == "calendarId" || k == "quietUntil") putLong(k, v) else putInt(k, v.toInt())
+                    // Le chiavi Long restano Long (scritte come Int, leggerle farebbe chiudere l'app)
+                    is Int -> if (k in LONG_KEYS) putLong(k, v.toLong()) else putInt(k, v)
+                    is Long -> if (k in LONG_KEYS) putLong(k, v) else putInt(k, v.toInt())
                     else -> putString(k, v.toString())
                 }
             }
@@ -472,7 +496,29 @@ class Prefs(context: Context) {
 
     fun clearAll() = sp.edit().clear().apply()
 
+    /**
+     * Ascolta le scelte che decidono cosa passa e cosa aspetta: qualunque schermata le cambi, chi ascolta
+     * ricontrolla le notifiche. Va tenuto il riferimento (Android lo tiene debole) e tolto con [stopWatching].
+     */
+    fun watchRules(onChange: () -> Unit): SharedPreferences.OnSharedPreferenceChangeListener =
+        SharedPreferences.OnSharedPreferenceChangeListener { _, key -> if (key == null || key in RULE_KEYS) onChange() }
+            .also { sp.registerOnSharedPreferenceChangeListener(it) }
+
+    fun stopWatching(l: SharedPreferences.OnSharedPreferenceChangeListener) = sp.unregisterOnSharedPreferenceChangeListener(l)
+
     companion object {
+        /** Le impostazioni salvate come Long */
+        val LONG_KEYS = setOf("calendarId", "quietUntil", "nightAlarm", "nightDone", "alarmHint", "alarmHintAt", "revivedAt", "samsungAsked")
+        /**
+         * Non si importano: il token, gli indirizzi di Home Assistant (con un indirizzo nuovo il tuo token partirebbe
+         * verso il server di chi ti ha passato il file), le reti di casa, e i conti che Sordina tiene sui tuoi contatti.
+         */
+        val NOT_IMPORTED = setOf("haToken", "haTokenEnc", "haUrl", "haLocalUrl", "haHomeNets", "starredBySordina", "personLookups")
+        /** Le chiavi delle regole: persone, app, tipi di notifica, app frenate o nascoste, "lascia passare", urgenze */
+        val RULE_KEYS = setOf(
+            "hidden", "appLevels", "passUntil", "importantNames", "importantInGroups", "talkPass",
+            "urgentEnabled", "urgentWords", "channelRules", "personRules", "braked", "systemPass",
+        )
         const val MAX_PINNED = 4
         /** Una fissata che non è un'app ("scrivi a Elisa su Telegram"): davanti alla cosa del cervello */
         const val PIN_ACTION = "do:"

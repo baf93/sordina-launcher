@@ -146,8 +146,18 @@ class Habits(private val context: Context) {
         return if (opens == 0) 5 else (minutes / opens).coerceIn(2, 30)
     }
 
+    /**
+     * Quanto vale adesso lasciare stare: i minuti di una visita, ma una volta sola per ogni tentazione.
+     * Entro [WIN_COOLDOWN] da un "Lascia stare" premiato (qualunque app frenata) vale 0: aprire e lasciare stare
+     * di continuo non fa punti, né minuti né imprese.
+     */
+    fun skipGain(visit: Int, now: Long = System.currentTimeMillis()): Int =
+        if (rewarded(sp.getLong("lastWin", 0L), now)) visit else 0
+
     fun logSkip(pkg: String, minutes: Int) {
-        if (minutes > 0) Tally.add("skips")
+        // Una rinuncia che non vale niente (appena dopo un'altra) non entra nello storico: non conta per le imprese
+        if (minutes == 0) return
+        if (minutes > 0) { Tally.add("skips"); sp.edit().putLong("lastWin", System.currentTimeMillis()).apply() }
         val keep = LocalDate.now().minusDays(60)
         val (old, recent) = skips().partition { !it.day.isAfter(keep) }
         val e = sp.edit()
@@ -384,6 +394,12 @@ class Habits(private val context: Context) {
     }.toMap()
 
     companion object {
+        /** Dopo un "Lascia stare" premiato, per così tanto gli altri non valgono niente */
+        const val WIN_COOLDOWN = 20 * 60_000L
+
+        /** Premiato se l'ultimo premio è più vecchio di [WIN_COOLDOWN] (o nel futuro: orologio spostato indietro). */
+        fun rewarded(lastWin: Long, now: Long): Boolean = now - lastWin !in 0 until WIN_COOLDOWN
+
         /** Minuti ripresi per arrivare al livello [l]. */
         fun levelStart(l: Int): Int = 15 * (l - 1) * l / 2
         fun levelOf(minutes: Int): Int { var l = 1; while (levelStart(l + 1) <= minutes) l++; return l }

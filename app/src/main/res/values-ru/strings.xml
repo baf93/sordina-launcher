@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="moment_none">Нет</string>
     <string name="theme_auto">Авто</string>
     <string name="theme_light">Светлая</string>
@@ -365,7 +365,7 @@
         <item quantity="many">%d раз</item>
         <item quantity="other">%d раза</item>
     </plurals>
-    <plurals name="n_days_row">
+    <plurals name="n_days_row" tools:ignore="ImpliedQuantity">
         <item quantity="one">день подряд</item>
         <item quantity="few">дня подряд</item>
         <item quantity="many">дней подряд</item>
@@ -444,8 +444,8 @@
     <string name="health_stopped_title">Sordina уснула</string>
     <string name="lv_always">Проходит всегда</string>
     <string name="lv_always_hint">Со звуком, всегда</string>
-    <string name="lv_silent">Проходит тихо</string>
-    <string name="lv_silent_hint">В шторке, без звука</string>
+    <string name="lv_silent">Пропускать</string>
+    <string name="lv_silent_hint">В шторке, как присылает приложение</string>
     <string name="lv_summary">Задерживается</string>
     <string name="lv_summary_hint">Ждёт в Sordina</string>
     <string name="moment_focus_until">Только важное до %1$s · нажми, чтобы закончить</string>
@@ -741,7 +741,7 @@
     <string name="brake_balance">Сегодня %1$s</string>
     <string name="brake_day_won">Сегодня ты в плюсе</string>
     <string name="perm_location">Местоположение</string>
-    <string name="h_p_location">Чтобы узнавать wifi дома и на работе и менять подсказки в зависимости от места</string>
+    <string name="h_p_location">Для погоды: только примерный район, никогда GPS</string>
     <string name="r_pass_title">Всегда пропускать</string>
     <string name="r_empty">Пока ничего</string>
     <string name="access_summary">Мгновенный тормоз и двойное касание для блокировки</string>
@@ -1053,4 +1053,21 @@
     <string name="ach_locked">Ещё не получены</string>
     <string name="usually_now">Обычно сейчас</string>
     <string name="hide_card">Скрыть</string>
+    <string name="pin_shortcut_q">Добавить «%1$s» из %2$s в ваши приложения?</string>
+    <string name="faults_title">Ошибки</string>
+    <string name="faults_none">Ошибок не записано</string>
+    <string name="faults_hint">Что недавно пошло не так. Остаётся на этом телефоне.</string>
+    <string name="health_samsung_title">Samsung отключил Sordina</string>
+    <string name="health_samsung_sub">Чтобы освободить память. Теперь она снова работает: вот как этого избежать.</string>
+    <string name="health_samsung_fix">Покажи как</string>
+    <string name="samsung_sleep_l">Никогда не в спящем режиме</string>
+    <string name="samsung_sleep_why">Samsung иногда отключает меня ночью</string>
+    <string name="samsung_sleep_title">Не давайте усыплять Sordina</string>
+    <string name="samsung_sleep_steps">Когда не хватает памяти, Samsung отключает фоновые приложения, и Sordina перестаёт сортировать уведомления, пока снова не проснётся.\n\nНа странице «Батарея»: Ограничения на использование в фоновом режиме → Приложения, которые никогда не переходят в спящий режим → + → Sordina.</string>
+    <string name="samsung_sleep_open">Открыть «Батарея»</string>
+    <string name="access_desc">Sordina использует специальные возможности только для трёх вещей: остановить притормаженное приложение в момент, когда оно выходит на передний план (и его сайт в браузере), заблокировать экран двойным касанием и набрать за вас фразу там, где приложения не принимают её извне (Assist в Home Assistant, Signal). Она слушает только притормаженные вами приложения и, если у них есть сайт, браузеры: в них читает только адресную строку, пока они на переднем плане. На экран смотрит лишь несколько секунд и только в этом приложении. Ничего не покидает телефон.</string>
+    <string name="access_consent_title">Использовать специальные возможности?</string>
+    <string name="access_consent_ok">Согласен, открыть настройки</string>
+    <string name="s_instant_brake_hint">Со специальными возможностями тормоз срабатывает сразу, действует и на сайты притормаженных приложений, а Sordina перестаёт проверять каждые несколько секунд. Если включить не удаётся: О приложении › ⋮ › Разрешить доступ к ограниченным настройкам.</string>
+    <string name="brake_recent">Уже засчитано недавно</string>
 </resources>

@@ -40,6 +40,13 @@ class SordinaApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        app.sordina.data.Faults.init(filesDir)
+        // Un crash resta scritto (sul telefono): si vede in Impostazioni › Dati, poi Android fa il suo corso
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { t, e ->
+            runCatching { app.sordina.data.Faults.record("crash:" + t.name, e) }
+            previous?.uncaughtException(t, e)
+        }
         Lang.init(this)
         app.sordina.data.Tally.init(this)
         app.sordina.data.Backup.onStart(this, prefs.onboarded)

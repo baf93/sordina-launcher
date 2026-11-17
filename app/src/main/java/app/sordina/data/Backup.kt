@@ -9,7 +9,8 @@ import java.io.File
  * La copia di ogni giorno, per il backup di Google.
  *
  * Una volta al giorno (aprendo Sordina, mai in sottofondo) si scrive un file solo con le impostazioni, le imprese,
- * lo storico del freno, le routine, le risposte veloci e quello che il cervello ha imparato. Android lo porta nel
+ * lo storico del freno, le routine e quello che il cervello ha imparato (le risposte veloci no: possono contenere
+ * testo personale). Android lo porta nel
  * backup di Google del telefono quando lo fa per tutte le app (in carica e col Wi-Fi), ed è l'unico file che porta:
  * le notifiche tenute, i piani e lo sfondo restano qui. Il token di Home Assistant non esce mai.
  *
@@ -21,8 +22,9 @@ object Backup {
     private const val COPY = "sordina.json"
     private const val FOUND = "restored.json"
     private val PREFS = listOf("sordina", "habits", "tally", "brain", "card_sense")
-    private val FILES = listOf("replies.json", "brain.tsv")
-    private val SECRET = setOf("haToken", "haTokenEnc")
+    private val FILES = listOf("brain.tsv")
+    /** Restano su questo telefono: il token (cifrato con una chiave che non lascia il telefono) e le reti di casa */
+    private val SECRET = setOf("haToken", "haTokenEnc", "haHomeNets")
 
     private fun dir(ctx: Context) = File(ctx.filesDir, DIR).apply { mkdirs() }
 
@@ -66,23 +68,27 @@ object Backup {
         val f = File(dir(ctx), FOUND)
         val o = runCatching { JSONObject(f.readText()) }.getOrNull() ?: return false
         o.optJSONObject("prefs")?.let { prefs ->
+            // Solo i file di impostazioni che Sordina scrive: una copia manomessa non ne crea altri
             for (name in prefs.keys()) {
+                if (name !in PREFS) continue
                 val sp = ctx.getSharedPreferences(name, Context.MODE_PRIVATE)
                 val keep = SECRET.associateWith { sp.all[it] }.filterValues { it != null }
                 val e = sp.edit().clear()
                 val vals = prefs.getJSONObject(name)
                 for (k in vals.keys()) {
-                    val v = vals.getJSONObject(k)
-                    when (v.getString("t")) {
+                    if (k in SECRET) continue
+                    val v = vals.optJSONObject(k) ?: continue
+                    runCatching { when (v.getString("t")) {
                         "b" -> e.putBoolean(k, v.getBoolean("v"))
                         "i" -> e.putInt(k, v.getInt("v"))
                         "l" -> e.putLong(k, v.getLong("v"))
                         "f" -> e.putFloat(k, v.getDouble("v").toFloat())
                         "s" -> e.putString(k, v.getString("v"))
                         "set" -> v.getJSONArray("v").let { a -> e.putStringSet(k, (0 until a.length()).map { a.getString(it) }.toSet()) }
-                    }
+                    } }
                 }
-                keep.forEach { (k, v) -> if (v is String) e.putString(k, v) }
+                @Suppress("UNCHECKED_CAST")
+                keep.forEach { (k, v) -> if (v is String) e.putString(k, v) else if (v is Set<*>) e.putStringSet(k, v as Set<String>) }
                 e.commit()
             }
         }
