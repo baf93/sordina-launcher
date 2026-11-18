@@ -177,7 +177,7 @@ internal fun MainActivity.sceneExtras(s: Scene) {
     }
     recap = if (s == Scene.EVENING) runCatching {
         val d = app.habits.today()
-        val min = d.minutes.filterKeys { it != packageName }.values.sum()
+        val min = d.screen
         if (min <= 0) null else {
             // A schermo solo icone e numeri; la frase intera resta per chi usa TalkBack
             val t = if (min >= 60) "${min / 60} h ${min % 60} min" else "$min min"

@@ -41,7 +41,8 @@ class Habits(private val context: Context) {
 
     fun opensToday(pkg: String) = brakesToday().count { it.first == pkg }
 
-    data class Day(val unlocks: Int?, val minutes: Map<String, Int>)
+    /** [screen]: minuti al telefono, senza Sordina, con le app sovrapposte contate una volta sola. */
+    data class Day(val unlocks: Int?, val minutes: Map<String, Int>, val screen: Int = 0)
 
     @Volatile private var todayCache: Pair<Long, Day>? = null
     private val appTodayCache = HashMap<String, Pair<Long, Pair<Int, Int>?>>()
@@ -61,25 +62,11 @@ class Habits(private val context: Context) {
         val start = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val now = System.currentTimeMillis()
         var unlocks = 0
-        val fg = HashMap<String, Long>()
-        val open = HashMap<String, Long>()
-        val ok = runCatching {
-            val ev = usm.queryEvents(start, now)
-            val e = UsageEvents.Event()
-            while (ev.hasNextEvent()) {
-                ev.getNextEvent(e)
-                when (e.eventType) {
-                    KEYGUARD_HIDDEN -> unlocks++
-                    UsageEvents.Event.MOVE_TO_FOREGROUND -> open[e.packageName] = e.timeStamp
-                    UsageEvents.Event.MOVE_TO_BACKGROUND -> open.remove(e.packageName)?.let { s ->
-                        fg[e.packageName] = (fg[e.packageName] ?: 0) + (e.timeStamp - s)
-                    }
-                }
-            }
-            open.forEach { (p, s) -> fg[p] = (fg[p] ?: 0) + (now - s) }
-        }.isSuccess
-        if (!ok) return Day(null, emptyMap())
-        return Day(if (Build.VERSION.SDK_INT >= 28) unlocks else null, fg.mapValues { (it.value / 60_000).toInt() })
+        val r = runCatching {
+            val evs = Foreground.read(usm.queryEvents(start, now)) { e -> if (e.eventType == KEYGUARD_HIDDEN) unlocks++ }
+            Foreground.fold(evs, start, now, exclude = setOf(context.packageName))
+        }.getOrNull() ?: return Day(null, emptyMap())
+        return Day(if (Build.VERSION.SDK_INT >= 28) unlocks else null, r.perPkg.mapValues { (it.value / 60_000).toInt() }, (r.total / 60_000).toInt())
     }
 
     /** Come [appToday], ma letto adesso (senza la copia di un minuto fa): per l'avviso di budget finito. */
@@ -97,31 +84,17 @@ class Habits(private val context: Context) {
         val start = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val now = System.currentTimeMillis()
         var opens = 0
-        var fg = 0L
-        var since: Long? = null
         var lastOpen = 0L
         return runCatching {
-            val ev = usm.queryEvents(start, now)
-            val e = UsageEvents.Event()
-            while (ev.hasNextEvent()) {
-                ev.getNextEvent(e)
-                if (e.packageName != pkg) continue
+            val evs = Foreground.read(usm.queryEvents(start, now), only = setOf(pkg)) { e ->
+                if (e.packageName != pkg) return@read
                 when (e.eventType) {
-                    UsageEvents.Event.MOVE_TO_FOREGROUND -> {
-                        // Un'apertura sola se rientri entro un minuto
-                        if (e.timeStamp - lastOpen > 60_000) opens++
-                        lastOpen = e.timeStamp
-                        if (since == null) since = e.timeStamp
-                    }
-                    UsageEvents.Event.MOVE_TO_BACKGROUND -> {
-                        since?.let { fg += e.timeStamp - it }
-                        since = null
-                        lastOpen = e.timeStamp
-                    }
+                    // Un'apertura sola se rientri entro un minuto
+                    Foreground.RESUMED -> { if (e.timeStamp - lastOpen > 60_000) opens++; lastOpen = e.timeStamp }
+                    Foreground.PAUSED -> lastOpen = e.timeStamp
                 }
             }
-            since?.let { fg += now - it }
-            opens to (fg / 60_000).toInt()
+            opens to ((Foreground.fold(evs, start, now).perPkg[pkg] ?: 0L) / 60_000).toInt()
         }.getOrNull()
     }
 
@@ -295,22 +268,9 @@ class Habits(private val context: Context) {
         val start = day.atStartOfDay(zone).toInstant().toEpochMilli()
         val end = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
         return runCatching {
-            val ev = usm.queryEvents(start, end)
-            val e = UsageEvents.Event()
             var events = 0
-            val fg = HashMap<String, Long>()
-            val open = HashMap<String, Long>()
-            while (ev.hasNextEvent()) {
-                ev.getNextEvent(e)
-                events++
-                if (e.packageName !in pkgs) continue
-                when (e.eventType) {
-                    UsageEvents.Event.MOVE_TO_FOREGROUND -> open[e.packageName] = e.timeStamp
-                    UsageEvents.Event.MOVE_TO_BACKGROUND -> open.remove(e.packageName)?.let { s -> fg[e.packageName] = (fg[e.packageName] ?: 0) + (e.timeStamp - s) }
-                }
-            }
-            open.forEach { (p, s) -> fg[p] = (fg[p] ?: 0) + (end - s) }
-            if (events == 0) null else fg.mapValues { (it.value / 60_000).toInt() }
+            val evs = Foreground.read(usm.queryEvents(start, end), only = pkgs) { events++ }
+            if (events == 0) null else Foreground.fold(evs, start, end).perPkg.filterKeys { it in pkgs }.mapValues { (it.value / 60_000).toInt() }
         }.getOrNull()
     }
 
@@ -520,36 +480,27 @@ class Habits(private val context: Context) {
         val end = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
         fun at(h: Int) = start + h * 3_600_000L
         return runCatching {
-            val ev = usm.queryEvents(start, end)
-            val e = UsageEvents.Event()
             var events = 0
-            var fg = 0L
-            val open = HashMap<String, Long>()
             val unlocks = ArrayList<Long>()
             var wake = 0L
             var brakedMorning = false
             var brakedLunch = false
             var brakedAny = false
-            while (ev.hasNextEvent()) {
-                ev.getNextEvent(e)
+            val evs = Foreground.read(usm.queryEvents(start, end)) { e ->
                 events++
                 val t = e.timeStamp
                 when (e.eventType) {
                     KEYGUARD_HIDDEN -> unlocks += t
                     SCREEN_INTERACTIVE -> if (wake == 0L && t >= at(4)) wake = t
-                    UsageEvents.Event.MOVE_TO_FOREGROUND -> {
-                        if (e.packageName != context.packageName) open[e.packageName] = t
-                        if (e.packageName in braked) {
-                            brakedAny = true
-                            if (t < at(10)) brakedMorning = true
-                            if (t in at(12) until at(14)) brakedLunch = true
-                        }
+                    Foreground.RESUMED -> if (e.packageName in braked) {
+                        brakedAny = true
+                        if (t < at(10)) brakedMorning = true
+                        if (t in at(12) until at(14)) brakedLunch = true
                     }
-                    UsageEvents.Event.MOVE_TO_BACKGROUND -> open.remove(e.packageName)?.let { fg += t - it }
                 }
             }
-            open.values.forEach { fg += end - it }
             if (events == 0) return@runCatching null
+            val fg = Foreground.fold(evs, start, end, exclude = setOf(context.packageName)).total
             val day8 = unlocks.filter { it in at(8)..at(22) }
             val gap = day8.zipWithNext().maxOfOrNull { (a, b) -> b - a } ?: 0L
             Medal.PhoneDay(
