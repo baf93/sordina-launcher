@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.time.LocalDate
 import java.util.concurrent.Executors
 
 /** Una notifica che Sordina tiene da parte (o ha lasciato passare in silenzio). */
@@ -37,6 +36,10 @@ data class Held(
     val channelName: String? = null,
     /** L'immagine della notifica, copiata in [NotifImages] (nome del file) */
     val image: String? = null,
+    /** La conversazione come la identifica l'app (shortcutId), per i nomi collegati a una persona */
+    val shortcut: String? = null,
+    /** I messaggi della conversazione, dal più vecchio (una chat mette più messaggi in una notifica sola); vuoto = solo [text] */
+    val lines: List<HeldLine> = emptyList(),
 ) {
     /** Raggruppa per persona; se non c'è una persona, per app. */
     val groupKey: String
@@ -44,6 +47,9 @@ data class Held(
     val groupTitle: String
         get() = if (isMessage) (conversation ?: person ?: appLabel) else appLabel
 }
+
+/** Un messaggio dentro una notifica di chat: quando, chi (nei gruppi) e cosa. */
+data class HeldLine(val time: Long, val sender: String?, val text: String)
 
 /**
  * Elenchi di chiavi di notifica su file. Le chiavi possono contenere un a capo (WhatsApp, Revolut):
@@ -70,11 +76,9 @@ object KeyList {
         return out
     }
 
-    fun write(f: File, keys: Collection<String>) = f.writeText(JSONArray(keys.toList()).toString())
+    fun write(f: File, keys: Collection<String>) = f.writeSafely(JSONArray(keys.toList()).toString())
 }
 
-/** Decisione presa su una notifica, per la pagina "Oggi". */
-data class Decision(val time: Long, val pkg: String, val appLabel: String, val level: Level?, val reason: String)
 
 /**
  * Archivio locale delle notifiche trattenute. Tutto in un file nell'app, niente esce dal telefono.
@@ -92,9 +96,6 @@ class NotifStore(private val context: Context) {
     private val _held = MutableStateFlow<Map<String, Held>>(emptyMap())
     val held: StateFlow<Map<String, Held>> = _held
 
-    private val _today = MutableStateFlow<List<Decision>>(emptyList())
-    val today: StateFlow<List<Decision>> = _today
-    private var todayDate = LocalDate.now()
 
     private val intents = HashMap<String, PendingIntent>()
     private val dismissedFile = File(context.filesDir, "dismissed.txt")
@@ -192,13 +193,6 @@ class NotifStore(private val context: Context) {
         if (intent != null) intents[key] = intent
     }
 
-    @Synchronized
-    fun log(d: Decision) {
-        val now = LocalDate.now()
-        if (now != todayDate) { todayDate = now; _today.value = emptyList() }
-        _today.value = (_today.value + d).takeLast(300)
-    }
-
     /** Raggruppato per persona, il gruppo con il messaggio più recente per primo. */
     fun groups(): List<List<Held>> {
         // Solo quello che è ancora trattenuto: ciò che è passato (subito o al riepilogo) sta nella tendina, non qui
@@ -261,10 +255,13 @@ class NotifStore(private val context: Context) {
                     put("person", h.person ?: JSONObject.NULL); put("conv", h.conversation ?: JSONObject.NULL)
                     put("text", h.text); put("time", h.time); put("level", h.level.name)
                     put("count", h.count); put("msg", h.isMessage)
-                    put("release", h.releaseAt); put("post", h.postTime); put("title", h.title ?: JSONObject.NULL); put("why", h.reason ?: JSONObject.NULL); put("ch", h.channel ?: JSONObject.NULL); put("chn", h.channelName ?: JSONObject.NULL); put("img", h.image ?: JSONObject.NULL)
+                    put("release", h.releaseAt); put("post", h.postTime); put("title", h.title ?: JSONObject.NULL); put("why", h.reason ?: JSONObject.NULL); put("ch", h.channel ?: JSONObject.NULL); put("chn", h.channelName ?: JSONObject.NULL); put("img", h.image ?: JSONObject.NULL); put("sc", h.shortcut ?: JSONObject.NULL)
+                    if (h.lines.isNotEmpty()) put("lines", JSONArray().apply {
+                        h.lines.forEach { l -> put(JSONObject().apply { put("t", l.time); put("s", l.sender ?: JSONObject.NULL); put("x", l.text) }) }
+                    })
                 })
             }
-            runCatching { file.writeText(arr.toString()) }
+            runCatching { file.writeSafely(arr.toString()) }
             // Le immagini delle notifiche lette se ne vanno con loro
             runCatching { NotifImages.prune(context, snapshot.mapNotNull { it.image }.toSet()) }
         }
@@ -289,6 +286,10 @@ class NotifStore(private val context: Context) {
                 channel = o.optString("ch").takeIf { !o.isNull("ch") && it.isNotEmpty() },
                 channelName = o.optString("chn").takeIf { !o.isNull("chn") && it.isNotEmpty() },
                 image = o.optString("img").takeIf { !o.isNull("img") && it.isNotEmpty() },
+                shortcut = o.optString("sc").takeIf { !o.isNull("sc") && it.isNotEmpty() },
+                lines = o.optJSONArray("lines")?.let { a -> (0 until a.length()).map { j -> a.getJSONObject(j) }.map { l ->
+                    HeldLine(l.optLong("t"), l.optString("s").takeIf { !l.isNull("s") && it.isNotEmpty() }, l.optString("x"))
+                } } ?: emptyList(),
             )
             m[h.key] = h
         }
@@ -304,7 +305,7 @@ class NotifStore(private val context: Context) {
         run {
             val o = JSONObject()
             snapshot.forEach { (p, apps) -> o.put(p, JSONObject(apps as Map<*, *>)) }
-            runCatching { learnFile.writeText(o.toString()) }
+            runCatching { learnFile.writeSafely(o.toString()) }
         }
     }
 
@@ -322,7 +323,7 @@ class NotifStore(private val context: Context) {
     fun wipe() {
         clear()
         io.execute { runCatching { NotifImages.wipe(context) } }
-        synchronized(this) { read.clear(); _today.value = emptyList() }
+        synchronized(this) { read.clear() }
         io.execute { runCatching { dismissedFile.delete() } }
         synchronized(this) { personApps.clear() }
         io.execute { runCatching { learnFile.delete() } }

@@ -14,6 +14,7 @@ import app.sordina.data.Held
 import app.sordina.data.Habits
 import app.sordina.data.RuleTarget
 import app.sordina.data.Rules
+import app.sordina.data.RuleOp
 import app.sordina.R
 import app.sordina.data.Categories
 import androidx.core.graphics.drawable.toBitmap
@@ -159,7 +160,6 @@ internal fun MainActivity.Root() {
         }
     }
     val held by app.store.held.collectAsState()
-    val today by app.store.today.collectAsState()
     val now = rememberNow()
     val groups = remember(held) { app.store.groups() }
     val signalCards by app.signals.cards.collectAsState()
@@ -476,17 +476,20 @@ internal fun MainActivity.Root() {
                     icon = ::notifIcon,
                     onOpen = { h -> SordinaListener.open(this@Root, h.key) },
                     onReadKeys = { keys -> SordinaListener.readKeys(this@Root, keys) },
-                    onReadAll = { SordinaListener.readAll(this@Root); screen = Screen.HOME },
                     onLetPass = ::letPass,
                     ruleOps = { t -> Rules.ops(prefs, t) },
                     ruleOn = { t, op -> Rules.isOn(prefs, t, op) },
                     onRule = ::setRule,
-                    onMove = { k, cat -> prefs.categoryOverrides = prefs.categoryOverrides + (k to cat.name); changed() },
+                    ruleNote = { t, op -> when {
+                        op != RuleOp.OFF && Rules.braked(prefs, t) -> tr(R.string.rule_braked)
+                        op == RuleOp.PERSON_IN && Rules.everywhere(prefs, t) -> tr(R.string.rule_everywhere)
+                        else -> null
+                    } },
                     onBack = { screen = Screen.HOME },
+                    aliasFor = ::aliasFor,
+                    onAlias = ::setAlias,
                     hiddenRevealed = hiddenRevealed,
                     onRevealHidden = { unlock(getString(R.string.hidden_apps)) { hiddenRevealed = true } },
-                    holdHint = remember(prefsVersion) { !prefs.sordinaHoldLearned },
-                    onHoldLearned = { if (!prefs.sordinaHoldLearned) { prefs.sordinaHoldLearned = true; changed() } },
                 )
                 }
 

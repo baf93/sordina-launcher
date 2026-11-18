@@ -45,18 +45,18 @@ class Silence(private val context: Context, private val prefs: Prefs) {
     /**
      * Le regole del silenzio di Sordina (solo da Android 15: prima cambierebbero il tuo Non disturbare).
      * Passano chiamate e messaggi dei preferiti (le tue persone importanti), chiamate ripetute,
-     * conversazioni prioritarie, sveglie e musica. [messagesFromAnyone]: in auto, mentre stai scrivendo a qualcuno.
+     * conversazioni prioritarie, sveglie e musica. [messagesFromAnyone]: mentre stai scrivendo a qualcuno.
      */
     private fun policy(messagesFromAnyone: Boolean) {
         if (Build.VERSION.SDK_INT < 35) return
-        // Chiamate: le persone importanti (i preferiti) e chi richiama entro pochi minuti. Sveglie e musica sempre.
-        // Messaggi: in auto passano tutti a Non disturbare, così decidono le tue regole di Sordina (le stesse di sempre);
-        // nel silenzio chiesto a mano solo i preferiti, o tutti mentre stai scrivendo a qualcuno.
+        // Chiamate: le persone importanti (i preferiti), in auto tutti i contatti, e chi richiama entro pochi minuti. Sveglie e musica sempre.
+        // Messaggi: solo i preferiti, o tutti mentre stai scrivendo a qualcuno. Anche in auto: Android Auto annuncia
+        // una notifica appena arriva, prima che Sordina la metta in sordina, quindi è Non disturbare a doverla fermare.
         val car = prefs.quietCar
-        val messages = if (car || (messagesFromAnyone && prefs.talkPass)) Policy.PRIORITY_SENDERS_ANY else Policy.PRIORITY_SENDERS_STARRED
+        val messages = if (messagesFromAnyone && prefs.talkPass) Policy.PRIORITY_SENDERS_ANY else Policy.PRIORITY_SENDERS_STARRED
         val categories = Policy.PRIORITY_CATEGORY_CALLS or Policy.PRIORITY_CATEGORY_REPEAT_CALLERS or Policy.PRIORITY_CATEGORY_MESSAGES or
             Policy.PRIORITY_CATEGORY_CONVERSATIONS or Policy.PRIORITY_CATEGORY_ALARMS or Policy.PRIORITY_CATEGORY_MEDIA
-        val conversations = if (car) Policy.CONVERSATION_SENDERS_ANYONE else Policy.CONVERSATION_SENDERS_IMPORTANT
+        val conversations = Policy.CONVERSATION_SENDERS_IMPORTANT
         // Chiamate in auto: anche tutti i tuoi contatti (con le mani libere una chiamata si prende); zitti solo i numeri sconosciuti
         val calls = if (car) Policy.PRIORITY_SENDERS_CONTACTS else Policy.PRIORITY_SENDERS_STARRED
         val wanted = Policy(categories, calls, messages, 0, conversations)

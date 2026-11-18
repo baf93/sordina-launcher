@@ -41,17 +41,28 @@ object Rules {
         else -> null
     }
 
+    /**
+     * La persona entra già ovunque (sezione Persone): "Fai entrare" vale già e da qui non si toglie
+     * (toglierla da tutte le app con un tocco su una notifica sarebbe troppo).
+     */
+    fun everywhere(prefs: Prefs, t: RuleTarget): Boolean = t.person != null &&
+        Classifier.importantKey(t.personTitle ?: t.person, prefs.importantNames, exact = t.pkg !in Classifier.CONTACT_NAMED) != null
+
+    /** L'app è frenata: resta in sordina, "Fai entrare" si legge ma non si tocca. */
+    fun braked(prefs: Prefs, t: RuleTarget): Boolean = t.pkg in prefs.braked
+
     fun isOn(prefs: Prefs, t: RuleTarget, op: RuleOp): Boolean = when (op) {
-        RuleOp.PERSON_IN -> t.person != null && Classifier.personRuleKey(t.pkg, t.person) in prefs.peopleIn
+        RuleOp.PERSON_IN -> t.person != null && (Classifier.personRuleKey(t.pkg, t.person) in prefs.peopleIn || everywhere(prefs, t))
         RuleOp.APP_IN -> t.pkg in prefs.inApps
         RuleOp.OFF -> offKey(t)?.let { it in prefs.offChats || it in prefs.offTypes } == true
     }
 
     /** Accende o spegne una scelta. Toglie anche "lascia passare per qualche ora", che la contraddirebbe. */
     fun toggle(prefs: Prefs, t: RuleTarget, op: RuleOp) {
+        if (op != RuleOp.OFF && braked(prefs, t)) return
         val on = !isOn(prefs, t, op)
         when (op) {
-            RuleOp.PERSON_IN -> t.person?.let { p ->
+            RuleOp.PERSON_IN -> if (!everywhere(prefs, t)) t.person?.let { p ->
                 val k = Classifier.personRuleKey(t.pkg, p)
                 if (on) prefs.offChats = prefs.offChats - k
                 prefs.peopleIn = if (on) prefs.peopleIn + k else prefs.peopleIn - k
@@ -70,6 +81,7 @@ object Rules {
 
     /** Un'app entra o no. Togliendola si tolgono anche le sue eccezioni: rimettendola, entra tutto. */
     fun setApp(prefs: Prefs, pkg: String, on: Boolean) {
+        if (on && pkg in prefs.braked) return
         prefs.inApps = if (on) prefs.inApps + pkg else prefs.inApps - pkg
         if (!on) {
             prefs.offTypes = prefs.offTypes.filterTo(HashSet()) { it.substringBefore('|') != pkg }

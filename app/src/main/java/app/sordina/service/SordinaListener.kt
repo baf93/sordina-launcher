@@ -1,6 +1,7 @@
 package app.sordina.service
 
 import app.sordina.data.Tally
+import app.sordina.data.HeldLine
 import app.sordina.data.NotifImages
 import android.app.ActivityOptions
 import android.app.NotificationManager
@@ -15,7 +16,6 @@ import android.service.notification.StatusBarNotification
 import app.sordina.SordinaApp
 import app.sordina.data.CardDetector
 import app.sordina.data.CardKind
-import app.sordina.data.Decision
 import app.sordina.data.Held
 import app.sordina.data.Level
 import app.sordina.data.Moments
@@ -125,7 +125,8 @@ class SordinaListener : NotificationListenerService() {
 
     /** Legge la notifica e aggiunge quello che sa solo il telefono: componente di sistema, app nascosta. */
     private fun info(sbn: StatusBarNotification, app: SordinaApp): NotifInfo = Classifier.read(sbn).let {
-        it.copy(system = isSystemComponent(it.pkg), hidden = "${it.pkg}#${it.user}" in hiddenSet(app.prefs.hidden))
+        it.copy(system = isSystemComponent(it.pkg), hidden = "${it.pkg}#${it.user}" in hiddenSet(app.prefs.hidden),
+            contactName = it.personUri?.let { u -> runCatching { app.people.nameForUri(u) }.getOrNull() })
     }
 
     /**
@@ -208,7 +209,10 @@ class SordinaListener : NotificationListenerService() {
         // In auto no: mentre guidi non lo leggeresti, e l'originale lo ritrovi quando ti fermi
         val muted = ranking?.matchesInterruptionFilter() == false
         if (fresh && level == Level.SEMPRE && app.silence.isActive() && muted && !app.prefs.quietCar) app.status.alert(held, sbn.notification.contentIntent)
-        if (fresh) store.log(Decision(now, sbn.packageName, label, level, verdict.reason))
+        if (fresh && (verdict.reason == Classifier.REASON_OTP || verdict.reason == Classifier.REASON_PAY_ALERT)) {
+            val seen = app.prefs.securityApps
+            if (seen[sbn.packageName] != label) app.prefs.securityApps = (seen - sbn.packageName + (sbn.packageName to label)).entries.toList().takeLast(40).associate { it.key to it.value }
+        }
     }
 
     /** Il testo con cui una notifica sta in Sordina: serve anche a riconoscerla se torna uguale dopo che l'hai letta. */
@@ -224,6 +228,9 @@ class SordinaListener : NotificationListenerService() {
             text = text, time = sbn.postTime, level = level, count = info.count,
             isMessage = info.isMessage, releaseAt = release, postTime = sbn.postTime,
             title = if (info.isMessage) null else info.title.takeIf { it.isNotBlank() && it != info.text },
+            shortcut = if (info.isMessage) info.shortcut else null,
+            // Più messaggi nella stessa notifica: si tengono tutti, così in Sordina si leggono uno per uno
+            lines = if (info.isMessage && info.lines.size > 1) info.lines.takeLast(MAX_LINES).map { (t, s, x) -> HeldLine(t, s, x) } else emptyList(),
             reason = reason,
             channel = info.channel, channelName = chName ?: channelName(sbn.key),
             // Solo per quelle che restano in Sordina: le altre l'immagine la mostrano già nella tendina
@@ -266,7 +273,7 @@ class SordinaListener : NotificationListenerService() {
             }
             val info = info(sbn, app)
             val fresh = heldOf(sbn, info, h.appLabel, h.level, store.get(h.key)?.releaseAt ?: h.releaseAt, h.reason, h.channelName)
-            if (fresh.postTime == h.postTime && fresh.text == h.text && fresh.count == h.count) continue
+            if (fresh.postTime == h.postTime && fresh.text == h.text && fresh.count == h.count && fresh.lines == h.lines) continue
             val verdict = Classifier.classify(info, snap)
             val level = verdict.level
             if (!(level == Level.RIEPILOGO && verdict.reason in Classifier.MUTED_BY_YOU)) card(sbn, info, scanPlans = true)
@@ -286,7 +293,8 @@ class SordinaListener : NotificationListenerService() {
         // App nascosta: in Casa solo il codice che è passato, senza il nome dell'app né l'immagine; niente piani, niente risposte imparate
         if (info.hidden) {
             Faults.guard("card.hidden") {
-                val otp = Classifier.isOtp(info.title + " " + info.text)
+                // "Non indovinare per questa app" vale anche qui: niente scheda del codice
+                val otp = info.pkg !in SordinaApp.of(this).prefs.noGuess && Classifier.securityOtp(info)
                 val c = if (!otp) null else CardDetector.detect(sbn.key, sbn.packageName, app.sordina.tr(app.sordina.R.string.hidden_apps), info.category,
                     info.title, info.text, info.ongoing, true, emptyList(), null, sbn.postTime)?.takeIf { it.kind == CardKind.OTP }
                 val signals = SordinaApp.of(this).signals
@@ -296,7 +304,7 @@ class SordinaListener : NotificationListenerService() {
         }
         Faults.guard("card") {
             CardDetector.detect(sbn.key, sbn.packageName, label(sbn.packageName), info.category, info.title, info.text,
-                info.ongoing, Classifier.isOtp(info.title + " " + info.text), buttons(sbn), progress(sbn), sbn.postTime)
+                info.ongoing, info.pkg !in SordinaApp.of(this).prefs.noGuess && Classifier.securityOtp(info), buttons(sbn), progress(sbn), sbn.postTime)
                 ?.let { k -> if (k.kind == CardKind.MUSIC) k else NotifImages.bitmap(this, sbn)?.let { k.copy(image = it) } ?: k }
                 ?.copy(pkg = sbn.packageName).let { c ->
                 val signals = SordinaApp.of(this).signals
@@ -401,6 +409,8 @@ class SordinaListener : NotificationListenerService() {
             .mapTo(HashSet()) { it.substringBefore('/') + "#" + it.substringAfterLast('#') }
         /** Quanto Android tiene posticipata una notifica in sordina; Sordina rinnova prima della fine. */
         const val HOLD_MILLIS = 24L * 3_600_000
+        /** Quanti messaggi di una chat tenere in una notifica (gli ultimi) */
+        const val MAX_LINES = 30
         /** I motivi del [Classifier] che vengono da una scelta tua, non da un'ipotesi di Sordina */
         private val YOUR_RULES = setOf("regola dell'app", "regola della persona", "regola del tipo")
         /** Si rinnova quando ne mancano meno di queste */
@@ -601,9 +611,11 @@ class SordinaListener : NotificationListenerService() {
                 app.store.remove(h.key)
                 app.status.cancelAlert(h.key)
                 app.signals.removeSource(h.key)
-                // Ricordata con il suo testo, solo se aspettava: se torna uguale entro due giorni si chiude da sola
+                // Ricordata con il suo testo, solo se aspettava: se l'app la ripubblica uguale si chiude da sola
                 if (h.releaseAt > 0) app.store.markRead(h.key, h.text)
-                if (h.releaseAt <= System.currentTimeMillis()) runCatching { instance?.cancelNotification(h.key) }
+                // Chiusa anche se è posticipata (Android chiude anche quelle): altrimenti tornerebbe nella tendina
+                // entro un giorno, già letta, ogni volta che l'app l'ha aggiornata nel frattempo
+                runCatching { instance?.cancelNotification(h.key) }
             }
         }
     }

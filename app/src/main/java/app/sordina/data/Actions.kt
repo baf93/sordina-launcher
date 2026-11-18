@@ -50,6 +50,8 @@ class Actions(
         is Act.Navigate -> navigate(act.place)
         is Act.Music -> music(act.query)
         is Act.Assist -> assist(act.text)
+        // Lo gestisce la schermata (serve l'impronta): qui non arriva
+        is Act.AlarmOff, is Act.AlarmOn, is Act.Routine -> Outcome(null, false)
         is Act.Setting -> start(Intent(act.action)).let { Outcome(null, it) }
         Act.SordinaSettings -> Outcome(null)
         is Act.Web -> web(act.query)

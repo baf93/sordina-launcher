@@ -55,6 +55,18 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import app.sordina.SordinaApp
 import app.sordina.data.HomeAssistant
 import app.sordina.service.SordinaAccess
+import app.sordina.service.AlarmCode
+import app.sordina.data.HaEntity
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.LockOpen
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Fingerprint
+import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.Shield
+import app.sordina.data.SavedRoutine
+import app.sordina.data.HomeRoutines
 import app.sordina.tr
 import app.sordina.ui.theme.S
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +79,7 @@ import kotlinx.coroutines.withContext
  * Il secondo livello resta chiuso finché non lo chiedi.
  */
 @Composable
-internal fun HaSettings(app: SordinaApp, ops: Ops, onChange: () -> Unit) {
+internal fun HaSettings(app: SordinaApp, ops: Ops, onAlarm: (String, String) -> Unit = { _, _ -> }, onRoutine: (String, String) -> Unit = { _, _ -> }, onChange: () -> Unit) {
     val prefs = app.prefs
     val ctx = LocalContext.current
     var on by remember { mutableStateOf(prefs.haEnabled) }
@@ -118,8 +130,10 @@ internal fun HaSettings(app: SordinaApp, ops: Ops, onChange: () -> Unit) {
             Line(tr(R.string.disconnect), icon = Icons.Rounded.LinkOff) { ask = true }
         }
         if (ask) Confirm(tr(R.string.s_ha_disc_title), tr(R.string.s_ha_disc_text), tr(R.string.disconnect),
-            onConfirm = { app.ha.setToken(""); prefs.haUrl = ""; prefs.haLocalUrl = ""; prefs.haStatusEntity = ""; prefs.haCalendar = ""; prefs.haCalendarName = ""; connected = false; open = false; ask = false; changed() },
+            onConfirm = { AlarmCode.forgetAll(prefs); app.ha.setToken(""); prefs.haUrl = ""; prefs.haLocalUrl = ""; prefs.haStatusEntity = ""; prefs.haCalendar = ""; prefs.haCalendarName = ""; connected = false; open = false; ask = false; changed() },
             onDismiss = { ask = false })
+        AlarmCodes(app, onAlarm)
+        RoutinePicks(app, onRoutine)
         return
     }
 
@@ -211,4 +225,177 @@ private fun RoundIcon(icon: ImageVector, label: String, onClick: () -> Unit) {
     Box(Modifier.size(40.dp).clip(CircleShape).background(c.bg).clickable(onClickLabel = label, onClick = onClick), contentAlignment = Alignment.Center) {
         Icon(icon, label, Modifier.size(20.dp), tint = c.ink)
     }
+}
+
+/**
+ * Gli allarmi di Home Assistant da disattivare con l'impronta ("disattiva allarme"): li scegli tu, uno per uno,
+ * ciascuno col suo codice. Ogni allarme ha la sua pagina ([HaAlarmPage]).
+ */
+@Composable
+private fun AlarmCodes(app: SordinaApp, onAlarm: (String, String) -> Unit) {
+    val prefs = app.prefs
+    val ctx = LocalContext.current
+    Topic(tr(R.string.alarm_topic), tr(R.string.alarm_topic_hint))
+    if (!AlarmCode.available(ctx)) {
+        Group { Line(tr(R.string.alarm_no_bio), icon = Icons.Rounded.Lock) }
+        return
+    }
+    var alarms by remember { mutableStateOf<List<HaEntity>?>(null) }
+    LaunchedEffect(Unit) { alarms = withContext(Dispatchers.IO) { runCatching { app.ha.alarms() }.getOrDefault(emptyList()) } }
+    val found = alarms ?: return
+    val saved = prefs.haAlarms
+    // Anche quelli salvati che adesso Home Assistant non elenca (fuori casa, o rinominati): si possono togliere
+    val ids = (found.map { it.id } + saved.keys).distinct()
+    Group {
+        if (ids.isEmpty()) Line(tr(R.string.alarm_none), icon = Icons.Rounded.Lock)
+        ids.forEach { id ->
+            val e = found.firstOrNull { it.id == id }
+            val name = e?.name ?: saved[id]?.name ?: id
+            val s = saved[id]
+            // Sotto: se inserisce anche, e in che modalità
+            val hint = when {
+                s == null && e != null && e.codeFormat == null -> tr(R.string.alarm_no_code)
+                s?.arm == true -> tr(R.string.alarm_hint_arm, AlarmCode.modeLabel(s.mode ?: "away"))
+                else -> null
+            }
+            Line(name, if (s != null) tr(R.string.alarm_saved_short) else tr(R.string.alarm_add), hint,
+                if (s != null) Icons.Rounded.Lock else Icons.Rounded.LockOpen) { onAlarm(id, name) }
+        }
+    }
+}
+
+/**
+ * Un allarme: se non è salvato, il codice da scrivere (o niente, se non lo chiede); se è salvato, anche inserire,
+ * la modalità predefinita e togliere il codice. Interruttori e scelte sulla pagina, niente fogli.
+ */
+@Composable
+internal fun HaAlarmPage(app: SordinaApp, id: String, name: String, onGone: () -> Unit) {
+    val prefs = app.prefs
+    val activity = LocalContext.current as? android.app.Activity ?: return
+    var e by remember { mutableStateOf<HaEntity?>(null) }
+    LaunchedEffect(id) { e = withContext(Dispatchers.IO) { runCatching { app.ha.alarms() }.getOrDefault(emptyList()) }.firstOrNull { it.id == id } }
+    var saved by remember { mutableStateOf(prefs.haAlarms[id]) }
+    var removing by remember { mutableStateOf(false) }
+    val s = saved
+    if (s == null) {
+        // Da salvare: il codice si scrive qui una volta, poi l'impronta lo chiude sul telefono
+        val needsCode = e?.codeFormat != null
+        var code by remember(id) { mutableStateOf("") }
+        Hint(if (needsCode) tr(R.string.alarm_save_sub) else tr(R.string.alarm_no_code), Modifier.padding(start = 12.dp, top = 8.dp, bottom = 8.dp))
+        Group {
+            Column(Modifier.background(S.c.card).padding(horizontal = 16.dp, vertical = 8.dp)) {
+                if (needsCode) Field(code, { code = it }, tr(R.string.alarm_code), password = true,
+                    keyboard = if (e?.codeFormat == "number") KeyboardType.NumberPassword else KeyboardType.Password)
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+        Primary(tr(R.string.alarm_add), Modifier.fillMaxWidth()) {
+            val c = code.trim()
+            if (needsCode && c.isEmpty()) return@Primary
+            AlarmCode.save(activity, prefs, id, name, if (needsCode) c else "") {
+                prefs.haAlarms[id]?.let { cur ->
+                    prefs.haAlarms = prefs.haAlarms + (id to cur.copy(mode = cur.mode ?: e?.armModes?.firstOrNull(), codeArm = e?.codeArmRequired ?: true))
+                }
+                saved = prefs.haAlarms[id]
+            }
+        }
+        return
+    }
+    fun update(a: app.sordina.data.SavedAlarm) { prefs.haAlarms = prefs.haAlarms + (id to a); saved = prefs.haAlarms[id] }
+    val modes = e?.armModes?.takeIf { it.isNotEmpty() } ?: listOfNotNull(s.mode)
+    Spacer(Modifier.height(8.dp))
+    Group {
+        Toggle(tr(R.string.alarm_can_arm), s.arm, if (s.arm) tr(R.string.alarm_hint_arm, AlarmCode.modeLabel(s.mode ?: modes.firstOrNull() ?: "away")) else null, Icons.Rounded.Shield) { v ->
+            update(s.copy(arm = v, codeArm = e?.codeArmRequired ?: s.codeArm))
+        }
+    }
+    if (s.arm && modes.isNotEmpty()) {
+        Topic(tr(R.string.alarm_pick_mode))
+        Group {
+            val cur = s.mode ?: modes.first()
+            modes.forEach { m ->
+                Line(AlarmCode.modeLabel(m), trailing = {
+                    if (m == cur) Icon(Icons.Rounded.Check, null, Modifier.size(22.dp), tint = S.c.accent) else Spacer(Modifier.size(22.dp))
+                }) { update(s.copy(mode = m)) }
+            }
+        }
+    }
+    Spacer(Modifier.height(16.dp))
+    Group { Line(tr(R.string.alarm_forget_item), icon = Icons.Rounded.DeleteOutline) { removing = true } }
+    if (removing) Confirm(tr(R.string.alarm_forget_title, s.name), tr(R.string.alarm_forget_text), tr(R.string.alarm_forget),
+        onConfirm = { AlarmCode.forget(prefs, id); removing = false; onGone() },
+        onDismiss = { removing = false })
+}
+
+/**
+ * Le routine di Home Assistant (scene e script): ti mostro quelle che vedo; ognuna ha la sua pagina ([HaRoutinePage]).
+ */
+@Composable
+private fun RoutinePicks(app: SordinaApp, onRoutine: (String, String) -> Unit) {
+    val prefs = app.prefs
+    Topic(tr(R.string.routine_topic), tr(R.string.routine_topic_hint))
+    var found by remember { mutableStateOf<List<HaEntity>?>(null) }
+    LaunchedEffect(Unit) { found = withContext(Dispatchers.IO) { runCatching { app.ha.routines() }.getOrDefault(emptyList()) } }
+    val list = found ?: return
+    val enabled = prefs.haRoutines
+    // Anche quelle salvate che adesso Home Assistant non elenca: si possono spegnere
+    val ids = (list.sortedBy { it.name.lowercase() }.map { it.id } + enabled.keys).distinct()
+    Group {
+        if (ids.isEmpty()) Line(tr(R.string.routine_none), icon = Icons.Rounded.PlayArrow)
+        ids.forEach { id ->
+            val name = list.firstOrNull { it.id == id }?.name ?: enabled[id]?.name ?: id
+            val r = enabled[id]?.takeIf { it.on }
+            val value = when { r == null -> tr(R.string.routine_value_off); r.auth || r.alarm != null -> tr(R.string.routine_auth); else -> tr(R.string.routine_free) }
+            // Sotto: l'allarme legato e le tue frasi ("e disattiva Centrale · «sto entrando»")
+            val hint = listOfNotNull(
+                r?.alarm?.let { a -> prefs.haAlarms[a]?.name }?.let { tr(if (r.arm) R.string.routine_hint_arm else R.string.routine_hint_alarm, it) },
+                r?.phrases?.takeIf { it.isNotEmpty() }?.joinToString(", ") { "«$it»" },
+            ).joinToString(" · ").ifEmpty { null }
+            Line(name, value, hint, if (r != null) Icons.Rounded.PlayArrow else null) { onRoutine(id, name) }
+        }
+    }
+}
+
+/**
+ * Una routine: attiva, con impronta, e per ogni allarme salvato "Inserisci" (dopo la routine) o "Disattiva" (prima).
+ * Le due cose sull'allarme si escludono, e con un allarme l'impronta c'è sempre. Sotto, le tue frasi.
+ */
+@Composable
+internal fun HaRoutinePage(app: SordinaApp, id: String, name: String) {
+    val prefs = app.prefs
+    val c = S.c
+    var r by remember(id) { mutableStateOf(prefs.haRoutines[id] ?: SavedRoutine(name, auth = true, on = false)) }
+    fun update(n: SavedRoutine) { r = n; prefs.haRoutines = prefs.haRoutines + (id to n) }
+    val alarms = prefs.haAlarms.entries.sortedBy { it.value.name.lowercase() }
+    Spacer(Modifier.height(8.dp))
+    Group {
+        Toggle(tr(R.string.routine_use), r.on, null, Icons.Rounded.PlayArrow) { v -> update(r.copy(on = v)) }
+        if (r.on) {
+            val forced = r.alarm != null
+            Toggle(tr(R.string.routine_auth), r.auth || forced, if (forced) tr(R.string.routine_auth_needed) else null, Icons.Rounded.Fingerprint) { v ->
+                if (!forced) update(r.copy(auth = v))
+            }
+            alarms.forEach { (a, s) ->
+                Toggle(tr(R.string.routine_arm_x, s.name), r.alarm == a && r.arm, null, Icons.Rounded.Shield) { v ->
+                    update(if (v) r.copy(alarm = a, arm = true, auth = true) else r.copy(alarm = null, arm = false))
+                }
+                Toggle(tr(R.string.alarm_off_x, s.name), r.alarm == a && !r.arm, null, Icons.Rounded.LockOpen) { v ->
+                    update(if (v) r.copy(alarm = a, arm = false, auth = true) else r.copy(alarm = null, arm = false))
+                }
+            }
+        }
+    }
+    if (!r.on) return
+    // Le tue frasi per lanciarla, oltre al nome: una per riga
+    Topic(tr(R.string.routine_phrases), tr(R.string.routine_phrases_hint))
+    var text by remember(id) { mutableStateOf(r.phrases.joinToString("\n")) }
+    Group {
+        Box(Modifier.fillMaxWidth().background(c.card).padding(horizontal = 16.dp, vertical = 14.dp)) {
+            if (text.isEmpty()) Text(tr(R.string.routine_phrases_hint), style = TextStyle(fontSize = 16.sp, color = c.soft))
+            BasicTextField(text, { t -> text = t; update(r.copy(phrases = HomeRoutines.parsePhrases(t))) }, minLines = 3,
+                textStyle = TextStyle(fontSize = 16.sp, color = c.ink), cursorBrush = SolidColor(c.accent),
+                modifier = Modifier.fillMaxWidth())
+        }
+    }
+    Spacer(Modifier.height(26.dp))
 }

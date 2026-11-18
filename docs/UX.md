@@ -59,19 +59,31 @@ In auto il fumetto è lo stesso, sotto "Tocca e parla"; il "di solito" non c'è,
 - Sotto, sei app: quelle che usi a quell'ora. Pressione lunga: tieni qui, togli.
 - Scrivendo: app, persone ("chiama Anna", "scrivi a Paolo che arrivo"), timer, sveglie, impegni ("calcetto domani alle 17"), calcoli, impostazioni.
 - Comandi di casa ("spegni luci sala"): passati ad **Assist** di Home Assistant, che conosce stanze e alias. Solo le entità che esponi ad Assist.
-- Verso altre persone serve sempre il tuo tocco. Anche per i comandi di casa che aprono o disarmano (porte, serrature, cancelli, garage, allarme): mai da soli, né a voce né dalle schede.
+- Verso altre persone serve sempre il tuo tocco.
+- I comandi di casa che aprono o disarmano (porte, serrature, cancelli, garage, allarme) chiedono impronta o PIN, da qualunque parte arrivino (voce, tastiera, proposta). Si riconoscono dalle parole e dal nome vero in Home Assistant: se la serratura si chiama "Ingresso", "apri ingresso" chiede l'impronta, "accendi luce ingresso" no. Chiudere, bloccare, inserire l'allarme: subito. Senza blocco schermo sul telefono basta un "Procedi". I pulsanti delle notifiche di Home Assistant restano come li hai configurati.
+- Allarmi: in Impostazioni › Home Assistant scegli quali allarmi (qualunque `alarm_control_panel`) disattivare con l'impronta, ciascuno col suo codice. "Disattiva allarme" (o il suo nome) chiede l'impronta e manda il codice; con più allarmi salvati, se non lo nomini, chiede quale. Il codice è chiuso da una chiave che si apre solo con l'impronta (non col PIN del telefono) e si annulla se registri un'impronta nuova. Se l'impronta non va, il codice si scrive a mano e non si salva.
+- Routine: in Impostazioni › Home Assistant › Routine vedi scene e script della casa e ognuna ha la sua pagina con gli interruttori: Usa questa routine, Con impronta, e per ogni allarme salvato Inserisci (dopo la routine: "Esco" + centrale) o Disattiva (prima: "Entra" + centrale; se l'allarme non si disattiva, la routine non parte). Le due cose sull'allarme si escludono e con un allarme l'impronta è sempre accesa. Anche ogni allarme ha la sua pagina (codice, anche inserire, modalità, togli il codice): niente fogli dal basso in Home Assistant. Si chiamano per nome ("buonanotte", "attiva scena esci") o con le tue frasi ("sto entrando", una per riga in Impostazioni) e possono comparire fra le proposte; il tocco chiede comunque l'impronta, se scelta.
+- Inserire: per ogni allarme salvato si può accendere "Anche inserire" (spento all'inizio: di solito inserisce già Home Assistant con le sue automazioni) e scegliere la modalità predefinita fra quelle che l'allarme sa fare (Fuori casa, In casa, Notte, Vacanza, Personalizzata). "Inserisci allarme" usa la predefinita, "inserisci allarme notte" quella detta. Se l'allarme vuole il codice anche per inserire, impronta; se no subito. Già inserito: lo dice e basta.
+- Allarme già disattivato: "disattiva allarme", o una routine legata a quell'allarme, dice "è già disattivato" e si ferma lì (niente impronta, niente routine).
 
 ## 4. Notifiche
 
-- **Passa:** persone importanti, codici, avvisi di pagamento sospetti, chiamate, sveglie, app scelte da te. Nella tendina, come le manda l'app.
+Tutto aspetta in sordina, tranne:
+
+- **Importanti:** codici e sicurezza, chiamate perse, promemoria, urgenze, conversazione in corso, sistema. Codici e sicurezza non si spengono; si spengono solo per un'app che sbaglia (le offerte con "codice SCONTO20").
+- **App:** le app che entrano. Toccandone una, si spengono i tipi di notifica o le chat che non servono.
+- **Persone:** le persone importanti, ovunque o solo da un'app.
 - **In sordina:** tutto il resto, nella pagina Sordina finché non la apri. Niente riepiloghi a orario.
+
+Dalla pagina Sordina, tieni premuta una notifica: "entra sempre", "spegni questo tipo", "spegni questa chat". Le regole si spiegano con le parole di Sordina ("lo faccio passare", "lo tengo io"), mai con nomi di livelli.
 - Sordina le sospende con la funzione standard di Android, non le copia: aperte dalla pagina Sordina si aprono **originali**, nel punto giusto.
 - Nulla si perde: se Sordina si ferma, Android le rimette nella tendina entro un giorno.
 - Le app nascoste sono una riga sola ("App nascoste · N"): chi e cosa si vedono solo dopo lo sblocco.
 - Urgenze e insistenza contano solo dai tuoi contatti: un SMS "URGENTE" da un numero sconosciuto resta in sordina.
 - In Casa la frase dice quante aspettano; toccandola, la lista.
 
-Notte (orario) e auto (Android Auto): passano solo le persone importanti, da sole, senza menu.
+Notte (orario) e auto (Android Auto): aspettano anche chiamate perse, promemoria e le persone che entrano da un'app sola; il resto delle eccezioni passa, senza menu.
+In auto, Non disturbare fa passare solo i messaggi delle persone importanti (i preferiti) e, mentre scrivi a qualcuno, di tutti: Android Auto annuncia una notifica appena arriva, prima che Sordina la metta in sordina, quindi è Non disturbare a doverla fermare. Il resto aspetta nella tendina e in Sordina.
 
 ## 5. Aspetto
 
@@ -85,7 +97,7 @@ Quattro passi, ognuno un titolo e un pulsante: Home · Notifiche · Persone impo
 
 ## 7. Impostazioni
 
-Persone importanti · Cosa passa subito (per app) · Orari dei riepiloghi · Notte · Home Assistant · Dati (esporta, importa, cancella) · Informazioni.
+Notifiche (Importanti · App · Persone · ordine della pagina Sordina) · Casa · Freno · Ricerca · Temi · Progressi · Generali (permessi, lingua, dati: esporta, importa, copia giornaliera) · Home Assistant.
 
 ## 8. Tolto rispetto alla bozza 1
 

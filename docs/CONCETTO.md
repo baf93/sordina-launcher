@@ -56,8 +56,8 @@ Il telefono riconosce in che momento sei e cambia ciò che propone. Momenti pred
 
 L'utente modifica, aggiunge o spegne i momenti.
 
-### Riepiloghi
-Ciò che non è urgente arriva in blocchi: predefiniti alle 8, alle 13 e alle 19. Ogni riepilogo raggruppa per persona, non per app. Nulla viene cancellato: se un riepilogo non lo apri, il contenuto resta al successivo.
+### La pagina Sordina
+Ciò che non passa aspetta nella pagina Sordina, raggruppato per persona, non per app, finché non lo apri o lo segni letto. Niente riepiloghi a orario: ci vai tu quando vuoi. Nulla viene cancellato.
 
 ### Messaggi: leggi qui, rispondi nell'app
 Niente risposte rapide. Ogni messaggio o avviso si legge per intero dentro Sordina (mittente, testo, anteprima). Un tocco porta nell'app, nel punto giusto, esattamente come toccare la notifica originale.
@@ -94,25 +94,29 @@ Cento adesivi della mascotte, tutti sul detox: le scelte del freno, le giornate 
 
 ## Cosa passa e cosa aspetta
 
-Tre livelli, decisi dall'utente. I predefiniti:
+Tutto aspetta in sordina, tranne tre cose decise dall'utente (Impostazioni → Notifiche):
 
-| Livello | Cosa contiene (predefinito) | Come arriva |
+| Tranne | Cosa contiene | Come arriva |
 |---|---|---|
-| Sempre | App scelte da te come "Sempre" (es. allarmi di casa) | Subito, anche in modalità e di notte |
-| Passa | Persone importanti, codici, avvisi di pagamento sospetti, chiamate perse, promemoria, app scelte da te | Nella tendina, come la manda l'app |
+| **Importanti** | Codici e sicurezza (codici di accesso, avvisi di pagamento sospetti), chiamate perse, promemoria, urgenze dai contatti, conversazione in corso, notifiche di sistema. Ognuno si spegne, tranne Codici e sicurezza: lì si spegne solo per un'app che sbaglia ("non indovinare per questa app") | Nella tendina, come le manda l'app |
+| **App** | Le app che entrano, con eventuali eccezioni dentro (un tipo di notifica, una chat) | Nella tendina, anche di notte e in auto |
+| **Persone** | Le persone importanti, ovunque o da un'app sola ("su WhatsApp"); nei gruppi solo se scelto | Nella tendina |
 | In sordina | Tutto il resto | Nella pagina Sordina, finché non la apri |
 
 La catena delle regole è fissa e deterministica (stessa notifica, stesse regole → stesso verdetto), in quest'ordine:
-regola per tipo di notifica (canale) → di sistema, chiamate, sveglie, media → "lascia passare per un po'" →
-regola per persona (per app) → app frenata → codici e avvisi di pagamento → app nascosta → conversazione in corso →
-app "Sempre" → persona importante → parole urgenti e insistenza (solo dai contatti, mai da numeri sconosciuti) →
-regola per app → pagamenti, chiamate perse, promemoria → predefinito (in sordina).
+tipo di notifica spento (salvo codici e sicurezza) → di sistema, chiamate, sveglie, media, in corso → "lascia passare per un po'" →
+codici e avvisi di pagamento (non per le app scelte con "non indovinare"; nei gruppi mai) → app frenata (sempre, anche se era fra le App o con persone che entrano) →
+chat spenta o persona che entra da un'app → app nascosta (se non è fra le App) → conversazione in corso → persona importante →
+App → urgenze e insistenza (solo in una chat a due, solo da chi è davvero in rubrica) → chiamate perse, promemoria →
+predefinito (in sordina).
+
+Un nome visto in un'app (Telegram, Signal…) vale come persona importante solo dove il nome viene dalla rubrica, o se l'hai collegato tu a quella conversazione: il collegamento è per conversazione, non per nome, così un altro che si chiama uguale non passa.
 
 Garanzie:
 - **Il segnale di calma è sempre visibile**, così si sa che non c'è niente invece di doverlo controllare.
 - **Nessuna perdita.** Ogni notifica in sordina resta nella pagina Sordina finché non la apri o la segni letta.
 - **Le tue scelte vincono.** Quello che metti in sordina tu (app, persona, tipo, frenata, nascosta) non torna davanti come scheda o proposta.
-- **Prova delle regole.** Una schermata mostra cosa è passato e cosa è stato trattenuto oggi, per correggere le regole.
+- **Il freno vince.** Un'app frenata resta in sordina: frenandola esce dalle App, non si può aggiungere fra le App né far entrare le sue persone (la scelta si legge ma non si tocca). Passano solo codici, chiamate e il "lascia passare" chiesto per qualche ora.
 
 ## Fonti di contesto
 
@@ -163,7 +167,7 @@ Dentro:
 - Schermo vuoto con segnale di calma
 - Barra delle intenzioni con app, contatti e scorciatoie
 - Sei proposte apprese per ora e luogo
-- Tre livelli di notifiche e riepiloghi
+- Notifiche: Importanti, App, Persone; il resto in sordina
 - Momenti Notte e In auto
 - Estensione Home Assistant minima: allarmi sopra il silenzioso e Buonanotte
 

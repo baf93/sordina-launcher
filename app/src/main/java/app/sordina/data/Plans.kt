@@ -214,7 +214,7 @@ class Plans(context: Context) {
                     a.put(JSONObject().put("k", p.key).put("l", p.label).put("w", p.who).put("s", p.snippet).put("at", p.at ?: 0L)
                         .put("d", p.dayOnly).put("pl", p.place).put("tr", p.tracking).put("fl", p.flight).put("p", p.posted).put("ev", p.event))
                 }
-                file.writeText(a.toString())
+                file.writeSafely(a.toString())
             }
         }
     }

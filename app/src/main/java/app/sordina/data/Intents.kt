@@ -20,8 +20,14 @@ sealed interface Act {
     data class Media(val keyCode: Int) : Act
     data class Navigate(val place: String) : Act
     data class Music(val query: String) : Act
-    /** Frase passata ad Assist di Home Assistant */
-    data class Assist(val text: String) : Act
+    /** Frase passata ad Assist di Home Assistant. [guarded]: apre o disarma qualcosa in casa, si conferma con impronta o PIN prima di partire ([HomeRisk]) */
+    data class Assist(val text: String, val guarded: Boolean = false) : Act
+    /** Una routine di Home Assistant abilitata in Sordina ([HomeRoutines]) */
+    data class Routine(val entity: String) : Act
+    /** Inserisce un allarme salvato in [mode] (null: la predefinita); null: si chiede quale */
+    data class AlarmOn(val entity: String?, val mode: String?) : Act
+    /** Disattiva un allarme salvato con l'impronta ([app.sordina.service.AlarmCode]); null: si chiede quale */
+    data class AlarmOff(val entity: String?) : Act
     data class Setting(val action: String) : Act
     data object SordinaSettings : Act
     data class Web(val query: String) : Act
@@ -189,7 +195,7 @@ class Intents(
             "set" -> if (rest == "sordina") Candidate("set:sordina", tr(R.string.s_settings), null, Kind.SETTING, 60, false, Act.SordinaSettings)
                 else SETTINGS.firstOrNull { it.third == rest }?.let { (_, title, action) -> Candidate("set:$action", title, tr(R.string.settings_kind), Kind.SETTING, 60, false, Act.Setting(action)) }
             // Un comando che ripeti: si ricapisce la frase (con le app e la casa di adesso)
-            "cmd" -> understandRaw(rest, apps, usage).firstOrNull()?.takeIf { !it.toOthers && it.kind != Kind.WEB && it.kind != Kind.APP && it.kind != Kind.CALC }
+            "cmd" -> understandRaw(rest, apps, usage).firstOrNull()?.takeIf { !it.toOthers && it.kind != Kind.WEB && it.kind != Kind.APP && it.kind != Kind.CALC && (it.act as? Act.Assist)?.guarded != true }
                 ?.copy(score = 60)
             else -> null
         }
@@ -302,6 +308,10 @@ class Intents(
         val first = nw.firstOrNull() ?: return
         val restN = nw.drop(1).filter { it.isNotEmpty() }.joinToString(" ")
 
+        // Una routine di casa abilitata, per nome: "buonanotte", "attiva scena esco"
+        if (ha.configured) prefs.haRoutines.filterValues { it.on }.let { r -> HomeRoutines.match(nw, r.mapValues { it.value.name }, r.mapValues { it.value.phrases })?.let { id ->
+            out += Candidate("routine:$id", r.getValue(id).name, tr(R.string.routine_kind), Kind.HOME, 97, false, Act.Routine(id)); return
+        } }
         // Torcia
         if (nw.any { it in TORCH } || nq == "luce telefono" || nq.contains("lampe torche") || nq.contains("lampe de poche")) {
             out += Candidate("torch", tr(R.string.torch), tr(R.string.torch_hint), Kind.ACTION, 97, false, Act.Torch); return
@@ -398,6 +408,16 @@ class Intents(
             if (place.isNotBlank()) out += Candidate("nav", tr(R.string.toward_x, place), tr(R.string.navigation), Kind.ACTION, 90, false, Act.Navigate(place))
             return
         }
+        // Un allarme salvato con l'impronta: "disattiva allarme", "spegni antifurto garage"
+        if (ha.configured) HomeRisk.alarmOff(nw, prefs.haAlarms.mapValues { it.value.name })?.let { which ->
+            out += Candidate("alarm-off", tr(R.string.alarm_off_x, which.second), tr(R.string.home_kind), Kind.HOME, 96, false, Act.AlarmOff(which.first))
+            return
+        }
+        // Inserire un allarme salvato, se l'hai permesso: "inserisci allarme", "attiva antifurto notte"
+        if (ha.configured) HomeRisk.alarmOn(nw, prefs.haAlarms.filterValues { it.arm }.mapValues { it.value.name })?.let { (id, name, mode) ->
+            out += Candidate("alarm-on", tr(R.string.alarm_on_x, name), tr(R.string.home_kind), Kind.HOME, 96, false, Act.AlarmOn(id, mode))
+            return
+        }
         // Casa
         val haVerbs = mapOf("accendi" to HaOp.ON, "attiva" to HaOp.ON, "apri" to HaOp.ON, "alza" to HaOp.ON,
             "spegni" to HaOp.OFF, "disattiva" to HaOp.OFF, "chiudi" to HaOp.OFF, "abbassa" to HaOp.OFF, "stacca" to HaOp.OFF,
@@ -408,7 +428,7 @@ class Intents(
             val target = restN.replace(Regex("(?:al|a|su|to|auf|sur|para|em) \\d{1,3} ?(%|percento|per cento|gradi|percent|degrees|grados|degres|grad|graus|prozent|por ciento|pour cent)?"), "").split(' ').filter { it !in setOf("on", "off", "the", "an", "aus", "ein") }.joinToString(" ").trim()
             if (ha.canAssist && target.isNotBlank()) {
                 // Casa: la frase va ad Assist, che conosce stanze, alias ed entità esposte (e la tua lingua: la frase resta com'è)
-                out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, if (first in OPEN) 80 else 90, sensitive(nw), Act.Assist(ow.joinToString(" ")))
+                out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, if (first in OPEN) 80 else 90, false, Act.Assist(ow.joinToString(" "), HomeRisk.needsAuth(nw, prefs.haGuarded, sensitive(nw))))
             }
             if (first in OPEN) {
                 Search.apps(restN, apps, emptyMap(), 2).forEach { a ->
@@ -425,12 +445,12 @@ class Intents(
         }
         // Un canale TV ("metti Rai 1", "guarda il 5"): a casa, non nella musica
         if (ha.canAssist && HomeTalk.channel(nw, prefs.homeWords + ha.names())) {
-            out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, 93, sensitive(nw), Act.Assist(ow.joinToString(" ")))
+            out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, 93, false, Act.Assist(ow.joinToString(" "), HomeRisk.needsAuth(nw, emptyList(), sensitive(nw))))
             return
         }
         // Casa senza comando: domande e stati ("che luci sono accese", "quanti gradi in salotto") vanno ad Assist, non sul web
         if (ha.canAssist) HomeTalk.score(nw, prefs.homeWords + ha.names())?.let { s ->
-            out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, s, sensitive(nw), Act.Assist(ow.joinToString(" ")))
+            out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, s, false, Act.Assist(ow.joinToString(" "), HomeRisk.needsAuth(nw, emptyList(), sensitive(nw))))
         }
         // Musica
         if (first in PLAY && restN.isNotBlank()) {
@@ -612,7 +632,7 @@ class Intents(
         /** Aprire: un'app o, per casa, una porta (la frase per Assist resta nella tua lingua). */
         /**
          * Comandi di casa che aprono o disarmano (porte, serrature, cancelli, garage, allarme): mai da soli,
-         * né dalla tastiera né dalla voce né da una proposta. Restano un tocco tuo.
+         * né dalla tastiera né dalla voce né da una proposta. Si confermano con impronta o PIN ([HomeRisk]).
          */
         private val SENSITIVE = setOf("porta", "portone", "portoncino", "cancello", "cancelletto", "garage", "basculante", "serratura", "serrature",
             "allarme", "antifurto", "sblocca", "disarma", "lock", "unlock", "door", "gate", "garage", "alarm", "disarm",

@@ -103,8 +103,12 @@ import app.sordina.data.tomorrow
 import app.sordina.data.Proposals
 import app.sordina.data.Understanding
 import app.sordina.service.Scheduler
+import app.sordina.service.Classifier
 import app.sordina.service.SordinaListener
 import app.sordina.service.BrakeGuard
+import app.sordina.service.BudgetWatch
+import app.sordina.service.HomeGuard
+import app.sordina.service.AlarmCode
 import app.sordina.service.SordinaAccess
 import app.sordina.service.Health
 import app.sordina.service.StatusNotification
@@ -150,6 +154,7 @@ class MainActivity : ComponentActivity(), Ops {
     /** Le app nascoste nella pagina Sordina: sbloccate fino a quando si lascia la pagina */
     internal var hiddenRevealed by mutableStateOf(false)
     /** L'ultimo codice copiato da una scheda e quando: si toglie dagli appunti dopo [COPY_TTL] */
+    private var guardTry = 0L
     internal var copiedCode: String? = null
     internal var copiedAt = 0L
     /** Si torna alla ricerca da Tutte le app: niente tastiera, anche se di solito si apre */
@@ -364,6 +369,13 @@ class MainActivity : ComponentActivity(), Ops {
         SordinaListener.rebind(this)
         SordinaAccess.revive(this)
         BrakeGuard.atHome(this, prefs)
+        // Le serrature e gli allarmi di casa, per chiedere l'impronta: si riguardano ogni sei ore (e dopo ogni comando)
+        // Fuori casa senza https la casa non risponde: si riprova al massimo ogni dieci minuti
+        val t = System.currentTimeMillis()
+        if (app.ha.configured && t - prefs.haGuardedAt > 6 * 3_600_000L && t - guardTry > 10 * 60_000L) {
+            guardTry = t
+            lifecycleScope.launch(Dispatchers.IO) { runCatching { app.ha.entities(force = true) } }
+        }
         // Le app frenate possono essere cambiate: l'accessibilità ascolta solo quelle
         SordinaAccess.refresh()
         SordinaListener.sync()
@@ -492,7 +504,11 @@ class MainActivity : ComponentActivity(), Ops {
             brakeTarget = a
             brakeVia = null
             screen = Screen.BRAKE
-        } else catalog.launch(a)
+        } else {
+            // Frenata ma fuori dalla fascia del freno: niente freno, però l'avviso del budget sì
+            if (a.packageName in prefs.braked) BudgetWatch.opened(this, a.packageName, sawBrake = false)
+            catalog.launch(a)
+        }
     }
 
     /** Il freno vale adesso? Sempre, o solo nella fascia scelta (es. 22–8). */
@@ -509,10 +525,20 @@ class MainActivity : ComponentActivity(), Ops {
     internal fun understand(q: String, learn: Boolean = true): Understanding = app.intents.understand(q, apps.filter { it.key !in hidden }, proposals.usage, learn)
 
     internal fun run(c: Candidate, index: Int) {
+        // Un allarme salvato: impronta, poi il codice va a Home Assistant. Non si impara né si propone
+        (c.act as? Act.AlarmOff)?.let { a -> alarmOff(a.entity); return }
+        (c.act as? Act.AlarmOn)?.let { a -> alarmOn(a.entity, a.mode); return }
+        // Apre o disarma qualcosa in casa: prima impronta o PIN, poi parte come sempre (e solo allora si impara)
+        (c.act as? Act.Assist)?.takeIf { it.guarded }?.let { a ->
+            HomeGuard.ask(this, c.title) { run(c.copy(act = a.copy(guarded = false)), index) }
+            return
+        }
         // index < 0: toccata tra le proposte, non dalla ricerca (non conta per "giusta al primo colpo")
         if (index >= 0) app.intents.chosen(query, c, index)
         // Le app aperte le ricorda launch() (o la cronologia d'uso): qui solo le lettere scritte e le altre azioni
         app.brain.chosen(query, c, perms.usage || c.act is Act.OpenApp)
+        // Una routine di casa: impronta se l'hai chiesta (e il codice dell'allarme legato), poi parte
+        (c.act as? Act.Routine)?.let { r -> routine(r.entity); return }
         when (val act = c.act) {
             is Act.OpenApp -> launch(act.app)
             Act.SordinaSettings -> { query = ""; screen = Screen.SETTINGS }
@@ -549,6 +575,133 @@ class MainActivity : ComponentActivity(), Ops {
                     act is Act.Web || act is Act.Setting
                 if (leaves && !here && out.ok && screen != Screen.SETTINGS) { screen = Screen.HOME; query = "" }
             }
+        }
+    }
+
+    /**
+     * Lancia una routine abilitata. Con un allarme da disattivare: una sola impronta apre il codice, si disattiva e,
+     * solo se è andata, parte la routine ("Entra" non parte con la centrale ancora inserita). Con un allarme da
+     * inserire: impronta, parte la routine e, se è andata, si inserisce l'allarme nella sua modalità ("Esco").
+     */
+    internal fun routine(entity: String) {
+        val r = prefs.haRoutines[entity]?.takeIf { it.on } ?: return
+        val a = r.alarm?.let { prefs.haAlarms[it] }
+        val alarmName = a?.name ?: r.alarm.orEmpty()
+        /** [code]: quello dell'allarme legato ("" se non lo chiede), null senza allarme */
+        fun start(code: String?) {
+            screen = Screen.HOME; query = ""
+            bubble = Said(tr(R.string.ha_asking), wait = true)
+            lifecycleScope.launch {
+                val alarm = r.alarm.takeIf { code != null && a != null }
+                if (alarm != null && !r.arm) {
+                    val off = withContext(Dispatchers.IO) { app.ha.disarm(alarm, code!!) }
+                    if (!off) { bubble = Said(tr(R.string.routine_alarm_failed, alarmName, r.name), long = true); return@launch }
+                }
+                val ok = withContext(Dispatchers.IO) { app.ha.runRoutine(entity) }
+                if (!ok) { bubble = Said(tr(R.string.routine_failed, r.name), long = true); return@launch }
+                val armed = if (alarm != null && r.arm) withContext(Dispatchers.IO) {
+                    // Già inserito: va bene così, non si richiede
+                    val st = runCatching { app.ha.state(alarm)?.state }.getOrNull()
+                    if (st != null && (st.startsWith("armed_") || st == "arming" || st == "pending")) true
+                    else app.ha.arm(alarm, a!!.mode ?: "away", code!!)
+                } else null
+                bubble = Said(when {
+                    alarm != null && !r.arm -> tr(R.string.routine_done_alarm, r.name, alarmName)
+                    armed == true -> tr(R.string.routine_done_armed, r.name, alarmName)
+                    armed == false -> tr(R.string.routine_arm_failed, r.name, alarmName)
+                    else -> tr(R.string.routine_done, r.name)
+                }, long = true)
+                Feel(true, prefs.haptics, window.decorView).confirm()
+            }
+        }
+        val lost = { answer(tr(R.string.alarm_code_lost), ok = false) }
+        when {
+            a != null && !r.arm -> unlessOff(r.alarm!!) {
+                AlarmCode.use(this, prefs, r.alarm, onCode = { code -> start(code) }, onLost = lost,
+                    title = tr(R.string.routine_with_alarm_title, r.name, alarmName))
+            }
+            a != null -> {
+                val title = tr(R.string.routine_with_arm_title, r.name, alarmName)
+                if (a.codeArm && a.enc.isNotEmpty()) AlarmCode.use(this, prefs, r.alarm!!, onCode = { code -> start(code) }, onLost = lost, title = title)
+                else HomeGuard.ask(this, title) { start("") }
+            }
+            r.auth || r.alarm != null -> HomeGuard.ask(this, r.name) { start(null) }
+            else -> start(null)
+        }
+    }
+
+    /** Disattiva un allarme salvato ([entity] null: se ne hai più d'uno, prima si sceglie quale). */
+    internal fun alarmOff(entity: String?) {
+        val saved = prefs.haAlarms
+        if (entity == null) {
+            val list = saved.entries.sortedBy { it.value.name.lowercase() }
+            android.app.AlertDialog.Builder(this).setTitle(tr(R.string.alarm_pick))
+                .setItems(list.map { it.value.name }.toTypedArray()) { _, i -> alarmOff(list[i].key) }
+                .setNegativeButton(tr(R.string.cancel), null).show()
+            return
+        }
+        val name = saved[entity]?.name ?: return
+        unlessOff(entity) { AlarmCode.use(this, prefs, entity, onCode = { code ->
+            screen = Screen.HOME; query = ""
+            bubble = Said(tr(R.string.ha_asking), wait = true)
+            lifecycleScope.launch {
+                val ok = withContext(Dispatchers.IO) { app.ha.disarm(entity, code) }
+                bubble = Said(if (ok) tr(R.string.alarm_off_done, name) else tr(R.string.alarm_off_failed), long = true)
+                if (ok) Feel(true, prefs.haptics, window.decorView).confirm()
+            }
+        }, onLost = { answer(tr(R.string.alarm_code_lost), ok = false) }) }
+    }
+
+    /**
+     * Inserisce un allarme salvato in [mode] (null: la predefinita). Se vuole il codice anche per inserire, impronta;
+     * se no si inserisce subito (mettere in sicurezza non ha attrito). Già inserito: lo dico e basta.
+     */
+    internal fun alarmOn(entity: String?, mode: String?) {
+        val saved = prefs.haAlarms.filterValues { it.arm }
+        if (entity == null) {
+            val list = saved.entries.sortedBy { it.value.name.lowercase() }
+            android.app.AlertDialog.Builder(this).setTitle(tr(R.string.alarm_pick))
+                .setItems(list.map { it.value.name }.toTypedArray()) { _, i -> alarmOn(list[i].key, mode) }
+                .setNegativeButton(tr(R.string.cancel), null).show()
+            return
+        }
+        val a = saved[entity] ?: return
+        val m = mode ?: a.mode ?: "away"
+        val label = AlarmCode.modeLabel(m)
+        fun arm(code: String) {
+            screen = Screen.HOME; query = ""
+            bubble = Said(tr(R.string.ha_asking), wait = true)
+            lifecycleScope.launch {
+                val ok = withContext(Dispatchers.IO) { app.ha.arm(entity, m, code) }
+                bubble = Said(if (ok) tr(R.string.alarm_on_done, a.name, label) else tr(R.string.alarm_on_failed), long = true)
+                if (ok) Feel(true, prefs.haptics, window.decorView).confirm()
+            }
+        }
+        lifecycleScope.launch {
+            val st = withContext(Dispatchers.IO) { runCatching { app.ha.state(entity)?.state }.getOrNull() }
+            if (st != null && (st.startsWith("armed_") || st == "arming" || st == "pending" || st == "triggered")) {
+                screen = Screen.HOME; query = ""
+                bubble = Said(tr(R.string.alarm_already_on, a.name), long = true)
+                return@launch
+            }
+            if (a.codeArm && a.enc.isNotEmpty())
+                AlarmCode.use(this@MainActivity, prefs, entity, onCode = ::arm, onLost = { answer(tr(R.string.alarm_code_lost), ok = false) },
+                    title = tr(R.string.alarm_on_mode_x, a.name, label))
+            else arm("")
+        }
+    }
+
+    /**
+     * Se l'allarme è già disattivato lo dico e basta: niente impronta, niente codice, niente routine.
+     * Se casa non risponde si va avanti come sempre (sarà il disarmo a dire com'è andata).
+     */
+    private fun unlessOff(entity: String, go: () -> Unit) {
+        lifecycleScope.launch {
+            val st = withContext(Dispatchers.IO) { runCatching { app.ha.state(entity)?.state }.getOrNull() }
+            if (st == "disarmed") {
+                screen = Screen.HOME; query = ""
+                bubble = Said(tr(R.string.alarm_already_off, prefs.haAlarms[entity]?.name ?: entity), long = true)
+            } else go()
         }
     }
 
@@ -639,12 +792,40 @@ class MainActivity : ComponentActivity(), Ops {
     }
 
     /** Lascia passare un contatto o un'app: per qualche ora, oppure sempre (importante / livello Subito). */
-    internal fun letPass(h: Held, hours: Int?) {
+    /**
+     * Chi scrive ha un nome che somiglia a una sola persona importante ("Elisa" e Elisa Rossi), ma non è stata riconosciuta:
+     * la persona da proporre (chiave, nome in rubrica). Solo nelle chat a due, e una volta sola per nome e app.
+     */
+    internal fun aliasFor(h: Held): Pair<String, String>? {
+        if (!h.isMessage || h.conversation != null) return null
+        val seen = Search.normalize(h.person ?: return null).ifBlank { return null }
+        // Solo con un legame che chi scrive non può falsificare: la conversazione dell'app, o un nome che viene dalla rubrica
+        val k = Classifier.aliasKey(h.pkg, h.shortcut, h.person) ?: return null
+        if (k in prefs.personAliases || k in prefs.aliasRefused) return null
+        val first = seen.substringBefore(' ')
+        val match = prefs.importantNames.filter { it != seen && (it.substringBefore(' ') == first || seen.startsWith("$it ") ) }.singleOrNull() ?: return null
+        val name = runCatching { app.people.all().firstOrNull { it.normalized == match }?.name }.getOrNull()
+            ?: match.split(' ').joinToString(" ") { w -> w.replaceFirstChar { it.uppercase() } }
+        return match to name
+    }
+
+    internal fun setAlias(h: Held, important: String, yes: Boolean) {
+        val k = Classifier.aliasKey(h.pkg, h.shortcut, h.person) ?: return
+        if (yes) {
+            prefs.personAliases = prefs.personAliases + (k to important)
+            // Il nome visto, per l'elenco in Impostazioni (la chiave della conversazione non si legge)
+            h.person?.let { prefs.ruleNames = prefs.ruleNames + (k to "${h.appLabel} · $it") }
+            SordinaListener.reapply(this, h.pkg)
+        } else prefs.aliasRefused = prefs.aliasRefused + k
+        changed()
+    }
+
+    internal fun letPass(h: Held, hours: Int) {
         val k = h.groupKey
-        if (hours != null) prefs.passUntil = prefs.passUntil + (k to System.currentTimeMillis() + hours * 3_600_000L)
+        prefs.passUntil = prefs.passUntil + (k to System.currentTimeMillis() + hours * 3_600_000L)
         SordinaListener.releaseGroup(this, k)
         changed()
-        hint(if (hours == null) tr(R.string.passes_always_x, h.groupTitle) else tr(R.string.passes_for_x, h.groupTitle, trn(R.plurals.n_hours, hours)))
+        hint(tr(R.string.passes_for_x, h.groupTitle, trn(R.plurals.n_hours, hours)))
     }
 
     /** Una regola dalla pagina Sordina: vale subito, anche per quello che è già nella tendina o in sordina. */

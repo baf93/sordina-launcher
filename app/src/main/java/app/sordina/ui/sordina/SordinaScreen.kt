@@ -40,6 +40,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -111,9 +113,6 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /** Per quanto lasciar passare un contatto o un'app: ore, oppure null = sempre. */
-private val PASS_OPTIONS: List<Pair<String, Int?>> =
-    listOf(1, 2, 6, 12, 24).map { trn(R.plurals.for_hours, it) to it } + (tr(R.string.pass_always) to null)
-
 /** Una sezione della pagina: una categoria, oppure le app frenate (category = null). */
 private data class Section(val key: String, val label: String?, val groups: List<List<Held>>, val braked: Boolean = false, val locked: Boolean = false) {
     val total get() = groups.sumOf { g -> g.sumOf { it.count } }
@@ -144,20 +143,20 @@ fun SordinaScreen(
     onOpen: (Held) -> Unit,
     /** Queste notifiche, lette scorrendo (dopo che "Annulla" è scaduto) */
     onReadKeys: (List<String>) -> Unit,
-    onReadAll: () -> Unit,
-    onLetPass: (Held, Int?) -> Unit,
+    onLetPass: (Held, Int) -> Unit,
     /** Le scelte possibili per una notifica, com'è adesso ciascuna, e il tocco che la cambia */
     ruleOps: (RuleTarget) -> List<RuleOp>,
     ruleOn: (RuleTarget, RuleOp) -> Boolean,
     onRule: (RuleTarget, RuleOp) -> Unit,
-    onMove: (key: String, Category) -> Unit,
+    ruleNote: (RuleTarget, RuleOp) -> String? = { _, _ -> null },
     onBack: () -> Unit,
+    /** Chi scrive somiglia a una persona importante non riconosciuta: (chiave, nome come in rubrica) */
+    aliasFor: (Held) -> Pair<String, String>? = { null },
+    /** La risposta a "È Elisa Rossi?": sì collega il nome a lei, no non lo chiede più */
+    onAlias: (Held, String, Boolean) -> Unit = { _, _, _ -> },
     /** Le app nascoste: una riga sola finché non si sblocca */
     hiddenRevealed: Boolean = false,
     onRevealHidden: () -> Unit = {},
-    /** Sotto i messaggi aperti, la nota "tieni premuto": finché non l'hai fatto una volta */
-    holdHint: Boolean = false,
-    onHoldLearned: () -> Unit = {},
 ) {
     val c = S.c
     val feel = LocalFeel.current
@@ -198,7 +197,6 @@ fun SordinaScreen(
     val latest = shown.maxOfOrNull { g -> g.maxOf { it.time } }
     var expanded by remember { mutableStateOf(setOf<String>()) }
     var actionsFor by remember { mutableStateOf<Held?>(null) }
-    var moveFor by remember { mutableStateOf<Held?>(null) }
 
     val list = rememberLazyListState()
     Box(Modifier.fillMaxSize()) {
@@ -233,7 +231,7 @@ fun SordinaScreen(
                         if (s.braked || s.locked) Icon(Icons.Rounded.Lock, null, Modifier.padding(end = 5.dp).size(13.dp), tint = c.soft)
                         Text(
                             s.label + when { s.braked -> " · " + tr(R.string.stay_here); s.locked -> " · ${s.total}"; else -> "" },
-                            style = TextStyle(fontSize = 13.sp, color = c.soft),
+                            style = TextStyle(fontSize = 14.sp, color = c.soft),
                         )
                     }
                 }
@@ -242,18 +240,17 @@ fun SordinaScreen(
                     // Una pila: angoli grandi solo in cima e in fondo, fra una riga e l'altra appena accennati
                     val top = if (i == 0) 20.dp else 6.dp
                     val bottom = if (i == s.groups.lastIndex) 20.dp else 6.dp
-                    Box(Modifier.animateItem().padding(horizontal = 14.dp).padding(bottom = 2.dp)) {
+                    Box(Modifier.animateItem().padding(horizontal = 12.dp).padding(bottom = 2.dp)) {
                         Block(
                             g, open = key in expanded, dim = s.braked, icon = icon,
                             shape = RoundedCornerShape(topStart = top, topEnd = top, bottomStart = bottom, bottomEnd = bottom),
                             atTop = { !list.canScrollBackward },
-                            holdHint = holdHint,
                             onToggle = { feel.tick(); expanded = if (key in expanded) expanded - key else expanded + key },
                             onPullOpen = { expanded = expanded + key },
                             onOpen = { m -> commit(); onOpen(m) },
                             onReadGroup = { read(g, g.first().groupTitle) },
                             onReadOne = { m -> read(listOf(m), m.groupTitle) },
-                            onActions = { feel.threshold(); actionsFor = g.first(); onHoldLearned() },
+                            onActions = { feel.threshold(); actionsFor = g.first() },
                         )
                     }
                 }
@@ -263,7 +260,12 @@ fun SordinaScreen(
                 Box(Modifier.animateItem().fillMaxWidth().padding(top = 18.dp), contentAlignment = Alignment.Center) {
                     Box(
                         Modifier.height(40.dp).clip(RoundedCornerShape(20.dp)).border(1.dp, c.line, RoundedCornerShape(20.dp))
-                            .clickable { feel.confirm(); commit(); app.sordina.data.Tally.daily("readAll"); onReadAll() }
+                            .clickable {
+                                // Come lo scorrimento di una riga: spariscono subito, "Annulla" per qualche secondo, poi si chiudono.
+                                // Si resta qui: niente salto in Casa con la pagina vuota che passa davanti
+                                feel.confirm(); app.sordina.data.Tally.daily("readAll")
+                                read(sections.filter { !it.locked }.flatMap { it.groups.flatten() }, "")
+                            }
                             .padding(horizontal = 20.dp),
                         contentAlignment = Alignment.Center,
                     ) { Text(tr(R.string.all_read), style = TextStyle(fontSize = 14.sp, color = c.ink)) }
@@ -287,7 +289,8 @@ fun SordinaScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    p.title + " · " + trn(R.plurals.n_read, p.count), Modifier.weight(1f),
+                    // Senza titolo ("Tutto letto"): basta quante
+                    (if (p.title.isBlank()) "" else p.title + " · ") + trn(R.plurals.n_read, p.count), Modifier.weight(1f),
                     maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 14.sp, color = c.bg),
                 )
                 Box(
@@ -301,35 +304,36 @@ fun SordinaScreen(
     actionsFor?.let { h ->
         // Tenendo premuto: una regola per sempre (tipo, persona o gruppo, app), "lascia passare" per qualche ora, la categoria
         val t = h.target()
-        RuleSheet(t, ruleOps(t), ruleOn, onRule, onDismiss = { actionsFor = null }) {
-            val now = System.currentTimeMillis()
+        val alias = remember(h.key) { aliasFor(h) }
+        RuleSheet(t, ruleOps(t), ruleOn, onRule, onDismiss = { actionsFor = null }, note = ruleNote, top = alias?.let { (key, name) -> @Composable {
+            // Una domanda sola, solo quando il nome somiglia a una persona importante
+            Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp).fillMaxWidth().clip(RoundedCornerShape(18.dp))
+                .background(c.accent.copy(alpha = 0.12f)).padding(16.dp)) {
+                Text(tr(R.string.alias_ask, name), style = TextStyle(fontSize = 17.sp, color = c.ink))
+                Text(tr(R.string.alias_ask_hint, name, h.appLabel), Modifier.padding(top = 2.dp), style = TextStyle(fontSize = 13.sp, lineHeight = 18.sp, color = c.soft))
+                Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(Modifier.weight(1f).height(42.dp).clip(RoundedCornerShape(21.dp)).background(c.accent)
+                        .clickable { feel.confirm(); actionsFor = null; onAlias(h, key, true) }, contentAlignment = Alignment.Center,
+                    ) { Text(tr(R.string.alias_yes), style = TextStyle(fontSize = 15.sp, color = c.bg)) }
+                    Box(Modifier.weight(1f).height(42.dp).clip(RoundedCornerShape(21.dp)).background(c.card)
+                        .clickable { feel.tick(); actionsFor = null; onAlias(h, key, false) }, contentAlignment = Alignment.Center,
+                    ) { Text(tr(R.string.alias_no), style = TextStyle(fontSize = 15.sp, color = c.ink)) }
+                }
+            }
+        } }) {
+            // Solo per un po': tre durate in una riga, niente orari da leggere
             RuleLabel(tr(R.string.let_pass))
-            PASS_OPTIONS.filter { it.second != null }.forEach { (label, hours) ->
-                PickerRow(label, untilLabel(now + hours!! * 3_600_000L), highlight = false) { feel.confirm(); actionsFor = null; onLetPass(h, hours) }
-            }
-            // Senza categorie (tutto per arrivo) spostarla non cambierebbe niente
-            if (order != null) {
-                Spacer(Modifier.height(8.dp))
-                PickerRow(tr(R.string.move_category), Categories.of(h, overrides).label, highlight = false) { feel.tick(); actionsFor = null; moveFor = h }
-            }
-        }
-    }
-    moveFor?.let { h ->
-        val current = Categories.of(h, overrides)
-        Picker(tr(R.string.move_title, h.groupTitle), if (h.groupKey.startsWith("p:")) tr(R.string.move_hint_person) else tr(R.string.move_hint_app), onDismiss = { moveFor = null }) {
-            Category.entries.forEach { cat ->
-                PickerRow(cat.label, if (cat == current) tr(R.string.now_here) else "", highlight = cat == current) {
-                    feel.confirm(); moveFor = null; onMove(h.groupKey, cat)
+            Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(1, 6, 24).forEach { hours ->
+                    Box(
+                        Modifier.weight(1f).height(44.dp).clip(RoundedCornerShape(22.dp)).background(c.accent.copy(alpha = 0.14f))
+                            .clickable { feel.confirm(); actionsFor = null; onLetPass(h, hours) },
+                        contentAlignment = Alignment.Center,
+                    ) { Text(trn(R.plurals.for_hours, hours), maxLines = 1, style = TextStyle(fontSize = 15.sp, color = c.accent)) }
                 }
             }
         }
     }
-}
-
-private fun untilLabel(at: Long): String {
-    val t = Instant.ofEpochMilli(at).atZone(ZoneId.systemDefault())
-    return if (t.toLocalDate() == LocalDate.now()) tr(R.string.until_time, t.format(DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)))
-    else tr(R.string.until_tomorrow, t.format(DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)))
 }
 
 /**
@@ -339,7 +343,7 @@ private fun untilLabel(at: Long): String {
 @Composable
 private fun Block(
     g: List<Held>, open: Boolean, dim: Boolean, icon: (String) -> ImageBitmap?,
-    shape: RoundedCornerShape, atTop: () -> Boolean, holdHint: Boolean,
+    shape: RoundedCornerShape, atTop: () -> Boolean,
     onToggle: () -> Unit, onPullOpen: () -> Unit, onOpen: (Held) -> Unit,
     onReadGroup: () -> Unit, onReadOne: (Held) -> Unit, onActions: () -> Unit,
 ) {
@@ -347,7 +351,7 @@ private fun Block(
     val feel = LocalFeel.current
     val scope = rememberCoroutineScope()
     val h = g.first()
-    val total = g.sumOf { it.count }
+    val total = g.sumOf { it.shownCount() }
     val person = h.groupKey.startsWith("p:")
     val single = g.size == 1
 
@@ -382,21 +386,25 @@ private fun Block(
                         else scope.launch { reveal.animateTo(0f, feel.spec(spring(dampingRatio = 0.8f, stiffness = 500f))) }
                     },
                 )
-                .combinedClickable(onClick = onToggle, onLongClick = onActions)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+                // TalkBack: il tieni premuto si annuncia con quello che apre (sullo schermo non c'è un suggerimento)
+                // Piatta non c'è niente da aprire: il tocco apre l'ultimo messaggio, come toccarlo
+                .combinedClickable(onClick = onToggle, onLongClick = onActions, onLongClickLabel = tr(R.string.rule_actions)),
         ) {
-            Row(Modifier.alpha(if (dim) 0.6f else 1f), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.alpha(if (dim) 0.6f else 1f).padding(start = PAD_H, end = PAD_H, top = 14.dp, bottom = if (lit || reveal.value > 0f) 0.dp else 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Avatar(h, person, icon)
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(AVATAR_GAP))
                 Column(Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(h.groupTitle, Modifier.weight(1f, fill = false), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 15.sp, color = c.ink))
-                        Text(" · " + time(g.maxOf { it.time }), maxLines = 1, style = TextStyle(fontSize = 12.sp, color = c.soft))
+                        Text(h.groupTitle, Modifier.weight(1f, fill = false), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 16.5.sp, color = c.ink))
+                        Text(" · " + time(g.maxOf { it.time }), maxLines = 1, style = TextStyle(fontSize = 13.sp, color = c.soft))
                     }
                     // Chiusa: l'ultima riga. Mentre si apre, sfuma lasciando posto ai messaggi
                     if (!open) Text(
                         previewLine(g.maxBy { it.time }), Modifier.graphicsLayer { alpha = 1f - reveal.value },
-                        maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 13.sp, color = c.soft),
+                        maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 14.5.sp, color = c.soft),
                     )
                 }
                 // Il numero è anche la presa: da qui si tira giù sempre, senza aspettare
@@ -405,8 +413,8 @@ private fun Block(
                         .padding(start = if (total > 1) 8.dp else 3.dp, end = 3.dp, top = 2.dp, bottom = 2.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (total > 1) Text("$total", style = TextStyle(fontSize = 12.sp, color = chipColor))
-                    Icon(Icons.Rounded.KeyboardArrowDown, null, Modifier.size(16.dp).graphicsLayer { rotationZ = arrow }, tint = chipColor)
+                    if (total > 1) Text("$total", style = TextStyle(fontSize = 13.sp, color = chipColor))
+                    Icon(Icons.Rounded.KeyboardArrowDown, null, Modifier.size(18.dp).graphicsLayer { rotationZ = arrow }, tint = chipColor)
                 }
             }
             if (lit || reveal.value > 0f) {
@@ -418,41 +426,30 @@ private fun Block(
                         layout(p.width, (p.height * reveal.value).roundToInt()) { p.place(0, 0) }
                     },
                 ) {
-                    Column(Modifier.fillMaxWidth().padding(start = 48.dp, top = 6.dp)) {
+                    // Larghi quanto tutta la riga: scorrendo un messaggio di lato si muove la riga intera, non solo il testo
+                    Column(Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 8.dp)) {
                         // I messaggi, dal più vecchio al più recente: escono uno dopo l'altro mentre si apre
                         msgs.forEachIndexed { i, m ->
                             key(m.key) {
                                 val head = headline(m)
-                                Swipeable(m.key, enabled = !single, shape = RoundedCornerShape(10.dp), onSwiped = { onReadOne(m) }) {
+                                Swipeable(m.key, enabled = !single, shape = RectangleShape, onSwiped = { onReadOne(m) }) {
                                     Column(
                                         Modifier.fillMaxWidth().graphicsLayer {
                                             val step = 0.5f / msgs.size
                                             alpha = ((reveal.value - i * step) / 0.5f).coerceIn(0f, 1f)
-                                        }.background(surface).clickable { feel.tick(); onOpen(m) }.padding(vertical = 7.dp),
+                                        }.background(surface).clickable { feel.tick(); onOpen(m) }
+                                            .padding(start = PAD_H + AVATAR + AVATAR_GAP, end = PAD_H, top = 8.dp, bottom = 8.dp),
                                     ) {
-                                        Row(verticalAlignment = Alignment.Top) {
-                                            Text(
-                                                head ?: (body(m) + if (m.count > 1) "  · ${m.count}" else ""),
-                                                Modifier.weight(1f), maxLines = if (head != null) 2 else 5, overflow = TextOverflow.Ellipsis,
-                                                style = if (head != null) TextStyle(fontSize = 14.sp, lineHeight = 19.sp, fontWeight = FontWeight.SemiBold, color = c.ink)
-                                                else TextStyle(fontSize = 14.sp, lineHeight = 19.sp, color = c.ink),
-                                            )
-                                            Text(time(m.time), Modifier.padding(start = 10.dp, top = 2.dp), style = TextStyle(fontSize = 11.sp, color = c.soft))
+                                        // Una chat con più messaggi in una notifica: uno per riga, ognuno con la sua ora
+                                        if (m.lines.isNotEmpty()) m.lines.forEachIndexed { j, l ->
+                                            MessageText(if (m.conversation != null) l.sender else null, l.text, l.time, Modifier.padding(top = if (j > 0) 12.dp else 0.dp))
                                         }
-                                        if (head != null) Text(
-                                            body(m) + if (m.count > 1) "  · ${m.count}" else "",
-                                            Modifier.padding(top = 1.dp), maxLines = 5, overflow = TextOverflow.Ellipsis,
-                                            style = TextStyle(fontSize = 13.sp, lineHeight = 18.sp, color = c.soft),
-                                        )
+                                        else MessageText(head, body(m) + if (m.count > 1) "  · ${m.count}" else "", m.time)
                                         m.image?.let { HeldPicture(it) }
                                     }
                                 }
                             }
                         }
-                        if (holdHint) Text(
-                            tr(R.string.sordina_hold_hint), Modifier.padding(top = 6.dp),
-                            style = TextStyle(fontSize = 12.sp, color = c.soft),
-                        )
                     }
                 }
             }
@@ -460,8 +457,33 @@ private fun Block(
     }
 }
 
+/** Un messaggio: chi o cosa in evidenza (se c'è) e il testo, con l'ora a destra. */
+@Composable
+private fun MessageText(head: String?, text: String, at: Long, modifier: Modifier = Modifier) {
+    val c = S.c
+    Column(modifier) {
+        Row(verticalAlignment = Alignment.Top) {
+            Text(
+                head ?: text,
+                Modifier.weight(1f), maxLines = if (head != null) 2 else 5, overflow = TextOverflow.Ellipsis,
+                style = TextStyle(fontSize = 15.5.sp, lineHeight = 21.sp, fontWeight = if (head != null) FontWeight.SemiBold else FontWeight.Normal, color = c.ink),
+            )
+            Text(time(at), Modifier.padding(start = 10.dp, top = 2.dp), style = TextStyle(fontSize = 12.sp, color = c.soft))
+        }
+        if (head != null) Text(
+            text, Modifier.padding(top = 2.dp), maxLines = 5, overflow = TextOverflow.Ellipsis,
+            style = TextStyle(fontSize = 14.5.sp, lineHeight = 20.sp, color = c.soft),
+        )
+    }
+}
+
 /** Oltre questa parte, lasciando il dito i messaggi si aprono del tutto; prima tornano chiusi. */
 private const val OPEN_AT = 0.35f
+
+/** Le misure della riga: margine ai lati, avatar e spazio dopo; i messaggi partono allineati al nome. */
+private val PAD_H = 16.dp
+private val AVATAR = 40.dp
+private val AVATAR_GAP = 14.dp
 
 /** Chi o cosa: nei gruppi chi scrive, per le app il titolo della notifica; nelle chat a due nessuno (è il blocco). */
 private fun headline(h: Held): String? = when {
@@ -493,47 +515,20 @@ private fun Avatar(h: Held, person: Boolean, icon: (String) -> ImageBitmap?) {
     val c = S.c
     val bmp = remember(h.pkg) { icon(h.pkg) }
     if (!person && bmp != null) {
-        Image(bmp, null, Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)))
+        Image(bmp, null, Modifier.size(AVATAR).clip(RoundedCornerShape(11.dp)))
         return
     }
-    Box(Modifier.size(38.dp)) {
+    Box(Modifier.size(AVATAR)) {
         Box(
-            Modifier.size(36.dp).clip(CircleShape).background(if (person) c.accent.copy(alpha = 0.16f) else c.line),
+            Modifier.size(AVATAR).clip(CircleShape).background(if (person) c.accent.copy(alpha = 0.16f) else c.line),
             contentAlignment = Alignment.Center,
         ) {
-            Text(h.groupTitle.trim().take(1).uppercase(), style = TextStyle(fontSize = 15.sp, color = if (person) c.accent else c.soft))
+            Text(h.groupTitle.trim().take(1).uppercase(), style = TextStyle(fontSize = 17.sp, color = if (person) c.accent else c.soft))
         }
         if (person && bmp != null) Image(
             bmp, null,
-            Modifier.align(Alignment.BottomEnd).size(17.dp).clip(RoundedCornerShape(5.dp)).background(c.card).padding(1.5.dp).clip(RoundedCornerShape(4.dp)),
+            Modifier.align(Alignment.BottomEnd).offset(x = 2.dp, y = 2.dp).size(18.dp).clip(RoundedCornerShape(5.dp)).background(c.card).padding(1.5.dp).clip(RoundedCornerShape(4.dp)),
         )
-    }
-}
-
-@Composable
-private fun Picker(title: String, hint: String, onDismiss: () -> Unit, content: @Composable () -> Unit) {
-    val c = S.c
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = c.card,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        dragHandle = { Box(Modifier.padding(top = 12.dp, bottom = 14.dp).size(width = 36.dp, height = 4.dp).clip(CircleShape).background(c.dot)) },
-    ) {
-        Column(Modifier.navigationBarsPadding().padding(bottom = 12.dp)) {
-            Text(title, Modifier.padding(horizontal = 24.dp), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 21.sp, color = c.ink))
-            Text(hint, Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 10.dp), style = TextStyle(fontSize = 14.sp, color = c.soft))
-            content()
-        }
-    }
-}
-
-@Composable
-private fun PickerRow(label: String, hint: String, highlight: Boolean, onClick: () -> Unit) {
-    val c = S.c
-    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 15.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, Modifier.weight(1f), style = TextStyle(fontSize = 17.sp, color = if (highlight) c.accent else c.ink))
-        Text(hint, style = TextStyle(fontSize = 14.sp, color = c.soft))
     }
 }
 
@@ -684,3 +679,6 @@ private fun HeldPicture(name: String) {
         contentScale = androidx.compose.ui.layout.ContentScale.Crop,
     )
 }
+
+/** Quanti messaggi si vedono di questa notifica: quelli della chat, se li abbiamo, altrimenti quanti ne dice. */
+private fun Held.shownCount(): Int = if (lines.isNotEmpty()) lines.size else count

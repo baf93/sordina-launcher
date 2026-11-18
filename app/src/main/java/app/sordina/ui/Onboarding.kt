@@ -108,10 +108,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 
+/** I passi del primo avvio, in tre parti: prima si guarda come funziona, poi i permessi, poi le scelte. */
+private enum class Step(val part: Int) {
+    HI(0),
+    WAIT(1), FIND(1), BRAKE(1), ASK(1),
+    P_NOTIF(2), P_HOME(2), P_BATTERY(2), P_SAMSUNG(2), P_POST(2),
+    C_IMPORTANT(3), C_APPS(3), C_PEOPLE(3), C_BRAKE(3), C_HOME(3), C_HA(3),
+    DONE(4),
+}
+
 /**
- * Primo avvio. Ogni schermata ha al centro una cosa che si vede (le notifiche che aspettano, i volti,
- * le icone con l'attesa, il quadrante del giorno, Casa in piccolo) e sotto una frase che dice cosa succede.
- * Ogni passo ha già una scelta sensata: si può andare avanti senza toccare nulla.
+ * Primo avvio. Una cosa per schermata: in alto l'onda che si calma a ogni passo e dove sei ("Permessi · 2 di 4"),
+ * poi il titolo, una frase e al centro quello che serve vedere. I permessi si chiedono uno alla volta, dicendo
+ * prima cosa succederà in Android; quando torni c'è la spunta.
  */
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
@@ -125,89 +134,112 @@ fun Onboarding(
     onStep: (Int) -> Unit = {},
     onDone: () -> Unit,
 ) {
-    var step by rememberSaveable(startStep) { mutableIntStateOf(startStep) }
+    val steps = remember {
+        Step.entries.filter {
+            when (it) {
+                Step.P_SAMSUNG -> SamsungSleep.isSamsung
+                Step.P_POST -> Build.VERSION.SDK_INT >= 33
+                else -> true
+            }
+        }
+    }
+    val last = steps.size - 1
+    var i by rememberSaveable(startStep) { mutableIntStateOf(startStep.coerceIn(0, last)) }
+    val step = steps[i]
     // Si ricorda il passo: scegliere Sordina come Home la fa ripartire, e non deve ricominciare da capo
-    LaunchedEffect(step) { onStep(step) }
+    LaunchedEffect(i) { onStep(i) }
     // Una copia ritrovata dal backup di Google (telefono nuovo o app reinstallata): si può rimettere tutto com'era
     val ctx = androidx.compose.ui.platform.LocalContext.current
     var found by remember { mutableStateOf(Backup.found(ctx)) }
-    // 0 ciao · 1 notifiche · 2 persone · 3 app · 4 distrazioni · 5 Home Assistant · 6 la Home · 7 chiedimi · 8 come si usa · 9 tutto pronto
-    // Ogni permesso si chiede dove serve, mai tutti insieme
-    val last = 9
+    // Samsung non dice se Sordina è fra le app mai in sospensione: basta aver aperto la pagina
+    var samsungDone by remember { mutableStateOf(app.prefs.samsungAsked > 0) }
+    var haOpen by rememberSaveable { mutableStateOf(app.ha.configured) }
     val c = S.c
-    fun next() { if (step < last) step++ else onDone() }
-    androidx.activity.compose.BackHandler(enabled = step > 0) { step-- }
+    fun next() { if (i < last) i++ else onDone() }
+    androidx.activity.compose.BackHandler(enabled = i > 0) { i-- }
+
+    // Un permesso che manca: il pulsante lo chiede, sotto c'è "Più tardi"
+    val ask: (() -> Unit)? = when (step) {
+        Step.P_NOTIF -> if (!perms.listener) ({ ops.openListenerSettings() }) else null
+        Step.P_HOME -> if (!perms.home) ({ ops.openHomeSettings() }) else null
+        Step.P_BATTERY -> if (!perms.battery) ({ ops.openBatterySettings() }) else null
+        Step.P_SAMSUNG -> if (!samsungDone) ({ SamsungSleep.openBattery(ctx); samsungDone = true }) else null
+        Step.P_POST -> if (!perms.post) ({ ops.request(Manifest.permission.POST_NOTIFICATIONS) }) else null
+        else -> null
+    }
     val (label, action) = when {
-        step == 0 && found != null -> tr(R.string.ob_restore) to { if (Backup.restore(ctx)) Backup.restart(ctx) }
-        step == 0 -> tr(R.string.ob_hi_go) to { next() }
-        step == 1 && !perms.listener -> tr(R.string.ob_allow) to { ops.openListenerSettings() }
-        step == 4 && !perms.usage -> tr(R.string.ob_allow) to { ops.openUsageSettings() }
-        step == last && !perms.home -> tr(R.string.ob_set_home) to { ops.openHomeSettings() }
-        step == last -> tr(R.string.onb_go_home) to { onDone() }
+        step == Step.HI && found != null -> tr(R.string.ob_restore) to { if (Backup.restore(ctx)) Backup.restart(ctx) }
+        step == Step.HI -> tr(R.string.ob_hi_go) to { next() }
+        ask != null -> tr(when (step) {
+            Step.P_HOME -> R.string.ob2_home_btn
+            Step.P_POST -> R.string.ob_allow
+            else -> R.string.ob2_open_settings
+        }) to ask
+        step == Step.C_HA && !haOpen && !app.ha.configured -> tr(R.string.ob_ha_skip) to { next() }
+        step == Step.DONE -> tr(R.string.onb_go_home) to { onDone() }
         else -> tr(R.string.next) to { next() }
     }
-    val ending = step == last
+    val restore = step == Step.HI && found != null
+    val later = ask != null || restore
+
     Column(Modifier.fillMaxSize().background(c.bg).systemBarsPadding().padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 16.dp)) {
         // In testa l'onda di Sordina: a ogni passo si calma un po', all'ultimo è quasi piatta
         Row(verticalAlignment = Alignment.CenterVertically) {
-            SettleWave(step, last, Modifier.weight(1f).height(26.dp))
-            Spacer(Modifier.width(16.dp))
-            Dots(step, last)
-        }
-        AnimatedContent(step, transitionSpec = { Motion.forward(targetState > initialState) }, label = "step", modifier = Modifier.weight(1f)) { s ->
-            when (s) {
-                0 -> Welcome(found)
-                1 -> Waiting(app, perms)
-                2 -> Faces(app, perms, ops)
-                3 -> AlwaysApps(app, apps, ops)
-                4 -> Distracting(app, apps, usage, perms, ops)
-                // Prima della Home: con Home Assistant collegato, nella scelta dei calendari c'è già anche il suo
-                5 -> HaStep(app, ops)
-                6 -> HomeChoices(app, perms, ops)
-                7 -> AskMe(app)
-                8 -> MiniHome(app, perms) {}
-                else -> AllSet(perms, ops, label, { action() }, onLater = onDone)
+            SettleWave(i, last, Modifier.weight(1f).height(26.dp))
+            val inPart = steps.filter { it.part == step.part }
+            if (step.part in 1..3) {
+                Spacer(Modifier.width(16.dp))
+                val name = tr(when (step.part) { 1 -> R.string.ob2_part1; 2 -> R.string.ob2_part2; else -> R.string.ob2_part3 })
+                androidx.compose.material3.Text(tr(R.string.ob2_where, name, inPart.indexOf(step) + 1, inPart.size),
+                    style = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, color = c.soft))
             }
         }
-        // Alla fine il pulsante lascia il fondo: ricompare grande, al centro
-        androidx.compose.animation.AnimatedVisibility(!ending, enter = fadeIn(), exit = fadeOut(tween(250))) {
-            Column {
-                Spacer(Modifier.height(14.dp))
-                Pill(label) { action() }
-                // "Più tardi" solo dove serve: altrove il pulsante sta in fondo e il contenuto ha più posto
-                // Ai permessi sempre, finché ne manca uno: un "no" ad Android non deve bloccare l'avvio
-                val restore = step == 0 && found != null
-                val ha = step == 5 && !app.ha.configured
-                val later = label == tr(R.string.ob_allow) || restore || ha
-                if (later) androidx.compose.foundation.layout.Box(
-                    Modifier.fillMaxWidth().clickableNoRipple { if (restore) { Backup.forget(ctx); found = null } else next() }.padding(top = 14.dp, bottom = 4.dp),
-                    contentAlignment = Alignment.Center,
-                ) { Serif(tr(when { restore -> R.string.ob_restore_no; ha -> R.string.ob_ha_skip; else -> R.string.later }), size = 14.sp, color = c.soft) }
+        AnimatedContent(i, transitionSpec = { Motion.forward(targetState > initialState) }, label = "step", modifier = Modifier.weight(1f)) { s ->
+            when (steps[s]) {
+                Step.HI -> Welcome(found)
+                Step.WAIT -> Waiting()
+                Step.FIND -> FindThem()
+                Step.BRAKE -> BrakeDemo()
+                Step.ASK -> AskMe(app)
+                Step.P_NOTIF -> PermStep(R.string.ob2_pn_title, R.string.ob2_pn_why, perms.listener,
+                    R.string.ob2_pn_s1, R.string.ob2_pn_s2, R.string.ob2_pn_s3, R.string.ob2_back_here)
+                Step.P_HOME -> PermStep(R.string.ob2_ph_title, R.string.ob2_ph_why, perms.home,
+                    R.string.ob2_ph_s1, R.string.ob2_ph_s2, R.string.ob2_ph_s3)
+                Step.P_BATTERY -> PermStep(R.string.ob2_pb_title, R.string.ob2_pb_why, perms.battery,
+                    R.string.ob2_pb_s1, R.string.ob2_pb_s2)
+                Step.P_SAMSUNG -> PermStep(R.string.ob2_ps_title, R.string.ob2_ps_why, samsungDone,
+                    R.string.ob2_ps_s1, R.string.ob2_ps_s2, R.string.ob2_ps_s3, R.string.ob2_ps_s4, R.string.ob2_back_here)
+                Step.P_POST -> PermStep(R.string.ob2_pp_title, R.string.ob2_pp_why, perms.post,
+                    R.string.ob2_pp_s1, R.string.ob2_pp_s2)
+                Step.C_IMPORTANT -> Importants(app, ops)
+                Step.C_APPS -> AlwaysApps(app, apps, ops)
+                Step.C_PEOPLE -> Faces(app, perms, ops)
+                Step.C_BRAKE -> Distracting(app, apps, usage, perms, ops)
+                Step.C_HOME -> HomeChoices(app, perms, ops)
+                Step.C_HA -> HaStep(app, ops, haOpen) { haOpen = true }
+                Step.DONE -> AllSet(app, apps, perms, ops)
             }
         }
+        Spacer(Modifier.height(14.dp))
+        StartPill(label, accent = step == Step.DONE) { action() }
+        // "Più tardi" ai permessi, finché ne manca uno: un "no" ad Android non deve bloccare l'avvio
+        if (later) androidx.compose.foundation.layout.Box(
+            Modifier.fillMaxWidth().clickableNoRipple { if (restore) { Backup.forget(ctx); found = null } else next() }.padding(top = 14.dp, bottom = 4.dp),
+            contentAlignment = Alignment.Center,
+        ) { Serif(tr(if (restore) R.string.ob_restore_no else R.string.later), size = 14.sp, color = c.soft) }
     }
 }
 
 /** Il pulsante dell'avvio: pieno, alto come la barra di Casa. */
 @Composable
-private fun Pill(text: String, onClick: () -> Unit) {
+private fun StartPill(text: String, accent: Boolean = false, onClick: () -> Unit) {
     val c = S.c
     val feel = LocalFeel.current
     androidx.compose.foundation.layout.Box(
-        Modifier.fillMaxWidth().height(52.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(26.dp)).background(c.ink)
+        Modifier.fillMaxWidth().height(52.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(26.dp)).background(if (accent) c.accent else c.ink)
             .clickable { feel.confirm(); onClick() },
         contentAlignment = Alignment.Center,
     ) { androidx.compose.material3.Text(text, style = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, color = c.bg)) }
-}
-
-@Composable
-private fun Dots(step: Int, last: Int) {
-    val c = S.c
-    Row {
-        repeat(last + 1) { i ->
-            androidx.compose.foundation.layout.Box(Modifier.padding(horizontal = 3.dp).size(5.dp).clip(androidx.compose.foundation.shape.CircleShape).background(if (i == step) c.ink else c.dot))
-        }
-    }
 }
 
 /**
@@ -262,8 +294,10 @@ private fun Screen(
     var searching by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().padding(top = 18.dp)) {
         if (mascot != null) { Mascot(mascot, Modifier.size(76.dp)); Spacer(Modifier.height(10.dp)) }
-        androidx.compose.material3.Text(label.uppercase(), style = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, letterSpacing = 1.2.sp, color = c.accent))
-        Spacer(Modifier.height(6.dp))
+        if (label.isNotEmpty()) {
+            androidx.compose.material3.Text(label.uppercase(), style = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, letterSpacing = 1.2.sp, color = c.accent))
+            Spacer(Modifier.height(6.dp))
+        }
         if (searching && onSearch != null) {
             val focus = remember { androidx.compose.ui.focus.FocusRequester() }
             LaunchedEffect(Unit) { focus.requestFocus() }
@@ -312,7 +346,7 @@ private fun Welcome(found: java.time.LocalDate?) {
     val c = S.c
     val anim = LocalFeel.current.animations
     val text = found?.let { tr(R.string.ob_restore_found, it.format(java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.LONG))) }
-        ?: tr(R.string.ob_hi_text)
+        ?: tr(R.string.ob2_hi_text)
     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
         // Il fumetto, con la punta verso di lei
         Column(
@@ -334,12 +368,14 @@ private val DownTail = androidx.compose.foundation.shape.GenericShape { size, _ 
     moveTo(0f, 0f); lineTo(size.width, 0f); lineTo(size.width / 2f, size.height); close()
 }
 
-// 5 · Home Assistant, se ce l'hai: la stessa pagina delle impostazioni. Prima della Home, così i suoi calendari si vedono già lì.
+// Home Assistant, se ce l'hai: prima la domanda, il modulo solo se rispondi di sì.
 
 @Composable
-private fun HaStep(app: SordinaApp, ops: Ops) {
-    Screen(tr(R.string.ob_lha), tr(R.string.obha_title), tr(R.string.obha_sub)) {
-        Column(Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState())) {
+private fun HaStep(app: SordinaApp, ops: Ops, open: Boolean, onYes: () -> Unit) {
+    Screen("", tr(R.string.ob2_ha_title), tr(R.string.ob2_ha_sub)) {
+        if (!open) Column(Modifier.fillMaxSize(), verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
+            Secondary(tr(R.string.ob2_ha_yes), Modifier.fillMaxWidth()) { onYes() }
+        } else Column(Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState())) {
             HaSettings(app, ops) {}
             Spacer(Modifier.height(8.dp))
         }
@@ -349,7 +385,7 @@ private fun HaStep(app: SordinaApp, ops: Ops) {
 // 1 · Le notifiche cadono in fila, aspettano, e all'ora del riepilogo arrivano insieme
 
 @Composable
-private fun Waiting(app: SordinaApp, perms: PermState) {
+private fun Waiting() {
     val c = S.c
     // Esempi inventati: mai le notifiche vere di chi installa
     val rows = listOf(
@@ -359,7 +395,7 @@ private fun Waiting(app: SordinaApp, perms: PermState) {
     val t by androidx.compose.animation.core.rememberInfiniteTransition(label = "fall").animateFloat(
         0f, 1f, androidx.compose.animation.core.infiniteRepeatable(tween(6500, easing = androidx.compose.animation.core.LinearEasing)), label = "t",
     )
-    Screen(tr(R.string.ob_l1), tr(R.string.ob1_title), tr(R.string.ob1_sub) + if (perms.listener) "" else "\n\n" + tr(R.string.ob1_why)) {
+    Screen("", tr(R.string.ob2_w_title), tr(R.string.ob2_w_sub)) {
         Column(Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             rows.forEachIndexed { i, (glyph, text) ->
                 // Entra dall'alto uno dopo l'altro, resta, poi scende e sparisce quando arriva il riepilogo
@@ -383,7 +419,7 @@ private fun Waiting(app: SordinaApp, perms: PermState) {
             }
             Spacer(Modifier.height(14.dp))
             val clock = (((t - 0.66f) / 0.06f).coerceIn(0f, 1f)) * (1f - ((t - 0.94f) / 0.06f).coerceIn(0f, 1f))
-            androidx.compose.material3.Text(tr(R.string.ob1_at), Modifier.graphicsLayer { alpha = clock },
+            androidx.compose.material3.Text(tr(R.string.ob2_w_at), Modifier.graphicsLayer { alpha = clock },
                 style = androidx.compose.ui.text.TextStyle(fontSize = 15.sp, color = c.accent))
         }
     }
@@ -425,7 +461,7 @@ private fun Faces(app: SordinaApp, perms: PermState, ops: Ops) {
     }
     var q by remember { mutableStateOf("") }
     var small by remember { mutableStateOf(false) }
-    Screen(tr(R.string.ob_l3), tr(R.string.ob3_title), tr(R.string.ob_people_sub), collapsed = small,
+    Screen("", tr(R.string.ob2_people_title), tr(R.string.ob2_people_sub), collapsed = small,
         query = q, onSearch = if (perms.contacts) ({ q = it ?: "" }) else null, searchHint = tr(R.string.search_contact)) {
         if (!perms.contacts) {
             Secondary(tr(R.string.onb_allow_contacts), Modifier.fillMaxWidth()) { ops.request(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS) }
@@ -440,7 +476,8 @@ private fun Faces(app: SordinaApp, perms: PermState, ops: Ops) {
 
 @Composable
 private fun AlwaysApps(app: SordinaApp, apps: List<AppEntry>, ops: Ops) {
-    val installed = remember(apps) { apps.filter { !it.isWork }.distinctBy { it.packageName }.sortedBy { it.label.lowercase() } }
+    // Le frenate no: restano in sordina
+    val installed = remember(apps) { apps.filter { !it.isWork && it.packageName !in app.prefs.braked }.distinctBy { it.packageName }.sortedBy { it.label.lowercase() } }
     var chosen by remember { mutableStateOf(app.prefs.appLevels.filterValues { it == Level.SEMPRE }.keys) }
     fun toggle(pkg: String) {
         app.prefs.setAppLevel(pkg, if (pkg in chosen) null else Level.SEMPRE)
@@ -451,7 +488,7 @@ private fun AlwaysApps(app: SordinaApp, apps: List<AppEntry>, ops: Ops) {
     }
     var q by remember { mutableStateOf("") }
     var small by remember { mutableStateOf(false) }
-    Screen(tr(R.string.ob_lapps), tr(R.string.ob_apps_title), tr(R.string.ob_apps_sub), collapsed = small,
+    Screen("", tr(R.string.ob2_apps_title), tr(R.string.ob2_apps_sub), collapsed = small,
         query = q, onSearch = { q = it ?: "" }, searchHint = tr(R.string.s_search_app)) {
         PickList(installed, { it.packageName }, { it.label }, q,
             leading = { a -> AppDot(a.packageName) }, selected = chosen, onScrolled = { small = it }) { toggle(it.packageName) }
@@ -503,9 +540,15 @@ private fun Distracting(app: SordinaApp, apps: List<AppEntry>, usage: Map<String
     }
     var q by remember { mutableStateOf("") }
     var small by remember { mutableStateOf(false) }
-    Screen(tr(R.string.ob_l4), tr(R.string.ob4_title), tr(R.string.ob4_sub) + if (perms.usage) "" else "\n\n" + tr(R.string.ob4_why), collapsed = small,
+    Screen("", tr(R.string.ob2_brake_title), tr(R.string.ob2_brake_sub), collapsed = small,
         query = q, onSearch = { q = it ?: "" }, searchHint = tr(R.string.s_add_app)) {
-        PickList(installed.sortedBy { it.label.lowercase() }, { it.packageName }, { it.label }, q,
+        // Senza l'utilizzo delle app si sceglie a mano; con il permesso le più usate sono già spuntate
+        if (!perms.usage) Column(Modifier.fillMaxSize()) {
+            Secondary(tr(R.string.ob2_brake_usage), Modifier.fillMaxWidth()) { ops.openUsageSettings() }
+            Spacer(Modifier.height(10.dp))
+            PickList(installed.sortedBy { it.label.lowercase() }, { it.packageName }, { it.label }, q,
+                leading = { a -> AppDot(a.packageName) }, selected = braked, onScrolled = { small = it }) { toggle(it.packageName) }
+        } else PickList(installed.sortedBy { it.label.lowercase() }, { it.packageName }, { it.label }, q,
             leading = { a -> AppDot(a.packageName) }, selected = braked, onScrolled = { small = it }) { toggle(it.packageName) }
     }
 }
@@ -518,36 +561,18 @@ private fun HomeChoices(app: SordinaApp, perms: PermState, ops: Ops) {
     val prefs = app.prefs
     var weather by remember { mutableStateOf(prefs.homeWeather) }
     var agenda by remember { mutableStateOf(prefs.homeAgenda) }
-    var evening by remember { mutableStateOf(prefs.homeEvening) }
-    var night by remember { mutableStateOf(prefs.homeNight) }
-    var car by remember { mutableStateOf(prefs.homeCar) }
     // Acceso per davvero solo con il permesso: finché Android non risponde resta spento
     val weatherOn = weather && perms.location
     val agendaOn = agenda && perms.calendar
-    Screen(tr(R.string.ob_lhome), tr(R.string.obh_title), tr(R.string.obh_sub)) {
+    Screen("", tr(R.string.ob2_home_title), tr(R.string.ob2_home_sub)) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-            MomentCard(Icons.Rounded.WbSunny, tr(R.string.s_weather), tr(R.string.obh_weather), weatherOn) {
+            MomentCard(Icons.Rounded.WbSunny, tr(R.string.s_weather), tr(R.string.ob2_home_weather), weatherOn) {
                 weather = !weatherOn; prefs.homeWeather = weather; ops.changed()
                 if (weather && !perms.location) ops.request(Manifest.permission.ACCESS_COARSE_LOCATION)
             }
-            MomentCard(Icons.Rounded.Schedule, tr(R.string.n_agenda), tr(R.string.obh_agenda), agendaOn) {
+            MomentCard(Icons.Rounded.Schedule, tr(R.string.n_agenda), tr(R.string.ob2_home_agenda), agendaOn) {
                 agenda = !agendaOn; prefs.homeAgenda = agenda; ops.changed()
                 if (agenda && !perms.calendar) ops.request(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
-            }
-            // Con il calendario: quali si vedono e dove finiscono i nuovi, come nelle impostazioni
-            androidx.compose.animation.AnimatedVisibility(agendaOn) {
-                Column(Modifier.padding(vertical = 5.dp)) { Group { HomeCalendarsPick(app, ops); CalendarPick(app, ops) } }
-            }
-            Spacer(Modifier.height(14.dp))
-            Hint(tr(R.string.obh_moments), Modifier.padding(start = 4.dp, bottom = 4.dp))
-            MomentCard(Icons.Rounded.WbTwilight, tr(R.string.s_scene_evening), tr(R.string.n_from, hm(prefs.eveningFrom)), evening) {
-                evening = !evening; prefs.homeEvening = evening; ops.changed()
-            }
-            MomentCard(Icons.Rounded.Bedtime, tr(R.string.s_scene_night), tr(R.string.n_from, hm(prefs.nightFrom)), night) {
-                night = !night; prefs.homeNight = night; ops.changed()
-            }
-            MomentCard(Icons.Rounded.DirectionsCar, tr(R.string.s_scene_car), tr(R.string.ob5_car), car) {
-                car = !car; prefs.homeCar = car; ops.changed()
             }
             Spacer(Modifier.height(8.dp))
         }
@@ -584,7 +609,7 @@ private fun AskMe(app: SordinaApp) {
         }
     }
     val a = asks[i]
-    Screen(tr(R.string.ob_ltalk), tr(R.string.obt_title), tr(R.string.obt_sub)) {
+    Screen("", tr(R.string.obt_title), tr(R.string.ob2_ask_sub)) {
         Column(Modifier.fillMaxSize(), verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
             // La barra, con il testo che si scrive
             Row(
@@ -651,227 +676,199 @@ private fun MomentCard(icon: androidx.compose.ui.graphics.vector.ImageVector, na
     }
 }
 
-// 7 · Casa in piccolo: su le app, un'app che distrae chiede un respiro, giù la tendina, il resto aspetta in basso.
-
-private fun seg(u: Float, a: Float, b: Float) = ((u - a) / (b - a)).coerceIn(0f, 1f)
-private fun lerp(a: Float, b: Float, p: Float) = a + (b - a) * p
-
-@Composable
-private fun MiniHome(app: SordinaApp, perms: PermState, onFinished: () -> Unit) {
-    val c = S.c
-    val now = remember { java.time.LocalDate.now() }
-    // Un giro solo: alla fine lascia il posto a "Tutto pronto"
-    val anim = remember { androidx.compose.animation.core.Animatable(0f) }
-    LaunchedEffect(Unit) { while (true) { anim.snapTo(0f); anim.animateTo(1f, tween(28000, easing = androidx.compose.animation.core.LinearEasing)); onFinished() } }
-    val t = anim.value.coerceAtMost(0.9999f)
-    val scenes = 5
-    val scene = (t * scenes).toInt().coerceAtMost(scenes - 1)
-    val u = t * scenes - scene
-    val captions = listOf(R.string.ob6_c1, R.string.ob6_c4, R.string.ob6_c2, R.string.ob6_c3, R.string.ob6_c5)
-    Screen(tr(R.string.ob_l6), tr(R.string.ob6_title), if (perms.home) tr(R.string.onb_home_done) else tr(R.string.ob6_sub)) {
-        Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-            androidx.compose.foundation.layout.BoxWithConstraints(
-                Modifier.weight(1f).aspectRatio(0.5f, matchHeightConstraintsFirst = true)
-                    .border(1.5.dp, c.line, androidx.compose.foundation.shape.RoundedCornerShape(30.dp))
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(30.dp)).background(c.bg),
-            ) {
-                val W = maxWidth; val H = maxHeight
-                // Dove cade la notifica: la sordina in fondo
-                val counterY = H - 38.dp
-
-                // ── La Casa, come quella vera: il giorno, un impegno, la barra e sotto la sordina ──
-                Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 22.dp)) {
-                    val loc = java.util.Locale.getDefault()
-                    androidx.compose.material3.Text(now.format(java.time.format.DateTimeFormatter.ofPattern("EEEE", loc)).replaceFirstChar { it.uppercase() },
-                        style = androidx.compose.ui.text.TextStyle(fontSize = 21.sp, color = c.ink))
-                    androidx.compose.material3.Text(now.format(java.time.format.DateTimeFormatter.ofPattern("d MMMM", loc)),
-                        style = androidx.compose.ui.text.TextStyle(fontSize = 21.sp, color = c.soft))
-                    Spacer(Modifier.height(14.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        androidx.compose.material3.Text(hm(22 * 60), Modifier.padding(end = 8.dp), style = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, color = c.accent))
-                        androidx.compose.material3.Text(tr(R.string.obt_r1), style = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, color = c.ink))
-                    }
-                }
-                // Scena 5: il microfono tenuto premuto, poi lasciato
-                val hold = if (scene == 4) seg(u, 0.12f, 0.17f) * (1f - seg(u, 0.56f, 0.6f)) else 0f
-                Row(
-                    Modifier.align(Alignment.BottomCenter).padding(start = 12.dp, end = 12.dp, bottom = 66.dp).fillMaxWidth().height(34.dp)
-                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(17.dp)).background(surface()).padding(start = 12.dp, end = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    androidx.compose.material3.Text(tr(if (hold > 0f) R.string.home_listening else R.string.home_search), Modifier.weight(1f), maxLines = 1,
-                        style = androidx.compose.ui.text.TextStyle(fontSize = 11.sp, color = if (hold > 0f) c.ink else c.soft))
-                    androidx.compose.material3.Icon(Icons.Rounded.Mic, null, Modifier.size(14.dp), tint = c.accent)
-                }
-                // Il cerchio grande sul microfono (centro a 29 dp da destra e 83 dp dal fondo)
-                if (hold > 0f) androidx.compose.foundation.layout.Box(
-                    Modifier.align(Alignment.BottomEnd).offset(x = (-5).dp, y = (-59).dp).size(48.dp)
-                        .graphicsLayer { scaleX = hold; scaleY = hold }.clip(androidx.compose.foundation.shape.CircleShape).background(c.accent),
-                    contentAlignment = Alignment.Center,
-                ) { androidx.compose.material3.Icon(Icons.Rounded.Mic, null, Modifier.size(20.dp), tint = c.bg) }
-
-                // In fondo la sordina: le notifiche aspettano lì. Quando ha qualcosa da dire scivola a sinistra e apre il fumetto
-                val fall = if (scene == 3) seg(u, 0.08f, 0.32f) else 0f
-                val n = if (scene == 3 && fall >= 1f) 3 else 2
-                val bump = if (scene == 3) seg(u, 0.32f, 0.37f) * (1f - seg(u, 0.37f, 0.5f)) else 0f
-                // Scena 5: ascolta (i puntini), poi risponde
-                val voiceB = if (scene == 4) seg(u, 0.14f, 0.22f) * (1f - seg(u, 0.93f, 1f)) else 0f
-                val talk = voiceB
-                androidx.compose.foundation.layout.Box(Modifier.align(Alignment.BottomCenter).padding(start = 12.dp, end = 12.dp, bottom = 8.dp).fillMaxWidth().height(52.dp)) {
-                    if (talk > 0f) Row(
-                        Modifier.align(Alignment.CenterStart).padding(start = 30.dp).fillMaxWidth()
-                            .graphicsLayer { alpha = talk; translationX = (1f - talk) * -12.dp.toPx() }
-                            .clip(BubbleShape).background(surface()).padding(start = 13.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            if (u < 0.62f) androidx.compose.material3.Text("•••", style = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, letterSpacing = 2.sp, color = c.soft))
-                            else androidx.compose.material3.Text(tr(R.string.obt_r4), maxLines = 2, style = androidx.compose.ui.text.TextStyle(fontSize = 11.sp, lineHeight = 14.sp, color = c.ink))
-                        }
-                    }
-                    Row(Modifier.align(androidx.compose.ui.BiasAlignment(-talk, 0f)).graphicsLayer { scaleX = 1f + 0.15f * bump; scaleY = scaleX },
-                        verticalAlignment = Alignment.CenterVertically) {
-                        MascotGlyph(Pose.AWAKE, if (bump > 0f || talk > 0.5f) c.accent else c.soft, Modifier.size(22.dp))
-                        if (talk < 0.5f) {
-                            Spacer(Modifier.width(5.dp))
-                            androidx.compose.material3.Text("$n", style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = if (bump > 0f) c.accent else c.soft))
-                        }
-                    }
-                }
-
-                // 1 · In su: le app. Restano su: la seconda scena parte da qui e il respiro le copre
-                val apps = when (scene) {
-                    0 -> seg(u, 0.2f, 0.42f)
-                    1 -> if (u < 0.3f) 1f else 0f
-                    else -> 0f
-                }
-                if (apps > 0f) Column(
-                    Modifier.fillMaxSize().graphicsLayer { translationY = (1f - apps) * H.toPx() }.background(c.bg).padding(horizontal = 16.dp, vertical = 22.dp),
-                ) {
-                    Row(Modifier.fillMaxWidth().height(34.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(17.dp)).background(surface()).padding(horizontal = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically) {
-                        androidx.compose.material3.Icon(Icons.Rounded.Search, null, Modifier.size(14.dp), tint = c.accent)
-                    }
-                    Spacer(Modifier.height(14.dp))
-                    listOf(R.string.ob6_a5 to Icons.Rounded.PlayArrow, R.string.ob6_a1 to Icons.Rounded.Map, R.string.ob6_a2 to Icons.Rounded.PhotoCamera, R.string.ob6_a3 to Icons.Rounded.MusicNote)
-                        .forEach { (res, icon) ->
-                            Row(Modifier.height(36.dp), verticalAlignment = Alignment.CenterVertically) {
-                                androidx.compose.foundation.layout.Box(Modifier.size(24.dp).clip(androidx.compose.foundation.shape.CircleShape).background(c.tile), contentAlignment = Alignment.Center) {
-                                    androidx.compose.material3.Icon(icon, null, Modifier.size(13.dp), tint = c.ink)
-                                }
-                                Spacer(Modifier.width(10.dp))
-                                androidx.compose.material3.Text(tr(res), style = androidx.compose.ui.text.TextStyle(fontSize = 15.sp, color = c.ink))
-                            }
-                        }
-                }
-                // 2 · L'app che distrae: prima un respiro, e "Lascia stare" è il pulsante grande
-                if (scene == 1) {
-                    val b = seg(u, 0.24f, 0.3f) * (1f - seg(u, 0.84f, 0.9f))
-                    if (b > 0f) {
-                        val prog = seg(u, 0.3f, 0.8f)
-                        val left = 5 - (prog * 5).toInt()
-                        val breath = (kotlin.math.sin(u * 2 * Math.PI * 2.5).toFloat() + 1f) / 2f
-                        val press = seg(u, 0.76f, 0.79f) * (1f - seg(u, 0.81f, 0.84f))
-                        Column(
-                            Modifier.fillMaxSize().graphicsLayer { alpha = b }.background(c.bg).padding(horizontal = 16.dp, vertical = 22.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            Spacer(Modifier.height(16.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                androidx.compose.foundation.layout.Box(Modifier.size(18.dp).clip(androidx.compose.foundation.shape.CircleShape).background(c.tile), contentAlignment = Alignment.Center) {
-                                    androidx.compose.material3.Icon(Icons.Rounded.PlayArrow, null, Modifier.size(11.dp), tint = c.ink)
-                                }
-                                Spacer(Modifier.width(6.dp))
-                                androidx.compose.material3.Text(tr(R.string.ob6_a5), style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = c.ink))
-                            }
-                            Spacer(Modifier.weight(1f))
-                            androidx.compose.foundation.layout.Box(Modifier.size(120.dp), contentAlignment = Alignment.Center) {
-                                androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
-                                    val w = 4.dp.toPx()
-                                    drawCircle(c.line, size.minDimension / 2f - w, style = androidx.compose.ui.graphics.drawscope.Stroke(w))
-                                    drawArc(c.accent, -90f, 360f * prog, false,
-                                        androidx.compose.ui.geometry.Offset(w, w), androidx.compose.ui.geometry.Size(size.width - 2 * w, size.height - 2 * w),
-                                        style = androidx.compose.ui.graphics.drawscope.Stroke(w, cap = androidx.compose.ui.graphics.StrokeCap.Round))
-                                }
-                                androidx.compose.foundation.layout.Box(Modifier.size(72.dp).graphicsLayer { scaleX = 0.86f + 0.14f * breath; scaleY = scaleX }
-                                    .clip(androidx.compose.foundation.shape.CircleShape).background(c.accent.copy(alpha = 0.16f)))
-                                androidx.compose.material3.Text(if (left > 0) "$left" else "✓", style = androidx.compose.ui.text.TextStyle(fontSize = 26.sp, color = c.ink))
-                            }
-                            Spacer(Modifier.weight(1f))
-                            androidx.compose.foundation.layout.Box(
-                                Modifier.fillMaxWidth().height(34.dp).graphicsLayer { scaleX = 1f - 0.05f * press; scaleY = scaleX }
-                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(17.dp)).background(c.accent),
-                                contentAlignment = Alignment.Center,
-                            ) { androidx.compose.material3.Text(tr(R.string.leave_it), style = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, color = c.bg)) }
-                            androidx.compose.material3.Text(if (left > 0) tr(R.string.open_in, left) else tr(R.string.open_anyway), Modifier.padding(top = 8.dp),
-                                style = androidx.compose.ui.text.TextStyle(fontSize = 10.sp, color = c.dot))
-                        }
-                    }
-                }
-                // 3 · In giù: la tendina di Android, con quello che è passato
-                if (scene == 2) {
-                    val p = seg(u, 0.2f, 0.42f) * (1f - seg(u, 0.86f, 1f))
-                    if (p > 0f) Column(
-                        Modifier.fillMaxWidth().height(H * 0.5f).graphicsLayer { translationY = -(1f - p) * (H * 0.5f).toPx() }
-                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(bottomStart = 22.dp, bottomEnd = 22.dp)).background(c.card).padding(14.dp),
-                    ) {
-                        Spacer(Modifier.height(8.dp))
-                        Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp)) {
-                            repeat(4) { androidx.compose.foundation.layout.Box(Modifier.size(26.dp).clip(androidx.compose.foundation.shape.CircleShape).background(c.tile)) }
-                        }
-                        Spacer(Modifier.height(14.dp))
-                        MiniChip(tr(R.string.ob1_n4), Icons.Rounded.LocalShipping, Modifier.padding(bottom = 6.dp))
-                    }
-                }
-                // 4 · Una notifica arriva e scende in basso, ad aspettare
-                if (scene == 3 && fall > 0f && fall < 1f) MiniChip(tr(R.string.ob1_n1), Icons.Rounded.MailOutline,
-                    Modifier.align(Alignment.TopCenter).padding(horizontal = 12.dp).graphicsLayer {
-                        translationY = lerp(H.value * 0.2f, counterY.value - 14f, fall).dp.toPx()
-                        alpha = if (fall < 0.15f) fall / 0.15f else 1f - seg(fall, 0.7f, 1f)
-                        scaleX = 1f - 0.4f * seg(fall, 0.5f, 1f); scaleY = scaleX
-                    })
-
-                // ── Il dito ──
-                val cx = W / 2
-                val f = when (scene) {
-                    0 -> { val m = seg(u, 0.15f, 0.42f); Finger(cx, H * lerp(0.7f, 0.3f, m), seg(u, 0.04f, 0.14f) * (1f - seg(u, 0.44f, 0.52f)), 1f) }
-                    // Tocca l'app, poi "Lascia stare"
-                    1 -> if (u < 0.5f) Finger(70.dp, 88.dp, seg(u, 0.04f, 0.12f) * (1f - seg(u, 0.24f, 0.3f)), 1f - 0.2f * seg(u, 0.16f, 0.2f))
-                        else Finger(cx, H - 63.dp - 12.dp, seg(u, 0.66f, 0.72f) * (1f - seg(u, 0.84f, 0.9f)), 1f - 0.2f * seg(u, 0.76f, 0.79f))
-                    2 -> { val m = seg(u, 0.15f, 0.42f); Finger(cx, H * lerp(0.06f, 0.46f, m), seg(u, 0.04f, 0.14f) * (1f - seg(u, 0.44f, 0.52f)), 1f) }
-                    // Tiene premuto il microfono mentre parla, poi lascia
-                    4 -> Finger(W - 29.dp, H - 83.dp, seg(u, 0.04f, 0.1f) * (1f - seg(u, 0.56f, 0.62f)), 1f - 0.2f * seg(u, 0.1f, 0.14f))
-                    else -> null
-                }
-                if (f != null && f.alpha > 0f) androidx.compose.foundation.layout.Box(
-                    Modifier.offset(f.x - 15.dp, f.y - 15.dp).size(30.dp).graphicsLayer { alpha = f.alpha; scaleX = f.scale; scaleY = f.scale }
-                        .clip(androidx.compose.foundation.shape.CircleShape).background(c.accent.copy(alpha = 0.25f))
-                        .border(2.dp, c.accent, androidx.compose.foundation.shape.CircleShape),
-                )
-            }
-            Spacer(Modifier.height(14.dp))
-            // Sempre due righe: il telefono non cambia misura da una scena all'altra
-            AnimatedContent(scene, Modifier.fillMaxWidth(), transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(250)) }, label = "cap") { s ->
-                androidx.compose.material3.Text(tr(captions[s]), Modifier.fillMaxWidth(), minLines = 2, maxLines = 2,
-                    style = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, lineHeight = 22.sp, color = c.ink, textAlign = androidx.compose.ui.text.style.TextAlign.Center))
-            }
-        }
-    }
-}
-
-private data class Finger(val x: androidx.compose.ui.unit.Dp, val y: androidx.compose.ui.unit.Dp, val alpha: Float, val scale: Float)
 
 @Composable
 private fun MiniChip(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier = Modifier) {
     val c = S.c
     Row(
-        modifier.fillMaxWidth().clip(androidx.compose.foundation.shape.RoundedCornerShape(14.dp)).background(c.card).padding(horizontal = 10.dp, vertical = 8.dp),
+        modifier.fillMaxWidth().clip(androidx.compose.foundation.shape.RoundedCornerShape(14.dp)).background(c.bg).padding(horizontal = 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        androidx.compose.material3.Icon(icon, null, Modifier.size(13.dp), tint = c.soft)
-        Spacer(Modifier.width(6.dp))
+        androidx.compose.material3.Icon(icon, null, Modifier.size(16.dp), tint = c.soft)
+        Spacer(Modifier.width(10.dp))
         androidx.compose.material3.Text(text, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-            style = androidx.compose.ui.text.TextStyle(fontSize = 11.sp, color = c.ink))
+            style = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = c.ink))
+    }
+}
+
+// Le ritrovi: in fondo alla Home la sordina con il numero; sopra, quello che aspetta, tutto insieme.
+
+@Composable
+private fun FindThem() {
+    val c = S.c
+    val pulse by androidx.compose.animation.core.rememberInfiniteTransition(label = "find").animateFloat(
+        0f, 1f, androidx.compose.animation.core.infiniteRepeatable(tween(2400), androidx.compose.animation.core.RepeatMode.Reverse), label = "p",
+    )
+    Screen("", tr(R.string.ob2_f_title), tr(R.string.ob2_f_sub)) {
+        Column(Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(Modifier.fillMaxWidth().clip(androidx.compose.foundation.shape.RoundedCornerShape(22.dp)).background(surface()).padding(14.dp)) {
+                androidx.compose.material3.Text(tr(R.string.ob2_f_today), Modifier.padding(start = 4.dp, bottom = 8.dp),
+                    style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = c.soft))
+                MiniChip(tr(R.string.ob1_n1), Icons.Rounded.MailOutline, Modifier.padding(bottom = 6.dp))
+                MiniChip(tr(R.string.ob1_n2), Icons.Rounded.Groups, Modifier.padding(bottom = 6.dp))
+                MiniChip(tr(R.string.ob1_n4), Icons.Rounded.LocalShipping)
+            }
+            Spacer(Modifier.height(18.dp))
+            androidx.compose.material3.Icon(Icons.Rounded.KeyboardArrowUp, null, Modifier.size(22.dp).graphicsLayer { translationY = -pulse * 6.dp.toPx() }, tint = c.soft)
+            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                MascotGlyph(Pose.AWAKE, c.accent, Modifier.size(30.dp))
+                Spacer(Modifier.width(8.dp))
+                androidx.compose.material3.Text("3", style = androidx.compose.ui.text.TextStyle(fontSize = 20.sp, color = c.accent))
+            }
+        }
+    }
+}
+
+// Il freno: tocchi un'app che ti distrae, il cerchio si riempie in cinque secondi, "Lascio stare" è il pulsante grande.
+
+@Composable
+private fun BrakeDemo() {
+    val c = S.c
+    val t by androidx.compose.animation.core.rememberInfiniteTransition(label = "brake").animateFloat(
+        0f, 1f, androidx.compose.animation.core.infiniteRepeatable(tween(7000, easing = androidx.compose.animation.core.LinearEasing)), label = "t",
+    )
+    val prog = ((t - 0.05f) / 0.75f).coerceIn(0f, 1f)
+    val left = 5 - (prog * 5).toInt()
+    val breath = (kotlin.math.sin(t * 2 * Math.PI * 3).toFloat() + 1f) / 2f
+    Screen("", tr(R.string.ob2_b_title), tr(R.string.ob2_b_sub)) {
+        Column(Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            androidx.compose.foundation.layout.Box(Modifier.size(150.dp), contentAlignment = Alignment.Center) {
+                androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+                    val w = 5.dp.toPx()
+                    drawCircle(c.line, size.minDimension / 2f - w, style = androidx.compose.ui.graphics.drawscope.Stroke(w))
+                    drawArc(c.accent, -90f, 360f * prog, false,
+                        androidx.compose.ui.geometry.Offset(w, w), androidx.compose.ui.geometry.Size(size.width - 2 * w, size.height - 2 * w),
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(w, cap = androidx.compose.ui.graphics.StrokeCap.Round))
+                }
+                androidx.compose.foundation.layout.Box(Modifier.size(90.dp).graphicsLayer { scaleX = 0.86f + 0.14f * breath; scaleY = scaleX }
+                    .clip(androidx.compose.foundation.shape.CircleShape).background(c.accent.copy(alpha = 0.16f)))
+                androidx.compose.material3.Text(if (left > 0) "$left" else "✓", style = androidx.compose.ui.text.TextStyle(fontSize = 32.sp, color = c.ink))
+            }
+            Spacer(Modifier.height(24.dp))
+            androidx.compose.foundation.layout.Box(
+                Modifier.fillMaxWidth(0.8f).height(44.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(22.dp)).background(c.accent),
+                contentAlignment = Alignment.Center,
+            ) { androidx.compose.material3.Text(tr(R.string.leave_it), style = androidx.compose.ui.text.TextStyle(fontSize = 15.sp, color = c.bg)) }
+            androidx.compose.material3.Text(if (left > 0) tr(R.string.open_in, left) else tr(R.string.open_anyway), Modifier.padding(top = 10.dp),
+                style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = c.soft))
+        }
+    }
+}
+
+/**
+ * Un permesso: perché serve, e passo per passo cosa succede in Android. Quando torni e c'è, al posto dei passi
+ * la spunta grande.
+ */
+@Composable
+private fun PermStep(title: Int, why: Int, done: Boolean, vararg how: Int) {
+    val c = S.c
+    Screen("", tr(title), tr(why)) {
+        AnimatedContent(done, transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) }, label = "perm") { ok ->
+            if (ok) Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
+                androidx.compose.foundation.layout.Box(Modifier.size(72.dp).clip(androidx.compose.foundation.shape.CircleShape).background(c.accent), contentAlignment = Alignment.Center) {
+                    androidx.compose.material3.Icon(Icons.Rounded.Check, null, Modifier.size(38.dp), tint = c.bg)
+                }
+                Spacer(Modifier.height(14.dp))
+                androidx.compose.material3.Text(tr(R.string.ob2_perm_ok), style = androidx.compose.ui.text.TextStyle(fontSize = 18.sp, color = c.ink))
+            } else Column(Modifier.fillMaxSize(), verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
+                androidx.compose.material3.Text(tr(R.string.ob2_perm_how), Modifier.padding(bottom = 14.dp),
+                    style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = c.soft))
+                how.forEachIndexed { n, res ->
+                    Row(Modifier.padding(bottom = 14.dp), verticalAlignment = Alignment.Top) {
+                        androidx.compose.foundation.layout.Box(Modifier.size(28.dp).clip(androidx.compose.foundation.shape.CircleShape).background(surface()), contentAlignment = Alignment.Center) {
+                            androidx.compose.material3.Text("${n + 1}", style = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = c.accent))
+                        }
+                        Spacer(Modifier.width(14.dp))
+                        androidx.compose.material3.Text(tr(res), Modifier.padding(top = 4.dp), style = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, lineHeight = 22.sp, color = c.ink))
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Gli Importanti: passano già. Codici e sicurezza sempre; il resto si spegne con un tocco.
+
+@Composable
+private fun Importants(app: SordinaApp, ops: Ops) {
+    val prefs = app.prefs
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    var missed by remember { mutableStateOf(prefs.missedPass) }
+    var remind by remember { mutableStateOf(prefs.remindPass) }
+    var urgent by remember { mutableStateOf(prefs.urgentEnabled) }
+    fun apply() { ops.changed(); SordinaListener.reapply(ctx) }
+    Screen("", tr(R.string.ob2_imp_title), tr(R.string.ob2_imp_sub)) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            MomentCard(Icons.Rounded.Key, tr(R.string.notif_security), tr(R.string.ob2_imp_security), true) {}
+            MomentCard(Icons.Rounded.NotificationsActive, tr(R.string.notif_missed), tr(R.string.ob2_imp_missed), missed) {
+                missed = !missed; prefs.missedPass = missed; apply()
+            }
+            MomentCard(Icons.Rounded.Event, tr(R.string.notif_remind), tr(R.string.ob2_imp_remind), remind) {
+                remind = !remind; prefs.remindPass = remind; apply()
+            }
+            MomentCard(Icons.Rounded.Forum, tr(R.string.s_urgent), tr(R.string.ob2_imp_urgent), urgent) {
+                urgent = !urgent; prefs.urgentEnabled = urgent; apply()
+            }
+            Spacer(Modifier.height(8.dp))
+        }
+    }
+}
+
+/** La fine: cosa hai scelto, in parole semplici, e cosa manca ancora (si sistema da qui). */
+@Composable
+private fun AllSet(app: SordinaApp, apps: List<AppEntry>, perms: PermState, ops: Ops) {
+    val c = S.c
+    val prefs = app.prefs
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    fun appName(pkg: String) = apps.firstOrNull { it.packageName == pkg }?.label
+    fun names(list: List<String>) = when {
+        list.size <= 3 -> list.joinToString(", ")
+        else -> list.take(3).joinToString(", ") + " " + trn(R.plurals.ob2_and_more, list.size - 3)
+    }
+    val pass = remember {
+        prefs.appLevels.filterValues { it == Level.SEMPRE }.keys.mapNotNull(::appName).sorted() +
+            prefs.importantNames.sorted().map { n -> n.split(' ').joinToString(" ") { w -> w.replaceFirstChar { it.uppercase() } } }
+    }
+    val braked = remember { prefs.braked.mapNotNull(::appName).sorted() }
+    val home = listOfNotNull(
+        tr(R.string.s_weather).takeIf { prefs.homeWeather && perms.location },
+        tr(R.string.n_agenda).takeIf { prefs.homeAgenda && perms.calendar },
+    )
+    Column(Modifier.fillMaxSize().padding(top = 18.dp).verticalScroll(rememberScrollState())) {
+        Mascot(Mood.DONE, Modifier.size(76.dp))
+        Spacer(Modifier.height(10.dp))
+        androidx.compose.material3.Text(tr(R.string.ob_done_title), style = androidx.compose.ui.text.TextStyle(fontSize = 32.sp, lineHeight = 38.sp, color = c.ink))
+        Spacer(Modifier.height(10.dp))
+        androidx.compose.material3.Text(tr(R.string.ob2_done_sub), style = androidx.compose.ui.text.TextStyle(fontSize = 15.sp, lineHeight = 21.sp, color = c.soft))
+        Spacer(Modifier.height(16.dp))
+        Summary(tr(R.string.ob2_sum_pass), if (pass.isEmpty()) tr(R.string.ob2_sum_pass_none) else tr(R.string.ob2_sum_pass_some, names(pass)))
+        Summary(tr(R.string.ob2_sum_brake), if (braked.isEmpty()) tr(R.string.ob2_sum_none) else names(braked))
+        Summary(tr(R.string.ob2_sum_home), if (home.isEmpty()) tr(R.string.ob2_sum_home_none) else home.joinToString(", "))
+        // Quello che hai rimandato: si può fare ancora da qui
+        val missing = !perms.listener || !perms.home || !perms.battery || (Build.VERSION.SDK_INT >= 33 && !perms.post)
+        if (missing) {
+            Spacer(Modifier.height(10.dp))
+            androidx.compose.material3.Text(tr(R.string.ob2_sum_missing), Modifier.padding(start = 4.dp, bottom = 2.dp),
+                style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = c.soft))
+            if (!perms.listener) Need(false, tr(R.string.ob2_pn_title), tr(R.string.ob2_need_notif)) { ops.openListenerSettings() }
+            if (!perms.home) Need(false, tr(R.string.ob_home_l), tr(R.string.ob2_need_home)) { ops.openHomeSettings() }
+            if (!perms.battery) Need(false, tr(R.string.ob_battery_l), tr(R.string.ob2_need_battery)) { ops.openBatterySettings() }
+            if (Build.VERSION.SDK_INT >= 33 && !perms.post) Need(false, tr(R.string.onb_alerts), tr(R.string.ob2_need_post)) { ops.request(Manifest.permission.POST_NOTIFICATIONS) }
+        }
+        androidx.compose.material3.Text(tr(R.string.ob_backup), Modifier.padding(top = 14.dp, start = 4.dp).clickableNoRipple { Backup.openSettings(ctx) },
+            style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, lineHeight = 19.sp, color = c.soft, textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline))
+        Spacer(Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun Summary(title: String, text: String) {
+    val c = S.c
+    Column(Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(18.dp)).background(surface()).padding(horizontal = 16.dp, vertical = 12.dp)) {
+        androidx.compose.material3.Text(title, style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = c.soft))
+        Spacer(Modifier.height(2.dp))
+        androidx.compose.material3.Text(text, style = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, lineHeight = 22.sp, color = c.ink))
     }
 }
 
@@ -953,10 +950,12 @@ internal fun <T> PickList(
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val nq = Search.normalize(q)
     val shown = remember(items, nq) { if (nq.isEmpty()) items else items.filter { Search.normalize(label(it)).contains(nq) } }
-    // Righe: in cima le scelte, poi le altre per lettera
-    val rows = remember(shown, selected) {
+    // Righe: in cima le scelte di quando si è aperta la pagina, poi le altre per lettera.
+    // Toccando una riga si riempie solo il cerchio: niente si sposta sotto il dito
+    val opened = remember { selected }
+    val rows = remember(shown) {
         val out = ArrayList<Any>()
-        val (mine, rest) = shown.partition { key(it) in selected }
+        val (mine, rest) = shown.partition { key(it) in opened }
         if (mine.isNotEmpty()) { out += CHOSEN; mine.forEach { out += Pair(it, 0) } }
         var last = ""
         for (it in rest) { val l = app.sordina.ui.apps.letterOf(label(it)); if (l != last) { out += l; last = l }; out += Pair(it, 0) }
@@ -1031,45 +1030,4 @@ internal fun AppDot(pkg: String) {
 /** Segnaposto della sezione "Scelti" in cima alla lista (non è una lettera). */
 private const val CHOSEN = "\u0000chosen"
 
-/** La fine: il segno di Sordina, "Tutto pronto" e il pulsante grande in mezzo allo schermo. */
-@Composable
-private fun AllSet(perms: PermState, ops: Ops, label: String, onGo: () -> Unit, onLater: () -> Unit) {
-    val c = S.c
-    val feel = LocalFeel.current
-    val grow = remember { androidx.compose.animation.core.Animatable(0.85f) }
-    LaunchedEffect(Unit) { grow.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.55f, stiffness = 260f)) }
-    Column(Modifier.fillMaxSize().padding(bottom = 24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
-        Mascot(Mood.DONE, Modifier.size(120.dp))
-        Spacer(Modifier.height(16.dp))
-        androidx.compose.material3.Text(tr(R.string.ob_done_title), style = androidx.compose.ui.text.TextStyle(fontSize = 34.sp, lineHeight = 40.sp, color = c.ink))
-        Spacer(Modifier.height(18.dp))
-        // Gli ultimi tocchi: ognuno si spunta quando torni da Android
-        Column(Modifier.fillMaxWidth()) {
-            Need(perms.home, tr(R.string.ob_home_l), tr(R.string.ob_home_why)) { ops.openHomeSettings() }
-            Need(perms.battery, tr(R.string.ob_battery_l), tr(R.string.ob_perm_battery)) { ops.openBatterySettings() }
-            // Samsung spegne le app in background quando la memoria scarseggia: la strada per "App mai in sospensione"
-            if (SamsungSleep.isSamsung) {
-                val sctx = androidx.compose.ui.platform.LocalContext.current
-                val asking by SamsungSleep.asking.collectAsState()
-                val shown = remember(asking) { SordinaApp.of(sctx).prefs.samsungAsked > 0 }
-                Need(shown, tr(R.string.samsung_sleep_l), tr(R.string.samsung_sleep_why)) { SamsungSleep.ask() }
-            }
-            if (Build.VERSION.SDK_INT >= 33) Need(perms.post, tr(R.string.onb_alerts), tr(R.string.ob_perm_post)) { ops.request(Manifest.permission.POST_NOTIFICATIONS) }
-        }
-        val ctx = androidx.compose.ui.platform.LocalContext.current
-        androidx.compose.material3.Text(tr(R.string.ob_backup), Modifier.padding(top = 14.dp, start = 12.dp, end = 12.dp).clickableNoRipple { Backup.openSettings(ctx) },
-            style = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = c.soft, textAlign = androidx.compose.ui.text.style.TextAlign.Center, textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline))
-        Spacer(Modifier.height(28.dp))
-        androidx.compose.foundation.layout.Box(
-            Modifier.fillMaxWidth().height(68.dp).graphicsLayer { scaleX = grow.value; scaleY = grow.value }
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(34.dp)).background(c.accent)
-                .clickable { feel.confirm(); onGo() },
-            contentAlignment = Alignment.Center,
-        ) { androidx.compose.material3.Text(label, style = androidx.compose.ui.text.TextStyle(fontSize = 20.sp, color = c.bg)) }
-        if (!perms.home) androidx.compose.foundation.layout.Box(
-            Modifier.fillMaxWidth().clickableNoRipple(onLater).padding(top = 16.dp, bottom = 4.dp),
-            contentAlignment = Alignment.Center,
-        ) { Serif(tr(R.string.later), size = 14.sp, color = c.soft) }
-    }
-}
 

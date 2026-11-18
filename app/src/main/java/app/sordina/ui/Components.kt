@@ -249,6 +249,7 @@ fun Line(
     hint: String? = null,
     icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
     trailing: (@Composable () -> Unit)? = null,
+    leading: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
 ) {
     val c = S.c
@@ -258,7 +259,8 @@ fun Line(
             .padding(horizontal = 16.dp, vertical = 14.dp).heightIn(min = 36.dp),
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
     ) {
-        if (icon != null) { RowIcon(icon); androidx.compose.foundation.layout.Spacer(Modifier.width(12.dp)) }
+        if (leading != null) { leading(); androidx.compose.foundation.layout.Spacer(Modifier.width(12.dp)) }
+        else if (icon != null) { RowIcon(icon); androidx.compose.foundation.layout.Spacer(Modifier.width(12.dp)) }
         androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
             Text(label, style = TextStyle(fontSize = 17.sp, color = c.ink))
             if (hint != null) Text(hint, Modifier.padding(top = 1.dp), style = TextStyle(fontSize = 13.sp, lineHeight = 17.sp, color = c.soft))
@@ -281,13 +283,13 @@ fun Line(
 val LocalToggleMemory = androidx.compose.runtime.staticCompositionLocalOf<HashMap<String, Boolean>?> { null }
 
 @Composable
-fun Toggle(label: String, checked: Boolean, hint: String? = null, icon: androidx.compose.ui.graphics.vector.ImageVector? = null, onChange: (Boolean) -> Unit) {
+fun Toggle(label: String, checked: Boolean, hint: String? = null, icon: androidx.compose.ui.graphics.vector.ImageVector? = null, leading: (@Composable () -> Unit)? = null, onChange: (Boolean) -> Unit) {
     val c = S.c
     val memory = LocalToggleMemory.current
     // Primo fotogramma com'era prima, subito dopo com'è adesso: così il pallino scorre
     var shown by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(memory?.get(label) ?: checked) }
     androidx.compose.runtime.LaunchedEffect(checked) { shown = checked; memory?.set(label, checked) }
-    Line(label, hint = hint, icon = icon, trailing = {
+    Line(label, hint = hint, icon = icon, leading = leading, trailing = {
         androidx.compose.material3.Switch(
             shown, onChange,
             colors = androidx.compose.material3.SwitchDefaults.colors(
@@ -453,22 +455,29 @@ fun Pick(
         )
     }) { open = true }
     if (open) Sheet(title, onDismiss = { open = false }) {
-        options.forEachIndexed { i, o ->
-            val on = isOn(i)
-            androidx.compose.foundation.layout.Row(
-                Modifier.fillMaxWidth().clickable { onSelect(i); if (!multi) open = false }.padding(horizontal = 24.dp, vertical = 13.dp),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-            ) {
-                androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
-                    Text(o.label, style = TextStyle(fontSize = 17.sp, color = if (on) c.accent else c.ink))
-                    o.hint?.let { Text(it, style = TextStyle(fontSize = 13.sp, color = c.soft)) }
-                }
-                if (on) androidx.compose.material3.Icon(
-                    androidx.compose.material.icons.Icons.Rounded.Check, null, Modifier.size(22.dp), tint = c.accent,
-                )
-            }
-        }
+        ChoiceRows(options, isOn) { i -> onSelect(i); if (!multi) open = false }
         if (multi) Primary(app.sordina.tr(app.sordina.R.string.done), Modifier.padding(horizontal = 20.dp, vertical = 10.dp).fillMaxWidth()) { open = false }
+    }
+}
+
+/** Le scelte dentro un foglio: quella attiva in colore, con la spunta. */
+@Composable
+fun ChoiceRows(options: List<Option>, isOn: (Int) -> Boolean, onClick: (Int) -> Unit) {
+    val c = S.c
+    options.forEachIndexed { i, o ->
+        val on = isOn(i)
+        androidx.compose.foundation.layout.Row(
+            Modifier.fillMaxWidth().clickable { onClick(i) }.padding(horizontal = 24.dp, vertical = 13.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        ) {
+            androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
+                Text(o.label, style = TextStyle(fontSize = 17.sp, color = if (on) c.accent else c.ink))
+                o.hint?.let { Text(it, style = TextStyle(fontSize = 13.sp, color = c.soft)) }
+            }
+            if (on) androidx.compose.material3.Icon(
+                androidx.compose.material.icons.Icons.Rounded.Check, null, Modifier.size(22.dp), tint = c.accent,
+            )
+        }
     }
 }
 

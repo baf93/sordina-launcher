@@ -127,7 +127,9 @@ object BrakeGuard {
 
     /** [via]: il browser dove si è aperto il sito; passato il freno si torna lì, non nell'app. */
     private fun brake(context: Context, prefs: Prefs, pkg: String, via: String? = null): Boolean {
-        if (pkg == context.packageName || pkg == allowed || pkg !in prefs.braked || !brakeNow(prefs)) return false
+        if (pkg == context.packageName || pkg == allowed || pkg !in prefs.braked) return false
+        // Fuori dalla fascia il freno non sale, ma il budget conta lo stesso: l'avviso quando finisce
+        if (!brakeNow(prefs)) { runCatching { BudgetWatch.outsideBrake(context, pkg) }; return false }
         context.startActivity(
             Intent(context, MainActivity::class.java).putExtra(EXTRA, pkg).putExtra(VIA, via).putExtra(TOKEN, token)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT),

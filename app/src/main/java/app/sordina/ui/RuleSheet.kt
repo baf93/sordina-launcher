@@ -7,7 +7,11 @@ import app.sordina.tr
 import app.sordina.ui.theme.S
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,13 +41,13 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun RuleLabel(text: String) {
-    Text(text, Modifier.padding(start = 24.dp, end = 24.dp, top = 14.dp, bottom = 4.dp), style = TextStyle(fontSize = 13.sp, color = S.c.soft))
+    Text(text, Modifier.padding(start = 24.dp, end = 24.dp, top = 18.dp, bottom = 6.dp), style = TextStyle(fontSize = 13.sp, color = S.c.soft))
 }
 
 /**
- * Le scelte su una notifica, nel modello "tutto aspetta in Sordina, tranne": far entrare chi l'ha mandata
- * (da quest'app), far entrare tutta l'app, oppure spegnere quel tipo o quella chat dentro un'app che entra.
- * Ogni riga si accende e si spegne con un tocco; la spunta dice com'è adesso.
+ * Le scelte su una notifica, nel modello "tutto aspetta in Sordina, tranne": far entrare chi l'ha mandata,
+ * far entrare tutta l'app, oppure far aspettare quel tipo o quella chat dentro un'app che entra.
+ * Poche righe, nessuna spiegazione: il cerchio pieno dice com'è adesso, un tocco lo cambia.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +57,9 @@ fun RuleSheet(
     isOn: (RuleTarget, RuleOp) -> Boolean,
     onOp: (RuleTarget, RuleOp) -> Unit,
     onDismiss: () -> Unit,
+    top: (@Composable () -> Unit)? = null,
+    /** Una nota sotto la scelta ("Entra già ovunque"): la riga allora si legge ma non si tocca */
+    note: (RuleTarget, RuleOp) -> String? = { _, _ -> null },
     extra: (@Composable () -> Unit)? = null,
 ) {
     val c = S.c
@@ -66,32 +73,42 @@ fun RuleSheet(
     ) {
         Column(Modifier.navigationBarsPadding().padding(bottom = 12.dp).verticalScroll(rememberScrollState())) {
             Text(t.title, Modifier.padding(horizontal = 24.dp), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 21.sp, color = c.ink))
-            Text(listOfNotNull(t.appLabel, t.channelName?.takeIf { it.isNotBlank() && t.person == null }).joinToString(" · "),
-                Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp), style = TextStyle(fontSize = 14.sp, color = c.soft))
-            RuleLabel(tr(R.string.rule_next))
+            Text(t.appLabel, Modifier.padding(start = 24.dp, end = 24.dp, top = 2.dp, bottom = 10.dp), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                style = TextStyle(fontSize = 14.sp, color = c.soft))
+            top?.invoke()
             ops.forEach { op ->
-                val (label, hint) = when (op) {
-                    RuleOp.PERSON_IN -> tr(R.string.rule_person_in, t.personTitle ?: t.person.orEmpty()) to tr(R.string.rule_person_in_hint, t.appLabel)
-                    RuleOp.APP_IN -> tr(R.string.rule_app_in, t.appLabel) to tr(R.string.rule_app_in_hint)
-                    RuleOp.OFF -> tr(R.string.rule_off, t.kindName) to tr(R.string.rule_off_hint, t.appLabel)
+                val label = when (op) {
+                    RuleOp.PERSON_IN -> tr(R.string.rule_person_in, t.personTitle ?: t.person.orEmpty())
+                    RuleOp.APP_IN -> tr(R.string.rule_app_in, t.appLabel)
+                    RuleOp.OFF -> tr(R.string.rule_off, t.kindName)
                 }
-                LevelRow(label, hint, isOn(t, op)) { feel.confirm(); onDismiss(); onOp(t, op) }
+                val n = note(t, op)
+                CheckRow(label, isOn(t, op), n, enabled = n == null) { feel.confirm(); onDismiss(); onOp(t, op) }
             }
             extra?.invoke()
         }
     }
 }
 
+/** Una scelta che resta: a destra il cerchio, pieno quando vale. */
 @Composable
-private fun LevelRow(label: String, hint: String, on: Boolean, onClick: () -> Unit) {
+private fun CheckRow(label: String, on: Boolean, note: String? = null, enabled: Boolean = true, onClick: () -> Unit) {
     val c = S.c
-    Column(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 11.dp),
+    Row(
+        // Una casella da spuntare anche per TalkBack: dice "selezionato" o "non selezionato"
+        Modifier.fillMaxWidth()
+            .toggleable(value = on, enabled = enabled, role = Role.Checkbox, onValueChange = { onClick() })
+            .padding(horizontal = 24.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(label, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 17.sp, color = if (on) c.accent else c.ink))
-            if (on) Icon(Icons.Rounded.Check, null, Modifier.size(18.dp), tint = c.accent)
+        Column(Modifier.weight(1f)) {
+            Text(label, maxLines = 2, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 17.sp, color = c.ink))
+            note?.let { Text(it, Modifier.padding(top = 2.dp), style = TextStyle(fontSize = 14.sp, color = c.soft)) }
         }
-        Text(hint, style = TextStyle(fontSize = 13.sp, color = c.soft))
+        Spacer(Modifier.width(16.dp))
+        Box(
+            Modifier.size(24.dp).clip(CircleShape).let { m -> if (on) m.background(c.accent) else m.border(1.5.dp, c.dot, CircleShape) },
+            contentAlignment = Alignment.Center,
+        ) { if (on) Icon(Icons.Rounded.Check, null, Modifier.size(15.dp), tint = c.bg) }
     }
 }

@@ -187,7 +187,7 @@ class Signals(context: android.content.Context) {
         remove(c.key)
         _dismissedKeys.value = dismissed.keys.toSet()
         val snap = org.json.JSONObject(dismissed as Map<*, *>).toString()
-        runCatching { dismissedFile.writeText(snap) }
+        runCatching { dismissedFile.writeSafely(snap) }
     }
 
     /** La sessione multimediale più rilevante (quella che suona, o l'ultima messa in pausa da poco). */

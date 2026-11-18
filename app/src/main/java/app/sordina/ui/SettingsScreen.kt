@@ -68,6 +68,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.material.icons.rounded.DragHandle
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -117,8 +121,8 @@ private const val REPO = "https://github.com/baf93/sordina-launcher"
 private enum class Sub(val parent: String?) {
     MAIN(null),
     NOTIF("MAIN"), HOME("MAIN"), BRAKE("MAIN"), SEARCH("MAIN"), THEMES("MAIN"), GENERAL("MAIN"), PROGRESS("MAIN"),
-    PEOPLE("NOTIF"), ALWAYS("NOTIF"), KINDS("NOTIF"), ORDER("HOME"),
-    BRAKED("BRAKE"), HIDDEN("BRAKE"), MASCOTS("HOME"), PINNED("SEARCH"), EXCLUDED("SEARCH"), HA("MAIN"), CAR_APPS("HOME"), CAR_PEOPLE("HOME"), PERMS("GENERAL"), CREDITS("GENERAL"), LANG("GENERAL"), FAULTS("GENERAL"), WHY("GENERAL"),
+    PEOPLE("NOTIF"), ALWAYS("NOTIF"), KINDS("NOTIF"), ORDER("NOTIF"), SECURITY("NOTIF"), CAR("HOME"),
+    BRAKED("BRAKE"), HIDDEN("BRAKE"), MASCOTS("HOME"), PINNED("SEARCH"), EXCLUDED("SEARCH"), HA("MAIN"), HA_ALARM("HA"), HA_ROUTINE("HA"), CAR_APPS("CAR"), CAR_PEOPLE("CAR"), PERMS("GENERAL"), CREDITS("GENERAL"), LANG("GENERAL"), FAULTS("GENERAL"), WHY("GENERAL"),
 }
 
 private fun hm(min: Int) = Moments.fmt(min)
@@ -152,8 +156,13 @@ fun SettingsScreen(
     var sub by rememberSaveable { mutableStateOf(if (sticker != null) Sub.PROGRESS else Sub.MAIN) }
     // L'app di cui si guardano i tipi di notifica (pagina Sub.KINDS)
     var kindsOf by rememberSaveable { mutableStateOf<String?>(null) }
+    // L'allarme o la routine di Home Assistant aperti (pagine Sub.HA_ALARM e Sub.HA_ROUTINE): entità e nome
+    var haItem by rememberSaveable { mutableStateOf<String?>(null) }
+    var haName by rememberSaveable { mutableStateOf("") }
     // Solo all'apertura: poi la pagina si comporta come sempre
-    val jumpToSticker = remember { sticker }
+    var jumpToSticker by remember { mutableStateOf(sticker) }
+    // Usato una volta sola: uscendo da Progressi si dimentica, così rientrando non riapre più la scheda
+    LaunchedEffect(sub) { if (sub != Sub.PROGRESS) jumpToSticker = null }
     var tick by remember { mutableIntStateOf(0) }
     // Ogni pagina ricorda dove eri: tornando indietro, sei lì
     val scrolls = remember { HashMap<Sub, ScrollState>() }
@@ -220,14 +229,30 @@ fun SettingsScreen(
                 }
 
                 // ── Notifiche: tutto aspetta in Sordina, tranne. Dal generico allo specifico
-                Sub.NOTIF -> Page(tr(R.string.perm_notifications), tr(R.string.notif_intro), back, scrollOf(page)) {
+                Sub.NOTIF -> Page(tr(R.string.perm_notifications), null, back, scrollOf(page)) {
                     NotifPage(app, apps, change = ::change, onAddApp = { sub = Sub.ALWAYS }, onAddPerson = { sub = Sub.PEOPLE },
-                        onApp = { pkg -> kindsOf = pkg; sub = Sub.KINDS })
+                        onApp = { pkg -> kindsOf = pkg; sub = Sub.KINDS }, onSecurity = { sub = Sub.SECURITY })
+                    // La pagina Sordina si apre da Casa: il suo ordine si sceglie qui
+                    Topic(tr(R.string.sec_page))
+                    Group {
+                        val orders = listOf(
+                            Option(tr(R.string.s_order_auto), tr(R.string.s_order_auto_hint)),
+                            Option(tr(R.string.s_order_arrival)),
+                            Option(tr(R.string.s_order_yours)),
+                        )
+                        val oi = prefs.sordinaOrder.coerceIn(0, 2)
+                        Pick(tr(R.string.s_order), orders[oi].label, orders, { it == prefs.sordinaOrder }, icon = Icons.Rounded.Sort, title = tr(R.string.s_order_title)) { i ->
+                            change { prefs.sordinaOrder = i }
+                            if (i == 2) sub = Sub.ORDER
+                        }
+                        if (prefs.sordinaOrder == 2) Line(tr(R.string.s_your_order), icon = Icons.Rounded.Reorder) { sub = Sub.ORDER }
+                    }
                 }
 
                 // ── Home: come cambia durante il giorno e cosa sa
                 Sub.HOME -> Page(tr(R.string.perm_home), null, back, scrollOf(page)) {
-                    // Cosa c'è in Home: ognuna si spegne con un tocco
+                    // Tre blocchi: cosa c'è in Home, come cambia nei momenti, i gesti. Una riga per cosa
+                    Topic(tr(R.string.home_in_home))
                     Group {
                         val loc = granted(Manifest.permission.ACCESS_COARSE_LOCATION)
                         Toggle(tr(R.string.s_weather), prefs.homeWeather && loc, null, Icons.Rounded.Cloud) { v ->
@@ -243,17 +268,6 @@ fun SettingsScreen(
                         // Solo nella versione di prova: tutti i disegni, uno sotto l'altro
                         if ((ctx.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) Line("Tutte le sordine", "", null, Icons.Rounded.Collections) { sub = Sub.MASCOTS }
                     }
-                    // Doppio tocco sul fondo di Casa: spegne lo schermo. Serve l'accessibilità di Sordina
-                    Topic(tr(R.string.n_gestures))
-                    Group {
-                        val access by SordinaAccess.on.collectAsState()
-                        // Come il freno istantaneo: senza accessibilità resta spento, e accenderlo porta al permesso
-                        Toggle(tr(R.string.s_double_tap), access && prefs.doubleTapLock, if (access) null else tr(R.string.s_double_tap_hint), Icons.Rounded.TouchApp) { v ->
-                            change { prefs.doubleTapLock = v }
-                            if (v && !access) SordinaAccess.openSettings(ctx)
-                        }
-                    }
-                    // I momenti: cosa sono, detto in una riga
                     Topic(tr(R.string.n_moments))
                     Group {
                         // Una riga sola per accenderla e scegliere l'ora
@@ -266,54 +280,44 @@ fun SettingsScreen(
                         }
                         Hour(tr(R.string.s_scene_evening), prefs.homeEvening, prefs.eveningFrom, listOf(17, 18, 19, 20, 21, 22), Icons.Rounded.WbTwilight) { on, m -> prefs.homeEvening = on; prefs.eveningFrom = m }
                         Hour(tr(R.string.s_scene_night), prefs.homeNight, prefs.nightFrom, listOf(21, 22, 23, 0, 1), Icons.Rounded.Bedtime) { on, m -> prefs.homeNight = on; prefs.nightFrom = m }
-                        Toggle(tr(R.string.s_scene_car), prefs.homeCar, null, Icons.Rounded.DirectionsCar) { v -> change { prefs.homeCar = v } }
+                        // Solo quello che c'è: "2 app", "2 app · 3 persone"; acceso e vuoto dice "Acceso"
+                        val carSummary = if (!prefs.homeCar) tr(R.string.car_off) else listOfNotNull(
+                            ops.carApps().size.takeIf { it > 0 }?.let { trn(R.plurals.car_n_apps, it) },
+                            ops.carContacts().size.takeIf { it > 0 }?.let { trn(R.plurals.car_n_people, it) },
+                        ).joinToString(" · ").ifEmpty { tr(R.string.car_on) }
+                        Line(tr(R.string.s_scene_car), carSummary, null, Icons.Rounded.DirectionsCar) { sub = Sub.CAR }
+                    }
+                    // Doppio tocco sul fondo di Casa: spegne lo schermo. Serve l'accessibilità di Sordina
+                    Topic(tr(R.string.n_gestures))
+                    Group {
+                        val access by SordinaAccess.on.collectAsState()
+                        // Come il freno istantaneo: senza accessibilità resta spento, e accenderlo porta al permesso
+                        Toggle(tr(R.string.s_double_tap), access && prefs.doubleTapLock, if (access) null else tr(R.string.s_double_tap_hint), Icons.Rounded.TouchApp) { v ->
+                            change { prefs.doubleTapLock = v }
+                            if (v && !access) SordinaAccess.openSettings(ctx)
+                        }
+                    }
+                }
+
+                // ── In auto: acceso, solo chiamate, le app e le persone. Si scelgono con le liste di sempre, l'ordine si trascina
+                Sub.CAR -> Page(tr(R.string.s_scene_car), tr(R.string.car_sub), back, scrollOf(page)) {
+                    Spacer(Modifier.height(8.dp))
+                    Group {
+                        Toggle(tr(R.string.car_on), prefs.homeCar, null, Icons.Rounded.DirectionsCar) { v -> change { prefs.homeCar = v } }
                         if (prefs.homeCar) Toggle(tr(R.string.n_car_calls_only), prefs.carQuiet && perms.policy, if (perms.policy) null else tr(R.string.s_car_quiet_access), Icons.Rounded.Call) { v ->
                             if (v && !perms.policy) runCatching { ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
                             change { prefs.carQuiet = v }
                         }
                     }
                     if (prefs.homeCar) {
-                        // Fino a tre app, in una riga sola: con meno app i pulsanti si allargano
                         val car = ops.carApps()
                         Topic(tr(R.string.n_car_shortcuts), tr(R.string.n_car_shortcuts_hint))
-                        AppKeys(car, apps, byPackage = true, sorted = false, onRemove = { k -> change { prefs.carApps = car - k } },
-                            onMove = { i, j -> change { val l = car.toMutableList(); l[i] = l[j].also { l[j] = l[i] }; prefs.carApps = l } },
-                            add = if (car.size < 3) tr(R.string.n_add_app) else null) { sub = Sub.CAR_APPS }
-                        // Le quattro facce in auto, come le app: quelle di adesso (tue o proposte), in ordine; togli, sposta, aggiungi
+                        fun appLabel(k: String) = apps.firstOrNull { it.packageName == k }?.label ?: k
+                        DragList(car.map(::appLabel), add = tr(R.string.car_pick_apps), onAdd = { sub = Sub.CAR_APPS }) { order -> change { prefs.carApps = order.map { car[it] } } }
                         Topic(tr(R.string.n_car_people), tr(R.string.n_car_people_hint))
                         val people = remember(tick) { ops.carContacts() }
-                        val ids = people.map { it.id }
-                        Group {
-                            people.forEachIndexed { i, p ->
-                                Line(p.name, trailing = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        if (people.size > 1) {
-                                            RoundIcon(Icons.Rounded.KeyboardArrowUp, tr(R.string.up), i > 0) { change { prefs.carPeople = ids.toMutableList().also { l -> l[i] = l[i - 1].also { l[i - 1] = l[i] } } } }
-                                            Spacer(Modifier.width(6.dp))
-                                            RoundIcon(Icons.Rounded.KeyboardArrowDown, tr(R.string.down), i < people.lastIndex) { change { prefs.carPeople = ids.toMutableList().also { l -> l[i] = l[i + 1].also { l[i + 1] = l[i] } } } }
-                                            Spacer(Modifier.width(10.dp))
-                                        }
-                                        SmallPill(tr(R.string.remove)) { change { prefs.carPeople = ids - p.id } }
-                                    }
-                                })
-                            }
-                            if (people.size < 4) Line(tr(R.string.n_add_person), icon = Icons.Rounded.Add, trailing = {}) { sub = Sub.CAR_PEOPLE }
-                        }
-                    }
-                    // La pagina Sordina si apre da Casa: il suo ordine si sceglie qui
-                    Topic(tr(R.string.sec_page))
-                    Group {
-                        val orders = listOf(
-                            Option(tr(R.string.s_order_auto), tr(R.string.s_order_auto_hint)),
-                            Option(tr(R.string.s_order_arrival)),
-                            Option(tr(R.string.s_order_yours)),
-                        )
-                        val oi = prefs.sordinaOrder.coerceIn(0, 2)
-                        Pick(tr(R.string.s_order), orders[oi].label, orders, { it == prefs.sordinaOrder }, icon = Icons.Rounded.Sort, title = tr(R.string.s_order_title)) { i ->
-                            change { prefs.sordinaOrder = i }
-                            if (i == 2) sub = Sub.ORDER
-                        }
-                        if (prefs.sordinaOrder == 2) Line(tr(R.string.s_your_order), icon = Icons.Rounded.Reorder) { sub = Sub.ORDER }
+                        DragList(people.map { it.name }, add = tr(R.string.car_pick_people), onAdd = { sub = Sub.CAR_PEOPLE }) { order -> change { prefs.carPeople = order.map { people[it].id } } }
+                        if (car.size > 1 || people.size > 1) Hint(tr(R.string.drag_hint), Modifier.padding(start = 12.dp, top = 10.dp))
                     }
                 }
 
@@ -502,49 +506,37 @@ fun SettingsScreen(
                 }
 
                 // ── Le pagine con le liste
-                Sub.PEOPLE -> Page(tr(R.string.s_important), tr(R.string.ob_people_sub), back, scrollOf(page)) {
+                // Come "Aggiungi un'app": la rubrica per lettera, le scelte in cima, un tocco per aggiungere o togliere
+                Sub.PEOPLE -> if (!perms.contacts) Page(tr(R.string.n_add_person), null, back, scrollOf(page)) {
                     Spacer(Modifier.height(8.dp))
                     ImportantPicker(app, perms, ops)
-                }
-                Sub.ALWAYS -> AppChooser(tr(R.string.n_add_app), null, apps, selected = { prefs.inApps }, back) { pkg, on ->
+                } else PersonChooser(app, tr(R.string.n_add_person), back) { ops.changed(); SordinaListener.reapply(ctx) }
+                Sub.ALWAYS -> AppChooser(tr(R.string.n_add_app), null, apps.filter { it.packageName !in prefs.braked }, selected = { prefs.inApps }, back) { pkg, on ->
                     Rules.setApp(prefs, pkg, on); ops.changed(); SordinaListener.reapply(ctx, pkg)
                 }
                 Sub.BRAKED -> AppChooser(tr(R.string.s_braked_apps), null, apps, selected = { prefs.braked }, back) { pkg, on ->
                     prefs.braked = if (on) prefs.braked + pkg else prefs.braked - pkg; ops.changed()
                 }
-                Sub.CAR_PEOPLE -> ContactChooser(app, tr(R.string.n_car_people), tr(R.string.n_car_people_hint), selected = { ops.carContacts().map { it.id }.toSet() }, back) { id, on ->
+                Sub.CAR_PEOPLE -> ContactChooser(app, tr(R.string.n_car_people), tr(R.string.car_people_sub), selected = { ops.carContacts().map { it.id }.toSet() }, back) { id, on ->
                     val now = ops.carContacts().map { it.id }
                     prefs.carPeople = if (on) (if (now.size < 4) now + id else now) else now - id
                     ops.changed()
                     // Arrivati a quattro si torna indietro da soli
                     if (on && now.size >= 3) back()
                 }
-                Sub.CAR_APPS -> AppChooser(tr(R.string.n_car_shortcuts), tr(R.string.n_car_shortcuts_hint), apps, selected = { ops.carApps().toSet() }, back) { pkg, on ->
+                Sub.CAR_APPS -> AppChooser(tr(R.string.n_car_shortcuts), tr(R.string.car_apps_sub), apps, selected = { ops.carApps().toSet() }, back) { pkg, on ->
                     val now = ops.carApps()
                     prefs.carApps = if (on) (if (now.size < 3) now + pkg else now) else now - pkg
                     ops.changed()
                     // Arrivati a tre si torna indietro da soli
                     if (on && now.size >= 2) back()
                 }
+                Sub.SECURITY -> Page(tr(R.string.notif_security), null, back, scrollOf(page)) { SecurityPage(app, apps, change = ::change) }
                 Sub.KINDS -> kindsOf?.let { pkg -> AppKindsPage(app, pkg, apps.firstOrNull { it.packageName == pkg }?.label ?: pkg, scrollOf(page), back, onChange = { tick++; ops.changed(); SordinaListener.reapply(ctx, pkg) }) }
-                Sub.ORDER -> Page(tr(R.string.s_your_order), null, back, scrollOf(page)) {
+                Sub.ORDER -> Page(tr(R.string.s_your_order), tr(R.string.order_sub), back, scrollOf(page)) {
                     val order = Categories.custom(prefs.categoryOrder)
                     Spacer(Modifier.height(8.dp))
-                    Group {
-                        order.forEachIndexed { i, cat ->
-                            fun move(d: Int) = change {
-                                val l = order.toMutableList(); val j = i + d
-                                if (j in l.indices) { l[i] = l[j].also { l[j] = l[i] }; prefs.categoryOrder = l.map { it.name } }
-                            }
-                            Line("${i + 1}.  ${cat.label}", trailing = {
-                                Row {
-                                    RoundIcon(Icons.Rounded.KeyboardArrowUp, tr(R.string.up), i > 0) { move(-1) }
-                                    Spacer(Modifier.width(8.dp))
-                                    RoundIcon(Icons.Rounded.KeyboardArrowDown, tr(R.string.down), i < order.lastIndex) { move(1) }
-                                }
-                            })
-                        }
-                    }
+                    DragList(order.map { it.label }) { o -> change { prefs.categoryOrder = o.map { order[it].name } } }
                 }
                 Sub.PINNED, Sub.EXCLUDED -> {
                     // Si sceglie per app; si salva per chiave (l'app di lavoro resta distinta)
@@ -571,8 +563,12 @@ fun SettingsScreen(
                 Sub.MASCOTS -> Page("Tutte le sordine", null, back, scrollOf(page)) { MascotGallery() }
                 Sub.PROGRESS -> Page(tr(R.string.t_progress), null, back, scrollOf(page)) { ProgressPage(app.habits, jump = jumpToSticker) }
                 Sub.HA -> Page(tr(R.string.s_ha), null, back, scrollOf(page)) {
-                    HaSettings(app, ops) { tick++ }
+                    HaSettings(app, ops,
+                        onAlarm = { id, n -> haItem = id; haName = n; sub = Sub.HA_ALARM },
+                        onRoutine = { id, n -> haItem = id; haName = n; sub = Sub.HA_ROUTINE }) { tick++ }
                 }
+                Sub.HA_ALARM -> haItem?.let { id -> Page(haName, null, back, scrollOf(page)) { HaAlarmPage(app, id, haName, onGone = back) } }
+                Sub.HA_ROUTINE -> haItem?.let { id -> Page(haName, null, back, scrollOf(page)) { HaRoutinePage(app, id, haName) } }
                 Sub.PERMS -> Page(tr(R.string.s_perms), null, back, scrollOf(page)) {
                     Spacer(Modifier.height(8.dp))
                     Group {
@@ -626,6 +622,59 @@ private fun AppKeys(keys: List<String>, apps: List<AppEntry>, byPackage: Boolean
     }
 }
 
+/**
+ * Un elenco corto in cui l'ordine conta: tieni premuto una riga e trascinala. Niente frecce, niente "Rimuovi":
+ * si toglie dalla lista da cui si sceglie ([add] in fondo). L'ordine nuovo si salva quando lasci il dito.
+ */
+@Composable
+private fun DragList(labels: List<String>, add: String? = null, onAdd: () -> Unit = {}, onOrder: (List<Int>) -> Unit) {
+    val c = S.c
+    val feel = LocalFeel.current
+    val rowH = 58.dp
+    val rowPx = with(androidx.compose.ui.platform.LocalDensity.current) { rowH.toPx() }
+    // Durante il trascinamento l'ordine vive qui: la pagina non si ricostruisce sotto il dito
+    var order by remember(labels) { mutableStateOf(labels.indices.toList()) }
+    var dragging by remember { mutableIntStateOf(-1) }
+    var offset by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
+    val commit by androidx.compose.runtime.rememberUpdatedState(onOrder)
+    val n = labels.size
+    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(c.line)) {
+        order.forEachIndexed { slot, item ->
+            val lifted = slot == dragging
+            Row(
+                Modifier.padding(top = if (slot == 0) 0.dp else 1.dp)
+                    .zIndex(if (lifted) 1f else 0f)
+                    .graphicsLayer { translationY = if (lifted) offset else 0f; scaleX = if (lifted) 1.02f else 1f; scaleY = if (lifted) 1.02f else 1f }
+                    .fillMaxWidth().height(rowH).background(if (lifted) c.tile else c.card)
+                    .then(if (n < 2) Modifier else Modifier.pointerInput(Unit) {
+                        detectDragGesturesAfterLongPress(
+                            onDragStart = { dragging = slot; offset = 0f; feel.threshold() },
+                            onDrag = { ch, d ->
+                                ch.consume()
+                                offset += d.y
+                                val target = (dragging + (offset / rowPx).let { if (it > 0) (it + 0.5f).toInt() else (it - 0.5f).toInt() }).coerceIn(0, n - 1)
+                                if (target != dragging) {
+                                    order = order.toMutableList().also { l -> l.add(target, l.removeAt(dragging)) }
+                                    offset -= (target - dragging) * rowPx
+                                    dragging = target
+                                    feel.tick()
+                                }
+                            },
+                            onDragEnd = { dragging = -1; offset = 0f; if (order != labels.indices.toList()) commit(order) },
+                            onDragCancel = { dragging = -1; offset = 0f },
+                        )
+                    })
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(labels[item], Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 17.sp, color = c.ink))
+                if (n > 1) Icon(Icons.Rounded.DragHandle, null, Modifier.size(22.dp), tint = c.soft)
+            }
+        }
+        if (add != null) Box(Modifier.padding(top = if (n == 0) 0.dp else 1.dp)) { Line(add, icon = Icons.Rounded.Add, trailing = {}, onClick = onAdd) }
+    }
+}
+
 /** Quanto è in fondo una pagina: serve a capire se stai entrando o tornando. */
 private fun depth(s: Sub): Int = s.parent?.let { 1 + depth(Sub.valueOf(it)) } ?: 0
 
@@ -634,10 +683,18 @@ private fun depth(s: Sub): Int = s.parent?.let { 1 + depth(Sub.valueOf(it)) } ?:
 private fun Page(title: String, subtitle: String?, onBack: () -> Unit, scroll: ScrollState, content: @Composable ColumnScope.() -> Unit) {
     // La tastiera restringe la pagina: il campo in cui scrivi scorre sopra e non resta coperto
     Column(Modifier.fillMaxSize().imeJump().verticalScroll(scroll).padding(horizontal = 16.dp, vertical = 16.dp)) {
-        Header(title, onBack, subtitle = subtitle)
+        Header(title, onBack)
+        subtitle?.let { Intro(it, Modifier.padding(bottom = 8.dp)) }
         content()
         Spacer(Modifier.height(48.dp))
     }
+}
+
+/** Cosa fa la pagina, detto una volta: sotto il titolo, a filo con i blocchi. */
+@Composable
+private fun Intro(text: String, modifier: Modifier = Modifier, start: Int = 12) {
+    Text(text, modifier.padding(start = start.dp, end = 12.dp, top = 4.dp),
+        style = TextStyle(fontSize = 16.sp, lineHeight = 23.sp, color = S.c.soft))
 }
 
 /** Un argomento in cima alle impostazioni: un blocco come quelli della pagina Sordina, con il nome, a cosa serve e com'è adesso. */
@@ -673,7 +730,8 @@ private fun AppChooser(title: String, about: String?, apps: List<AppEntry>, sele
     var chosen by remember { mutableStateOf(selected()) }
     var q by remember { mutableStateOf("") }
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 16.dp)) {
-        Header(title, onBack, subtitle = about)
+        Header(title, onBack)
+        about?.let { Intro(it, Modifier.padding(bottom = 12.dp), start = 4) }
         Field(q, { q = it }, tr(R.string.s_search_app), Modifier.padding(horizontal = 4.dp))
         Box(Modifier.weight(1f).padding(start = 4.dp)) {
             PickList(installed, { it.packageName }, { it.label }, q, leading = { a -> AppDot(a.packageName) }, selected = chosen, onScrolled = {}) { a ->
@@ -694,12 +752,38 @@ private fun ContactChooser(app: SordinaApp, title: String, about: String?, selec
     var chosen by remember { mutableStateOf(selected()) }
     var q by remember { mutableStateOf("") }
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 16.dp)) {
-        Header(title, onBack, subtitle = about)
+        Header(title, onBack)
+        about?.let { Intro(it, Modifier.padding(bottom = 12.dp), start = 4) }
         Field(q, { q = it }, tr(R.string.search_contact), Modifier.padding(horizontal = 4.dp))
         Box(Modifier.weight(1f).padding(start = 4.dp)) {
             PickList(all, { it.id.toString() }, { it.name }, q, leading = { k -> Initial(k.name) }, selected = chosen.mapTo(HashSet()) { it.toString() }, onScrolled = {}) { k ->
                 onToggle(k.id, k.id !in chosen)
                 chosen = selected()
+            }
+        }
+    }
+}
+
+/**
+ * Le persone che entrano ovunque, scelte come le app: in cima quelle già dentro, poi la rubrica per lettera, la lente per filtrare.
+ * Una persona è il suo nome: due voci con lo stesso nome sono una riga sola.
+ */
+@Composable
+private fun PersonChooser(app: SordinaApp, title: String, onBack: () -> Unit, onChange: () -> Unit) {
+    var all by remember { mutableStateOf(emptyList<app.sordina.data.Contact>()) }
+    LaunchedEffect(Unit) {
+        all = withContext(Dispatchers.IO) { app.people.invalidate(); app.people.all().filter { it.normalized.isNotBlank() }.distinctBy { it.normalized }.sortedBy { it.name.lowercase() } }
+    }
+    var chosen by remember { mutableStateOf(app.prefs.importantNames) }
+    var q by remember { mutableStateOf("") }
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 16.dp)) {
+        Header(title, onBack)
+        Field(q, { q = it }, tr(R.string.search_contact), Modifier.padding(horizontal = 4.dp))
+        Box(Modifier.weight(1f).padding(start = 4.dp)) {
+            PickList(all, { it.normalized }, { it.name }, q, leading = { k -> Initial(k.name) }, selected = chosen, onScrolled = {}) { k ->
+                if (k.normalized in chosen) app.people.removeImportantName(k.normalized) else app.people.setImportant(k, true)
+                chosen = app.prefs.importantNames
+                onChange()
             }
         }
     }
@@ -799,15 +883,18 @@ private fun ListCell(i: Int, n: Int, content: @Composable () -> Unit) {
  * Il sottotitolo c'è solo quando dice qualcosa: "2 eccezioni", "su WhatsApp".
  */
 @Composable
-private fun NotifPage(app: SordinaApp, apps: List<AppEntry>, change: (() -> Unit) -> Unit, onAddApp: () -> Unit, onAddPerson: () -> Unit, onApp: (String) -> Unit) {
+private fun NotifPage(app: SordinaApp, apps: List<AppEntry>, change: (() -> Unit) -> Unit, onAddApp: () -> Unit, onAddPerson: () -> Unit, onApp: (String) -> Unit, onSecurity: () -> Unit) {
     val prefs = app.prefs
     val ctx = LocalContext.current
     fun appName(pkg: String) = apps.firstOrNull { it.packageName == pkg }?.label ?: pkg
     fun apply(block: () -> Unit) = change { block(); SordinaListener.reapply(ctx) }
 
+    Intro(tr(R.string.notif_intro))
     Topic(tr(R.string.notif_important))
     Group {
-        Line(tr(R.string.notif_security), hint = tr(R.string.notif_security_hint), icon = Icons.Rounded.Lock)
+        val skipped = prefs.noGuess.size
+        Line(tr(R.string.notif_security), if (skipped == 0) tr(R.string.pass_always) else trn(R.plurals.security_except_n, skipped),
+            tr(R.string.notif_security_hint), Icons.Rounded.Lock) { onSecurity() }
         Toggle(tr(R.string.notif_missed), prefs.missedPass, null, Icons.Rounded.Call) { v -> apply { prefs.missedPass = v } }
         Toggle(tr(R.string.notif_remind), prefs.remindPass, null, Icons.Rounded.Schedule) { v -> apply { prefs.remindPass = v } }
         Toggle(tr(R.string.s_urgent), prefs.urgentEnabled, tr(R.string.s_urgent_hint), Icons.Rounded.PriorityHigh) { v -> apply { prefs.urgentEnabled = v } }
@@ -819,7 +906,8 @@ private fun NotifPage(app: SordinaApp, apps: List<AppEntry>, change: (() -> Unit
     Group {
         prefs.inApps.sortedBy { appName(it).lowercase() }.forEach { pkg ->
             val n = Rules.exceptions(prefs, pkg)
-            Line(appName(pkg), hint = if (n > 0) trn(R.plurals.n_exceptions, n) else null) { onApp(pkg) }
+            Line(appName(pkg), hint = if (n > 0) trn(R.plurals.n_exceptions, n) else null,
+                leading = if (prefs.appIcons) ({ AppDot(pkg) }) else null) { onApp(pkg) }
         }
         Line(tr(R.string.n_add_app), icon = Icons.Rounded.Add, trailing = {}, onClick = onAddApp)
     }
@@ -827,22 +915,35 @@ private fun NotifPage(app: SordinaApp, apps: List<AppEntry>, change: (() -> Unit
     Topic(tr(R.string.cat_people))
     var editing by remember { mutableStateOf<String?>(null) }
     val names = prefs.ruleNames
-    fun personName(k: String) = names[k]?.substringAfter(" · ") ?: k.substringAfter('|').replaceFirstChar { it.uppercase() }
+    // Il nome come in rubrica ("Elisa Rossi"), non la chiave ("elisa rossi")
+    var book by remember { mutableStateOf(emptyMap<String, String>()) }
+    LaunchedEffect(Unit) { book = withContext(Dispatchers.IO) { runCatching { app.people.all().associate { it.normalized to it.name } }.getOrDefault(emptyMap()) } }
+    fun pretty(n: String) = book[n] ?: n.split(' ').joinToString(" ") { w -> w.replaceFirstChar { it.uppercase() } }
+    fun personName(k: String) = names[k]?.substringAfter(" · ") ?: pretty(k.substringAfter('|'))
     Group {
         val everywhere = prefs.importantNames.map { it to null as String? }
         val oneApp = prefs.peopleIn.map { it to it.substringBefore('|') }
         (everywhere + oneApp).sortedBy { (k, pkg) -> (if (pkg == null) k else personName(k)).lowercase() }.forEach { (k, pkg) ->
-            if (pkg == null) Line(k.replaceFirstChar { it.uppercase() }, hint = if (k in prefs.importantInGroups) tr(R.string.n_in_groups) else null) { editing = k }
+            if (pkg == null) Line(pretty(k), hint = if (k in prefs.importantInGroups) tr(R.string.n_in_groups) else null) { editing = k }
             else Line(personName(k), hint = tr(R.string.notif_on_app, appName(pkg))) { editing = k }
         }
         Line(tr(R.string.n_add_person), icon = Icons.Rounded.Add, trailing = {}, onClick = onAddPerson)
     }
     editing?.let { k ->
         val everywhere = '|' !in k
-        Sheet(if (everywhere) k.replaceFirstChar { it.uppercase() } else personName(k), onDismiss = { editing = null }) {
+        Sheet(if (everywhere) pretty(k) else personName(k), onDismiss = { editing = null }) {
             if (everywhere) Toggle(tr(R.string.n_in_groups), k in prefs.importantInGroups, null, Icons.Rounded.Groups) { v ->
                 apply { prefs.importantInGroups = if (v) prefs.importantInGroups + k else prefs.importantInGroups - k }
                 editing = null
+            }
+            // I nomi collegati a lei ("Elisa" su Telegram): si vedono e si tolgono uno per uno
+            if (everywhere) prefs.personAliases.filterValues { it == k }.keys.sorted().forEach { a ->
+                val seen = names[a]?.substringAfter(" · ")
+                    ?: a.substringAfter('|').removePrefix("s:").split(' ').joinToString(" ") { w -> w.replaceFirstChar { it.uppercase() } }
+                SheetRow(tr(R.string.alias_row, seen, appName(a.substringBefore('|'))), Icons.Rounded.Link, hint = tr(R.string.remove)) {
+                    apply { prefs.personAliases = prefs.personAliases - a; prefs.ruleNames = prefs.ruleNames - a }
+                    editing = null
+                }
             }
             SheetRow(tr(R.string.remove), Icons.Rounded.DeleteOutline) {
                 apply { if (everywhere) app.people.removeImportantName(k) else prefs.peopleIn = prefs.peopleIn - k }
@@ -856,16 +957,46 @@ private fun NotifPage(app: SordinaApp, apps: List<AppEntry>, change: (() -> Unit
  * Un'app che entra: entra tutto, tranne i tipi (o le chat) che spegni qui. I tipi si imparano man mano che
  * arrivano (Android non ne dà l'elenco a un launcher); quelli nuovi entrano.
  */
+/**
+ * Codici e sicurezza: le app che ho fatto passare come codice o avviso di pagamento, ciascuna si può spegnere.
+ * Spenta, le sue notifiche seguono le regole come tutte le altre (un'app di offerte che scrive "codice SCONTO20").
+ */
+@Composable
+private fun SecurityPage(app: SordinaApp, apps: List<AppEntry>, change: (() -> Unit) -> Unit) {
+    val prefs = app.prefs
+    val ctx = LocalContext.current
+    var off by remember { mutableStateOf(prefs.noGuess) }
+    // Il nome visto quando il codice è passato: anche le app senza icona (Play Services manda codici)
+    val seen = prefs.securityApps
+    fun appName(pkg: String) = apps.firstOrNull { it.packageName == pkg }?.label ?: seen[pkg] ?: pkg
+    val list = (seen.keys + off).sortedBy { appName(it).lowercase() }
+    Intro(tr(R.string.security_intro))
+    if (list.isEmpty()) Text(tr(R.string.security_none), Modifier.padding(horizontal = 8.dp, vertical = 12.dp), style = TextStyle(fontSize = 15.sp, color = S.c.soft))
+    else Group {
+        list.forEach { pkg ->
+            Toggle(appName(pkg), pkg !in off, leading = if (prefs.appIcons) ({ AppDot(pkg) }) else null) { on ->
+                change { prefs.noGuess = if (on) prefs.noGuess - pkg else prefs.noGuess + pkg; SordinaListener.reapply(ctx, pkg) }
+                off = prefs.noGuess
+            }
+        }
+    }
+    Spacer(Modifier.height(26.dp))
+}
+
 @Composable
 private fun AppKindsPage(app: SordinaApp, pkg: String, label: String, scroll: ScrollState, onBack: () -> Unit, onChange: () -> Unit) {
     val prefs = app.prefs
     // Quello che c'è adesso nella tendina o in sordina conta già: la lista non parte vuota
-    val kinds = remember(pkg) {
-        SordinaListener.tray().filter { it.pkg == pkg }.forEach { t ->
-            if (t.person != null) app.kinds.chat(pkg, t.person, t.personTitle) else app.kinds.channel(pkg, t.channel, t.channelName)
+    // Subito quello che si sa già; la tendina (una chiamata ad Android che legge tutte le notifiche) fuori dal thread dell'interfaccia
+    var kinds by remember(pkg) { mutableStateOf(app.kinds.of(pkg)) }
+    LaunchedEffect(pkg) {
+        kinds = withContext(Dispatchers.IO) {
+            SordinaListener.tray().filter { it.pkg == pkg }.forEach { t ->
+                if (t.person != null) app.kinds.chat(pkg, t.person, t.personTitle) else app.kinds.channel(pkg, t.channel, t.channelName)
+            }
+            app.store.held.value.values.filter { it.pkg == pkg && !it.groupKey.startsWith("p:") }.forEach { h -> app.kinds.channel(pkg, h.channel, h.channelName) }
+            app.kinds.of(pkg)
         }
-        app.store.held.value.values.filter { it.pkg == pkg && !it.groupKey.startsWith("p:") }.forEach { h -> app.kinds.channel(pkg, h.channel, h.channelName) }
-        app.kinds.of(pkg)
     }
     var off by remember { mutableStateOf(prefs.offTypes + prefs.offChats) }
     // Spente ma non (più) fra quelle viste: restano in lista, si possono riaccendere

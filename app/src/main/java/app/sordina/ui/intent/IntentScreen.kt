@@ -545,7 +545,7 @@ private fun ActionProposal(cand: Candidate, actions: ProposalActions, icon: andr
     val glyph = when (val a = cand.act) {
         is Act.Call -> Icons.Rounded.Call
         is Act.Message -> Icons.AutoMirrored.Rounded.Chat
-        is Act.Assist -> Icons.Rounded.Home
+        is Act.Assist, is Act.AlarmOff, is Act.AlarmOn, is Act.Routine -> Icons.Rounded.Home
         is Act.Setting, Act.SordinaSettings -> Icons.Rounded.Settings
         else -> if (a is Act.Timer) Icons.Rounded.Timer else Icons.Rounded.Bolt
     }

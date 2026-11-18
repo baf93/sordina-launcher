@@ -72,12 +72,13 @@ L'URL dell'informativa diventa `https://baf93.github.io/sordina-launcher/store/p
 
 **AccessibilityService** (richiesto, perché `isAccessibilityTool` non è dichiarato):
 - **Funzionalità principale:** frenare le app che distraggono, bloccarle appena arrivano in primo piano (anche il loro sito nel browser); bloccare lo schermo con un doppio tocco; scrivere un comando in Home Assistant Assist / Signal per conto dell'utente.
-- **Testo suggerito:** "Sordina è un launcher per il benessere digitale. Il servizio di accessibilità è facoltativo e ascolta solo il cambio di finestra delle app che l'utente ha scelto di frenare. Quando una di queste app, o il suo sito nel browser (letto solo dalla barra dell'indirizzo), arriva in primo piano, Sordina la ferma. Serve anche a bloccare lo schermo con un doppio tocco e a digitare una frase in Home Assistant Assist su richiesta dell'utente. Nessun dato lascia il dispositivo."
+- **Testo suggerito:** "Sordina è un launcher per il benessere digitale. Il servizio di accessibilità è facoltativo e ascolta solo il cambio di finestra delle app che l'utente ha scelto di frenare. Quando una di queste app, o il suo sito nel browser (letto solo dalla barra dell'indirizzo), arriva in primo piano, Sordina la ferma. Serve anche a bloccare lo schermo con un doppio tocco e, su richiesta dell'utente, a scrivere una frase dove l'app non la accetta dall'esterno: un comando in Home Assistant Assist, o il testo di un messaggio nella casella di Signal (senza inviarlo: l'invio resta all'utente). In quei casi legge la finestra di quell'app solo per pochi secondi. Nessun dato lascia il dispositivo."
 - **Video** (link YouTube non in elenco, 30–60 s):
   1. l'informativa e il tocco su "Accetto";
   2. l'accensione nelle impostazioni;
   3. un'app frenata che viene fermata;
-  4. il doppio tocco che blocca lo schermo.
+  4. il doppio tocco che blocca lo schermo;
+  5. "scrivi a … su Signal": il testo compare nella casella e l'invio lo tocca l'utente.
 
 Non servono moduli per: accesso alle notifiche, accesso all'utilizzo, contatti, calendario, posizione (solo in primo piano), microfono.
 Su `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` non c'è un modulo, ma Play può chiedere perché serve. Risposta: "un launcher che smista le notifiche deve restare attivo; senza l'esenzione Android ne ritarda l'ascolto".

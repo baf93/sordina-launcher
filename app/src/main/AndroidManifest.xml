@@ -37,6 +37,12 @@
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
+    <!-- Il lettore di QR di Google (play-services-code-scanner) ha un'attività bloccata in verticale: Play ne deduce
+         "schermo verticale obbligatorio" ed esclude tablet, Chromebook e XR. Per Sordina non serve. -->
+    <uses-feature android:name="android.hardware.screen.portrait" android:required="false" />
+    <!-- La posizione approssimativa è facoltativa: senza, Sordina funziona lo stesso -->
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.location.network" android:required="false" />
 
     <queries>
         <intent>
@@ -106,12 +112,15 @@
             </intent-filter>
         </activity>
 
-        <!-- "Aggiungi a schermata Home" da un browser: le web app finiscono fra le app -->
+        <!-- "Aggiungi a schermata Home" da un browser: le web app finiscono fra le app.
+             Un suo task, sopra il browser: Android la apre con NEW_TASK|CLEAR_TASK, e nel task della Home
+             cancellerebbe Sordina e finirebbe dietro al browser. Niente noHistory: chiuderebbe la domanda
+             appena qualcosa le passa sopra, prima che tu risponda. -->
         <activity
             android:name=".PinShortcutActivity"
             android:exported="true"
+            android:taskAffinity="app.sordina.pin"
             android:excludeFromRecents="true"
-            android:noHistory="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar">
             <intent-filter>
                 <action android:name="android.content.pm.action.CONFIRM_PIN_SHORTCUT" />
@@ -143,7 +152,13 @@
             android:name=".service.ActionReceiver"
             android:exported="false" />
 
-        <!-- Facoltativa: freno istantaneo e doppio tocco per spegnere. Non legge lo schermo. -->
+        <receiver
+            android:name=".service.BudgetReceiver"
+            android:exported="false" />
+
+        <!-- Facoltativa: freno istantaneo (anche dei siti frenati: dei browser legge solo la barra dell'indirizzo, mentre sono davanti),
+             doppio tocco per spegnere, e una frase scritta per te dove l'app non la accetta da fuori (Assist di Home Assistant,
+             la casella di Signal senza inviare): lì legge la finestra di quell'app per pochi secondi. Vedi res/xml/accessibility.xml e access_desc. -->
         <service
             android:name=".service.SordinaAccess"
             android:exported="false"

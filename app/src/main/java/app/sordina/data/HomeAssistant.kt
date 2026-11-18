@@ -19,13 +19,21 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 /** Un'entità di Home Assistant che si può comandare o leggere. */
-data class HaEntity(val id: String, val name: String, val state: String, val area: String?) {
+data class HaEntity(val id: String, val name: String, val state: String, val area: String?, val deviceClass: String? = null,
+                    /** Per gli allarmi: "number", "text" o null (non chiede codice) */
+                    val codeFormat: String? = null,
+                    /** Per gli allarmi: le modalità che sa inserire (bit di Home Assistant) e se vuole il codice anche per inserire */
+                    val features: Int = 0, val codeArmRequired: Boolean = true) {
+    /** Le modalità di inserimento che l'allarme supporta, nell'ordine in cui si propongono */
+    val armModes: List<String> get() = ARM_MODES.filter { (_, bit) -> (features and bit) != 0 }.map { it.first }
     val domain: String get() = id.substringBefore('.')
     val normalized: String = Search.normalize(name)
     val isOn: Boolean get() = state == "on" || state == "open" || state == "playing" || state == "unlocked"
     val controllable: Boolean get() = domain in CONTROLLABLE
 
     companion object {
+        /** Modalità di inserimento (suffisso del servizio alarm_arm_…) e il loro bit in supported_features */
+        val ARM_MODES = listOf("away" to 2, "home" to 1, "night" to 4, "vacation" to 32, "custom_bypass" to 16)
         val CONTROLLABLE = setOf("light", "switch", "fan", "cover", "script", "scene", "input_boolean", "lock", "media_player", "climate", "automation")
     }
 }
@@ -118,22 +126,27 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
         val net = context.getSystemService(android.net.ConnectivityManager::class.java)?.activeNetwork
         for ((base, wait) in bases()) {
             val c = runCatching { URL(base + path).openConnection() as HttpURLConnection }.getOrNull() ?: continue
-            val code = try {
+            try {
                 c.connectTimeout = wait
                 c.readTimeout = 6000
                 // Il token non segue i reindirizzamenti verso altri indirizzi
                 c.instanceFollowRedirects = false
                 c.setRequestProperty("Authorization", "Bearer $t")
                 c.setRequestProperty("Content-Type", "application/json")
-                if (body != null) {
-                    c.requestMethod = "POST"
-                    c.doOutput = true
-                    c.outputStream.use { it.write(body.toString().toByteArray()) }
-                }
-                c.responseCode
+                if (body != null) { c.requestMethod = "POST"; c.doOutput = true }
+                c.connect()
             } catch (_: java.io.IOException) {
                 // Non raggiungibile da qui: si prova l'altro indirizzo
                 c.disconnect(); continue
+            }
+            val code = try {
+                if (body != null) c.outputStream.use { it.write(body.toString().toByteArray()) }
+                c.responseCode
+            } catch (_: java.io.IOException) {
+                c.disconnect()
+                // Un comando (apri, disattiva, una routine) può essere già arrivato: non si rimanda dall'altro indirizzo,
+                // se no partirebbe due volte. Una lettura invece si può riprovare.
+                if (body != null) return null else continue
             }
             // Ha risposto: questa è la strada giusta su questa rete, anche se la risposta è un errore
             route = net to base
@@ -185,10 +198,16 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
             val id = o.optString("entity_id")
             val attrs = o.optJSONObject("attributes")
             val name = attrs?.optString("friendly_name")?.takeIf { it.isNotBlank() } ?: id
-            out += HaEntity(id, name, o.optString("state"), attrs?.optString("area")?.takeIf { it.isNotBlank() })
+            out += HaEntity(id, name, o.optString("state"), attrs?.optString("area")?.takeIf { it.isNotBlank() },
+                attrs?.optString("device_class")?.takeIf { it.isNotBlank() },
+                attrs?.takeIf { !it.isNull("code_format") }?.optString("code_format")?.takeIf { it.isNotBlank() },
+                attrs?.optInt("supported_features", 0) ?: 0, attrs?.optBoolean("code_arm_required", true) ?: true)
         }
         cache = out
         cacheAt = System.currentTimeMillis()
+        // I nomi di serrature, allarmi, garage e cancelli restano anche da Sordina chiusa: servono a riconoscere "apri ingresso"
+        prefs.haGuarded = out.filter(HomeRisk::guarded).map { it.name }.toSet()
+        prefs.haGuardedAt = cacheAt
         return out
     }
 
@@ -256,7 +275,7 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
                     val b = java.time.OffsetDateTime.parse(s).toInstant().toEpochMilli()
                     val f = if (e.isBlank()) b + 3600_000 else java.time.OffsetDateTime.parse(e).toInstant().toEpochMilli()
                     out += Upcoming((id + s).hashCode().toLong(), o.optString("summary").ifBlank { tr(R.string.event) }, b, f,
-                        o.optString("location").takeIf { it.isNotBlank() }, "ha", false)
+                        o.optString("location").takeIf { it.isNotBlank() && !o.isNull("location") }, "ha", false)
                 }
             }
         }
@@ -299,6 +318,23 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
         val body = (extra ?: JSONObject()).put("entity_id", entityId)
         return request("/api/services/$domain/$service", body) != null
     }
+
+    /** Disattiva un allarme ([code] vuoto: non lo chiede). Il codice va solo in questa chiamata, mai altrove. */
+    fun disarm(entity: String, code: String): Boolean =
+        call("alarm_control_panel", "alarm_disarm", entity, if (code.isEmpty()) null else JSONObject().put("code", code))
+
+    /** Inserisce un allarme in [mode] (away, home, night…); [code] vuoto se non lo chiede. */
+    fun arm(entity: String, mode: String, code: String): Boolean =
+        call("alarm_control_panel", "alarm_arm_$mode", entity, if (code.isEmpty()) null else JSONObject().put("code", code))
+
+    /** Le scene e gli script della casa, per sceglierli in Impostazioni */
+    fun routines(): List<HaEntity> = entities().filter { it.domain in HomeRoutines.DOMAINS }
+
+    /** Lancia una scena o uno script */
+    fun runRoutine(entity: String): Boolean = call(entity.substringBefore('.'), "turn_on", entity)
+
+    /** Gli allarmi della casa, per sceglierli in Impostazioni */
+    fun alarms(): List<HaEntity> = entities().filter { it.domain == "alarm_control_panel" }
 
     fun turn(e: HaEntity, on: Boolean): Boolean = when (e.domain) {
         "cover" -> call("cover", if (on) "open_cover" else "close_cover", e.id)

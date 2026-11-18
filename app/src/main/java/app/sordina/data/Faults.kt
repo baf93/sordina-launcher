@@ -60,6 +60,6 @@ object Faults {
         val f = file ?: return
         if (++writes % 50 != 0) return
         val snap = synchronized(this) { list.toList() }
-        runCatching { f.writeText(snap.joinToString("") { "${it.time}\t${it.where}\t${it.what}\n" }) }
+        runCatching { f.writeSafely(snap.joinToString("") { "${it.time}\t${it.where}\t${it.what}\n" }) }
     }
 }

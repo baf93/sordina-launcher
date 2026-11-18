@@ -140,7 +140,10 @@ class AppCatalog(private val context: Context) {
         val cb = object : LauncherApps.Callback() {
             override fun onPackageRemoved(packageName: String?, user: UserHandle?) {
                 // Hai tolto un'app che avevi frenato: un'impresa
-                if (packageName != null && packageName in app.sordina.SordinaApp.of(context).prefs.braked) app.sordina.data.Tally.flag("farewell")
+                val prefs = app.sordina.SordinaApp.of(context).prefs
+                if (packageName != null && packageName in prefs.braked) app.sordina.data.Tally.flag("farewell")
+                // Rimossa davvero (non un aggiornamento: lì arriva onPackageChanged)
+                if (packageName != null) runCatching { prefs.forgetApp(packageName) }
                 onChange()
             }
             override fun onPackageAdded(packageName: String?, user: UserHandle?) = onChange()

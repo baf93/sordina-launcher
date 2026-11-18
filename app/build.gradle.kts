@@ -12,8 +12,8 @@ android {
         applicationId = "app.sordina"
         minSdk = 26
         targetSdk = 36
-        versionCode = 10
-        versionName = "0.2"
+        versionCode = 14
+        versionName = "0.2.4"
     }
 
     // La chiave di caricamento Play non sta mai su disco: la ricava signing/release.sh da una password e la passa qui
@@ -63,4 +63,6 @@ dependencies {
     // Lettore QR di Play Services: niente permesso fotocamera, si apre solo quando lo tocchi
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
     testImplementation("junit:junit:4.13.2")
+    // org.json vero nei test (quello di Android lì è solo uno stub): per provare la copia delle impostazioni
+    testImplementation("org.json:json:20240303")
 }

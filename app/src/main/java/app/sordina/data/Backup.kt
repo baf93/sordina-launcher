@@ -24,7 +24,18 @@ object Backup {
     private val PREFS = listOf("sordina", "habits", "tally", "brain", "card_sense")
     private val FILES = listOf("brain.tsv")
     /** Restano su questo telefono: il token (cifrato con una chiave che non lascia il telefono) e le reti di casa */
-    private val SECRET = setOf("haToken", "haTokenEnc", "haHomeNets")
+    private val SECRET = setOf("haToken", "haTokenEnc", "haHomeNets", "haAlarms")
+    /**
+     * Restano su questo telefono anche i nomi delle chat e di chi ti scrive in ogni app: le chat spente, le persone che
+     * entrano da un'app sola, i nomi collegati a una persona importante (e quelli rifiutati). Sul telefono nuovo si
+     * rifanno con un tocco quando quelle notifiche arrivano. Le regole per tipo di notifica invece viaggiano.
+     * Anche l'elenco delle app che ho fatto passare come codice (securityApps) resta qui; la scelta "non indovinare" viaggia.
+     */
+    // I nomi delle persone importanti (importantNames) invece viaggiano: sono la scelta principale, rifarla a mano
+    // su un telefono nuovo sarebbe perdere la cosa più importante. Stanno nella copia sul telefono, come i contatti.
+    private val LOCAL = setOf("personRules", "holdAlways", "personAliases", "aliasRefused", "securityApps", "haGuarded", "haGuardedAt", "haRoutines")
+    /** I nomi da mostrare delle regole: viaggiano solo quelli dei tipi di notifica (canali), non di chat e persone */
+    private const val RULE_NAMES = "ruleNames"
 
     private fun dir(ctx: Context) = File(ctx.filesDir, DIR).apply { mkdirs() }
 
@@ -72,27 +83,23 @@ object Backup {
             for (name in prefs.keys()) {
                 if (name !in PREFS) continue
                 val sp = ctx.getSharedPreferences(name, Context.MODE_PRIVATE)
-                val keep = SECRET.associateWith { sp.all[it] }.filterValues { it != null }
+                val keep = (SECRET + LOCAL).associateWith { sp.all[it] }.filterValues { it != null }
                 val e = sp.edit().clear()
-                val vals = prefs.getJSONObject(name)
-                for (k in vals.keys()) {
-                    if (k in SECRET) continue
-                    val v = vals.optJSONObject(k) ?: continue
-                    runCatching { when (v.getString("t")) {
-                        "b" -> e.putBoolean(k, v.getBoolean("v"))
-                        "i" -> e.putInt(k, v.getInt("v"))
-                        "l" -> e.putLong(k, v.getLong("v"))
-                        "f" -> e.putFloat(k, v.getDouble("v").toFloat())
-                        "s" -> e.putString(k, v.getString("v"))
-                        "set" -> v.getJSONArray("v").let { a -> e.putStringSet(k, (0 until a.length()).map { a.getString(it) }.toSet()) }
-                    } }
+                @Suppress("UNCHECKED_CAST")
+                for ((k, v) in decode(prefs.getJSONObject(name))) when (v) {
+                    is Boolean -> e.putBoolean(k, v)
+                    is Int -> e.putInt(k, v)
+                    is Long -> e.putLong(k, v)
+                    is Float -> e.putFloat(k, v)
+                    is Set<*> -> e.putStringSet(k, v as Set<String>)
+                    else -> e.putString(k, v.toString())
                 }
                 @Suppress("UNCHECKED_CAST")
                 keep.forEach { (k, v) -> if (v is String) e.putString(k, v) else if (v is Set<*>) e.putStringSet(k, v as Set<String>) }
                 e.commit()
             }
         }
-        o.optJSONObject("files")?.let { files -> for (name in files.keys()) if (name in FILES) File(ctx.filesDir, name).writeText(files.getString(name)) }
+        o.optJSONObject("files")?.let { files -> for (name in files.keys()) if (name in FILES) File(ctx.filesDir, name).writeSafely(files.getString(name)) }
         f.delete()
         return true
     }
@@ -114,9 +121,17 @@ object Backup {
     }
 
     private fun dump(ctx: Context, name: String): JSONObject {
+        val all = ctx.getSharedPreferences(name, Context.MODE_PRIVATE).all
+        val offTypes = if (name == "sordina") runCatching { Prefs(ctx).offTypes }.getOrDefault(emptySet()) else emptySet()
+        return encode(all, offTypes)
+    }
+
+    /** Le impostazioni come escono dal telefono: senza i segreti né i nomi delle chat e delle persone. */
+    internal fun encode(all: Map<String, *>, offTypes: Set<String>): JSONObject {
         val o = JSONObject()
-        for ((k, v) in ctx.getSharedPreferences(name, Context.MODE_PRIVATE).all) {
-            if (k in SECRET || v == null) continue
+        for ((k, raw) in all) {
+            if (k in SECRET || k in LOCAL || raw == null) continue
+            val v = if (k == RULE_NAMES && raw is String) onlyTypes(raw, offTypes) else raw
             o.put(k, when (v) {
                 is Boolean -> JSONObject().put("t", "b").put("v", v)
                 is Int -> JSONObject().put("t", "i").put("v", v)
@@ -127,5 +142,32 @@ object Backup {
             })
         }
         return o
+    }
+
+    /** Dei nomi delle regole tiene solo quelli dei tipi spenti ("pacchetto|canale"): niente nomi di chat o persone. */
+    internal fun onlyTypes(json: String, offTypes: Set<String>): String = runCatching {
+        val src = JSONObject(json)
+        val out = JSONObject()
+        for (k in src.keys()) if (k in offTypes) out.put(k, src.get(k))
+        out.toString()
+    }.getOrDefault("{}")
+
+    /** Il contrario di [encode]: quello che si rimette. Le chiavi che restano sul telefono non si toccano, anche se la copia le avesse. */
+    internal fun decode(vals: JSONObject): Map<String, Any> {
+        val out = LinkedHashMap<String, Any>()
+        for (k in vals.keys()) {
+            if (k in SECRET || k in LOCAL) continue
+            val v = vals.optJSONObject(k) ?: continue
+            runCatching { when (v.getString("t")) {
+                "b" -> v.getBoolean("v")
+                "i" -> v.getInt("v")
+                "l" -> v.getLong("v")
+                "f" -> v.getDouble("v").toFloat()
+                "s" -> v.getString("v")
+                "set" -> v.getJSONArray("v").let { a -> (0 until a.length()).map { a.getString(it) }.toSet() }
+                else -> null
+            } }.getOrNull()?.let { out[k] = it }
+        }
+        return out
     }
 }

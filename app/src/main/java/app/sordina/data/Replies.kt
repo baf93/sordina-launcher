@@ -78,7 +78,7 @@ class Replies(private val file: File?) {
             runCatching {
                 val a = JSONArray()
                 snap.forEach { a.put(JSONArray().put(it[0]).put(it[1]).put(it[2]).put(it[3])) }
-                f.writeText(a.toString())
+                f.writeSafely(a.toString())
             }
         }
     }

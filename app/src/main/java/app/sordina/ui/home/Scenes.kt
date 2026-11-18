@@ -48,6 +48,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.text.withStyle
 import app.sordina.data.Card
 import app.sordina.data.CardAction
 import app.sordina.ui.LocalFeel
@@ -139,8 +141,8 @@ internal fun NightHome(
         Text(day, Modifier.padding(horizontal = 28.dp), style = TextStyle(fontSize = 17.sp, color = c.soft))
         Spacer(Modifier.weight(1f))
         Column(Modifier.fillMaxWidth().padding(horizontal = 28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(now.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)),
-                style = TextStyle(fontSize = if (short) 72.sp else 88.sp, fontWeight = FontWeight.Light, color = c.ink))
+            BigClock(now.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)),
+                TextStyle(fontSize = if (short) 72.sp else 88.sp, fontWeight = FontWeight.Light, color = c.ink))
             Row(Modifier.padding(top = 4.dp).clickableNoRipple { onScene("alarm") }, verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.Alarm, null, Modifier.size(18.dp), tint = if (state.alarm != null) c.accent else c.soft)
                 Spacer(Modifier.width(6.dp))
@@ -174,6 +176,29 @@ internal fun NightHome(
         Spacer(Modifier.height(12.dp))
         SordinaZone(state, onAction, onCard, onScene) { onSheet() }
         Spacer(Modifier.height(16.dp))
+    }
+}
+
+/**
+ * L'ora grande, sempre su una riga: AM/PM (o 上午, ecc.) piccolo accanto alle cifre,
+ * e se non ci sta comunque (schermi stretti, testo ingrandito) si rimpicciolisce quanto basta.
+ */
+@Composable
+private fun BigClock(time: String, style: TextStyle) {
+    val text = androidx.compose.ui.text.buildAnnotatedString {
+        Regex("[0-9:.\\s]+|[^0-9:.\\s]+").findAll(time).forEach { m ->
+            val v = m.value
+            if (v.any { it.isDigit() }) append(v)
+            else if (v.isNotBlank()) withStyle(androidx.compose.ui.text.SpanStyle(fontSize = 0.4f.em)) { append(v) }
+            else append(" ")
+        }
+    }
+    val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        val maxPx = constraints.maxWidth
+        val wide = androidx.compose.runtime.remember(text, style, maxPx) { measurer.measure(text, style, softWrap = false, maxLines = 1).size.width }
+        val fit = if (wide > maxPx && wide > 0) style.copy(fontSize = style.fontSize * (maxPx.toFloat() / wide * 0.98f)) else style
+        Text(text, maxLines = 1, softWrap = false, style = fit)
     }
 }
 

@@ -3,6 +3,7 @@ package app.sordina.data.brain
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import app.sordina.data.writeSafely
 import android.content.Intent
 import app.sordina.R
 import app.sordina.data.Act
@@ -136,7 +137,7 @@ class Brain(
     private fun compact(keep: Long) = io.execute {
         runCatching {
             val lines = file.readLines().filter { (it.split('\t').getOrNull(1)?.toLongOrNull() ?: 0L) >= keep }.map(::canonLine)
-            file.writeText(lines.joinToString("\n", postfix = "\n"))
+            file.writeSafely(lines.joinToString("\n", postfix = "\n"))
         }
     }
 
@@ -276,7 +277,7 @@ class Brain(
         is Act.Message -> "msg:${a.contact.token}:${a.via.name}"
         Act.SordinaSettings -> "set:sordina"
         is Act.Setting -> "set:${a.action}"
-        is Act.Timer, is Act.Alarm, Act.Torch, is Act.Media, is Act.Navigate, is Act.Music, is Act.Assist ->
+        is Act.Timer, is Act.Alarm, Act.Torch, is Act.Media, is Act.Navigate, is Act.Music, is Act.Assist, is Act.Routine ->
             Search.normalize(query).takeIf { it.isNotEmpty() }?.let { "cmd:$it" }
         else -> null
     }
@@ -374,7 +375,7 @@ class Brain(
         model.clearTyped()
         io.execute {
             runCatching {
-                if (file.exists()) file.writeText(file.readLines().filterNot { it.startsWith("C\t") }.joinToString("\n", postfix = "\n"))
+                if (file.exists()) file.writeSafely(file.readLines().filterNot { it.startsWith("C\t") }.joinToString("\n", postfix = "\n"))
             }
         }
     }

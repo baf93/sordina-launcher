@@ -9,15 +9,26 @@ import app.sordina.ui.theme.ThemeFamily
 import app.sordina.ui.theme.ThemeMode
 import org.json.JSONObject
 
-/** Come arriva una notifica. */
-enum class Level(private val labelRes: Int, private val hintRes: Int) {
-    SEMPRE(R.string.lv_always, R.string.lv_always_hint),
-    SUBITO(R.string.lv_silent, R.string.lv_silent_hint),
-    RIEPILOGO(R.string.lv_summary, R.string.lv_summary_hint),
-    ;
-    val label: String get() = tr(labelRes)
-    val hint: String get() = tr(hintRes)
-}
+/** Come arriva una notifica: SEMPRE (un'app che entra), SUBITO (passa), RIEPILOGO (aspetta in sordina). Nomi interni, mai mostrati. */
+enum class Level { SEMPRE, SUBITO, RIEPILOGO }
+
+/**
+ * Una routine di Home Assistant (scena o script) abilitata in Sordina: [auth] con l'impronta;
+ * [alarm] un allarme salvato da disattivare prima (allora l'impronta c'è sempre: apre il codice).
+ * [phrases]: le tue frasi per lanciarla oltre al nome ("sto entrando").
+ */
+/**
+ * Una routine di Home Assistant in Sordina. [on]: si lancia (spenta tiene le scelte). [alarm]: un allarme salvato,
+ * da disattivare prima ([arm] false) o da inserire dopo ([arm] true). Con un allarme l'impronta c'è sempre.
+ */
+data class SavedRoutine(val name: String, val auth: Boolean, val alarm: String? = null, val phrases: List<String> = emptyList(), val arm: Boolean = false, val on: Boolean = true)
+
+/**
+ * Un allarme di Home Assistant salvato per l'impronta: [enc] è il codice cifrato, vuoto se l'allarme non lo chiede.
+ * [arm]: si può anche inserire da Sordina (spento all'inizio); [mode] la modalità predefinita (away, home, night…);
+ * [codeArm]: l'allarme vuole il codice anche per inserire (allora serve l'impronta, se no si inserisce subito).
+ */
+data class SavedAlarm(val name: String, val enc: String, val arm: Boolean = false, val mode: String? = null, val codeArm: Boolean = true)
 
 /** Quanto mostrare sulla schermata di blocco. */
 enum class LockPrivacy(private val labelRes: Int, private val exampleRes: Int) {
@@ -365,6 +376,62 @@ class Prefs(context: Context) {
         set(v) = put { putString("budgetsNext", JSONObject(v).toString()) }
 
     /** Il nome da mostrare per una regola (tipo di notifica o persona), per l'elenco in Impostazioni */
+    /** Gli allarmi di Home Assistant da disattivare con l'impronta: entità → nome e codice cifrato ([app.sordina.service.AlarmCode]). Mai nel backup */
+    var haAlarms: Map<String, SavedAlarm>
+        get() = runCatching {
+            JSONObject(str("haAlarms", "{}")).let { o -> o.keys().asSequence().associateWith { k -> o.getJSONObject(k).let { SavedAlarm(it.optString("n"), it.optString("c"), it.optBoolean("arm"), it.optString("m").ifBlank { null }, it.optBoolean("ca", true)) } } }
+        }.getOrDefault(emptyMap())
+        set(v) = put { putString("haAlarms", JSONObject().apply { v.forEach { (k, a) -> put(k, JSONObject().put("n", a.name).put("c", a.enc).put("arm", a.arm).put("m", a.mode ?: "").put("ca", a.codeArm)) } }.toString()) }
+
+    /** Le routine di Home Assistant abilitate: entità → nome, impronta, allarme da disattivare. Solo su questo telefono */
+    var haRoutines: Map<String, SavedRoutine>
+        get() = runCatching {
+            JSONObject(str("haRoutines", "{}")).let { o -> o.keys().asSequence().associateWith { k ->
+                o.getJSONObject(k).let { j ->
+                    val f = j.optJSONArray("f")
+                    SavedRoutine(j.optString("n"), j.optBoolean("a", true), j.optString("al").ifBlank { null },
+                        if (f == null) emptyList() else (0 until f.length()).map { f.getString(it) }, j.optBoolean("ar"), j.optBoolean("on", true))
+                }
+            } }
+        }.getOrDefault(emptyMap())
+        set(v) = put { putString("haRoutines", JSONObject().apply { v.forEach { (k, r) -> put(k, JSONObject().put("n", r.name).put("a", r.auth).put("al", r.alarm ?: "").put("f", org.json.JSONArray(r.phrases)).put("ar", r.arm).put("on", r.on)) } }.toString()) }
+
+    /** I nomi delle entità di casa che aprono o disarmano (serrature, allarmi, garage, cancelli): vedi [HomeRisk]. Solo su questo telefono */
+    var haGuarded: Set<String>
+        get() = sp.getStringSet("haGuarded", emptySet())!!.toSet()
+        set(v) = put { putStringSet("haGuarded", v) }
+    var haGuardedAt: Long
+        get() = sp.getLong("haGuardedAt", 0L)
+        set(v) = put { putLong("haGuardedAt", v) }
+
+    /** Le app per cui non indovino codici e avvisi di pagamento: le loro notifiche seguono le regole come le altre */
+    var noGuess: Set<String>
+        get() = sp.getStringSet("noGuess", emptySet())!!.toSet()
+        set(v) = put { putStringSet("noGuess", v) }
+    /**
+     * Le app che ho fatto passare almeno una volta come codice o pagamento, col loro nome (per l'elenco in Codici e
+     * sicurezza: anche le app senza icona, che da Android 11 il launcher non vede). Le più recenti in fondo. Solo su questo telefono
+     */
+    var securityApps: Map<String, String>
+        get() = runCatching { JSONObject(str("securityApps", "{}")).let { o -> o.keys().asSequence().associateWith { o.getString(it) } } }.getOrDefault(emptyMap())
+        set(v) = put { putString("securityApps", JSONObject(v).toString()) }
+
+    /** Un'app tolta dal telefono: si dimentica anche in Codici e sicurezza */
+    fun forgetApp(pkg: String) {
+        if (pkg in securityApps) securityApps = securityApps - pkg
+        if (pkg in noGuess) noGuess = noGuess - pkg
+    }
+
+    /** "pacchetto|nome visto" → persona importante (nome normalizzato): "Elisa" su Telegram è Elisa Rossi */
+    var personAliases: Map<String, String>
+        get() = runCatching { JSONObject(str("personAliases", "{}")).let { o -> o.keys().asSequence().associateWith { o.getString(it) } } }.getOrDefault(emptyMap())
+        set(v) = put { putString("personAliases", JSONObject(v).toString()) }
+
+    /** "pacchetto|nome visto" a cui hai già risposto "No, non è lei": non si chiede più */
+    var aliasRefused: Set<String>
+        get() = sp.getStringSet("aliasRefused", emptySet())!!.toSet()
+        set(v) = put { putStringSet("aliasRefused", v) }
+
     var ruleNames: Map<String, String>
         get() = runCatching { JSONObject(str("ruleNames", "{}")).let { o -> o.keys().asSequence().associateWith { o.getString(it) } } }.getOrDefault(emptyMap())
         set(v) = put { putString("ruleNames", JSONObject(v).toString()) }
@@ -421,7 +488,12 @@ class Prefs(context: Context) {
         set(v) = put { putBoolean("brakeSuggested", v) }
     var braked: Set<String>
         get() = sp.getStringSet("braked", emptySet())!!.toSet()
-        set(v) = put { putStringSet("braked", v) }.also { Tally.onBraked(v.isNotEmpty()) }
+        set(v) {
+            put { putStringSet("braked", v) }
+            // Frenata: non è più fra le app che passano (il freno vince comunque, così le liste dicono il vero)
+            if (v.any { it in appLevels }) appLevels = appLevels - v
+            Tally.onBraked(v.isNotEmpty())
+        }
     /** Le notifiche di sistema (auricolari, Bluetooth, Play Services…) passano senza sordina */
     var systemPass: Boolean
         get() = sp.getBoolean("systemPass", true)
@@ -598,7 +670,7 @@ class Prefs(context: Context) {
         /** Le chiavi delle regole: persone, app, tipi di notifica, app frenate o nascoste, "lascia passare", urgenze */
         val RULE_KEYS = setOf(
             "hidden", "appLevels", "passUntil", "importantNames", "importantInGroups", "talkPass",
-            "urgentEnabled", "urgentWords", "channelRules", "personRules", "braked", "systemPass", "missedPass", "remindPass",
+            "urgentEnabled", "urgentWords", "channelRules", "personRules", "braked", "systemPass", "missedPass", "remindPass", "noGuess",
         )
         const val MAX_PINNED = 4
         /** Una fissata che non è un'app ("scrivi a Elisa su Telegram"): davanti alla cosa del cervello */

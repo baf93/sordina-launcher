@@ -138,12 +138,14 @@ import java.util.Locale
 
 internal fun MainActivity.eventCard(e: Upcoming, now: Long): Card {
     val label = startLabel(e.begin, now)
+    // Gli impegni del calendario di casa hanno link "ha": non è una riunione, e il loro id non è nel calendario del telefono
+    val ha = e.link == "ha"
     val actions = buildList {
-        e.link?.let { add(CardAction(tr(R.string.join), CardOp.OpenUrl(it))) }
+        e.link?.takeIf { it.startsWith("http") }?.let { add(CardAction(tr(R.string.join), CardOp.OpenUrl(it))) }
         e.location?.let { add(CardAction(tr(R.string.navigate), CardOp.Navigate(it))) }
-        if (isEmpty()) add(CardAction(tr(R.string.open), CardOp.OpenEvent(e.id)))
+        if (isEmpty() && !ha) add(CardAction(tr(R.string.open), CardOp.OpenEvent(e.id)))
     }.let { a -> if (scene == Scene.CAR) a.sortedByDescending { it.op is CardOp.Navigate } else a }
-    return Card("event:${e.id}:${e.begin}", CardKind.EVENT, label, e.title, e.location, actions, e.begin, e.end,
+    return Card(if (ha) "event:ha:${e.id}:${e.begin}" else "event:${e.id}:${e.begin}", CardKind.EVENT, label, e.title, e.location, actions, e.begin, e.end,
         bar = if (e.begin <= now) Bar(e.begin, e.end) else null)
 }
 
@@ -155,6 +157,7 @@ internal fun MainActivity.cardTap(card: Card) {
         // Un piano letto nei messaggi: il tocco fa la prima cosa (Naviga vicino all'ora, In calendario prima)
         card.key.startsWith("plan:") -> card.actions.firstOrNull()?.let { cardAction(card, it) }
         card.kind == CardKind.MUSIC -> openMusic()
+        card.key.startsWith("event:ha:") -> openHaCalendar()
         card.kind == CardKind.EVENT -> card.key.split(':').getOrNull(1)?.toLongOrNull()?.let { cardAction(card, CardAction("", CardOp.OpenEvent(it))) }
         card.kind == CardKind.HABIT -> card.actions.firstOrNull()?.let { cardAction(card, it) }
         card.kind == CardKind.RAIN -> openWeather()

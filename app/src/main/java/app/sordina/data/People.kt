@@ -33,7 +33,7 @@ class People(private val context: Context, private val prefs: Prefs) {
     fun hasPermission() =
         context.checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
 
-    fun invalidate() { cache = null; names = null; nameWords = null }
+    fun invalidate() { cache = null; names = null; nameWords = null; byNumber = null }
 
     @Volatile private var names: Set<String>? = null
     @Volatile private var nameWords: Set<String>? = null
@@ -99,6 +99,36 @@ class People(private val context: Context, private val prefs: Prefs) {
         cache = list
         followRenames(list)
         return list
+    }
+
+    @Volatile private var byNumber: Map<String, String>? = null
+
+    /** Le ultime 9 cifre: "+39 333 1234567" e "3331234567" sono lo stesso numero. */
+    private fun tail(number: String) = number.filter { it.isDigit() }.takeLast(9)
+
+    /**
+     * Chi è davvero chi scrive, dal legame con la rubrica che dà l'app ("tel:…", la chiave del contatto):
+     * il nome normalizzato del contatto, o null. Il nome che si vede nella notifica non c'entra.
+     */
+    fun nameForUri(uri: String?): String? {
+        if (uri.isNullOrBlank()) return null
+        val u = runCatching { android.net.Uri.parse(uri) }.getOrNull() ?: return null
+        return when {
+            u.scheme == "tel" -> {
+                val t = tail(u.schemeSpecificPart.orEmpty()).takeIf { it.length >= 6 } ?: return null
+                val map = byNumber ?: all().filter { it.number.isNotBlank() }.groupBy { tail(it.number) }
+                    .mapNotNull { (k, cs) -> cs.map { it.normalized }.distinct().singleOrNull()?.let { k to it } }.toMap().also { byNumber = it }
+                map[t]
+            }
+            u.scheme == "content" && u.authority == ContactsContract.AUTHORITY -> {
+                val segs = u.pathSegments
+                val i = segs.indexOf("lookup")
+                val key = if (i >= 0) segs.getOrNull(i + 1) else null
+                val id = segs.lastOrNull()?.toLongOrNull()
+                (key?.let { k -> all().firstOrNull { it.lookup == cleanLookup(k) } } ?: id?.let { x -> all().firstOrNull { it.id == x } })?.normalized
+            }
+            else -> null
+        }
     }
 
     /** Il contatto di un token ("@chiave" o nome normalizzato); per nome solo se è uno solo. */
@@ -182,6 +212,8 @@ class People(private val context: Context, private val prefs: Prefs) {
         val n = contact.normalized
         // Riaggiunta dopo averla messa "In sordina": quella regola vincerebbe sull'importante e i suoi messaggi resterebbero fermi
         if (important) prefs.personRules.keys.filter { it == n || it.endsWith("|$n") }.takeIf { it.isNotEmpty() }?.let { ks -> prefs.personRules = prefs.personRules - ks.toSet() }
+        // Entra ovunque: le stesse persone "solo su un'app" sarebbero doppioni
+        if (important) prefs.peopleIn = prefs.peopleIn.filterTo(HashSet()) { !it.endsWith("|$n") }
         prefs.importantNames = if (important) prefs.importantNames + n else prefs.importantNames - n
         setStarred(contact.id, important, wasStarred = contact.starred)
     }
@@ -195,6 +227,9 @@ class People(private val context: Context, private val prefs: Prefs) {
         prefs.importantNames = prefs.importantNames - n
         prefs.importantInGroups = prefs.importantInGroups - n
         prefs.passUntil = prefs.passUntil - "p:$n"
+        val gone = prefs.personAliases.filterValues { it == n }.keys
+        prefs.personAliases = prefs.personAliases - gone
+        prefs.ruleNames = prefs.ruleNames - gone
         Talking.forget(n)
         if (unstar) all().firstOrNull { it.normalized == n }?.let { setStarred(it.id, false, wasStarred = it.starred) }
     }

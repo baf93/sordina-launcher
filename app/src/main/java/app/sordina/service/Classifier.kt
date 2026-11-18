@@ -35,6 +35,14 @@ data class NotifInfo(
     val hidden: Boolean = false,
     /** Con chi è la conversazione: il gruppo, o l'altra persona (anche quando l'ultimo messaggio è tuo) */
     val peer: String? = null,
+    /** Il legame con la rubrica che dà l'app per chi scrive ("tel:…" o la chiave del contatto), se lo dà */
+    val personUri: String? = null,
+    /** I messaggi della conversazione (quando, chi, cosa), dal più vecchio; senza i tuoi */
+    val lines: List<Triple<Long, String?, String>> = emptyList(),
+    /** Il contatto (nome normalizzato) di [personUri]: chi è davvero, qualunque nome mostri l'app */
+    val contactName: String? = null,
+    /** La conversazione come la identifica l'app (shortcutId): stabile, non la sceglie chi scrive */
+    val shortcut: String? = null,
 )
 
 /**
@@ -68,6 +76,10 @@ data class RuleSnapshot(
     val remindPass: Boolean = true,
     /** I nomi della rubrica, normalizzati */
     val contacts: Set<String> = emptySet(),
+    /** "pacchetto|nome visto" → persona importante: "Elisa" su Telegram è Elisa Rossi */
+    val aliases: Map<String, String> = emptyMap(),
+    /** Le app per cui non si indovinano codici e avvisi di pagamento */
+    val noGuess: Set<String> = emptySet(),
 ) {
     companion object {
         fun of(self: String, prefs: Prefs, people: People, moment: Moment, now: Long = System.currentTimeMillis()) = RuleSnapshot(
@@ -80,6 +92,7 @@ data class RuleSnapshot(
             urgentWords = prefs.urgentWords.split(',').map { it.trim() }.filter { it.isNotEmpty() }.ifEmpty { Classifier.URGENT_WORDS },
             missedPass = prefs.missedPass, remindPass = prefs.remindPass,
             contacts = people.normalizedNames(),
+            aliases = prefs.personAliases, noGuess = prefs.noGuess,
         )
     }
 }
@@ -98,7 +111,7 @@ object Classifier {
 
     /** Parole che da sole indicano un codice da digitare (non "autorizzato", "sicurezza"…: compaiono nei pagamenti). */
     private val OTP_STRONG = Regex(
-        "\\b(codice|code|otp|passcode|monouso|one[- ]time|chiave|2fa)\\b",
+        "\\b(codice|code|otp|passcode|monouso|one[- ]time|2fa)\\b",
         RegexOption.IGNORE_CASE,
     )
     /** Parole ambigue ("il pin del portone", "la password del wifi"): valgono solo con un segno che è un accesso a un servizio. */
@@ -107,6 +120,19 @@ object Classifier {
         "(non condivider|do not share|don't share|never share|valid|scad|expire|minut|accedere|accesso|login|log in|sign[- ]?in|autentica|authenticat|identit|conferma|confirm|account)",
         RegexOption.IGNORE_CASE,
     )
+    /** "Chiave" è un codice solo se il testo parla di un accesso ("la chiave della cassetta" no). */
+    private val KEY_WORD = Regex("\\bchiave\\b", RegexOption.IGNORE_CASE)
+    private val ACCESS = Regex(
+        "(accedere|accesso|accedi|login|log in|sign[- ]?in|autentica|authenticat|non condivider|do not share|don't share|never share)",
+        RegexOption.IGNORE_CASE,
+    )
+    /** Una promozione: lì "codice … valido" è uno sconto, non un accesso. */
+    private val PROMO = Regex(
+        "(\\bscont[oi]\\b|\\bscontat|\\bofferta|\\bofferte|\\bcoupon|\\bpromo|\\bpromozion|\\bsaldi\\b|\\bdiscount|\\brisparmi|\\d+\\s?%)",
+        RegexOption.IGNORE_CASE,
+    )
+    /** Un codice promozionale scritto dopo "codice": lettere maiuscole e cifre insieme (SCONTO20, 20OFF). */
+    private val PROMO_CODE = Regex("(?i:\\b(?:codice|code|coupon))\\s*:?\\s*(?=[A-Z0-9]*[A-Z])(?=[A-Z0-9]*\\d)[A-Z0-9]{4,}\\b")
     /** "Codice" che non è un codice di accesso. */
     private val NOT_OTP = Regex(
         "\\b(codice|code)\\s+(id|fiscale|cliente|pratica|ordine|order|sconto|promo|promozionale|coupon|tracking|spedizione|postale|iban|articolo|prodotto|protocollo|riferimento|reference|identificativo|segnalazione|partner)\\b",
@@ -138,8 +164,11 @@ object Classifier {
     fun otpNumber(text: String): String? {
         if (MAIL_BODY.containsMatchIn(text)) return null
         val long = text.length > SHORT
-        val clean = NOT_OTP.replace(if (long) text.take(MAIL_HEAD) else text, " ")
+        val head = if (long) text.take(MAIL_HEAD) else text
+        if (PROMO.containsMatchIn(head) || PROMO_CODE.containsMatchIn(head)) return null
+        val clean = NOT_OTP.replace(head, " ")
         val words = OTP_STRONG.findAll(clean).map { it.range }.toList() +
+            (if (ACCESS.containsMatchIn(clean)) KEY_WORD.findAll(clean).map { it.range }.toList() else emptyList()) +
             (if (!long && SERVICE.containsMatchIn(clean)) OTP_WEAK.findAll(clean).map { it.range }.toList() else emptyList())
         if (words.isEmpty()) return null
         // Una mail lunga deve anche dire che è un accesso (scadenza, non condividere, accedi…): le newsletter no
@@ -192,13 +221,37 @@ object Classifier {
 
     /** Avvisi di sicurezza su pagamenti: frodi, autorizzazioni da confermare, rifiuti. Non aspettano mai. */
     private val PAY_ALERT = Regex(
-        "(sospett|frod|fraud|non autorizzat|unauthori[sz]ed|rifiutat|declined|negat|bloccat|blocked|sei stato tu|was this you|" +
-            "conferma(re)? (il |l'|questo |questa )?(pagament|acquist|transazion|operazion)|approva|autorizza (il|l'|questo|questa)|" +
-            "confirm (the |this )?(payment|purchase|transaction)|approve|entro \\d+ minut|within \\d+ minut)",
+        "(\\bsospett\\p{L}*|\\bfrod[ei]\\b|\\bfraud\\p{L}*|\\bnon autorizzat[oaie]\\b|\\bunauthori[sz]ed\\b|\\brifiutat[oaie]\\b|\\bdeclined\\b|" +
+            "\\bnegat[oaie]\\b|\\bbloccat[oaie]\\b|\\bblocked\\b|\\bsei stat[oa] tu\\b|\\bwas this you\\b|" +
+            "\\bconferma(re)? (il |l'|questo |questa )?(pagament|acquist|transazion|operazion)|\\bapprova\\b|\\bautorizza (il|l'|questo|questa)\\b|" +
+            "\\bconfirm (the |this )?(payment|purchase|transaction)|\\bapprove\\b|\\bentro \\d+ minut|\\bwithin \\d+ minut)",
+        RegexOption.IGNORE_CASE,
+    )
+    /** Si parla davvero di soldi: senza questo "bloccata", "negativo", "approva" sono cronaca, meteo, pubblicità. */
+    private val PAY_CONTEXT = Regex(
+        "(pagament|payment|transazion|transaction|acquist|purchase|addebit|\\bcharge|bonific|\\btransfer|prelievo|prelevat|withdraw|" +
+            "3d ?secure|\\b3ds\\b|\\bcart[ae]\\b|\\bcards?\\b|\\bcont[oi]\\b|\\bbank\\b|\\bbanca\\b|\\bpaypal\\b|€|\\$|\\beur\\b|\\busd\\b)",
         RegexOption.IGNORE_CASE,
     )
 
-    fun isPaymentAlert(text: String): Boolean = PAY_ALERT.containsMatchIn(text)
+    fun isPaymentAlert(text: String): Boolean =
+        PAY_ALERT.containsMatchIn(text) && (PAY_CONTEXT.containsMatchIn(text) || CardDetector.paymentCents(text) != null)
+
+    /**
+     * Un codice di accesso che conta come "Importante": in un gruppo no, i codici veri arrivano solo a te
+     * (altrimenti chiunque in una chat spenta la riaprirebbe scrivendo "codice 1234").
+     */
+    fun securityOtp(n: NotifInfo): Boolean = (!n.isMessage || n.conversation == null) && isOtp(n.title + " " + n.text)
+
+    /**
+     * La chiave di un nome collegato a una persona importante: la conversazione (shortcutId) quando l'app la dà;
+     * il nome visto solo nelle app che lo prendono dalla rubrica. Altrove il nome lo sceglie chi scrive: null.
+     */
+    fun aliasKey(pkg: String, shortcut: String?, person: String?): String? = when {
+        !shortcut.isNullOrBlank() -> "$pkg|s:$shortcut"
+        pkg in CONTACT_NAMED && !person.isNullOrBlank() -> personRuleKey(pkg, Search.normalize(person)).takeIf { !it.endsWith("|") }
+        else -> null
+    }
 
     /** I motivi che in una modalità di Android (QUIET) aspettano invece di passare in silenzio. */
     private val QUIET_HOLDS = setOf(REASON_PERSON, REASON_MISSED, REASON_REMINDER)
@@ -244,7 +297,11 @@ object Classifier {
             if (level == Level.SUBITO && s.quiet && why in QUIET_HOLDS) Verdict(Level.RIEPILOGO, "modalità") else Verdict(level, why)
 
         val all = n.title + " " + n.text
-        val security = isOtp(all) || (!n.isMessage && isPaymentAlert(all))
+        // "Non indovinare per questa app": niente scorciatoie di sicurezza, valgono le regole come per tutto il resto
+        val guess = n.pkg !in s.noGuess
+        val otp = guess && securityOtp(n)
+        val payAlert = guess && !n.isMessage && isPaymentAlert(all)
+        val security = otp || payAlert
         if (!security && channelKey(n.pkg, n.channel) in s.offTypes) return Verdict(Level.RIEPILOGO, REASON_CHANNEL)
 
         if (n.system && s.systemPass) return Verdict(null, "sistema")
@@ -255,8 +312,12 @@ object Classifier {
         val who = personKey(n)
         if ((s.passUntil["a:" + n.pkg] ?: 0L) > s.now || (who != null && (s.passUntil["p:$who"] ?: 0L) > s.now)) return Verdict(null, "lasciata passare")
 
-        if (isOtp(all)) return Verdict(Level.SUBITO, REASON_OTP)
-        if (!n.isMessage && isPaymentAlert(all)) return Verdict(Level.SUBITO, REASON_PAY_ALERT)
+        if (otp) return Verdict(Level.SUBITO, REASON_OTP)
+        if (payAlert) return Verdict(Level.SUBITO, REASON_PAY_ALERT)
+
+        // Un'app frenata resta sempre in sordina: più forte dell'app che passa, delle persone, della chat in corso.
+        // Passano solo i codici di sicurezza, chiamate e sveglie (sopra) e il "lascia passare" chiesto per qualche ora.
+        if (n.pkg in s.braked) return Verdict(Level.RIEPILOGO, REASON_BRAKED)
 
         if (who != null) {
             val k = personRuleKey(n.pkg, who)
@@ -265,7 +326,6 @@ object Classifier {
         }
 
         val listed = n.pkg in s.inApps
-        if (n.pkg in s.braked && !listed) return Verdict(Level.RIEPILOGO, REASON_BRAKED)
         if (n.hidden && !listed) return Verdict(Level.RIEPILOGO, REASON_HIDDEN)
 
         if (n.isMessage && s.talkPass && n.peer != null && talkKey(n.pkg, n.peer) in s.talking) return Verdict(null, "conversazione in corso")
@@ -273,14 +333,19 @@ object Classifier {
         if (n.isMessage) {
             val inGroup = n.conversation != null
             val exact = n.pkg !in CONTACT_NAMED
-            val imp = importantKey(n.person, s.important, exact) ?: if (!inGroup) importantKey(n.title, s.important, exact) else null
+            // Prima chi è davvero (il contatto che dà l'app), poi un nome collegato a mano, poi il nome che si vede
+            val imp = n.contactName?.takeIf { it in s.important }
+                ?: (if (!inGroup) aliasKey(n.pkg, n.shortcut, n.person)?.let { s.aliases[it] } else null)?.takeIf { it in s.important }
+                ?: importantKey(n.person, s.important, exact) ?: if (!inGroup) importantKey(n.title, s.important, exact) else null
             if (imp != null && (!inGroup || imp in s.importantInGroups)) return Verdict(Level.SUBITO, "persona importante")
         }
 
         if (listed) return Verdict(Level.SEMPRE, REASON_APP)
 
         // Urgenze: solo in una chat a due, solo da qualcuno che è nella tua rubrica (uno sconosciuto non decide quanto conta)
-        if (s.urgentEnabled && n.isMessage && n.conversation == null && n.person != null && Search.normalize(n.person) in s.contacts) {
+        // In rubrica davvero: il contatto che dà l'app, o il nome solo dove viene dalla rubrica (su Telegram lo sceglie chi scrive)
+        val inBook = n.contactName != null || (n.pkg in CONTACT_NAMED && n.person != null && Search.normalize(n.person) in s.contacts)
+        if (s.urgentEnabled && n.isMessage && n.conversation == null && inBook) {
             if (isUrgent(n.text, s.urgentWords)) return Verdict(Level.SUBITO, "urgente")
             if (n.burst >= BURST) return Verdict(Level.SUBITO, "insiste")
         }
@@ -371,6 +436,11 @@ object Classifier {
         }.getOrNull()
         val isGroupConv = if (Build.VERSION.SDK_INT >= 28) e.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION) else convTitle != null
         var burst = 1
+        var personUri: String? = null
+        fun uriOf(b: android.os.Bundle): String? = if (Build.VERSION.SDK_INT >= 28) {
+            @Suppress("DEPRECATION")
+            (b.get("sender_person") as? android.app.Person)?.uri
+        } else null
         fun senderOf(b: android.os.Bundle): String? = (if (Build.VERSION.SDK_INT >= 28) {
             @Suppress("DEPRECATION")
             (b.get("sender_person") as? android.app.Person)?.name?.toString()
@@ -381,6 +451,7 @@ object Classifier {
             if (last != null) {
                 text = last.getCharSequence("text")?.toString() ?: text
                 person = senderOf(last)
+                personUri = uriOf(last)
                 // Quanti messaggi di fila, della stessa persona, negli ultimi minuti
                 val since = System.currentTimeMillis() - BURST_MILLIS
                 val times = messages.toList().asReversed().mapNotNull { it as? android.os.Bundle }
@@ -401,7 +472,23 @@ object Classifier {
         if (conversation == null && isMessage && title.contains(": ") && isGroupConv) conversation = title.substringBefore(": ")
         // Riassunti tipo "3 nuovi messaggi" non sono messaggi veri
         conversation = conversation?.replace(Regex("\\s*\\(\\d+ (messaggi|messages)\\)$"), "")
+        // Una chat a due senza mittente nei messaggi: la persona della notifica
+        if (personUri == null && isMessage && !isGroupConv && Build.VERSION.SDK_INT >= 28) personUri = runCatching {
+            @Suppress("DEPRECATION")
+            (e.getParcelableArrayList<android.app.Person>(Notification.EXTRA_PEOPLE_LIST))?.singleOrNull()?.uri
+        }.getOrNull()
         val mine = lastIsMine(sbn)
+        // Tutti i messaggi, non solo l'ultimo: la chat li mette in una notifica sola. I tuoi (risposte dalla notifica) no
+        val me = if (Build.VERSION.SDK_INT >= 28) runCatching {
+            @Suppress("DEPRECATION")
+            (e.get(Notification.EXTRA_MESSAGING_PERSON) as? android.app.Person)?.name?.toString()
+        }.getOrNull() else null
+        val lines = messages.orEmpty().mapNotNull { it as? android.os.Bundle }.mapNotNull { b ->
+            val s = senderOf(b)
+            if (s == null || (me != null && s == me)) return@mapNotNull null
+            val t = b.getCharSequence("text")?.toString()?.let { clean(it) }?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            Triple(b.getLong("time"), s.trim().ifBlank { null }, t)
+        }
         val peerName = conversation?.trim()?.ifBlank { null }
             ?: (if (mine) title.substringBefore(": ") else person ?: title).trim().ifBlank { null }
         return NotifInfo(
@@ -418,8 +505,11 @@ object Classifier {
             title = clean(title),
             isMessage = isMessage,
             count = count,
+            lines = lines,
             burst = burst,
             channel = n.channelId,
+            personUri = personUri?.ifBlank { null },
+            shortcut = if (isMessage && Build.VERSION.SDK_INT >= 26) n.shortcutId?.ifBlank { null } else null,
         )
     }
 }
