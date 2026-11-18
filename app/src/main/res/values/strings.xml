@@ -578,7 +578,6 @@
     <string name="brake_win_day">I\'ll leave it, +%1$d min and the day is yours again</string>
     <string name="brake_balance">Today %1$s</string>
     <string name="brake_day_won">You\'re in the plus today</string>
-    <string name="health_card_label">Sordina · one tap fixes it</string>
     <string name="health_access_title">Sordina can\'t see notifications</string>
     <string name="health_access_sub">Without this permission it can\'t hold anything back.</string>
     <string name="health_access_fix">Grant access</string>

@@ -401,7 +401,6 @@
     <string name="health_battery_fix">保持唤醒</string>
     <string name="health_battery_sub">把它移出省电：它耗电极少，并会保持唤醒。</string>
     <string name="health_battery_title">Android 可能会让 Sordina 休眠</string>
-    <string name="health_card_label">Sordina · 点一下就好</string>
     <string name="health_stopped_fix">唤醒</string>
     <string name="health_stopped_sub">在你唤醒它之前，所有通知都会通过。</string>
     <string name="health_stopped_title">Sordina 睡着了</string>

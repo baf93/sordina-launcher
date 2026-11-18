@@ -401,7 +401,6 @@
     <string name="health_battery_fix">起こしておく</string>
     <string name="health_battery_sub">バッテリー節約の対象外にしてください。消費はごくわずかで、起きたままでいられます。</string>
     <string name="health_battery_title">Android が Sordina を眠らせるかもしれません</string>
-    <string name="health_card_label">Sordina · タップひとつで直る</string>
     <string name="health_stopped_fix">起こす</string>
     <string name="health_stopped_sub">起こすまで、すべての通知が届きます。</string>
     <string name="health_stopped_title">Sordina が眠ってしまいました</string>

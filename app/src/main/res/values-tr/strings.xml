@@ -412,7 +412,6 @@
     <string name="health_battery_fix">Uyanık tut</string>
     <string name="health_battery_sub">Pil tasarrufundan çıkar: çok az harcar ve uyanık kalır.</string>
     <string name="health_battery_title">Android Sordina\'yı uyutabilir</string>
-    <string name="health_card_label">Sordina · tek dokunuşla düzelir</string>
     <string name="health_stopped_fix">Uyandır</string>
     <string name="health_stopped_sub">Sen uyandırana kadar tüm bildirimler geçer.</string>
     <string name="health_stopped_title">Sordina uyudu</string>

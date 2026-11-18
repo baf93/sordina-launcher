@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -34,6 +35,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.material.icons.rounded.LockOpen
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AcUnit
 import androidx.compose.material.icons.rounded.Check
@@ -152,7 +156,7 @@ data class HomeState(
     /** "La notte comincia alle 23:00", "Fino alle 7:00 solo l'importante" */
     val sceneLine: String? = null,
     /** Sera: com'è andata oggi */
-    val recap: String? = null,
+    val recap: DayRecap? = null,
     /** Auto: le quattro persone, scelte da te o quelle che chiami di più */
     val people: List<CarPerson> = emptyList(),
     /** Auto: fino a tre app scelte da te, con la loro icona */
@@ -266,11 +270,25 @@ private fun DayHome(
             }
         } }
         Spacer(Modifier.weight(1f))
-        // La sera, appena sopra la barra e allineata alla sua scritta: com'è andata oggi. Tocco: le statistiche del telefono
-        state.recap?.let {
+        // La sera, appena sopra la barra e al centro: com'è andata oggi. Tocco: le statistiche del telefono
+        state.recap?.let { r ->
             OnBackdrop(state.bottomDark) {
-                Text(it, Modifier.padding(start = 38.dp, end = 28.dp, bottom = 14.dp).clickableNoRipple { onScene("usage") }, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    style = TextStyle(fontSize = 15.sp, color = S.c.soft))
+                // Solo icone e numeri: "⏱ 29m   🔓 25". La frase intera la legge TalkBack
+                val soft = S.c.soft
+                val num = TextStyle(fontSize = 15.sp, color = soft)
+                Row(
+                    Modifier.fillMaxWidth().padding(bottom = 14.dp).wrapContentWidth(Alignment.CenterHorizontally)
+                        .clearAndSetSemantics { contentDescription = r.spoken }
+                        .clickableNoRipple { onScene("usage") },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Rounded.Schedule, null, Modifier.size(16.dp), tint = soft)
+                    Text(r.time, Modifier.padding(start = 5.dp), maxLines = 1, style = num)
+                    r.unlocks?.let { n ->
+                        Icon(Icons.Rounded.LockOpen, null, Modifier.padding(start = 18.dp).size(16.dp), tint = soft)
+                        Text("$n", Modifier.padding(start = 5.dp), maxLines = 1, style = num)
+                    }
+                }
             }
         }
         SearchBar(state, onSearch, onMicDown, onMicUp)
@@ -337,3 +355,6 @@ internal fun weatherIcon(w: String): ImageVector = when {
     tr(R.string.wx_storm) in w -> Icons.Rounded.Thunderstorm
     else -> Icons.Rounded.Cloud
 }
+
+/** Com'è andata oggi, la sera: tempo al telefono ("29m"), sblocchi, e la frase intera per TalkBack. */
+data class DayRecap(val time: String, val unlocks: Int?, val spoken: String)

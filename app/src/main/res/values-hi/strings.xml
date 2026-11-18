@@ -412,7 +412,6 @@
     <string name="health_battery_fix">जगाए रखें</string>
     <string name="health_battery_sub">इसे बैटरी बचत से हटाएँ: यह बहुत कम खर्च करता है और जगा रहता है।</string>
     <string name="health_battery_title">Android Sordina को सुला सकता है</string>
-    <string name="health_card_label">Sordina · एक टैप में ठीक</string>
     <string name="health_stopped_fix">जगाएँ</string>
     <string name="health_stopped_sub">जब तक आप इसे नहीं जगाते, सभी सूचनाएँ आती रहेंगी।</string>
     <string name="health_stopped_title">Sordina सो गया</string>

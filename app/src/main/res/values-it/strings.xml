@@ -577,7 +577,6 @@
     <string name="brake_win_day">Lascio stare, +%1$d min e la giornata torna tua</string>
     <string name="brake_balance">Oggi %1$s</string>
     <string name="brake_day_won">Oggi sei in positivo</string>
-    <string name="health_card_label">Sordina · si sistema con un tocco</string>
     <string name="health_access_title">Sordina non vede le notifiche</string>
     <string name="health_access_sub">Senza questo permesso non può mettere niente in sordina.</string>
     <string name="health_access_fix">Dai il permesso</string>

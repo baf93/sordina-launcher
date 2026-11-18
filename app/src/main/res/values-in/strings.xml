@@ -401,7 +401,6 @@
     <string name="health_battery_fix">Biarkan tetap aktif</string>
     <string name="health_battery_sub">Kecualikan dari penghemat baterai: pemakaiannya sangat kecil dan tetap aktif.</string>
     <string name="health_battery_title">Android bisa menidurkan Sordina</string>
-    <string name="health_card_label">Sordina · sekali ketuk beres</string>
     <string name="health_stopped_fix">Bangunkan</string>
     <string name="health_stopped_sub">Semua notifikasi masuk sampai kamu membangunkannya.</string>
     <string name="health_stopped_title">Sordina tertidur</string>

@@ -308,15 +308,16 @@ internal fun MainActivity.budgetCard(p: Habits.Proposal): Card {
     )
 }
 
+/** I fumetti di Sordina hanno la stessa firma degli altri: il suo logo e il suo nome. */
 internal fun MainActivity.healthCard(h: Health): Card = when (h) {
-    Health.NO_ACCESS -> Card("health:access", CardKind.HEALTH, tr(R.string.health_card_label), tr(R.string.health_access_title), tr(R.string.health_access_sub),
-        listOf(CardAction(tr(R.string.health_access_fix), CardOp.Fix)))
-    Health.STOPPED -> Card("health:stopped", CardKind.HEALTH, tr(R.string.health_card_label), tr(R.string.health_stopped_title), tr(R.string.health_stopped_sub),
-        listOf(CardAction(tr(R.string.health_stopped_fix), CardOp.Fix)))
-    Health.SAMSUNG -> Card("health:samsung", CardKind.HEALTH, tr(R.string.health_card_label), tr(R.string.health_samsung_title), tr(R.string.health_samsung_sub),
-        listOf(CardAction(tr(R.string.health_samsung_fix), CardOp.Fix)))
-    Health.BATTERY -> Card("health:battery", CardKind.HEALTH, tr(R.string.health_card_label), tr(R.string.health_battery_title), tr(R.string.health_battery_sub),
-        listOf(CardAction(tr(R.string.health_battery_fix), CardOp.Fix)))
+    Health.NO_ACCESS -> Card("health:access", CardKind.HEALTH, tr(R.string.app_name), tr(R.string.health_access_title), tr(R.string.health_access_sub),
+        listOf(CardAction(tr(R.string.health_access_fix), CardOp.Fix)), pkg = packageName)
+    Health.STOPPED -> Card("health:stopped", CardKind.HEALTH, tr(R.string.app_name), tr(R.string.health_stopped_title), tr(R.string.health_stopped_sub),
+        listOf(CardAction(tr(R.string.health_stopped_fix), CardOp.Fix)), pkg = packageName)
+    Health.SAMSUNG -> Card("health:samsung", CardKind.HEALTH, tr(R.string.app_name), tr(R.string.health_samsung_title), tr(R.string.health_samsung_sub),
+        listOf(CardAction(tr(R.string.health_samsung_fix), CardOp.Fix)), pkg = packageName)
+    Health.BATTERY -> Card("health:battery", CardKind.HEALTH, tr(R.string.app_name), tr(R.string.health_battery_title), tr(R.string.health_battery_sub),
+        listOf(CardAction(tr(R.string.health_battery_fix), CardOp.Fix)), pkg = packageName)
 }
 
 /** Toglie il codice copiato dagli appunti se è passato il minuto e ci sono ancora loro. */

@@ -401,7 +401,6 @@
     <string name="health_battery_fix">Giữ cho thức</string>
     <string name="health_battery_sub">Loại nó khỏi chế độ tiết kiệm pin: nó tốn rất ít và luôn thức.</string>
     <string name="health_battery_title">Android có thể cho Sordina ngủ</string>
-    <string name="health_card_label">Sordina · chạm một lần là xong</string>
     <string name="health_stopped_fix">Đánh thức</string>
     <string name="health_stopped_sub">Mọi thông báo đều được qua cho đến khi bạn đánh thức nó.</string>
     <string name="health_stopped_title">Sordina đã ngủ</string>

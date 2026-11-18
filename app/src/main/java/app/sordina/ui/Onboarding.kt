@@ -175,7 +175,8 @@ fun Onboarding(
             Step.P_POST -> R.string.ob_allow
             else -> R.string.ob2_open_settings
         }) to ask
-        step == Step.C_HA && !haOpen && !app.ha.configured -> tr(R.string.ob_ha_skip) to { next() }
+        // "Non ce l'ho": Home Assistant resta spento; si accende da Impostazioni se lo installi
+        step == Step.C_HA && !haOpen && !app.ha.configured -> tr(R.string.ob_ha_skip) to { app.prefs.haEnabled = false; ops.changed(); next() }
         step == Step.DONE -> tr(R.string.onb_go_home) to { onDone() }
         else -> tr(R.string.next) to { next() }
     }
@@ -374,7 +375,7 @@ private val DownTail = androidx.compose.foundation.shape.GenericShape { size, _ 
 private fun HaStep(app: SordinaApp, ops: Ops, open: Boolean, onYes: () -> Unit) {
     Screen("", tr(R.string.ob2_ha_title), tr(R.string.ob2_ha_sub)) {
         if (!open) Column(Modifier.fillMaxSize(), verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
-            Secondary(tr(R.string.ob2_ha_yes), Modifier.fillMaxWidth()) { onYes() }
+            Secondary(tr(R.string.ob2_ha_yes), Modifier.fillMaxWidth()) { app.prefs.haEnabled = true; ops.changed(); onYes() }
         } else Column(Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState())) {
             HaSettings(app, ops) {}
             Spacer(Modifier.height(8.dp))

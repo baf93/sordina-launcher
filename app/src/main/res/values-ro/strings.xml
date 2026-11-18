@@ -423,7 +423,6 @@
     <string name="health_battery_fix">Ține-o trează</string>
     <string name="health_battery_sub">Scoate-o din economisirea bateriei: consumă foarte puțin și rămâne trează.</string>
     <string name="health_battery_title">Android ar putea adormi Sordina</string>
-    <string name="health_card_label">Sordina · o atingere și e gata</string>
     <string name="health_stopped_fix">Trezește-o</string>
     <string name="health_stopped_sub">Toate notificările trec până o trezești.</string>
     <string name="health_stopped_title">Sordina a adormit</string>

@@ -216,10 +216,10 @@ fun IntentScreen(
             // Tutte le app: un'icona sola, in alto a destra, lontana dal pollice
             Row(Modifier.fillMaxWidth().padding(start = 28.dp, top = 6.dp, end = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                 // Il titolo: la domanda della barra di Casa, qui scritta in grande
-                Text(tr(R.string.home_search), style = TextStyle(fontSize = 30.sp, lineHeight = 36.sp, color = S.c.ink))
-                Spacer(Modifier.weight(1f))
+                // Il titolo prende solo lo spazio che avanza: su schermi stretti va a capo, il cerchio resta intero
+                Text(tr(R.string.home_search), Modifier.weight(1f), style = TextStyle(fontSize = 30.sp, lineHeight = 36.sp, color = S.c.ink))
                 Box(
-                    Modifier.size(44.dp).clip(CircleShape).background(surface())
+                    Modifier.padding(start = 12.dp).size(44.dp).clip(CircleShape).background(surface())
                         .clickableNoRipple { feelTop.tick(); onAllApps() },
                     contentAlignment = Alignment.Center,
                 ) { Icon(Icons.Rounded.Apps, tr(R.string.all_apps), Modifier.size(22.dp), tint = S.c.ink) }

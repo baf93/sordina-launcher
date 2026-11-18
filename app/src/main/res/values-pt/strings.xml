@@ -412,7 +412,6 @@
     <string name="health_battery_fix">Manter acordado</string>
     <string name="health_battery_sub">Tire-o da economia de bateria: gasta muito pouco e fica acordado.</string>
     <string name="health_battery_title">O Android pode pôr o Sordina para dormir</string>
-    <string name="health_card_label">Sordina · um toque e pronto</string>
     <string name="health_stopped_fix">Acordar</string>
     <string name="health_stopped_sub">Todas as notificações passam até você acordá-lo.</string>
     <string name="health_stopped_title">O Sordina adormeceu</string>

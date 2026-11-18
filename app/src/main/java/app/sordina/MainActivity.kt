@@ -189,7 +189,7 @@ class MainActivity : ComponentActivity(), Ops {
     internal var health by mutableStateOf<Health?>(null)
     internal var tomorrowEvents by mutableStateOf<List<Upcoming>>(emptyList())
     internal var tomorrowWeather by mutableStateOf<String?>(null)
-    internal var recap by mutableStateOf<String?>(null)
+    internal var recap by mutableStateOf<app.sordina.ui.home.DayRecap?>(null)
     internal var carPeople by mutableStateOf<List<CarPerson>>(emptyList())
     /** Le foto delle persone in auto: si leggono dalla rubrica una volta sola */
     internal val carPhotos = java.util.concurrent.ConcurrentHashMap<Long, java.util.Optional<androidx.compose.ui.graphics.ImageBitmap>>()

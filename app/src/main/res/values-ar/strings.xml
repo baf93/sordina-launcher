@@ -456,7 +456,6 @@
     <string name="health_battery_fix">أبقِها مستيقظة</string>
     <string name="health_battery_sub">استثنِها من توفير البطارية: تستهلك القليل جدًا وتبقى مستيقظة.</string>
     <string name="health_battery_title">قد يجعل Android ‏Sordina تنام</string>
-    <string name="health_card_label">Sordina · لمسة واحدة للإصلاح</string>
     <string name="health_stopped_fix">أيقظها</string>
     <string name="health_stopped_sub">تصل كل الإشعارات حتى توقظها.</string>
     <string name="health_stopped_title">نامت Sordina</string>

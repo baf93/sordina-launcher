@@ -434,7 +434,6 @@
     <string name="health_battery_fix">Nechat vzhůru</string>
     <string name="health_battery_sub">Vyřaď ji ze spořiče baterie: spotřebuje velmi málo a zůstane vzhůru.</string>
     <string name="health_battery_title">Android může Sordinu uspat</string>
-    <string name="health_card_label">Sordina · jedno klepnutí a je to</string>
     <string name="health_stopped_fix">Probudit</string>
     <string name="health_stopped_sub">Všechna oznámení projdou, dokud ji neprobudíš.</string>
     <string name="health_stopped_title">Sordina usnula</string>

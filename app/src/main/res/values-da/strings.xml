@@ -412,7 +412,6 @@
     <string name="health_battery_fix">Hold den vågen</string>
     <string name="health_battery_sub">Fjern den fra batterisparing: den bruger meget lidt og holder sig vågen.</string>
     <string name="health_battery_title">Android kan få Sordina til at sove</string>
-    <string name="health_card_label">Sordina · ét tryk, så virker det</string>
     <string name="health_stopped_fix">Væk den</string>
     <string name="health_stopped_sub">Alle notifikationer kommer igennem, indtil du vækker den.</string>
     <string name="health_stopped_title">Sordina er faldet i søvn</string>

@@ -412,7 +412,6 @@
     <string name="health_battery_fix">Κράτα το ξύπνιο</string>
     <string name="health_battery_sub">Βγάλ\' το από την εξοικονόμηση μπαταρίας: καταναλώνει ελάχιστα και μένει ξύπνιο.</string>
     <string name="health_battery_title">Το Android μπορεί να κοιμίσει το Sordina</string>
-    <string name="health_card_label">Sordina · ένα πάτημα και φτιάχνει</string>
     <string name="health_stopped_fix">Ξύπνα το</string>
     <string name="health_stopped_sub">Όλες οι ειδοποιήσεις περνούν μέχρι να το ξυπνήσεις.</string>
     <string name="health_stopped_title">Το Sordina αποκοιμήθηκε</string>

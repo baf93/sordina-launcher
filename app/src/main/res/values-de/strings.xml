@@ -412,7 +412,6 @@
     <string name="health_battery_fix">Wach halten</string>
     <string name="health_battery_sub">Nimm sie vom Energiesparen aus: Sie braucht sehr wenig und bleibt wach.</string>
     <string name="health_battery_title">Android könnte Sordina schlafen legen</string>
-    <string name="health_card_label">Sordina · ein Tipp und alles läuft</string>
     <string name="health_stopped_fix">Aufwecken</string>
     <string name="health_stopped_sub">Alle Benachrichtigungen kommen durch, bis du sie aufweckst.</string>
     <string name="health_stopped_title">Sordina ist eingeschlafen</string>

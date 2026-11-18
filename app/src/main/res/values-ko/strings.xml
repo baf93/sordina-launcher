@@ -401,7 +401,6 @@
     <string name="health_battery_fix">깨어 있게 하기</string>
     <string name="health_battery_sub">배터리 절약에서 제외하세요. 소모가 아주 적고 계속 깨어 있어요.</string>
     <string name="health_battery_title">Android가 Sordina를 재울 수 있어요</string>
-    <string name="health_card_label">Sordina · 한 번 탭하면 해결</string>
     <string name="health_stopped_fix">깨우기</string>
     <string name="health_stopped_sub">깨울 때까지 모든 알림이 와요.</string>
     <string name="health_stopped_title">Sordina가 잠들었어요</string>

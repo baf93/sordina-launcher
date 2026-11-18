@@ -412,7 +412,6 @@
     <string name="health_battery_fix">Wakker houden</string>
     <string name="health_battery_sub">Haal hem uit batterijbesparing: hij verbruikt heel weinig en blijft wakker.</string>
     <string name="health_battery_title">Android kan Sordina in slaap brengen</string>
-    <string name="health_card_label">Sordina · één tik en het werkt weer</string>
     <string name="health_stopped_fix">Wakker maken</string>
     <string name="health_stopped_sub">Alle meldingen komen door tot je hem wakker maakt.</string>
     <string name="health_stopped_title">Sordina is in slaap gevallen</string>

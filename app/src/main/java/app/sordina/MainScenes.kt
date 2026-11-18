@@ -1,5 +1,6 @@
 package app.sordina
 
+import app.sordina.ui.home.DayRecap
 import app.sordina.ui.Celebration
 import app.sordina.data.Backup
 import app.sordina.data.Signals
@@ -178,8 +179,10 @@ internal fun MainActivity.sceneExtras(s: Scene) {
         val d = app.habits.today()
         val min = d.minutes.filterKeys { it != packageName }.values.sum()
         if (min <= 0) null else {
+            // A schermo solo icone e numeri; la frase intera resta per chi usa TalkBack
             val t = if (min >= 60) "${min / 60} h ${min % 60} min" else "$min min"
-            d.unlocks?.let { tr(R.string.scene_recap, t, it) } ?: tr(R.string.scene_recap_time, t)
+            val short = if (min >= 60) "${min / 60}h ${min % 60}m" else "${min}m"
+            DayRecap(short, d.unlocks, d.unlocks?.let { tr(R.string.scene_recap, t, it) } ?: tr(R.string.scene_recap_time, t))
         }
     }.getOrNull() else null
     if (s == Scene.CAR) carPeople = runCatching {

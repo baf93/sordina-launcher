@@ -434,7 +434,6 @@
     <string name="health_battery_fix">Не давати заснути</string>
     <string name="health_battery_sub">Виключи її з економії заряду: вона витрачає дуже мало й не засинає.</string>
     <string name="health_battery_title">Android може приспати Sordina</string>
-    <string name="health_card_label">Sordina · один дотик, і все працює</string>
     <string name="health_stopped_fix">Розбудити</string>
     <string name="health_stopped_sub">Усі сповіщення проходять, доки ти її не розбудиш.</string>
     <string name="health_stopped_title">Sordina заснула</string>

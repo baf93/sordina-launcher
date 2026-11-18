@@ -412,7 +412,6 @@
     <string name="health_battery_fix">La garder éveillée</string>
     <string name="health_battery_sub">Exclus-la de l\'économie de batterie : elle consomme très peu et reste éveillée.</string>
     <string name="health_battery_title">Android pourrait endormir Sordina</string>
-    <string name="health_card_label">Sordina · une touche pour réparer</string>
     <string name="health_stopped_fix">La réveiller</string>
     <string name="health_stopped_sub">Toutes les notifications passent jusqu\'à ce que tu la réveilles.</string>
     <string name="health_stopped_title">Sordina s\'est endormie</string>

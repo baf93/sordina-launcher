@@ -412,7 +412,6 @@
     <string name="health_battery_fix">Pidä hereillä</string>
     <string name="health_battery_sub">Poista se virransäästöstä: se kuluttaa hyvin vähän ja pysyy hereillä.</string>
     <string name="health_battery_title">Android voi nukuttaa Sordinan</string>
-    <string name="health_card_label">Sordina · yksi napautus ja kunnossa</string>
     <string name="health_stopped_fix">Herätä</string>
     <string name="health_stopped_sub">Kaikki ilmoitukset pääsevät läpi, kunnes herätät sen.</string>
     <string name="health_stopped_title">Sordina nukahti</string>

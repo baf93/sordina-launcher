@@ -434,7 +434,6 @@
     <string name="health_battery_fix">Nie usypiaj</string>
     <string name="health_battery_sub">Wyłącz ją z oszczędzania baterii: zużywa bardzo mało i nie zasypia.</string>
     <string name="health_battery_title">Android może uśpić Sordinę</string>
-    <string name="health_card_label">Sordina · jedno dotknięcie i działa</string>
     <string name="health_stopped_fix">Obudź ją</string>
     <string name="health_stopped_sub">Wszystkie powiadomienia przechodzą, dopóki jej nie obudzisz.</string>
     <string name="health_stopped_title">Sordina zasnęła</string>

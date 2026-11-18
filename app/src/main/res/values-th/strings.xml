@@ -401,7 +401,6 @@
     <string name="health_battery_fix">ให้ตื่นอยู่</string>
     <string name="health_battery_sub">นำออกจากโหมดประหยัดแบตเตอรี่: ใช้พลังงานน้อยมากและตื่นอยู่ตลอด</string>
     <string name="health_battery_title">Android อาจทำให้ Sordina หลับ</string>
-    <string name="health_card_label">Sordina · แตะครั้งเดียวก็แก้ได้</string>
     <string name="health_stopped_fix">ปลุก</string>
     <string name="health_stopped_sub">การแจ้งเตือนทั้งหมดจะผ่านจนกว่าคุณจะปลุก</string>
     <string name="health_stopped_title">Sordina หลับไปแล้ว</string>
