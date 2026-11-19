@@ -155,7 +155,7 @@ Sordina has no servers, no account and no analytics. Notifications, contacts, ca
 - **A daily copy of settings and what Sordina learned (no notifications, no token)** → Your Google account, via Android backup · If backup is on
 - **Device model, Android version, languages, error codes** → Google, via ML Kit · Diagnostics of the on-device text and QR libraries
 
-Full policy (IT/EN): [store/privacy](store/privacy/index.html).
+Full policy (IT/EN): [baf93.github.io/sordina-launcher/store/privacy](https://baf93.github.io/sordina-launcher/store/privacy/).
 
 <p align="center"><img src="store/graphics/en/7.png" width="300" alt="Everything stays on your phone"></p>
 
