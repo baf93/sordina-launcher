@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Tutto il materiale del Play Store da una pagina sola: il frammento sceglie cosa disegnare.
-     #icon (512×512) · #feature-it / #feature-en (1024×500) · #shot-it-1 … #shot-en-7 (1080×1920)
+     #icon (512×512) · #feature-<lingua> (1024×500) · #shot-<lingua>-1 … 7 (it, en, es, fr, de, pt) (1080×1920)
      Le schermate riproducono l'interfaccia vera (colori, misure in dp, testi dell'app) con dati inventati. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Roboto+Mono:wght@400&family=Fraunces:opsz,wght@9..144,300;9..144,400&display=block" rel="stylesheet">
@@ -60,7 +60,9 @@
   .bubble:before { content: ''; position: absolute; left: -7px; top: 50%; margin-top: -9px; border-style: solid; border-width: 9px 9px 9px 0;
                    border-color: transparent var(--card) transparent transparent; }
   .bubble .col { flex: 1; min-width: 0; }
-  .lab { font-size: 13px; color: var(--usoft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lab { font-size: 13px; color: var(--usoft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; margin-bottom: 2px; }
+  .aic { width: 16px; height: 16px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; margin-right: 7px; color: #fff; flex: none; }
+  .aic .mi { font-size: 11px; }
   .ttl { font-size: 19px; line-height: 24px; }
   .sub { font-size: 15px; color: var(--usoft); }
   .round { width: 48px; height: 48px; border-radius: 24px; background: var(--uacc); color: var(--bg); display: flex; align-items: center; justify-content: center; flex: none; margin-left: 8px; }
@@ -163,11 +165,11 @@
     <!-- In Casa, sullo sfondo scuro, la sordina è disegnata a tratto -->
     <symbol id="line" viewBox="-40 -58 80 102">
       <g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round">
-        <path d="M-3,-54 L3,-54 Q9,-54 9,-48 L9,-46 Q9,-40 3,-40 L-3,-40 Q-9,-40 -9,-46 L-9,-48 Q-9,-54 -3,-54 Z"/>
+        <rect x="-9" y="-54" width="18" height="11" rx="5"/>
         <path d="M-12,-42 Q0,-46 12,-42 L33,26 Q34,40 0,40 Q-34,40 -33,26 Z"/>
-        <path d="M-6,12 Q0,17 6,12"/>
+        <path d="M-30,25 Q0,34 30,25"/>
       </g>
-      <g fill="currentColor"><circle cx="-8" cy="2" r="3"/><circle cx="8" cy="2" r="3"/></g>
+      <g fill="currentColor"><circle cx="-9" cy="3" r="4.6"/><circle cx="9" cy="3" r="4.6"/></g>
     </symbol>
   </defs>
 </svg>
@@ -224,6 +226,106 @@ const T = {
     promise: [['person_off', 'No account'], ['block', 'No ads'], ['visibility_off', 'No tracking'], ['code', 'Open source']],
     fSay: 'Nothing urgent until 1&nbsp;PM', fSmall: 'Sordina', fTag: "The phone that doesn't interrupt you.",
   },
+  es: {
+    day: 'Lunes', date: '16 de noviembre', weather: '8° despejado', today: 'Hoy', tomorrow: 'Mañana',
+    ev1: 'Reunión de proyecto', ev2: 'Comida con Julia', ev3: 'Dentista',
+    search: '¿Qué necesitas?', inMin: 'En 5 min', calendar: 'Calendario',
+    caps: [
+      ['El móvil que no te interrumpe', 'Una pantalla tranquila: solo lo que importa ahora.'],
+      ['Las notificaciones te esperan', 'Lo importante llega. Lo demás espera hasta que tú quieras.'],
+      ['Lo que necesitas, cuando lo necesitas', 'El código para copiar, la reunión a la que unirte: un toque.'],
+      ['Desliza para ver más', 'Las fotos de las notificaciones, en el bocadillo.'],
+      ['Dilo y Sordina lo hace', 'Escribe o habla: llamadas, mensajes, temporizadores, tu casa.'],
+      ['En el coche, solo lo esencial', 'Navegación, música y tu gente, sin apartar la vista de la carretera.'],
+      ['Todo se queda en tu móvil', 'Sordina no tiene servidores: lo que aprende se queda contigo.'],
+    ],
+    sordina: 'Sordina', people: 'Personas', groups: 'Grupos', work: 'Trabajo', shop: 'Compras y dinero', readAll: 'Todo leído',
+    p1: 'Julia', p1m: '¿Nos vemos a las 8 en el sitio de siempre?', p1m2: 'Yo llevo el vino 🍷', p2: 'Fútbol de los jueves', p2s: 'Marcos', p2m: '¿Quién trae el balón?',
+    w1: 'Resumen semanal', w1s: 'Outlook', w1m: 'Las tareas de la semana', w2: 'Canal del proyecto', w2s: 'Teams', w2m: 'Laura: he subido las diapositivas',
+    s1: 'Tu pedido está en camino', s1s: 'Mensajería', s1m: 'Entrega prevista mañana',
+    bank: 'Banco', code: 'código', copy: 'Copiar',
+    homeLab: 'Casa · Timbre', homeTtl: 'Ha llegado un paquete', homeSub: 'En el felpudo de la entrada',
+    typed: 'escribe a julia que ya llego', r1: 'Escribir a Julia', r1s: '«Ya llego» · mensaje', r2: 'Llamar a Julia', r2s: 'Móvil', r3: 'Temporizador de 10 minutos', r3s: 'Empieza ya, sin abrir el Reloj',
+    carScene: 'En el coche · solo pasan las llamadas', carNext: '9:30', carEv: 'Reunión de proyecto', mic: 'Toca y habla',
+    faces: ['Julia', 'Marcos', 'Mamá', 'Lucas'], playing: 'Reproduciendo', song: 'Olas lentas', artist: 'Marea',
+    promise: [['person_off', 'Sin cuenta'], ['block', 'Sin anuncios'], ['visibility_off', 'Sin rastreo'], ['code', 'Código abierto']],
+    fSay: 'Nada urgente hasta las&nbsp;13', fSmall: 'Sordina', fTag: 'El móvil que no te interrumpe.',
+  },
+  fr: {
+    day: 'Lundi', date: '16 novembre', weather: '8° dégagé', today: "Aujourd'hui", tomorrow: 'Demain',
+    ev1: 'Réunion de projet', ev2: 'Déjeuner avec Julie', ev3: 'Dentiste',
+    search: "De quoi avez-vous besoin ?", inMin: 'Dans 5 min', calendar: 'Agenda',
+    caps: [
+      ['Le téléphone qui ne vous interrompt pas', "Un accueil calme : seulement ce qui compte maintenant."],
+      ['Les notifications vous attendent', "L'important passe. Le reste attend que vous soyez prêt."],
+      ['Ce qu’il faut, quand il faut', 'Le code à copier, la réunion à rejoindre : un geste.'],
+      ['Glissez pour voir plus', 'Les photos des notifications, dans la bulle.'],
+      ['Dites-le, Sordina le fait', 'Écrivez ou parlez : appels, messages, minuteurs, la maison.'],
+      ["En voiture, l'essentiel", 'Navigation, musique et vos proches, les yeux sur la route.'],
+      ['Tout reste sur votre téléphone', "Sordina n'a pas de serveur : ce qu'il apprend reste chez vous."],
+    ],
+    sordina: 'Sordina', people: 'Personnes', groups: 'Groupes', work: 'Travail', shop: 'Achats et argent', readAll: 'Tout lu',
+    p1: 'Julie', p1m: 'On se voit à 20 h au même endroit ?', p1m2: "J'apporte le vin 🍷", p2: 'Foot du jeudi', p2s: 'Marc', p2m: 'Qui apporte le ballon ?',
+    w1: 'Résumé hebdomadaire', w1s: 'Outlook', w1m: 'Les tâches de la semaine', w2: 'Canal du projet', w2s: 'Teams', w2m: "Laura : j'ai mis les slides",
+    s1: 'Votre commande est en route', s1s: 'Livreur', s1m: 'Livraison prévue demain',
+    bank: 'Banque', code: 'code', copy: 'Copier',
+    homeLab: 'Maison · Sonnette', homeTtl: 'Un colis est arrivé', homeSub: "Sur le paillasson devant la porte",
+    typed: "écris à julie que j'arrive", r1: 'Écrire à Julie', r1s: '« J’arrive » · message', r2: 'Appeler Julie', r2s: 'Mobile', r3: 'Minuteur de 10 minutes', r3s: "Démarre tout de suite, sans ouvrir l'Horloge",
+    carScene: 'En voiture · seuls les appels passent', carNext: '9:30', carEv: 'Réunion de projet', mic: 'Touchez et parlez',
+    faces: ['Julie', 'Marc', 'Maman', 'Luc'], playing: 'En lecture', song: 'Vagues lentes', artist: 'Marea',
+    promise: [['person_off', 'Pas de compte'], ['block', 'Pas de pub'], ['visibility_off', 'Pas de pistage'], ['code', 'Open source']],
+    fSay: "Rien d'urgent avant&nbsp;13&nbsp;h", fSmall: 'Sordina', fTag: 'Le téléphone qui ne vous interrompt pas.',
+  },
+  de: {
+    day: 'Montag', date: '16. November', weather: '8° klar', today: 'Heute', tomorrow: 'Morgen',
+    ev1: 'Projektbesprechung', ev2: 'Mittagessen mit Julia', ev3: 'Zahnarzt',
+    search: 'Was brauchst du?', inMin: 'In 5 Min.', calendar: 'Kalender',
+    caps: [
+      ['Das Handy, das dich nicht unterbricht', 'Ein ruhiger Startbildschirm: nur, was gerade zählt.'],
+      ['Benachrichtigungen warten auf dich', 'Wichtiges kommt durch. Der Rest wartet, bis du bereit bist.'],
+      ['Was du brauchst, wenn du es brauchst', 'Den Code kopieren, dem Meeting beitreten: ein Tipp.'],
+      ['Nach oben wischen für mehr', 'Fotos aus Benachrichtigungen, direkt in der Sprechblase.'],
+      ['Sag es, Sordina macht es', 'Tippen oder sprechen: anrufen, schreiben, Timer, dein Zuhause.'],
+      ['Im Auto nur das Nötigste', 'Navigation, Musik und deine Leute, den Blick auf der Straße.'],
+      ['Alles bleibt auf deinem Handy', 'Sordina hat keine Server: Was es lernt, bleibt bei dir.'],
+    ],
+    sordina: 'Sordina', people: 'Menschen', groups: 'Gruppen', work: 'Arbeit', shop: 'Einkäufe und Geld', readAll: 'Alles gelesen',
+    p1: 'Julia', p1m: 'Sehen wir uns um 8 am üblichen Ort?', p1m2: 'Ich bringe den Wein mit 🍷', p2: 'Fußball am Donnerstag', p2s: 'Markus', p2m: 'Wer bringt den Ball mit?',
+    w1: 'Wochenübersicht', w1s: 'Outlook', w1m: 'Die Aufgaben der Woche', w2: 'Projektkanal', w2s: 'Teams', w2m: 'Laura: Folien sind hochgeladen',
+    s1: 'Deine Bestellung ist unterwegs', s1s: 'Paketdienst', s1m: 'Zustellung voraussichtlich morgen',
+    bank: 'Bank', code: 'Code', copy: 'Kopieren',
+    homeLab: 'Zuhause · Türklingel', homeTtl: 'Ein Paket ist angekommen', homeSub: 'Auf der Fußmatte vor der Tür',
+    typed: 'schreib julia ich bin gleich da', r1: 'Julia schreiben', r1s: '„Bin gleich da" · Nachricht', r2: 'Julia anrufen', r2s: 'Mobil', r3: 'Timer für 10 Minuten', r3s: 'Startet sofort, ohne die Uhr-App',
+    carScene: 'Im Auto · nur Anrufe kommen durch', carNext: '9:30', carEv: 'Projektbesprechung', mic: 'Tippen und sprechen',
+    faces: ['Julia', 'Markus', 'Mama', 'Lukas'], playing: 'Läuft gerade', song: 'Langsame Wellen', artist: 'Marea',
+    promise: [['person_off', 'Kein Konto'], ['block', 'Keine Werbung'], ['visibility_off', 'Kein Tracking'], ['code', 'Open Source']],
+    fSay: 'Nichts Dringendes bis 13&nbsp;Uhr', fSmall: 'Sordina', fTag: 'Das Handy, das dich nicht unterbricht.',
+  },
+  pt: {
+    day: 'Segunda-feira', date: '16 de novembro', weather: '8° céu limpo', today: 'Hoje', tomorrow: 'Amanhã',
+    ev1: 'Reunião do projeto', ev2: 'Almoço com a Júlia', ev3: 'Dentista',
+    search: 'Do que você precisa?', inMin: 'Em 5 min', calendar: 'Agenda',
+    caps: [
+      ['O celular que não te interrompe', 'Uma tela tranquila: só o que importa agora.'],
+      ['As notificações esperam você', 'O importante passa. O resto espera até você querer.'],
+      ['O que precisa, quando precisa', 'O código para copiar, a reunião para entrar: um toque.'],
+      ['Deslize para ver mais', 'As fotos das notificações, no próprio balão.'],
+      ['Falou, o Sordina faz', 'Escreva ou fale: ligações, mensagens, timers, sua casa.'],
+      ['No carro, só o essencial', 'Navegação, música e sua gente, sem tirar os olhos da estrada.'],
+      ['Tudo fica no seu celular', 'O Sordina não tem servidores: o que aprende fica com você.'],
+    ],
+    sordina: 'Sordina', people: 'Pessoas', groups: 'Grupos', work: 'Trabalho', shop: 'Compras e dinheiro', readAll: 'Tudo lido',
+    p1: 'Júlia', p1m: 'Nos vemos às 8 no lugar de sempre?', p1m2: 'Eu levo o vinho 🍷', p2: 'Futebol de quinta', p2s: 'Marcos', p2m: 'Quem leva a bola?',
+    w1: 'Resumo semanal', w1s: 'Outlook', w1m: 'As tarefas da semana', w2: 'Canal do projeto', w2s: 'Teams', w2m: 'Laura: subi os slides',
+    s1: 'Seu pedido está a caminho', s1s: 'Transportadora', s1m: 'Entrega prevista para amanhã',
+    bank: 'Banco', code: 'código', copy: 'Copiar',
+    homeLab: 'Casa · Campainha', homeTtl: 'Chegou uma encomenda', homeSub: 'No tapete em frente à porta',
+    typed: 'manda pra júlia que já vou', r1: 'Escrever para Júlia', r1s: '“Já vou” · mensagem', r2: 'Ligar para Júlia', r2s: 'Celular', r3: 'Timer de 10 minutos', r3s: 'Começa na hora, sem abrir o Relógio',
+    carScene: 'No carro · só passam as ligações', carNext: '9:30', carEv: 'Reunião do projeto', mic: 'Toque e fale',
+    faces: ['Júlia', 'Marcos', 'Mãe', 'Lucas'], playing: 'Tocando agora', song: 'Ondas lentas', artist: 'Marea',
+    promise: [['person_off', 'Sem conta'], ['block', 'Sem anúncios'], ['visibility_off', 'Sem rastreamento'], ['code', 'Código aberto']],
+    fSay: 'Nada urgente até as&nbsp;13h', fSmall: 'Sordina', fTag: 'O celular que não te interrompe.',
+  },
 };
 const FACE = ['#E8A93A', '#9FD3BE', '#A8C5DA', '#F2A7A0', '#CFB194', '#B8A9D9'];
 
@@ -242,6 +344,8 @@ function homeTop(t, agenda = true) {
     <div class="dlabel">${t.tomorrow}</div>
     <div class="aline"><span class="t">8:30</span><span>${t.ev3}</span></div>` : ''}</div>`;
 }
+// La firma del fumetto, come nell'app: l'icona piccola dell'app e il suo nome, quieti, in testa
+const sig = (bg, ic, text) => `<div class="lab"><span class="aic" style="background:${bg}">${mi(ic)}</span>${text}</div>`;
 const searchBar = (t) => `<div class="search">${t.search}${mi('mic')}</div>`;
 
 // La foto del campanello: un'illustrazione, niente foto vere
@@ -269,7 +373,7 @@ function shot(lang, n) {
   let inner = '';
   if (n === 1) {
     inner = phone('light', `${homeTop(t)}<div class="grow"></div>${searchBar(t)}
-      <div class="zone">${mascot(3)}<div class="bubble"><div class="col"><div class="lab">${t.inMin} · ${t.calendar}</div><div class="ttl">${t.ev1}</div></div>
+      <div class="zone">${mascot(3)}<div class="bubble"><div class="col">${sig('#1C6FD1', 'event', t.calendar + ' · 1/3')}<div class="ttl">${t.ev1}</div><div class="sub">${t.inMin}</div></div>
       <div class="round">${mi('videocam')}</div></div></div>`);
   } else if (n === 2) {
     const blk = (init, col, appCol, appIc, title, cnt, who, prev, time) => `<div class="block"><div class="brow">
@@ -292,7 +396,7 @@ function shot(lang, n) {
       <div class="readall">${t.readAll}</div>`);
   } else if (n === 3) {
     inner = phone('dark', `${homeTop(t)}<div class="grow"></div>${searchBar(t)}
-      <div class="zone">${mascot(2)}<div class="bubble"><div class="col"><div class="lab">${t.bank} · ${t.code} · 1/2</div><div class="code">482 913</div>
+      <div class="zone">${mascot(2)}<div class="bubble"><div class="col">${sig('#2E7D5B', 'account_balance', t.bank + ' · 1/2')}<div class="code">482 913</div>
       <div class="track"><i style="width:72%"></i></div></div><div class="round">${mi('content_copy')}</div></div></div>`);
   } else if (n === 4) {
     inner = phone('dark', `${homeTop(t, false)}<div class="grow"></div>
@@ -301,7 +405,7 @@ function shot(lang, n) {
           <div class="bubble" style="display:block;padding-top:4px;margin-left:0">
             <div class="handle">${mi('keyboard_arrow_down')}</div>
             <div style="margin:2px 0 10px">${doorPic()}</div>
-            <div style="display:flex;align-items:center"><div class="col"><div class="lab">${t.homeLab}</div><div class="ttl">${t.homeTtl}</div><div class="sub">${t.homeSub}</div></div>
+            <div style="display:flex;align-items:center"><div class="col">${sig('#41BDF5', 'home', t.homeLab)}<div class="ttl">${t.homeTtl}</div><div class="sub">${t.homeSub}</div></div>
             <div class="round">${mi('check')}</div></div>
           </div></div></div>
       <div class="search" style="visibility:hidden"></div><div class="zone">${mascot(1)}</div>`);
@@ -320,7 +424,7 @@ function shot(lang, n) {
       <div class="grow"></div><div class="faces">${faces}</div>
       <div class="tiles">${tile('#2E8B57', 'navigation')}${tile('#D9534F', 'music_note')}${tile('#3E8ED0', 'home')}</div>
       <div class="micbar">${mi('mic')}${t.mic}</div>
-      <div class="zone" style="margin-top:8px">${mascot(0)}<div class="bubble"><div class="col"><div class="lab">${t.playing}</div><div class="ttl">${t.song}</div><div class="sub">${t.artist}</div></div>
+      <div class="zone" style="margin-top:8px">${mascot(0)}<div class="bubble"><div class="col">${sig('#D9534F', 'music_note', t.playing)}<div class="ttl">${t.song}</div><div class="sub">${t.artist}</div></div>
       <div class="round">${mi('pause')}</div><div class="round quiet" style="margin-left:6px">${mi('skip_next')}</div></div></div>`);
   } else if (n === 7) {
     return `<div class="shot"><div class="caption"><h1>${t.caps[i][0]}</h1><p>${t.caps[i][1]}</p></div>
