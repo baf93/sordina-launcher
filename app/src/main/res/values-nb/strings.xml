@@ -1280,4 +1280,7 @@
     <string name="routine_arm_failed">%1$s utført, men jeg fikk ikke aktivert %2$s</string>
     <string name="routine_with_arm_title">%1$s og aktiver %2$s</string>
     <string name="alarm_can_arm">Kan også aktivere</string>
+    <string name="notif_tray">Fra panelet</string>
+    <string name="n_add_notif">Legg til et varsel</string>
+    <string name="tray_pick_sub">Det som ligger i varselpanelet nå. Velg ett, så venter den typen i Sordina, også om den kommer fra systemet. Bare den typen, ikke hele appen.</string>
 </resources>

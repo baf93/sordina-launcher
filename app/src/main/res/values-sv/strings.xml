@@ -1280,4 +1280,7 @@
     <string name="routine_arm_failed">%1$s klar, men jag kunde inte larma %2$s</string>
     <string name="routine_with_arm_title">%1$s och larma %2$s</string>
     <string name="alarm_can_arm">Kan även larma</string>
+    <string name="notif_tray">Från panelen</string>
+    <string name="n_add_notif">Lägg till en avisering</string>
+    <string name="tray_pick_sub">Det som finns i aviseringspanelen nu. Välj en så väntar den typen i Sordina, även om den kommer från systemet. Bara den typen, inte hela appen.</string>
 </resources>

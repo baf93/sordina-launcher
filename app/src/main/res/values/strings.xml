@@ -1285,4 +1285,7 @@
     <string name="routine_arm_failed">%1$s done, but I couldn\'t arm %2$s</string>
     <string name="routine_with_arm_title">%1$s and arm %2$s</string>
     <string name="alarm_can_arm">Can also arm</string>
+    <string name="notif_tray">From the shade</string>
+    <string name="n_add_notif">Add a notification</string>
+    <string name="tray_pick_sub">What\'s in the notification shade now. Pick one and that type waits in Sordina, even if it comes from the system. Only that type, not the whole app.</string>
 </resources>

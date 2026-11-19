@@ -7,6 +7,7 @@ import app.sordina.data.Prefs
 import androidx.compose.ui.text.style.TextOverflow
 import app.sordina.data.AppIcons
 import app.sordina.service.Talking
+import app.sordina.service.Classifier
 import androidx.compose.material.icons.rounded.Forum
 import androidx.compose.material.icons.rounded.BugReport
 import app.sordina.data.Faults
@@ -121,7 +122,7 @@ private const val REPO = "https://github.com/baf93/sordina-launcher"
 private enum class Sub(val parent: String?) {
     MAIN(null),
     NOTIF("MAIN"), HOME("MAIN"), BRAKE("MAIN"), SEARCH("MAIN"), THEMES("MAIN"), GENERAL("MAIN"), PROGRESS("MAIN"),
-    PEOPLE("NOTIF"), ALWAYS("NOTIF"), KINDS("NOTIF"), ORDER("NOTIF"), SECURITY("NOTIF"), CAR("HOME"),
+    PEOPLE("NOTIF"), ALWAYS("NOTIF"), TRAY("NOTIF"), KINDS("NOTIF"), ORDER("NOTIF"), SECURITY("NOTIF"), CAR("HOME"),
     BRAKED("BRAKE"), HIDDEN("BRAKE"), MASCOTS("HOME"), PINNED("SEARCH"), EXCLUDED("SEARCH"), HA("MAIN"), HA_ALARM("HA"), HA_ROUTINE("HA"), CAR_APPS("CAR"), CAR_PEOPLE("CAR"), PERMS("GENERAL"), CREDITS("GENERAL"), LANG("GENERAL"), FAULTS("GENERAL"), WHY("GENERAL"),
 }
 
@@ -231,7 +232,7 @@ fun SettingsScreen(
                 // ── Notifiche: tutto aspetta in Sordina, tranne. Dal generico allo specifico
                 Sub.NOTIF -> Page(tr(R.string.perm_notifications), null, back, scrollOf(page)) {
                     NotifPage(app, apps, change = ::change, onAddApp = { sub = Sub.ALWAYS }, onAddPerson = { sub = Sub.PEOPLE },
-                        onApp = { pkg -> kindsOf = pkg; sub = Sub.KINDS }, onSecurity = { sub = Sub.SECURITY })
+                        onApp = { pkg -> kindsOf = pkg; sub = Sub.KINDS }, onSecurity = { sub = Sub.SECURITY }, onAddTray = { sub = Sub.TRAY })
                     // La pagina Sordina si apre da Casa: il suo ordine si sceglie qui
                     Topic(tr(R.string.sec_page))
                     Group {
@@ -532,6 +533,7 @@ fun SettingsScreen(
                     if (on && now.size >= 2) back()
                 }
                 Sub.SECURITY -> Page(tr(R.string.notif_security), null, back, scrollOf(page)) { SecurityPage(app, apps, change = ::change) }
+                Sub.TRAY -> TrayChooser(app, tr(R.string.n_add_notif), tr(R.string.tray_pick_sub), back) { pkg -> ops.changed(); SordinaListener.reapply(ctx, pkg) }
                 Sub.KINDS -> kindsOf?.let { pkg -> AppKindsPage(app, pkg, apps.firstOrNull { it.packageName == pkg }?.label ?: pkg, scrollOf(page), back, onChange = { tick++; ops.changed(); SordinaListener.reapply(ctx, pkg) }) }
                 Sub.ORDER -> Page(tr(R.string.s_your_order), tr(R.string.order_sub), back, scrollOf(page)) {
                     val order = Categories.custom(prefs.categoryOrder)
@@ -742,6 +744,44 @@ private fun AppChooser(title: String, about: String?, apps: List<AppEntry>, sele
     }
 }
 
+/**
+ * Aggiungi una notifica: quello che c'è adesso nella tendina, un tipo per riga ("Meteo · Previsioni"), scelto come le app.
+ * In cima i tipi già in sordina, così si tolgono anche quando non sono più nella tendina.
+ * Niente chat (le persone hanno la loro sezione), niente app che entrano (i loro tipi si spengono nella loro pagina).
+ */
+@Composable
+private fun TrayChooser(app: SordinaApp, title: String, about: String, onBack: () -> Unit, onChange: (String) -> Unit) {
+    val prefs = app.prefs
+    var items by remember { mutableStateOf<List<Pair<String, String>>?>(null) }
+    LaunchedEffect(Unit) {
+        items = withContext(Dispatchers.IO) {
+            val now = SordinaListener.tray()
+                .filter { it.person == null && !it.channel.isNullOrBlank() && it.pkg !in prefs.inApps && !Classifier.isCore(it.pkg) }
+                .map { Classifier.channelKey(it.pkg, it.channel) to "${it.appLabel} · ${it.kindName}" }
+            val names = now.toMap()
+            val muted = Rules.trayOff(prefs).map { it to (prefs.ruleNames[it] ?: names[it] ?: it.substringAfter('|')) }
+            (muted + now).distinctBy { it.first }.sortedBy { it.second.lowercase() }
+        }
+    }
+    var chosen by remember { mutableStateOf(prefs.offTypes) }
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 16.dp)) {
+        Header(title, onBack)
+        Intro(about, Modifier.padding(bottom = 12.dp), start = 4)
+        val list = items
+        if (list != null && list.isEmpty()) Text(tr(R.string.tray_none), Modifier.padding(horizontal = 8.dp, vertical = 12.dp), style = TextStyle(fontSize = 15.sp, color = S.c.soft))
+        else if (list != null) Box(Modifier.weight(1f).padding(start = 4.dp)) {
+            PickList(list, { it.first }, { it.second }, "", leading = { e -> AppDot(e.first.substringBefore('|')) }, selected = chosen, onScrolled = {}) { e ->
+                val k = e.first
+                val on = k !in chosen
+                prefs.offTypes = if (on) prefs.offTypes + k else prefs.offTypes - k
+                if (on) prefs.ruleNames = prefs.ruleNames + (k to e.second)
+                chosen = prefs.offTypes
+                onChange(k.substringBefore('|'))
+            }
+        }
+    }
+}
+
 /** Come [AppChooser], per le persone: in cima le scelte, poi la rubrica per lettera (solo chi ha un numero), la lente per filtrare. */
 @Composable
 private fun ContactChooser(app: SordinaApp, title: String, about: String?, selected: () -> Set<Long>, onBack: () -> Unit, onToggle: (Long, Boolean) -> Unit) {
@@ -883,7 +923,7 @@ private fun ListCell(i: Int, n: Int, content: @Composable () -> Unit) {
  * Il sottotitolo c'è solo quando dice qualcosa: "2 eccezioni", "su WhatsApp".
  */
 @Composable
-private fun NotifPage(app: SordinaApp, apps: List<AppEntry>, change: (() -> Unit) -> Unit, onAddApp: () -> Unit, onAddPerson: () -> Unit, onApp: (String) -> Unit, onSecurity: () -> Unit) {
+private fun NotifPage(app: SordinaApp, apps: List<AppEntry>, change: (() -> Unit) -> Unit, onAddApp: () -> Unit, onAddPerson: () -> Unit, onApp: (String) -> Unit, onSecurity: () -> Unit, onAddTray: () -> Unit) {
     val prefs = app.prefs
     val ctx = LocalContext.current
     fun appName(pkg: String) = apps.firstOrNull { it.packageName == pkg }?.label ?: pkg
@@ -948,6 +988,26 @@ private fun NotifPage(app: SordinaApp, apps: List<AppEntry>, change: (() -> Unit
             SheetRow(tr(R.string.remove), Icons.Rounded.DeleteOutline) {
                 apply { if (everywhere) app.people.removeImportantName(k) else prefs.peopleIn = prefs.peopleIn - k }
                 editing = null
+            }
+        }
+    }
+
+    // Dalla tendina: un tipo di notifica che passerebbe (il meteo, i promemoria di un'app, una notifica di sistema)
+    // va in sordina. Solo quel tipo, non l'app.
+    Topic(tr(R.string.notif_tray))
+    var muting by remember { mutableStateOf<String?>(null) }
+    fun trayName(k: String) = prefs.ruleNames[k] ?: (appName(k.substringBefore('|')) + " · " + k.substringAfter('|'))
+    Group {
+        Rules.trayOff(prefs).sortedBy { trayName(it).lowercase() }.forEach { k ->
+            Line(trayName(k), leading = if (prefs.appIcons) ({ AppDot(k.substringBefore('|')) }) else null) { muting = k }
+        }
+        Line(tr(R.string.n_add_notif), icon = Icons.Rounded.Add, trailing = {}, onClick = onAddTray)
+    }
+    muting?.let { k ->
+        Sheet(trayName(k), onDismiss = { muting = null }) {
+            SheetRow(tr(R.string.remove), Icons.Rounded.DeleteOutline) {
+                change { prefs.offTypes = prefs.offTypes - k; SordinaListener.reapply(ctx, k.substringBefore('|')) }
+                muting = null
             }
         }
     }

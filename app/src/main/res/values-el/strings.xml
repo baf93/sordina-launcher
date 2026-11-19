@@ -1280,4 +1280,7 @@
     <string name="routine_arm_failed">%1$s έγινε, αλλά δεν μπόρεσα να οπλίσω %2$s</string>
     <string name="routine_with_arm_title">%1$s και όπλιση %2$s</string>
     <string name="alarm_can_arm">Και όπλιση</string>
+    <string name="notif_tray">Από τη γραμμή</string>
+    <string name="n_add_notif">Προσθήκη ειδοποίησης</string>
+    <string name="tray_pick_sub">Ό,τι υπάρχει τώρα στη γραμμή ειδοποιήσεων. Διάλεξε μία και αυτός ο τύπος περιμένει στη Sordina, ακόμη κι αν είναι του συστήματος. Μόνο αυτός ο τύπος, όχι όλη η εφαρμογή.</string>
 </resources>

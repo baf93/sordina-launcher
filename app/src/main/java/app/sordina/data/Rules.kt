@@ -93,6 +93,12 @@ object Rules {
     /** Dopo la scelta: la notifica entra (true) o aspetta in Sordina. */
     fun enters(prefs: Prefs, t: RuleTarget, op: RuleOp): Boolean = if (op == RuleOp.OFF) !isOn(prefs, t, op) else isOn(prefs, t, op)
 
+    /**
+     * I tipi messi in sordina dalla tendina (Impostazioni → Notifiche → Dalla tendina): quelli delle app che non entrano.
+     * Quelli delle app che entrano sono le loro eccezioni e stanno nella pagina dell'app.
+     */
+    fun trayOff(prefs: Prefs): List<String> = prefs.offTypes.filter { it.substringBefore('|') !in prefs.inApps }
+
     /** Quante eccezioni (tipi e chat spenti) ha un'app. */
     fun exceptions(prefs: Prefs, pkg: String): Int =
         prefs.offTypes.count { it.substringBefore('|') == pkg } + prefs.offChats.count { it.substringBefore('|') == pkg }

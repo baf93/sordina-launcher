@@ -107,6 +107,8 @@ object Classifier {
         Notification.CATEGORY_TRANSPORT, Notification.CATEGORY_PROGRESS, Notification.CATEGORY_SERVICE,
         Notification.CATEGORY_SYSTEM, "stopwatch", "location_sharing", "car_emergency", "car_warning",
     )
+    /** Il telefono stesso (chiamate, sistema): passa sempre, nessuna regola lo tocca. */
+    fun isCore(pkg: String) = pkg in SYSTEM_PKGS
     private val SYSTEM_PKGS = setOf("android", "com.android.systemui", "com.android.phone", "com.samsung.android.incallui", "com.google.android.dialer.incall")
 
     /** Parole che da sole indicano un codice da digitare (non "autorizzato", "sicurezza"…: compaiono nei pagamenti). */

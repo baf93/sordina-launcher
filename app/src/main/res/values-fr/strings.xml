@@ -1286,4 +1286,7 @@
     <string name="routine_arm_failed">%1$s fait, mais je n\'ai pas pu armer %2$s</string>
     <string name="routine_with_arm_title">%1$s et armer %2$s</string>
     <string name="alarm_can_arm">Peut aussi armer</string>
+    <string name="notif_tray">Depuis le volet</string>
+    <string name="n_add_notif">Ajouter une notification</string>
+    <string name="tray_pick_sub">Ce qui est dans le volet des notifications maintenant. Choisis-en une et ce type attend dans Sordina, même s\'il vient du système. Seulement ce type, pas toute l\'appli.</string>
 </resources>

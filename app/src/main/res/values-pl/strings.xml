@@ -1314,4 +1314,7 @@
     <string name="routine_arm_failed">%1$s gotowe, ale nie udało się uzbroić %2$s</string>
     <string name="routine_with_arm_title">%1$s i uzbrój %2$s</string>
     <string name="alarm_can_arm">Także uzbrajanie</string>
+    <string name="notif_tray">Z panelu</string>
+    <string name="n_add_notif">Dodaj powiadomienie</string>
+    <string name="tray_pick_sub">To, co jest teraz w panelu powiadomień. Wybierz jedno, a ten typ poczeka w Sordinie, nawet jeśli pochodzi z systemu. Tylko ten typ, nie cała aplikacja.</string>
 </resources>

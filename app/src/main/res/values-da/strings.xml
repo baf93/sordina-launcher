@@ -1280,4 +1280,7 @@
     <string name="routine_arm_failed">%1$s udført, men jeg kunne ikke tilkoble %2$s</string>
     <string name="routine_with_arm_title">%1$s og tilkobl %2$s</string>
     <string name="alarm_can_arm">Kan også tilkoble</string>
+    <string name="notif_tray">Fra panelet</string>
+    <string name="n_add_notif">Tilføj en notifikation</string>
+    <string name="tray_pick_sub">Det, der er i notifikationspanelet nu. Vælg en, så venter den type i Sordina, også hvis den kommer fra systemet. Kun den type, ikke hele appen.</string>
 </resources>

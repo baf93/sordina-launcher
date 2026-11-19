@@ -1264,4 +1264,7 @@
     <string name="routine_arm_failed">%1$s已完成，但无法布防%2$s</string>
     <string name="routine_with_arm_title">%1$s并布防%2$s</string>
     <string name="alarm_can_arm">也可布防</string>
+    <string name="notif_tray">来自通知栏</string>
+    <string name="n_add_notif">添加通知</string>
+    <string name="tray_pick_sub">现在通知栏里的内容。选一条，这一类通知就会在 Sordina 里等着，即使来自系统。只是这一类，不是整个应用。</string>
 </resources>

@@ -1280,4 +1280,7 @@
     <string name="routine_arm_failed">%1$s tamam ama %2$s kurulamadı</string>
     <string name="routine_with_arm_title">%1$s ve %2$s kur</string>
     <string name="alarm_can_arm">Kurmak da</string>
+    <string name="notif_tray">Bildirim panelinden</string>
+    <string name="n_add_notif">Bildirim ekle</string>
+    <string name="tray_pick_sub">Şu an bildirim panelinde olanlar. Birini seç, o tür sistemden gelse bile Sordina\'da bekler. Yalnızca o tür, uygulamanın tamamı değil.</string>
 </resources>

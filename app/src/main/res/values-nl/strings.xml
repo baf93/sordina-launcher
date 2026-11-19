@@ -1280,4 +1280,7 @@
     <string name="routine_arm_failed">%1$s klaar, maar %2$s kon niet worden ingeschakeld</string>
     <string name="routine_with_arm_title">%1$s en %2$s inschakelen</string>
     <string name="alarm_can_arm">Ook inschakelen</string>
+    <string name="notif_tray">Uit het paneel</string>
+    <string name="n_add_notif">Melding toevoegen</string>
+    <string name="tray_pick_sub">Wat er nu in het meldingenpaneel staat. Kies er een en dat type wacht in Sordina, ook als het van het systeem komt. Alleen dat type, niet de hele app.</string>
 </resources>

@@ -1284,4 +1284,7 @@
     <string name="routine_arm_failed">%1$s erledigt, aber %2$s ließ sich nicht scharf schalten</string>
     <string name="routine_with_arm_title">%1$s und %2$s scharf schalten</string>
     <string name="alarm_can_arm">Auch scharf schalten</string>
+    <string name="notif_tray">Aus der Leiste</string>
+    <string name="n_add_notif">Benachrichtigung hinzufügen</string>
+    <string name="tray_pick_sub">Was gerade in der Benachrichtigungsleiste ist. Wähle eine aus und diese Art wartet in Sordina, auch wenn sie vom System kommt. Nur diese Art, nicht die ganze App.</string>
 </resources>

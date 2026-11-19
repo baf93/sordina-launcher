@@ -1314,4 +1314,7 @@
     <string name="routine_arm_failed">%1$s hotovo, ale %2$s se nepodařilo zapnout</string>
     <string name="routine_with_arm_title">%1$s a zapnout %2$s</string>
     <string name="alarm_can_arm">Také zapínat</string>
+    <string name="notif_tray">Z lišty</string>
+    <string name="n_add_notif">Přidat oznámení</string>
+    <string name="tray_pick_sub">Co je teď v liště oznámení. Vyber jedno a tento typ počká v Sordině, i když je ze systému. Jen tento typ, ne celá aplikace.</string>
 </resources>

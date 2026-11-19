@@ -1280,4 +1280,7 @@
     <string name="routine_arm_failed">%1$s हो गया, पर %2$s चालू नहीं हो पाया</string>
     <string name="routine_with_arm_title">%1$s और %2$s चालू करें</string>
     <string name="alarm_can_arm">चालू भी करें</string>
+    <string name="notif_tray">सूचना पैनल से</string>
+    <string name="n_add_notif">सूचना जोड़ें</string>
+    <string name="tray_pick_sub">अभी सूचना पैनल में जो है। एक चुनें और वह प्रकार Sordina में इंतज़ार करेगा, चाहे वह सिस्टम का हो। सिर्फ़ वह प्रकार, पूरा ऐप नहीं।</string>
 </resources>

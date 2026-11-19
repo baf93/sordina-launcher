@@ -1348,4 +1348,7 @@
     <string name="routine_arm_failed">تم %1$s، لكن لم أتمكن من تفعيل %2$s</string>
     <string name="routine_with_arm_title">%1$s وتفعيل %2$s</string>
     <string name="alarm_can_arm">التفعيل أيضًا</string>
+    <string name="notif_tray">من لوحة الإشعارات</string>
+    <string name="n_add_notif">أضف إشعارًا</string>
+    <string name="tray_pick_sub">ما يوجد الآن في لوحة الإشعارات. اختر واحدًا وسينتظر هذا النوع في Sordina، حتى لو كان من النظام. هذا النوع فقط، لا التطبيق كله.</string>
 </resources>

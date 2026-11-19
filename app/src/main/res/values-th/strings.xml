@@ -1264,4 +1264,7 @@
     <string name="routine_arm_failed">%1$s เสร็จแล้ว แต่เปิด %2$s ไม่ได้</string>
     <string name="routine_with_arm_title">%1$s และเปิด %2$s</string>
     <string name="alarm_can_arm">เปิดได้ด้วย</string>
+    <string name="notif_tray">จากแถบแจ้งเตือน</string>
+    <string name="n_add_notif">เพิ่มการแจ้งเตือน</string>
+    <string name="tray_pick_sub">สิ่งที่อยู่ในแถบแจ้งเตือนตอนนี้ เลือกหนึ่งรายการ แล้วการแจ้งเตือนประเภทนั้นจะรอใน Sordina แม้จะมาจากระบบ เฉพาะประเภทนั้น ไม่ใช่ทั้งแอป</string>
 </resources>

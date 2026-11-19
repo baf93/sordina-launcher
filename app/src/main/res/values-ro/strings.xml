@@ -1297,4 +1297,7 @@
     <string name="routine_arm_failed">%1$s gata, dar nu am putut arma %2$s</string>
     <string name="routine_with_arm_title">%1$s și armează %2$s</string>
     <string name="alarm_can_arm">Poate și arma</string>
+    <string name="notif_tray">Din bară</string>
+    <string name="n_add_notif">Adaugă o notificare</string>
+    <string name="tray_pick_sub">Ce este acum în bara de notificări. Alege una și acel tip așteaptă în Sordina, chiar dacă vine de la sistem. Doar acel tip, nu toată aplicația.</string>
 </resources>

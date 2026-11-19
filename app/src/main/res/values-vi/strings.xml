@@ -1264,4 +1264,7 @@
     <string name="routine_arm_failed">Đã xong %1$s nhưng không bật được %2$s</string>
     <string name="routine_with_arm_title">%1$s và bật %2$s</string>
     <string name="alarm_can_arm">Cũng bật</string>
+    <string name="notif_tray">Từ thanh thông báo</string>
+    <string name="n_add_notif">Thêm thông báo</string>
+    <string name="tray_pick_sub">Những gì đang có trên thanh thông báo. Chọn một và loại đó sẽ chờ trong Sordina, kể cả khi đến từ hệ thống. Chỉ loại đó, không phải cả ứng dụng.</string>
 </resources>

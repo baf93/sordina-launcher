@@ -1314,4 +1314,7 @@
     <string name="routine_arm_failed">%1$s готово, но поставить %2$s на охрану не удалось</string>
     <string name="routine_with_arm_title">%1$s и поставить %2$s на охрану</string>
     <string name="alarm_can_arm">Также ставить на охрану</string>
+    <string name="notif_tray">Из шторки</string>
+    <string name="n_add_notif">Добавить уведомление</string>
+    <string name="tray_pick_sub">То, что сейчас в шторке уведомлений. Выберите одно, и этот тип будет ждать в Sordina, даже если он системный. Только этот тип, не всё приложение.</string>
 </resources>

@@ -1264,4 +1264,7 @@
     <string name="routine_arm_failed">%1$s 완료, 하지만 %2$s 경계 설정 실패</string>
     <string name="routine_with_arm_title">%1$s 및 %2$s 경계 설정</string>
     <string name="alarm_can_arm">경계 설정도</string>
+    <string name="notif_tray">알림 창에서</string>
+    <string name="n_add_notif">알림 추가</string>
+    <string name="tray_pick_sub">지금 알림 창에 있는 것들입니다. 하나를 고르면 그 유형은 시스템 알림이라도 Sordina에서 기다립니다. 앱 전체가 아니라 그 유형만요.</string>
 </resources>

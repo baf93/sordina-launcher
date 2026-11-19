@@ -1280,4 +1280,7 @@
     <string name="routine_arm_failed">%1$s tehty, mutta %2$s ei virittynyt</string>
     <string name="routine_with_arm_title">%1$s ja viritä %2$s</string>
     <string name="alarm_can_arm">Myös viritys</string>
+    <string name="notif_tray">Ilmoituspalkista</string>
+    <string name="n_add_notif">Lisää ilmoitus</string>
+    <string name="tray_pick_sub">Mitä ilmoituspalkissa on nyt. Valitse yksi, niin se tyyppi odottaa Sordinassa, vaikka se tulisi järjestelmältä. Vain se tyyppi, ei koko sovellusta.</string>
 </resources>

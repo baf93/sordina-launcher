@@ -1286,4 +1286,7 @@
     <string name="routine_arm_failed">%1$s hecho, pero no pude activar %2$s</string>
     <string name="routine_with_arm_title">%1$s y activar %2$s</string>
     <string name="alarm_can_arm">También activar</string>
+    <string name="notif_tray">Desde la barra</string>
+    <string name="n_add_notif">Añadir una notificación</string>
+    <string name="tray_pick_sub">Lo que hay ahora en la barra de notificaciones. Elige una y ese tipo espera en Sordina, aunque sea del sistema. Solo ese tipo, no toda la app.</string>
 </resources>

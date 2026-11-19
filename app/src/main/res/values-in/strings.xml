@@ -1264,4 +1264,7 @@
     <string name="routine_arm_failed">%1$s selesai, tapi %2$s gagal diaktifkan</string>
     <string name="routine_with_arm_title">%1$s dan aktifkan %2$s</string>
     <string name="alarm_can_arm">Juga mengaktifkan</string>
+    <string name="notif_tray">Dari panel</string>
+    <string name="n_add_notif">Tambah notifikasi</string>
+    <string name="tray_pick_sub">Yang ada di panel notifikasi sekarang. Pilih satu dan jenis itu menunggu di Sordina, meski dari sistem. Hanya jenis itu, bukan seluruh aplikasi.</string>
 </resources>

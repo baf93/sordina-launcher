@@ -1264,4 +1264,7 @@
     <string name="routine_arm_failed">%1$sは完了しましたが、%2$sをセットできませんでした</string>
     <string name="routine_with_arm_title">%1$sと%2$sのセット</string>
     <string name="alarm_can_arm">セットもする</string>
+    <string name="notif_tray">通知パネルから</string>
+    <string name="n_add_notif">通知を追加</string>
+    <string name="tray_pick_sub">いま通知パネルにあるもの。ひとつ選ぶと、その種類はシステムのものでも Sordina で待ちます。アプリ全体ではなく、その種類だけです。</string>
 </resources>

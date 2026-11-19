@@ -1314,4 +1314,7 @@
     <string name="routine_arm_failed">%1$s готово, але поставити %2$s на охорону не вдалося</string>
     <string name="routine_with_arm_title">%1$s і поставити %2$s на охорону</string>
     <string name="alarm_can_arm">Також ставити на охорону</string>
+    <string name="notif_tray">Зі шторки</string>
+    <string name="n_add_notif">Додати сповіщення</string>
+    <string name="tray_pick_sub">Те, що зараз у шторці сповіщень. Виберіть одне, і цей тип чекатиме в Sordina, навіть якщо він системний. Лише цей тип, не весь застосунок.</string>
 </resources>
