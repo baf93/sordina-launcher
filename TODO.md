@@ -6,6 +6,7 @@ Niente di aperto.
 
 ## Da provare sul telefono
 
+- Notifiche → Oggi con notifiche vere (WhatsApp, banca, meteo): motivi giusti, a mezzanotte si svuota.
 - Tieni premuta un'app nella lista: vibrazione, riga illuminata e un po' più piccola.
 - Sveglia, timer, evento scritti nella ricerca: si torna a Casa e risponde il fumetto della sordina (non la barra scura). Routine e allarmi di casa: idem.
 - Voce senza la lingua scaricata (Android 13+): "Scarico la lingua…" e poi funziona.

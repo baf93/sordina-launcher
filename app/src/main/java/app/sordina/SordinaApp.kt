@@ -21,6 +21,7 @@ class SordinaApp : Application() {
     val prefs by lazy { Prefs(this) }
     val catalog by lazy { AppCatalog(this) }
     val store by lazy { NotifStore(this) }
+    val today by lazy { app.sordina.data.Today(this) }
     val kinds by lazy { app.sordina.data.Kinds(this) }
     val people by lazy { People(this, prefs) }
     val moments by lazy { Moments(this, prefs) }

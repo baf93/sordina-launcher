@@ -898,6 +898,7 @@ class MainActivity : ComponentActivity(), Ops {
         app.silence.stop()
         SordinaListener.readAll(this)
         app.store.wipe()
+        app.today.wipe()
         app.ha.setToken("")
         prefs.clearAll()
         family = prefs.family; mode = prefs.mode; hidden = prefs.hidden

@@ -59,6 +59,7 @@ The rest is held on the Sordina page, grouped by person, until *you* decide to l
 
 - **nothing gets lost**: held notifications stay until you read them
 - **every held notification tells you why it's waiting**, and one long-press changes the rule
+- **Today**: under Settings → Notifications, everything that came through or waited since midnight, each with the rule that decided it
 - **real urgency still gets through**: "urgent", "call me", or three messages in five minutes from one person
 - **timed silence**: "mute for 45 minutes", "quiet until 3pm", then everything resumes
 - **pictures included**: the photo from the doorbell or the chat, right there

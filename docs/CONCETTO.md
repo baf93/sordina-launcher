@@ -1,215 +1,175 @@
 # Sordina: concetto
 
-Nome: Sordina (deciso l'11 novembre 2026; sul Play Store "Sordina Launcher"). Bozza 1, 11 novembre 2026, da rivedere insieme.
+Aggiornato al 19 novembre 2026, versione 0.2.7 (17). Il perché e le regole di fondo; il come, schermata per schermata, è in [UX.md](UX.md). La prima bozza dell'11 novembre è nella cronologia git.
 
 ## Visione
 
 Un modo nuovo di usare il telefono: lo prendi perché ti serve, fai la cosa, e lui torna in silenzio. Niente ti invita a restare, niente di importante ti sfugge.
 
-Non è un launcher con meno icone. È un telefono che parte dall'intenzione e dal momento, non dalle app.
+Non è un launcher con meno icone. È un telefono che parte da quello che vuoi fare, non dalle app.
 
 ## Come nasce
 
-- **Le impostazioni di partenza sono quelle dell'autore.** L'app nasce con un'opinione precisa su cosa significa "calmo" e funziona così dal primo minuto, senza configurare nulla.
-- **Ogni utente le cambia come vuole.** Tutto quello che segue è un valore predefinito, non una regola fissa. Personalizzare è possibile, mai obbligatorio.
-- **Funziona da sola.** Home Assistant è un'estensione che la rende più brava, non un requisito.
+- **Le impostazioni di partenza sono quelle dell'autore.** L'app ha un'opinione precisa su cosa significa "calmo" e funziona così dal primo minuto.
+- **Ogni utente le cambia come vuole.** Tutto è un valore predefinito, non una regola fissa. Personalizzare è possibile, mai obbligatorio.
+- **Funziona da sola.** Home Assistant la rende più brava, non è un requisito.
 
 ## Principi
 
-1. **Parte vuoto.** Allo sblocco: schermo nero, ora, e al massimo un segnale discreto. Nessuna griglia, niente da scorrere.
-2. **Prima l'intenzione, poi l'app.** Scrivi o dici cosa vuoi fare, e parte l'azione giusta.
-3. **Il momento propone, non pretende.** Al massimo sei proposte, imparate da cosa fai di solito a quell'ora e in quel posto. Mai un elenco.
-4. **L'importante passa sempre, il resto aspetta.** Regole chiare, decise dall'utente, non un algoritmo che indovina.
-5. **Attrito solo per il "tanto per".** Le app usate per riflesso chiedono un momento prima di aprirsi. Quelle usate per uno scopo si aprono subito.
-6. **Fatto, e torna nero.** Finita l'azione, nessun percorso che porta altrove.
-7. **Un gioco leggero, mai una pressione.** Una riga a fine giornata. Imprese, serie e adesivi della mascotte festeggiano le scelte fatte, non chiedono di tornare: nessuna notifica per non perdere la serie, un'impresa vinta resta tua. Quando ne vinci una la festa dura un attimo in Casa, poi resta nella pagina dei progressi.
+1. **Casa quasi vuota.** Data, meteo, i prossimi impegni, una barra e la sordina. Nessuna griglia, niente da scorrere.
+2. **Prima l'intenzione, poi l'app.** Scrivi o dici cosa vuoi fare, e Sordina fa la cosa giusta.
+3. **Propone, non fa da sola.** Una cosa alla volta, imparata da quello che fai di solito a quell'ora. A toccare sei sempre tu.
+4. **L'importante passa, il resto aspetta.** Regole chiare, decise da te. Dove Sordina riconosce qualcosa dal testo (codici, urgenze), si vede perché, e si spegne.
+5. **Un freno solo per il "tanto per".** Le app usate per riflesso chiedono un momento prima di aprirsi. Quelle usate per uno scopo si aprono subito.
+6. **Fatto, e torna calmo.** Finita l'azione, nessun percorso che porta altrove.
+7. **Un gioco leggero, mai una pressione.** Imprese, serie e adesivi della mascotte festeggiano le scelte fatte, non chiedono di tornare: nessuna notifica per non perdere la serie, quello che vinci resta tuo.
 8. **Tutto resta sul telefono.** Niente account, niente server, niente tracciamento.
 
 ## L'esperienza
 
-### Schermo vuoto
-Ora e data. Sotto, solo se serve, una riga di stato: "Niente di urgente fino alle 13". Tocco o gesto verso l'alto per agire.
+### Casa e il fumetto della sordina
+Data, meteo, i prossimi impegni e la barra. Sotto, la sordina: tace quando non c'è niente, e quando serve parla in un fumetto che dice **una cosa sola**, la più importante in corso: il codice da copiare, la riunione che sta per iniziare, la chiamata persa, la musica, la domanda di casa. Se non c'è niente in corso, propone una cosa che di solito fai a quell'ora.
 
-### Barra delle intenzioni
-Il centro dell'app. Si scrive o si parla: "paga parcheggio", "chiama Anna", "spegni luci sala", "musica in auto".
-- Riconosce app, contatti, azioni delle app (scorciatoie Android), comandi di casa se Home Assistant è collegato.
-- Impara dall'uso: le intenzioni frequenti salgono in cima, sul telefono, senza inviare dati.
-- Se un'intenzione apre un'app da frenare, scatta l'attrito.
+### La barra
+Si scrive o si parla, in tutte le 27 lingue dell'app: "chiama Anna", "scrivi a Paolo che arrivo", "sveglia domani alle 7", "calcetto domani alle 17", "spegni luci sala".
+- Fa l'azione quando può (sveglia, timer, impegno con Annulla, comando di casa); verso altre persone serve sempre il tuo tocco.
+- Voce riconosciuta solo sul telefono.
+- Impara dalle correzioni, dai soprannomi ("mamma"), dall'app che usi con ciascuno. Tutto in locale.
+- Sotto la barra, sei app proposte per quell'ora; più su, tutte le app.
 
-### Le sei proposte
-Sotto la barra, sei cose: quelle che di solito fai a quell'ora, in quel posto. Non categorie fisse, ma ciò che l'app impara usandola, tutto sul telefono.
-- Possono essere app, persone o azioni ("Chiama Anna", "Verso casa", "Spegni luci sala").
-- Le app da frenare non vengono mai proposte: Sordina non suggerisce le abitudini che vuoi perdere.
-- Si possono fissare una o due proposte che restano sempre.
-- Dettagli in [UX.md](UX.md).
-
-### Il momento
-Il telefono riconosce in che momento sei e cambia ciò che propone. Momenti predefiniti:
-
-| Momento | Come lo riconosce | Cosa propone | Interruzioni |
-|---|---|---|---|
-| Mattina | Prima ora dopo la sveglia | Meteo, primo impegno, stato casa | Normali |
-| Lavoro | Calendario o orario impostato | Prossima riunione, Teams, Outlook | Lavoro e persone importanti |
-| In auto | Android Auto o Bluetooth dell'auto | Maps, musica, chiama | Solo chiamate |
-| Sera a casa | Wi-Fi di casa dopo le 19 | Casa, musica | Persone importanti |
-| Notte | Orario o Buonanotte di Home Assistant | Niente | Solo chiamate importanti e allarmi |
-
-L'utente modifica, aggiunge o spegne i momenti.
+### La Casa cambia con te
+Tre momenti, ognuno si accende da solo e si spegne quando vuoi:
+- **Sera** (da un'ora scelta): la giornata si chiude, con un riepilogo di una riga (tempo al telefono, sblocchi), senza grafici.
+- **Notte** (da un'ora scelta): solo l'essenziale, schermo scuro.
+- **Auto** (Android Auto): orologio grande, navigazione, musica, le persone scelte e un microfono che si trova senza guardare.
 
 ### La pagina Sordina
-Ciò che non passa aspetta nella pagina Sordina, raggruppato per persona, non per app, finché non lo apri o lo segni letto. Niente riepiloghi a orario: ci vai tu quando vuoi. Nulla viene cancellato.
+Quello che non passa aspetta qui, raggruppato per persona (o per app, se non c'è una persona), finché non lo apri o lo segni letto. Niente riepiloghi a orario: ci vai tu quando vuoi. Nulla viene cancellato. Si legge tutto qui, e un tocco apre l'app nel punto giusto, come la notifica originale.
 
-### Messaggi: leggi qui, rispondi nell'app
-Niente risposte rapide. Ogni messaggio o avviso si legge per intero dentro Sordina (mittente, testo, anteprima). Un tocco porta nell'app, nel punto giusto, esattamente come toccare la notifica originale.
-- Sordina conserva l'azione di apertura della notifica anche quando la notifica di sistema viene nascosta.
-- Se l'app di origine l'ha ritirata, si apre l'app nella sua schermata principale.
+### Il freno
+Per le app che apri per abitudine (e i loro siti nel browser): prima di aprirsi chiedono un momento. "Lascia stare" fa guadagnare minuti, livelli e giorni di serie; "Apri comunque" apre. Ogni app frenata può avere un budget giornaliero; il lunedì Sordina propone di aggiustarlo su com'è andata la settimana. Non è un blocco, è un dosso.
 
-### Aspetto e temi
-Tranquilla, non spoglia: deve essere piacevole da guardare e da usare.
-
-La struttura delle schermate è sempre la stessa; cambia il **tema**. Un tema decide colori, caratteri, stile dell'orologio, forme e texture. L'app ne include diversi, e se ne possono aggiungere (anche dalla comunità, essendo open source).
-
-Direzioni di partenza, da rifinire: **Carta** (chiaro, serif, caldo), **Strumento** (monocromo, puntini, monospace, un solo rosso), **Morbido** (pastello, forme tonde), più gli incroci tra loro.
-
-Dentro ogni tema, un minimo di personalizzazione da una sola schermata:
-- **Colore d'accento**: alcune tinte proposte dal tema, o dal sistema (Material You).
-- **Chiaro, scuro o automatico** dove il tema lo prevede.
-- **Movimento ridotto**.
-- **Foto di sfondo**, a schermo intero o come cartolina appoggiata sulla carta.
-
-Testo adattivo: con una foto di sfondo, ogni zona di testo (data, ora, frase, linea della giornata, righe in basso) diventa chiara o scura in base alla luce della foto sotto di lei. Un alone leggero del colore opposto aiuta dove la foto è mista. Il calcolo si fa una volta sola, quando si sceglie la foto. Si può anche forzare sempre chiaro o sempre scuro.
-
-Le app si riconoscono dalla loro icona originale, piccola e ammorbidita, mai in griglia. Le persone hanno un'iniziale colorata o la foto del contatto.
-
-### Specchio serale
-Una riga: "Oggi l'hai preso 34 volte, 27 per un motivo". Facoltativo, spegnibile.
-
-### Imprese e serie
-Cento adesivi della mascotte, tutti sul detox: le scelte del freno, le giornate senza tentazioni, il tempo ripreso, le serie di giorni, la guida, le notifiche. Le regole del gioco:
+### Imprese e adesivi
+Cento adesivi della mascotte, tutti sul distacco: le scelte del freno, le giornate senza tentazioni, il tempo ripreso, le serie, la guida, le notifiche.
 - **Festeggiano, non chiedono.** Nessuna notifica, nessun promemoria per "non perdere la serie".
-- **Una tentazione vale una volta.** Dopo un "Lascia stare" premiato, per 20 minuti gli altri (anche su altre app frenate) non danno minuti né imprese: aprire e lasciare stare di continuo non fa punti. "Apri comunque" invece costa sempre.
+- **Una tentazione vale una volta.** Dopo un "Lascia stare" premiato, per 20 minuti gli altri non danno minuti né imprese.
 - **Quello che vinci resta.** Una serie che si interrompe non toglie le imprese già vinte.
-- **Un attimo e via.** Un'impresa nuova si festeggia una volta in Casa; il resto sta nella pagina dei progressi, dove vai tu.
-- **Tutto sul telefono.** Gli adesivi si condividono solo se scegli di farlo.
+- **Un attimo e via.** Un'impresa nuova si festeggia una volta in Casa; il resto sta nella pagina dei progressi.
+- Gli adesivi si condividono (WhatsApp, Telegram) solo se scegli di farlo.
+
+### Aspetto
+Un tema sobrio, chiaro, scuro o automatico, con un colore principale. Sfondo a tinta unita, con disegni, o lo sfondo del telefono: il testo resta leggibile su qualsiasi immagine. Una mascotte, tante facce. Su tablet una colonna centrale che ruota con lo schermo.
 
 ## Cosa passa e cosa aspetta
 
-Tutto aspetta in sordina, tranne tre cose decise dall'utente (Impostazioni → Notifiche):
+Tutto aspetta in sordina, tranne quello che scegli in Impostazioni → Notifiche, dal generico allo specifico:
 
-| Tranne | Cosa contiene | Come arriva |
+| Tranne | Cosa contiene | Si spegne? |
 |---|---|---|
-| **Importanti** | Codici e sicurezza (codici di accesso, avvisi di pagamento sospetti), chiamate perse, promemoria, urgenze dai contatti, conversazione in corso, notifiche di sistema. Ognuno si spegne, tranne Codici e sicurezza: lì si spegne solo per un'app che sbaglia ("non indovinare per questa app") | Nella tendina, come le manda l'app |
-| **App** | Le app che entrano, con eventuali eccezioni dentro (un tipo di notifica, una chat) | Nella tendina, anche di notte e in auto |
-| **Persone** | Le persone importanti, ovunque o da un'app sola ("su WhatsApp"); nei gruppi solo se scelto | Nella tendina |
-| In sordina | Tutto il resto | Nella pagina Sordina, finché non la apri |
+| **Importanti** | Codici e sicurezza (codici di accesso, avvisi di frode, pagamenti da confermare), chiamate perse, promemoria e impegni, messaggi urgenti dai contatti, messaggi di risposta (per 15 minuti dopo che scrivi o chiami qualcuno), notifiche di sistema | Uno per uno. Codici e sicurezza no: si spengono solo per un'app che sbaglia ("non indovinare per questa app") |
+| **App** | Le app che fai entrare: entra tutto, tranne i tipi di notifica o le chat che spegni nella loro pagina | Togliendo l'app, o il singolo tipo |
+| **Persone** | Ovunque, o solo da un'app ("su WhatsApp"); nei gruppi solo se scelto | Togliendo la persona |
 
-La catena delle regole è fissa e deterministica (stessa notifica, stesse regole → stesso verdetto), in quest'ordine:
-tipo di notifica spento (salvo codici e sicurezza) → di sistema, chiamate, sveglie, media, in corso → "lascia passare per un po'" →
-codici e avvisi di pagamento (non per le app scelte con "non indovinare"; nei gruppi mai) → app frenata (sempre, anche se era fra le App o con persone che entrano) →
+E nella direzione opposta:
+
+| **Dalla tendina** | Un tipo di notifica che passerebbe comunque (meteo, calendario, sistema) e che vuoi in sordina. Si sceglie da quello che c'è adesso nella tendina; va in sordina solo quel tipo, mai l'app intera |
+|---|---|
+
+Più specifica è la regola, più vince. Il resto aspetta nella pagina Sordina.
+
+In cima alla pagina Notifiche c'è **Oggi**: le notifiche arrivate da mezzanotte, passate o in sordina, ciascuna con il motivo. Si guarda e basta: per cambiare una regola si torna in Notifiche, per leggere c'è la pagina Sordina.
+
+La catena delle regole è fissa e deterministica (stessa notifica, stesse regole, stesso verdetto), in quest'ordine:
+tipo spento (salvo codici e sicurezza) → sistema, chiamate, sveglie, musica, notifiche in corso → "lascia passare per qualche ora" →
+codici e avvisi di pagamento (non per le app con "non indovinare"; nei gruppi mai) → app frenata →
 chat spenta o persona che entra da un'app → app nascosta (se non è fra le App) → conversazione in corso → persona importante →
 App → urgenze e insistenza (solo in una chat a due, solo da chi è davvero in rubrica) → chiamate perse, promemoria →
-predefinito (in sordina).
+il resto aspetta.
 
-Un nome visto in un'app (Telegram, Signal…) vale come persona importante solo dove il nome viene dalla rubrica, o se l'hai collegato tu a quella conversazione: il collegamento è per conversazione, non per nome, così un altro che si chiama uguale non passa.
+Un nome visto in un'app (Telegram, Signal…) vale come persona importante solo dove il nome viene dalla rubrica, o se l'hai collegato tu a quella conversazione: il collegamento è per conversazione, non per nome.
+
+Con Non disturbare o una modalità di Android accesa aspettano anche le persone che entrano da un'app sola, le chiamate perse e i promemoria; codici e sicurezza, persone di ovunque, App e urgenze restano visibili.
 
 Garanzie:
-- **Il segnale di calma è sempre visibile**, così si sa che non c'è niente invece di doverlo controllare.
-- **Nessuna perdita.** Ogni notifica in sordina resta nella pagina Sordina finché non la apri o la segni letta.
-- **Le tue scelte vincono.** Quello che metti in sordina tu (app, persona, tipo, frenata, nascosta) non torna davanti come scheda o proposta.
-- **Il freno vince.** Un'app frenata resta in sordina: frenandola esce dalle App, non si può aggiungere fra le App né far entrare le sue persone (la scelta si legge ma non si tocca). Passano solo codici, chiamate e il "lascia passare" chiesto per qualche ora.
+- **Nessuna perdita.** Sordina posticipa le notifiche con la funzione di Android, non le copia: se si fermasse, entro un giorno tutto torna da solo nella tendina.
+- **Le tue scelte vincono.** Quello che metti in sordina tu (app, persona, tipo, frenata, nascosta) non torna davanti come fumetto o proposta.
+- **Il freno vince.** Un'app frenata resta in sordina: passano solo codici, chiamate e il "lascia passare" chiesto per qualche ora.
+- **Letto è letto.** Una notifica letta nell'app di origine esce anche dalla sordina.
 
-## Fonti di contesto
+## Home Assistant
 
-| Fonte | Cosa fornisce | Disponibile per |
-|---|---|---|
-| Telefono | Ora, luogo (casa, lavoro), Wi-Fi, auto, ricarica, movimento | Tutti |
-| Calendario | Impegni, riunioni, orari di lavoro | Tutti |
-| Home Assistant | Presenza, allarmi, routine, sonno, comandi | Chi lo collega |
+Facoltativo, con token (risposte nel fumetto) o solo con l'app di Home Assistant installata.
+- **Comandi dalla barra**, nella tua lingua, passati ad Assist: luci, tapparelle, scene, domande.
+- **La casa chiede**: le notifiche con risposte di Home Assistant compaiono nel fumetto, con fino a tre risposte.
+- **Routine** come "Esco" o "Rientro" in un tocco, con o senza impronta, anche legate a un allarme (inserisci dopo, disattiva prima).
+- **Allarmi**: "disattiva allarme", "inserisci allarme notte", con il codice cifrato sul telefono e aperto solo dall'impronta.
+- **Sicurezza prima**: aprire porte, cancelli, garage e serrature, o disattivare un allarme, chiede impronta o PIN, da voce, tastiera o proposta. Chiudere, bloccare e inserire restano immediati.
 
-## Estensione Home Assistant
-
-Cosa aggiunge:
-- **Allarmi sopra il silenzioso**: un'entità o un evento scelto dall'utente diventa livello "Sempre".
-- **Momenti guidati dalla casa**: Buonanotte attiva Notte, Esci e rientro cambiano il momento.
-- **Comandi nella barra delle intenzioni**: script e scene di Home Assistant come intenzioni.
-- **Stato in una riga** sullo schermo vuoto, se c'è qualcosa da sapere.
-
-Come si collega: indirizzo e token creati dall'utente in Home Assistant, conservati cifrati sul telefono, usati in rete locale o tramite l'accesso remoto dell'utente. Nessun server intermedio.
-
+Indirizzo e token restano cifrati sul telefono. Nessun server intermedio.
 
 ## Privacy e permessi
 
-| Permesso | Perché serve | Senza |
-|---|---|---|
-| App predefinita per la Home | È la Home | L'app non ha senso |
-| Accesso alle notifiche | Livelli, riepiloghi, segnale di calma | Niente riepiloghi |
-| Accesso a Non disturbare | Applicare i livelli di interruzione | Solo riepiloghi, senza silenziare |
-| Dati di utilizzo | Attrito e specchio serale | Niente attrito né specchio |
-| Posizione (facoltativa) | Riconoscere casa e lavoro | Momenti solo da orario, Wi-Fi e calendario |
-| Calendario (facoltativo) | Momento Lavoro e prossimo impegno | Lavoro solo da orario |
-| Contatti (facoltativo) | Persone importanti, "chiama Anna" | Persone scelte a mano |
-| Microfono (facoltativo) | Ricerca a voce, riconosciuta solo sul telefono | Solo ricerca scritta |
+Escono dal telefono solo:
+- la posizione arrotondata a ~10 km verso Open-Meteo, per il meteo, al massimo una volta l'ora;
+- i comandi verso il **tuo** Home Assistant, se lo colleghi;
+- una copia giornaliera delle impostazioni e di ciò che Sordina ha imparato (senza notifiche né token) nel backup Google, se il backup è acceso;
+- i dati di diagnostica di ML Kit (modello, versione di Android, lingue, codici di errore), per le librerie di testo e QR sul telefono.
 
-Da evitare: servizio di accessibilità, connessione a internet per qualsiasi cosa che non sia Home Assistant.
+| Permesso | Perché serve |
+|---|---|
+| Accesso alle notifiche (l'unico necessario) | Decidere cosa passa e cosa aspetta; codici, riunioni e immagini nel fumetto |
+| Home predefinita | È la Home |
+| Dati di utilizzo | Ordinare le app nella ricerca, freno, riepilogo della sera |
+| Accesso a Non disturbare | Silenzio a tempo ("silenzio per 45 minuti") e auto |
+| Notifiche | La scheda di stato e gli avvisi di Sordina |
+| Contatti | "Chiama Anna", persone importanti, persone in auto |
+| Calendario | Prossimi impegni, impegni scritti nella barra |
+| Posizione approssimativa | Solo meteo |
+| Microfono | Voce, riconosciuta sul telefono |
+| Telefono | Fare la chiamata dopo il tuo tocco |
+| Servizio di accessibilità | Freno istantaneo (anche sul sito dell'app frenata, leggendo solo la barra degli indirizzi), doppio tocco per spegnere lo schermo, scrivere una frase in Assist o in Signal. Spiegato prima, con consenso esplicito |
+| Esenzione dall'ottimizzazione della batteria | Perché Android non addormenti lo smistamento delle notifiche |
 
 ## Limiti di Android
 
-- La schermata di blocco resta quella del sistema. Sordina ci porta il riepilogo con una propria scheda di notifica e, facoltativamente, uno sfondo vivo del tema (vedi UX.md, 3.9).
+- La schermata di blocco resta quella del sistema. Sordina ci porta una scheda di stato silenziosa.
 - I gesti indietro e app recenti restano del sistema.
 - Dopo alcuni aggiornamenti il sistema può rimettere la sua Home come predefinita.
 - L'apertura nel punto giusto dipende dall'app di origine: se ritira la notifica, Sordina apre l'app e basta.
-
-## Prima versione da provare
-
-Obiettivo: una settimana sul telefono dell'autore, poi decidere.
-
-Dentro:
-- Schermo vuoto con segnale di calma
-- Barra delle intenzioni con app, contatti e scorciatoie
-- Sei proposte apprese per ora e luogo
-- Notifiche: Importanti, App, Persone; il resto in sordina
-- Momenti Notte e In auto
-- Estensione Home Assistant minima: allarmi sopra il silenzioso e Buonanotte
-
-Fuori, per dopo:
-- Voce
-- Momenti Mattina, Lavoro, Sera
-- Attrito e specchio serale
-- Comandi di casa nella barra
+- Un launcher non può leggere l'elenco dei tipi di notifica di un'app: Sordina li impara man mano che arrivano.
+- Android Auto annuncia una notifica appena arriva, prima che Sordina la metta in sordina: in auto è Non disturbare a doverla fermare.
 
 ## Come capire se funziona
 
 - Il telefono si prende meno volte al giorno, e più spesso per un motivo.
-- Nessuna notifica importante persa in una settimana.
-- Non viene voglia di tornare alla Home di One UI.
+- Nessuna notifica importante persa in una settimana (la pagina Oggi serve anche a verificarlo).
+- Non viene voglia di tornare alla Home del telefono.
 
 ## Cosa esiste già (ricerca dell'11 novembre 2026)
 
-Nessuna app trovata combina tutto, ma quasi ogni pezzo esiste da qualche parte:
-
 | App | Cosa ha in comune | Cosa manca |
 |---|---|---|
-| Niagara Launcher | Riepilogo delle notifiche ogni ~6 ore (beta) | Per app, non per persona; niente intenzioni né momenti; non open source |
-| Before Launcher | Filtro notifiche, home a lista di testo | Niente riepiloghi per persona, niente contesto |
-| Siempo → Focus Launcher | Intenzioni e notifiche a blocchi, open source | Siempo chiusa nel 2020, ripubblicata come Focus Launcher: testo bianco e nero, timer, blocco app |
-| Kvaesitso | Ricerca globale (app, contatti, calendario), calcolatrice, unità; open source GPL-3.0 | Nessuna gestione delle notifiche, nessun contesto |
-| MinkLauncher | Azioni scritte con un prefisso (messaggio, evento, nota) | Niente linguaggio naturale, niente notifiche |
+| Niagara Launcher | Riepilogo delle notifiche ogni ~6 ore (beta) | Per app, non per persona; niente intenzioni; non open source |
+| Before Launcher | Filtro notifiche, home a lista di testo | Niente raggruppamento per persona, niente contesto |
+| Focus Launcher (ex Siempo) | Intenzioni e notifiche a blocchi, open source | Testo bianco e nero, timer, blocco app |
+| Kvaesitso | Ricerca globale, calcolatrice, unità; open source GPL-3.0 | Nessuna gestione delle notifiche |
+| MinkLauncher | Azioni scritte con un prefisso | Niente linguaggio naturale, niente notifiche |
 | Olauncher | Minimale, open source | Solo lista di app |
-| Pixel Launcher | Proposte in base a uso e abitudini | Solo Pixel, nessuna calma |
-| EverythingMe, Aviate | Proposte per ora e luogo, momenti | Chiusi da anni |
+| Pixel Launcher | Proposte in base all'uso | Solo Pixel, nessuna calma |
 
-Cosa rende Sordina diversa: riepiloghi **per persona** con lettura del messaggio, sei proposte apprese **tutte in locale**, intenzioni che **fanno l'azione**, momenti, Home Assistant integrato, temi curati. Il rischio da tenere d'occhio è Niagara, il più diffuso.
+Cosa rende Sordina diversa: notifiche raggruppate **per persona** con lettura del messaggio, comandi che **fanno l'azione** in 27 lingue, proposte apprese **tutte in locale**, Home Assistant integrato con sicurezza a impronta, freno con budget. Il rischio da tenere d'occhio è Niagara, il più diffuso.
 
 ## Decisioni
 
-- **Open source e gratuita**, pubblicata sul Play Store con l'account sviluppatore dell'autore. Nessuna pubblicità, nessun acquisto in-app.
-
-- **Veloce e fluida anche sui telefoni economici e vecchi**: requisito di progetto (dettagli in UX.md, Qualità).
+- Nome **Sordina**, sul Play Store "Sordina Launcher".
+- **Open source e gratuita**, licenza GPL-3.0. Nessuna pubblicità, nessun acquisto in-app.
+- Kotlin e Jetpack Compose, solo Android 8+, package `app.sordina`.
+- **Veloce e fluida anche sui telefoni economici e vecchi.**
+- Niente riepiloghi a orario: in sordina vuol dire "finché non la apri".
+- Imprese e serie restano, con le regole del gioco leggero (principio 7).
+- L'accessibilità si usa, solo per le funzioni elencate sopra e con consenso esplicito.
 
 ## Domande aperte
 
-- Nome: **Sordina** (sul Play Store "Sordina Launcher"). Deciso l'11 novembre 2026.
-- Licenza: GPL-3.0, decisa.
-- Anche su F-Droid, oltre al Play Store.
-- Tecnologia: Kotlin e Jetpack Compose, solo Android, package app.sordina (decisi).
-- Requisiti Play Store aggiornati per accesso alle notifiche, Non disturbare e dati di utilizzo.
+- Pubblicazione anche su F-Droid.
+- Revisione madrelingua delle traduzioni nuove e dei comandi delle 20 lingue in `LingueAltre.kt`.

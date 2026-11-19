@@ -1,6 +1,6 @@
 # Sordina: come funziona
 
-Versione 2, 12 novembre 2026. Sostituisce la bozza 1 (nella cronologia git).
+Versione 3, 19 novembre 2026 (app 0.2.7). Il perché è in [CONCETTO.md](CONCETTO.md); le versioni precedenti sono nella cronologia git.
 
 **In una riga:** prendi il telefono, fai la cosa, lui torna in silenzio. Sordina impara cosa fai e te lo propone; a fare sei sempre tu.
 
@@ -10,11 +10,13 @@ Principio: **KISS & Smart**. Poche cose sullo schermo, frasi di 3–4 parole, ne
 
 | Dove | Cosa c'è |
 |---|---|
-| **Casa** | Ora, data, una frase ("tutto calmo", "3 in attesa") e la **sordina col suo fumetto** |
+| **Casa** | Data, meteo, i prossimi impegni, la barra e la **sordina col suo fumetto** (con il numero di quelle in attesa) |
 | **Su** | Barra (scrivi o parli) e sei app proposte. Ancora su: tutte le app |
 | **Giù** | La tendina di Android, intatta |
 
-Tasto Home o Indietro: sempre Casa. Pressione lunga sul vuoto: impostazioni.
+Tasto Home o Indietro: sempre Casa. Pressione lunga sul vuoto: impostazioni. Doppio tocco sul fondo (facoltativo, con l'accessibilità): spegne lo schermo.
+
+La Casa cambia nei momenti accesi in Impostazioni → Home: **Sera** (da un'ora scelta, con il riepilogo di una riga: tempo al telefono, sblocchi), **Notte** (da un'ora scelta, solo l'essenziale) e **Auto** (Android Auto: orologio grande, fino a 3 app in una riga, fino a 4 persone con la foto, microfono grande).
 
 ## 2. Casa e il fumetto della sordina
 
@@ -68,47 +70,71 @@ In auto il fumetto è lo stesso, sotto "Tocca e parla"; il "di solito" non c'è,
 
 ## 4. Notifiche
 
-Tutto aspetta in sordina, tranne:
+Tutto aspetta in sordina, tranne quello che scegli in Impostazioni → Notifiche. La pagina va dal generico allo specifico:
 
-- **Importanti:** codici e sicurezza, chiamate perse, promemoria, urgenze, conversazione in corso, sistema. Codici e sicurezza non si spengono; si spengono solo per un'app che sbaglia (le offerte con "codice SCONTO20").
-- **App:** le app che entrano. Toccandone una, si spengono i tipi di notifica o le chat che non servono.
-- **Persone:** le persone importanti, ovunque o solo da un'app.
-- **In sordina:** tutto il resto, nella pagina Sordina finché non la apri. Niente riepiloghi a orario.
+- **Oggi**: una riga in cima ("12 passate · 48 in sordina") che apre le notifiche di oggi.
+- **Importanti:** codici e sicurezza, chiamate perse, promemoria e impegni, messaggi urgenti, messaggi di risposta, notifiche di sistema. Ognuno si spegne con il suo interruttore; codici e sicurezza no, si spengono solo per un'app che sbaglia (le offerte con "codice SCONTO20"), nella loro pagina.
+- **App:** le app che entrano. Nessuna nota se entra tutto; "1 eccezione", "N eccezioni" se dentro hai spento dei tipi o delle chat. Toccandola si vede ogni tipo con il suo stato. I tipi si imparano man mano che arrivano; per le app di messaggi i tipi sono le chat.
+- **Persone:** ovunque o "su WhatsApp"; nei gruppi solo se scelto. Vince la regola più specifica.
+- **Dalla tendina:** la direzione opposta, per quello che passerebbe comunque (meteo, calendario, sistema). "Aggiungi una notifica" mostra quello che c'è adesso nella tendina: scelta una riga, va in sordina solo quel tipo, mai l'app. Ogni riga si toglie.
+- In fondo, l'ordine della pagina Sordina.
 
-Dalla pagina Sordina, tieni premuta una notifica: "entra sempre", "spegni questo tipo", "spegni questa chat". Le regole si spiegano con le parole di Sordina ("lo faccio passare", "lo tengo io"), mai con nomi di livelli.
-- Sordina le sospende con la funzione standard di Android, non le copia: aperte dalla pagina Sordina si aprono **originali**, nel punto giusto.
-- Nulla si perde: se Sordina si ferma, Android le rimette nella tendina entro un giorno.
+Gli elenchi per aggiungere app e persone sono uguali: alfabetici, con il cerchio di spunta, e l'ordine non cambia mentre la pagina è aperta.
+
+### Oggi
+Le notifiche arrivate da mezzanotte, in ordine di tempo, divise in mattina, pomeriggio e sera. Due pillole: **Passate** e **In sordina**. Ogni riga: chi e l'app, l'ora, e sotto il motivo con le parole delle sezioni ("Codici e sicurezza", "persona, ovunque", "nessuna regola la fa passare").
+
+Si guarda e basta: le righe non si toccano. Per cambiare una regola si torna in Notifiche.
+
+Le app nascoste non compaiono. A mezzanotte si ricomincia; il registro resta sul telefono, fuori dal backup, e si cancella con "Cancella tutto".
+
+### La pagina Sordina
+- Raggruppata per persona o, se non c'è una persona, per app. Ogni gruppo parte chiuso.
+- Tieni premuto un gruppo: un foglio con le righe a spunta ("Fai entrare Elisa", "Fai entrare tutto da WhatsApp", "Fai aspettare…") e tre pillole per lasciar passare per un po'. Nessuna spiegazione nel foglio.
+- Le regole si dicono con le parole di Sordina ("lo faccio passare", "lo tengo io"), mai con nomi di livelli.
+- Sordina le posticipa con la funzione standard di Android, non le copia: aperte dalla pagina si aprono **originali**, nel punto giusto. Se Sordina si ferma, Android le rimette nella tendina entro un giorno.
+- Una notifica letta nell'app di origine esce anche dalla sordina.
 - Le app nascoste sono una riga sola ("App nascoste · N"): chi e cosa si vedono solo dopo lo sblocco.
 - Urgenze e insistenza contano solo dai tuoi contatti: un SMS "URGENTE" da un numero sconosciuto resta in sordina.
-- In Casa la frase dice quante aspettano; toccandola, la lista.
 
-Notte (orario) e auto (Android Auto): aspettano anche chiamate perse, promemoria e le persone che entrano da un'app sola; il resto delle eccezioni passa, senza menu.
-In auto, Non disturbare fa passare solo i messaggi delle persone importanti (i preferiti) e, mentre scrivi a qualcuno, di tutti: Android Auto annuncia una notifica appena arriva, prima che Sordina la metta in sordina, quindi è Non disturbare a doverla fermare. Il resto aspetta nella tendina e in Sordina.
+### Silenzio, notte e auto
+- "Silenzio per 45 minuti", "silenzio fino alle 15" dalla barra: Non disturbare a tempo, poi tutto riprende.
+- Con Non disturbare o una modalità di Android accesa aspettano anche le persone che entrano da un'app sola, le chiamate perse e i promemoria; il resto delle eccezioni passa.
+- In auto, Non disturbare fa passare solo i messaggi delle persone importanti e, mentre scrivi a qualcuno, di tutti: Android Auto annuncia una notifica appena arriva, prima che Sordina la metta in sordina. Le chiamate, se scegli, solo dai contatti; chi richiama entro pochi minuti passa comunque.
 
 ## 5. Aspetto
 
-- Un tema sobrio, chiaro o scuro automatico. Sfondo pieno, un carattere, un accento.
+- Un tema sobrio, chiaro, scuro o automatico, con un colore principale (anche quello del telefono).
+- Sfondo: tinta unita, disegni, o lo sfondo del telefono (anche sulla schermata di blocco). Il testo diventa chiaro o scuro in base all'immagine sotto.
 - L'ora grande e leggera; il fumetto è l'unico elemento in rilievo.
 - Frasi corte. Nessuna etichetta maiuscola, nessun riquadro dentro un riquadro.
 
 ## 6. Primo avvio
 
-Quattro passi, ognuno un titolo e un pulsante: Home · Notifiche · Persone importanti · Fatto. Gli altri permessi si chiedono la prima volta che servono.
+Una cosa per schermata. In alto l'onda che si calma a ogni passo e dove sei ("Permessi · 2 di 4"). Frasi corte, Sordina parla in prima persona.
+
+1. **Ciao**
+2. **Come funziona**: le notifiche aspettano, le ritrovi, le app si aprono con calma, chiedimi le cose.
+3. **Permessi**, uno per schermata, ciascuno con "Cosa succede adesso" in passi numerati e una spunta grande al ritorno: notifiche, Home, batteria, Samsung (solo sui Samsung), notifiche di Sordina.
+4. **Le tue scelte**: Importanti, app che entrano subito, persone, app che fanno perdere tempo, cosa mostra la Home (meteo, impegni), Home Assistant sì o no.
+5. **Tutto pronto**, con un riassunto semplice.
+
+Gli altri permessi si chiedono la prima volta che servono.
 
 ## 7. Impostazioni
 
-Notifiche (Importanti · App · Persone · ordine della pagina Sordina) · Casa · Freno · Ricerca · Temi · Progressi · Generali (permessi, lingua, dati: esporta, importa, copia giornaliera) · Home Assistant.
+In cima, solo se manca qualcosa: i permessi da sistemare. Poi: I tuoi progressi · Notifiche (Oggi · Importanti · App · Persone · Dalla tendina · ordine della pagina Sordina) · Freno (app frenate, budget, secondi di attesa) · Home (cosa mostra, momenti, auto, gesti) · Temi · Ricerca · Home Assistant (allarmi, routine) · Generali (permessi, lingua, dati, errori, crediti, perché Sordina).
 
-## 8. Tolto rispetto alla bozza 1
+## 8. Tolto lungo la strada
 
-Schermata In attesa a pagina intera, pagina Oggi, specchio serale, linea della giornata, menu dei momenti, riga Casa, tema Quaderno, grana della carta, primo avvio in dieci passi, regole automatiche dentro Sordina.
+Schermata In attesa a pagina intera, pagina Oggi in Casa (il registro di oggi vive ora in Impostazioni → Notifiche), specchio serale separato (ora è il riepilogo della Sera), linea della giornata, menu dei momenti, riga Casa, temi multipli, grana della carta, primo avvio in dieci passi, regole automatiche dentro Sordina, livelli di notifica (Sempre, Silenziosa, Riepilogo), riepiloghi a orario.
 
 ## 9. Più avanti
 
-Schermata di blocco "live" (sfondo animato), altri temi, inglese.
+Schermata di blocco "live" (sfondo animato), altri temi, F-Droid.
 
 ## 10. Da verificare
 
-- Il rilascio al riepilogo: le notifiche tornano una per una con suono? Devono tornare in silenzio, o con un solo suono.
-- Riconoscere il Wi-Fi di casa richiede il permesso di posizione (solo per il nome della rete): accettabile, o meglio la zona di Home Assistant?
+L'elenco aggiornato delle prove sul telefono è in [TODO.md](../TODO.md).
+
 - Biglietti dalle mail: quanto testo mostra davvero Gmail nella notifica.

@@ -122,7 +122,7 @@ private const val REPO = "https://github.com/baf93/sordina-launcher"
 private enum class Sub(val parent: String?) {
     MAIN(null),
     NOTIF("MAIN"), HOME("MAIN"), BRAKE("MAIN"), SEARCH("MAIN"), THEMES("MAIN"), GENERAL("MAIN"), PROGRESS("MAIN"),
-    PEOPLE("NOTIF"), ALWAYS("NOTIF"), TRAY("NOTIF"), KINDS("NOTIF"), ORDER("NOTIF"), SECURITY("NOTIF"), CAR("HOME"),
+    PEOPLE("NOTIF"), TODAY("NOTIF"), ALWAYS("NOTIF"), TRAY("NOTIF"), KINDS("NOTIF"), ORDER("NOTIF"), SECURITY("NOTIF"), CAR("HOME"),
     BRAKED("BRAKE"), HIDDEN("BRAKE"), MASCOTS("HOME"), PINNED("SEARCH"), EXCLUDED("SEARCH"), HA("MAIN"), HA_ALARM("HA"), HA_ROUTINE("HA"), CAR_APPS("CAR"), CAR_PEOPLE("CAR"), PERMS("GENERAL"), CREDITS("GENERAL"), LANG("GENERAL"), FAULTS("GENERAL"), WHY("GENERAL"),
 }
 
@@ -232,7 +232,8 @@ fun SettingsScreen(
                 // ── Notifiche: tutto aspetta in Sordina, tranne. Dal generico allo specifico
                 Sub.NOTIF -> Page(tr(R.string.perm_notifications), null, back, scrollOf(page)) {
                     NotifPage(app, apps, change = ::change, onAddApp = { sub = Sub.ALWAYS }, onAddPerson = { sub = Sub.PEOPLE },
-                        onApp = { pkg -> kindsOf = pkg; sub = Sub.KINDS }, onSecurity = { sub = Sub.SECURITY }, onAddTray = { sub = Sub.TRAY })
+                        onApp = { pkg -> kindsOf = pkg; sub = Sub.KINDS }, onSecurity = { sub = Sub.SECURITY }, onAddTray = { sub = Sub.TRAY },
+                        onToday = { sub = Sub.TODAY })
                     // La pagina Sordina si apre da Casa: il suo ordine si sceglie qui
                     Topic(tr(R.string.sec_page))
                     Group {
@@ -532,6 +533,8 @@ fun SettingsScreen(
                     // Arrivati a tre si torna indietro da soli
                     if (on && now.size >= 2) back()
                 }
+                // Oggi: cosa è passato e cosa aspetta, e perché. Solo da leggere: le regole si cambiano in Notifiche
+                Sub.TODAY -> Page(tr(R.string.today_title), null, back, scrollOf(page)) { TodayPage(app) }
                 Sub.SECURITY -> Page(tr(R.string.notif_security), null, back, scrollOf(page)) { SecurityPage(app, apps, change = ::change) }
                 Sub.TRAY -> TrayChooser(app, tr(R.string.n_add_notif), tr(R.string.tray_pick_sub), back) { pkg -> ops.changed(); SordinaListener.reapply(ctx, pkg) }
                 Sub.KINDS -> kindsOf?.let { pkg -> AppKindsPage(app, pkg, apps.firstOrNull { it.packageName == pkg }?.label ?: pkg, scrollOf(page), back, onChange = { tick++; ops.changed(); SordinaListener.reapply(ctx, pkg) }) }
@@ -923,13 +926,17 @@ private fun ListCell(i: Int, n: Int, content: @Composable () -> Unit) {
  * Il sottotitolo c'è solo quando dice qualcosa: "2 eccezioni", "su WhatsApp".
  */
 @Composable
-private fun NotifPage(app: SordinaApp, apps: List<AppEntry>, change: (() -> Unit) -> Unit, onAddApp: () -> Unit, onAddPerson: () -> Unit, onApp: (String) -> Unit, onSecurity: () -> Unit, onAddTray: () -> Unit) {
+private fun NotifPage(app: SordinaApp, apps: List<AppEntry>, change: (() -> Unit) -> Unit, onAddApp: () -> Unit, onAddPerson: () -> Unit, onApp: (String) -> Unit, onSecurity: () -> Unit, onAddTray: () -> Unit, onToday: () -> Unit) {
     val prefs = app.prefs
     val ctx = LocalContext.current
     fun appName(pkg: String) = apps.firstOrNull { it.packageName == pkg }?.label ?: pkg
     fun apply(block: () -> Unit) = change { block(); SordinaListener.reapply(ctx) }
 
     Intro(tr(R.string.notif_intro))
+    // Oggi: per capire perché una cosa è passata o ha aspettato, prima delle regole
+    val today by app.today.items.collectAsState()
+    Spacer(Modifier.height(16.dp))
+    Group { Line(tr(R.string.today_title), hint = todaySummary(remember(today) { app.today.current() }), onClick = onToday) }
     Topic(tr(R.string.notif_important))
     Group {
         val skipped = prefs.noGuess.size

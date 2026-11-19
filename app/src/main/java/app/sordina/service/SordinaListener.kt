@@ -1,6 +1,7 @@
 package app.sordina.service
 
 import app.sordina.data.Tally
+import app.sordina.data.TodayItem
 import app.sordina.data.HeldLine
 import app.sordina.data.NotifImages
 import android.app.ActivityOptions
@@ -244,6 +245,15 @@ class SordinaListener : NotificationListenerService() {
         if (technical) {
             if (level == Level.RIEPILOGO && verdict.reason == Classifier.REASON_CHANNEL) Faults.guard("snooze.tech") { snoozeNotification(key, HOLD_MILLIS) }
             if (existing == null) return
+        }
+        // Il registro di oggi (Impostazioni → Notifiche → Oggi): cosa è passato, cosa aspetta, e perché.
+        // Non le app nascoste: lì non si vedono da nessuna parte, nemmeno qui.
+        if (fresh && !technical && !info.isGroupSummary && sbn.packageName != packageName && verdict.reason != Classifier.REASON_HIDDEN
+            && (info.text.isNotBlank() || info.title.isNotBlank())) Faults.guard("today") {
+            val name = label(sbn.packageName)
+            val who = (if (info.isMessage) info.conversation ?: info.person else info.title)?.takeIf { it.isNotBlank() } ?: name
+            app.today.add(TodayItem(sbn.postTime, key, sbn.packageName, name, who,
+                textOf(info).hashCode(), passed = level != Level.RIEPILOGO, reason = verdict.reason))
         }
         if (level == null) {
             // Prima aspettava, adesso una regola la lascia passare: resta nella tendina, Sordina la dimentica
