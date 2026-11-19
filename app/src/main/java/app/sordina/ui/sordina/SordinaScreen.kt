@@ -96,6 +96,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.sp
 import app.sordina.data.Categories
 import app.sordina.data.Category
@@ -366,7 +368,11 @@ private fun Block(
     val full = remember { intArrayOf(0) }
     val lit = pulling || open
     val chipColor by animateColorAsState(if (pulling) c.accent else c.soft, label = "chip")
-    val arrow by animateFloatAsState(if (open) 180f else 0f, feel.spec(Motion.enter()), label = "arrow")
+    // La freccia gira appena si capisce dove va: al tocco, o quando il dito ha tirato abbastanza (non a fine apertura)
+    val armed by remember { derivedStateOf { reveal.value >= OPEN_AT } }
+    val arrow by animateFloatAsState(if (open || (pulling && armed)) 180f else 0f, feel.spec(Motion.enter(160)), label = "arrow")
+    // Quanto dito serve per aprire: l'altezza dei messaggi, ma mai più di [PULL_MAX] (un gruppo grande non chiede di tirare mezzo schermo)
+    val pullMax = with(LocalDensity.current) { PULL_MAX.toPx() }
     val surface by animateColorAsState(if (pulling) lerp(c.card, c.ink, 0.05f) else c.card, label = "lift")
 
     Swipeable(h.groupKey, enabled = true, shape = shape, onSwiped = { if (single) onReadOne(h) else onReadGroup() }) {
@@ -376,7 +382,7 @@ private fun Block(
                     enabled = !open, atTop = atTop,
                     onArm = { feel.tick(); pulling = true },
                     onPull = { dy ->
-                        val f = (dy / (if (full[0] > 0) full[0].toFloat() else 400f)).coerceIn(0f, 1f)
+                        val f = (dy / (if (full[0] > 0) minOf(full[0].toFloat(), pullMax) else pullMax)).coerceIn(0f, 1f)
                         if (reveal.value < OPEN_AT && f >= OPEN_AT) feel.threshold()
                         scope.launch { reveal.snapTo(f) }
                     },
@@ -392,7 +398,8 @@ private fun Block(
         ) {
             Row(
                 Modifier.alpha(if (dim) 0.6f else 1f).padding(start = PAD_H, end = PAD_H, top = 14.dp, bottom = if (lit || reveal.value > 0f) 0.dp else 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                // In alto, non al centro: aprendo, la riga di anteprima sparisce e il titolo con l'ora non deve scendere
+                verticalAlignment = Alignment.Top,
             ) {
                 Avatar(h, person, icon)
                 Spacer(Modifier.width(AVATAR_GAP))
@@ -479,6 +486,8 @@ private fun MessageText(head: String?, text: String, at: Long, modifier: Modifie
 
 /** Oltre questa parte, lasciando il dito i messaggi si aprono del tutto; prima tornano chiusi. */
 private const val OPEN_AT = 0.35f
+/** Il dito che serve al massimo per aprire tutto un gruppo, per quanto lungo */
+private val PULL_MAX = 220.dp
 
 /** Le misure della riga: margine ai lati, avatar e spazio dopo; i messaggi partono allineati al nome. */
 private val PAD_H = 16.dp
