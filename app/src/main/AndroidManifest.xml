@@ -160,6 +160,10 @@
             android:name=".service.BudgetReceiver"
             android:exported="false" />
 
+        <receiver
+            android:name=".service.CalendarReminderReceiver"
+            android:exported="false" />
+
         <!-- Facoltativa: freno istantaneo (anche dei siti frenati: dei browser legge solo la barra dell'indirizzo, mentre sono davanti),
              doppio tocco per spegnere, e una frase scritta per te dove l'app non la accetta da fuori (Assist di Home Assistant,
              la casella di Signal senza inviare): lì legge la finestra di quell'app per pochi secondi. Vedi res/xml/accessibility.xml e access_desc. -->

@@ -102,7 +102,7 @@ internal class CodeScreen(
         val input = InputSignInMethod.Builder(object : InputCallback {
             override fun onInputSubmitted(text: String) { submit(text) }
         })
-            .setInputType(InputSignInMethod.INPUT_TYPE_PASSWORD)
+            .setInputType(InputSignInMethod.INPUT_TYPE_DEFAULT)
             .setKeyboardType(InputSignInMethod.KEYBOARD_NUMBER)
             .setHint(tr(R.string.auto_code_hint))
             .setShowKeyboardByDefault(true)

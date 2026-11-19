@@ -583,6 +583,14 @@ class Prefs(context: Context) {
     var haCalendarName: String
         get() = str("haCalendarName", "")
         set(v) = put { putString("haCalendarName", v) }
+    /** Il calendario di Sordina: gli impegni di Casa si aprono qui */
+    var sordinaCalendar: Boolean
+        get() = sp.getBoolean("sordinaCalendar", false)
+        set(v) = put { putBoolean("sordinaCalendar", v) }
+    /** Promemoria di Sordina per gli impegni, 15 minuti prima: spenti finché non li accendi (spesso li fa già Home Assistant) */
+    var calendarReminders: Boolean
+        get() = sp.getBoolean("calendarReminders", false)
+        set(v) = put { putBoolean("calendarReminders", v) }
     var haStatusEntity: String
         get() = str("haStatusEntity", "")
         set(v) = put { putString("haStatusEntity", v.trim()) }

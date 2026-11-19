@@ -1,4 +1,5 @@
 package app.sordina
+import app.sordina.ui.calendar.CalStart
 import app.sordina.ui.Celebration
 
 import app.sordina.data.Backup
@@ -140,7 +141,7 @@ import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import java.util.Locale
 
-enum class Screen { HOME, INTENT, ALL_APPS, SETTINGS, BRAKE, ONBOARDING, SORDINA }
+enum class Screen { HOME, INTENT, ALL_APPS, SETTINGS, BRAKE, ONBOARDING, SORDINA, CALENDAR }
 
 class MainActivity : ComponentActivity(), Ops {
 
@@ -154,6 +155,8 @@ class MainActivity : ComponentActivity(), Ops {
     internal var screen by mutableStateOf(Screen.HOME)
     /** Le app nascoste nella pagina Sordina: sbloccate fino a quando si lascia la pagina */
     internal var hiddenRevealed by mutableStateOf(false)
+    /** Da dove si entra nel calendario di Sordina */
+    internal var calStart by mutableStateOf(CalStart())
     /** L'ultimo codice copiato da una scheda e quando: si toglie dagli appunti dopo [COPY_TTL] */
     private var guardTry = 0L
     internal var copiedCode: String? = null
@@ -359,6 +362,10 @@ class MainActivity : ComponentActivity(), Ops {
         }
         when {
             intent?.action == ACTION_WAITING -> { screen = Screen.SORDINA }
+            intent?.action == ACTION_CALENDAR -> {
+                calStart = CalStart(begin = intent.getLongExtra(EXTRA_BEGIN, 0L).takeIf { it > 0 }, title = intent.getStringExtra(EXTRA_TITLE))
+                screen = Screen.CALENDAR
+            }
             intent?.hasCategory(Intent.CATEGORY_HOME) == true -> { screen = Screen.HOME; query = "" }
         }
     }
@@ -544,6 +551,7 @@ class MainActivity : ComponentActivity(), Ops {
         when (val act = c.act) {
             is Act.OpenApp -> launch(act.app)
             Act.SordinaSettings -> { query = ""; screen = Screen.SETTINGS }
+            Act.SordinaCalendar -> { query = ""; calStart = CalStart(); screen = Screen.CALENDAR }
             else -> lifecycleScope.launch {
                 // Si apre Assist: la tastiera della ricerca si chiude prima, così sopra non si vede mai una tastiera
                 if (act is Act.Assist) runCatching { androidx.core.view.WindowCompat.getInsetsController(window, window.decorView).hide(androidx.core.view.WindowInsetsCompat.Type.ime()) }
@@ -906,6 +914,10 @@ class MainActivity : ComponentActivity(), Ops {
 
     companion object {
         const val ACTION_WAITING = "app.sordina.WAITING"
+        /** Da un promemoria: il calendario di Sordina, sull'impegno */
+        const val ACTION_CALENDAR = "app.sordina.CALENDAR"
+        const val EXTRA_BEGIN = "begin"
+        const val EXTRA_TITLE = "title"
         /** In auto, dopo il tocco: quanto si aspetta che cominci a parlare */
         internal const val NO_SPEECH_MILLIS = 6_000L
         /** La scheda "di solito" del cervello compare solo da questa probabilità (misurata sulla memoria vera). */

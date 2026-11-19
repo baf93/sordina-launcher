@@ -1385,4 +1385,109 @@
     <string name="auto_s_voice_hint">Rutine, casă, ce așteaptă și apeluri, vocal</string>
     <string name="routine_car">Și în mașină</string>
     <string name="routine_car_hint">O casetă în Acasă pe ecranul mașinii</string>
+    <string name="ch_car">Confirmări din mașină</string>
+    <string name="auto_no_events_week">Nu ai nimic în calendar în zilele următoare</string>
+    <!-- Il calendario di Sordina -->
+    <string name="cal_title">Calendar</string>
+    <string name="cal_week">Săptămână</string>
+    <string name="cal_month">Lună</string>
+    <string name="cal_search">Caută în evenimente</string>
+    <string name="cal_new">Eveniment nou</string>
+    <string name="cal_edit">Editează evenimentul</string>
+    <string name="cal_edit_btn">Editează</string>
+    <string name="cal_delete_btn">Șterge</string>
+    <string name="cal_delete_q">Ștergi „%1$s”?</string>
+    <string name="cal_delete_text">Dispare și din %1$s.</string>
+    <string name="cal_repeats_hint">Acest eveniment se repetă</string>
+    <string name="cal_only_this">Doar acesta</string>
+    <string name="cal_all">De fiecare dată</string>
+    <string name="cal_following">Acesta și următoarele</string>
+    <string name="cal_what">Ce</string>
+    <string name="cal_what_missing">Scrie ce este</string>
+    <string name="cal_all_day">Toată ziua</string>
+    <string name="cal_all_day_short">Zi</string>
+    <string name="cal_starts">Începe</string>
+    <string name="cal_ends">Se termină</string>
+    <string name="cal_end_before">Se termină înainte să înceapă</string>
+    <string name="cal_calendar">Calendar</string>
+    <string name="cal_home_hint">Home Assistant</string>
+    <string name="cal_repeat">Repetă</string>
+    <string name="cal_rep_none">Niciodată</string>
+    <string name="cal_rep_daily">În fiecare zi</string>
+    <string name="cal_rep_weekly">În fiecare săptămână</string>
+    <string name="cal_rep_monthly">În fiecare lună</string>
+    <string name="cal_rep_yearly">În fiecare an</string>
+    <string name="cal_rep_custom">Personalizată</string>
+    <string name="cal_rep_end">Sfârșitul repetării</string>
+    <string name="cal_every">La fiecare</string>
+    <string name="cal_rep_last">Ultima dată</string>
+    <plurals name="cal_unit_day">
+        <item quantity="one">zi</item>
+        <item quantity="few">zile</item>
+        <item quantity="other">zile</item>
+    </plurals>
+    <plurals name="cal_unit_week">
+        <item quantity="one">săptămână</item>
+        <item quantity="few">săptămâni</item>
+        <item quantity="other">săptămâni</item>
+    </plurals>
+    <plurals name="cal_unit_month">
+        <item quantity="one">lună</item>
+        <item quantity="few">luni</item>
+        <item quantity="other">luni</item>
+    </plurals>
+    <plurals name="cal_unit_year">
+        <item quantity="one">an</item>
+        <item quantity="few">ani</item>
+        <item quantity="other">ani</item>
+    </plurals>
+    <string name="cal_until">până la %1$s</string>
+    <plurals name="cal_every_day">
+        <item quantity="one">La fiecare %d zi</item>
+        <item quantity="few">La fiecare %d zile</item>
+        <item quantity="other">La fiecare %d de zile</item>
+    </plurals>
+    <plurals name="cal_every_week">
+        <item quantity="one">La fiecare %d săptămână</item>
+        <item quantity="few">La fiecare %d săptămâni</item>
+        <item quantity="other">La fiecare %d de săptămâni</item>
+    </plurals>
+    <plurals name="cal_every_month">
+        <item quantity="one">La fiecare %d lună</item>
+        <item quantity="few">La fiecare %d luni</item>
+        <item quantity="other">La fiecare %d de luni</item>
+    </plurals>
+    <plurals name="cal_every_year">
+        <item quantity="one">La fiecare %d an</item>
+        <item quantity="few">La fiecare %d ani</item>
+        <item quantity="other">La fiecare %d de ani</item>
+    </plurals>
+    <plurals name="cal_times">
+        <item quantity="one">%d dată</item>
+        <item quantity="few">%d ori</item>
+        <item quantity="other">%d de ori</item>
+    </plurals>
+    <string name="cal_place">Loc</string>
+    <string name="cal_notes">Note</string>
+    <string name="cal_save">Salvează</string>
+    <string name="cal_free_title">O zi liberă</string>
+    <string name="cal_empty_day">Nimic în această zi</string>
+    <string name="cal_no_results">N-am găsit nimic</string>
+    <string name="cal_synced">Actualizat la %1$s</string>
+    <string name="cal_offline">Home Assistant nu răspunde: e copia de la %1$s</string>
+    <string name="cal_pending">Se așteaptă Home Assistant: %1$d modificări</string>
+    <string name="cal_pending_one">Se așteaptă Home Assistant</string>
+    <string name="cal_waiting_badge">în așteptare</string>
+    <string name="cal_queued">Salvat. Ajunge la Home Assistant imediat ce răspunde</string>
+    <string name="cal_offline_save">Home Assistant nu răspunde: Sordina păstrează modificarea și o trimite mai târziu</string>
+    <string name="cal_refused">Home Assistant a refuzat: %1$s</string>
+    <string name="cal_failed">Nu am reușit să salvez</string>
+    <string name="cal_read_only">Acest calendar nu se poate modifica de aici</string>
+    <string name="cal_no_books">Niciun calendar în care să scrii: alege unul în setări</string>
+    <string name="cal_enable">Calendarul Sordina</string>
+    <string name="cal_enable_hint">Vezi, adaugă și modifică evenimente aici, fără să deschizi alte aplicații</string>
+    <string name="cal_remind">Mementouri de la Sordina</string>
+    <string name="cal_remind_hint">Cu 15 minute înainte de fiecare eveniment. Lasă oprit dacă Home Assistant îți amintește deja</string>
+    <string name="cal_remind_text">La %1$s</string>
+    <string name="ch_cal">Mementouri pentru evenimente</string>
 </resources>

@@ -110,6 +110,9 @@ Facoltativo, con token (risposte nel fumetto) o solo con l'app di Home Assistant
 
 Indirizzo e token restano cifrati sul telefono. Nessun server intermedio.
 
+### Il calendario di Sordina
+Facoltativo (Impostazioni › Home, sotto Impegni). I calendari di casa e quelli del telefono in un posto solo, nello stile di Sordina, senza aprire l'app di Home Assistant: elenco con la settimana sopra, mese, cerca, "+" per un impegno nuovo; tocchi un impegno e lo vedi, lo modifichi o lo elimini. Dei calendari di casa Sordina tiene una copia da un anno prima a un anno dopo il mese corrente: si apre anche senza casa, e quello che cambi parte appena Home Assistant risponde (se lo rifiuta, Sordina lo dice). Cosa si può fare lo decide ogni calendario. I promemoria, 15 minuti prima, li può fare anche Sordina, solo per i calendari di casa e spenti all'inizio (spesso li fa già Home Assistant; quelli del telefono hanno i loro).
+
 ## Privacy e permessi
 
 Escono dal telefono solo:

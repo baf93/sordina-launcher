@@ -1352,4 +1352,91 @@
     <string name="auto_s_voice_hint">Quy trình, nhà, những gì đang chờ và cuộc gọi, bằng giọng nói</string>
     <string name="routine_car">Cả trên xe</string>
     <string name="routine_car_hint">Một ô trong Nhà trên màn hình xe</string>
+    <string name="ch_car">Xác nhận từ xe</string>
+    <string name="auto_no_events_week">Vài ngày tới lịch của bạn trống</string>
+    <!-- Il calendario di Sordina -->
+    <string name="cal_title">Lịch</string>
+    <string name="cal_week">Tuần</string>
+    <string name="cal_month">Tháng</string>
+    <string name="cal_search">Tìm trong sự kiện</string>
+    <string name="cal_new">Sự kiện mới</string>
+    <string name="cal_edit">Sửa sự kiện</string>
+    <string name="cal_edit_btn">Sửa</string>
+    <string name="cal_delete_btn">Xóa</string>
+    <string name="cal_delete_q">Xóa “%1$s”?</string>
+    <string name="cal_delete_text">Nó cũng biến mất khỏi %1$s.</string>
+    <string name="cal_repeats_hint">Sự kiện này lặp lại</string>
+    <string name="cal_only_this">Chỉ lần này</string>
+    <string name="cal_all">Tất cả các lần</string>
+    <string name="cal_following">Lần này và các lần sau</string>
+    <string name="cal_what">Việc gì</string>
+    <string name="cal_what_missing">Hãy viết đó là gì</string>
+    <string name="cal_all_day">Cả ngày</string>
+    <string name="cal_all_day_short">Ngày</string>
+    <string name="cal_starts">Bắt đầu</string>
+    <string name="cal_ends">Kết thúc</string>
+    <string name="cal_end_before">Kết thúc trước khi bắt đầu</string>
+    <string name="cal_calendar">Lịch</string>
+    <string name="cal_home_hint">Home Assistant</string>
+    <string name="cal_repeat">Lặp lại</string>
+    <string name="cal_rep_none">Không bao giờ</string>
+    <string name="cal_rep_daily">Hằng ngày</string>
+    <string name="cal_rep_weekly">Hằng tuần</string>
+    <string name="cal_rep_monthly">Hằng tháng</string>
+    <string name="cal_rep_yearly">Hằng năm</string>
+    <string name="cal_rep_custom">Tùy chỉnh</string>
+    <string name="cal_rep_end">Kết thúc lặp lại</string>
+    <string name="cal_every">Mỗi</string>
+    <string name="cal_rep_last">Lần cuối</string>
+    <plurals name="cal_unit_day">
+        <item quantity="other">ngày</item>
+    </plurals>
+    <plurals name="cal_unit_week">
+        <item quantity="other">tuần</item>
+    </plurals>
+    <plurals name="cal_unit_month">
+        <item quantity="other">tháng</item>
+    </plurals>
+    <plurals name="cal_unit_year">
+        <item quantity="other">năm</item>
+    </plurals>
+    <string name="cal_until">đến %1$s</string>
+    <plurals name="cal_every_day">
+        <item quantity="other">Mỗi %d ngày</item>
+    </plurals>
+    <plurals name="cal_every_week">
+        <item quantity="other">Mỗi %d tuần</item>
+    </plurals>
+    <plurals name="cal_every_month">
+        <item quantity="other">Mỗi %d tháng</item>
+    </plurals>
+    <plurals name="cal_every_year">
+        <item quantity="other">Mỗi %d năm</item>
+    </plurals>
+    <plurals name="cal_times">
+        <item quantity="other">%d lần</item>
+    </plurals>
+    <string name="cal_place">Địa điểm</string>
+    <string name="cal_notes">Ghi chú</string>
+    <string name="cal_save">Lưu</string>
+    <string name="cal_free_title">Một ngày rảnh</string>
+    <string name="cal_empty_day">Không có gì trong ngày này</string>
+    <string name="cal_no_results">Không tìm thấy gì</string>
+    <string name="cal_synced">Cập nhật lúc %1$s</string>
+    <string name="cal_offline">Home Assistant không phản hồi: đây là bản sao lúc %1$s</string>
+    <string name="cal_pending">Đang chờ Home Assistant: %1$d thay đổi</string>
+    <string name="cal_pending_one">Đang chờ Home Assistant</string>
+    <string name="cal_waiting_badge">đang chờ</string>
+    <string name="cal_queued">Đã lưu. Sẽ đến Home Assistant ngay khi nó phản hồi</string>
+    <string name="cal_offline_save">Home Assistant không phản hồi: Sordina giữ thay đổi và gửi sau</string>
+    <string name="cal_refused">Home Assistant từ chối: %1$s</string>
+    <string name="cal_failed">Không lưu được</string>
+    <string name="cal_read_only">Không thể sửa lịch này từ đây</string>
+    <string name="cal_no_books">Không có lịch để ghi: hãy chọn một lịch trong cài đặt</string>
+    <string name="cal_enable">Lịch của Sordina</string>
+    <string name="cal_enable_hint">Xem, thêm và sửa sự kiện ngay tại đây, không cần mở ứng dụng khác</string>
+    <string name="cal_remind">Lời nhắc của Sordina</string>
+    <string name="cal_remind_hint">15 phút trước mỗi sự kiện. Hãy tắt nếu Home Assistant đã nhắc bạn</string>
+    <string name="cal_remind_text">Lúc %1$s</string>
+    <string name="ch_cal">Lời nhắc sự kiện</string>
 </resources>

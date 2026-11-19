@@ -1,5 +1,6 @@
 package app.sordina
 
+import app.sordina.ui.calendar.CalStart
 import app.sordina.ui.home.DayRecap
 import app.sordina.ui.Celebration
 import app.sordina.data.Backup
@@ -332,9 +333,16 @@ internal fun MainActivity.nextEvent(): AgendaRow? {
     val ms = System.currentTimeMillis()
     val e = agendaEvents.filter { it.end > ms && !it.allDay }.minByOrNull { it.begin } ?: return null
     // Gli impegni del calendario di casa hanno tutti la chiave "ha": si riconoscono anche dal titolo
-    val k = if (e.link == "ha") "ha" else "event:${e.id}"
+    val k = agendaKey(e)
     val row = agendaRows(0).firstOrNull { it.key == k && it.text == e.title } ?: return null
     return row.copy(key = e.location?.takeIf { it.isNotBlank() }?.let { "nav:$it" } ?: row.key)
+}
+
+/** Cosa apre un impegno di Casa: il calendario di Sordina (sull'impegno, riconosciuto da inizio e titolo), o l'app del suo calendario */
+internal fun MainActivity.agendaKey(e: Upcoming): String = when {
+    prefs.sordinaCalendar -> "cal:${e.begin}:${e.title}"
+    e.link == "ha" -> "ha"
+    else -> "event:${e.id}"
 }
 
 internal fun MainActivity.agendaRows(waiting: Int): List<AgendaRow> {
@@ -345,7 +353,7 @@ internal fun MainActivity.agendaRows(waiting: Int): List<AgendaRow> {
     // Il motore è fermo o rischia di esserlo: lo si dice per primo, un tocco porta dove si sistema
     val timed = ArrayList<Pair<Long, AgendaRow>>()
     for (e in agendaEvents) {
-        val key = if (e.link == "ha") "ha" else "event:${e.id}"
+        val key = agendaKey(e)
         val t = java.time.Instant.ofEpochMilli(e.begin).atZone(zone)
         val d = t.toLocalDate()
         val row = when {
@@ -388,6 +396,10 @@ internal fun MainActivity.onAgenda(key: String) {
         key == "weather" -> openWeather()
         key == "sordina" -> screen = Screen.SORDINA
         key == "ha" -> openHaCalendar()
+        key == "calendar" -> { calStart = CalStart(); screen = Screen.CALENDAR }
+        key.startsWith("cal:") -> key.split(":", limit = 3).let { p ->
+            calStart = CalStart(begin = p.getOrNull(1)?.toLongOrNull(), title = p.getOrNull(2)); screen = Screen.CALENDAR
+        }
         key.startsWith("event:") -> key.removePrefix("event:").toLongOrNull()?.let {
             start(Intent(Intent.ACTION_VIEW, android.content.ContentUris.withAppendedId(android.provider.CalendarContract.Events.CONTENT_URI, it)))
         }

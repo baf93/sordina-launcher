@@ -1368,4 +1368,100 @@
     <string name="auto_s_voice_hint">Rutiinit, koti, odottavat ja puhelut, äänellä</string>
     <string name="routine_car">Myös autossa</string>
     <string name="routine_car_hint">Ruutu Kodissa auton näytöllä</string>
+    <string name="ch_car">Vahvistukset autosta</string>
+    <string name="auto_no_events_week">Kalenterissa ei ole mitään lähipäivinä</string>
+    <!-- Il calendario di Sordina -->
+    <string name="cal_title">Kalenteri</string>
+    <string name="cal_week">Viikko</string>
+    <string name="cal_month">Kuukausi</string>
+    <string name="cal_search">Hae tapahtumista</string>
+    <string name="cal_new">Uusi tapahtuma</string>
+    <string name="cal_edit">Muokkaa tapahtumaa</string>
+    <string name="cal_edit_btn">Muokkaa</string>
+    <string name="cal_delete_btn">Poista</string>
+    <string name="cal_delete_q">Poistetaanko ”%1$s”?</string>
+    <string name="cal_delete_text">Se katoaa myös kalenterista %1$s.</string>
+    <string name="cal_repeats_hint">Tämä tapahtuma toistuu</string>
+    <string name="cal_only_this">Vain tämä</string>
+    <string name="cal_all">Kaikki kerrat</string>
+    <string name="cal_following">Tämä ja seuraavat</string>
+    <string name="cal_what">Mitä</string>
+    <string name="cal_what_missing">Kirjoita, mikä se on</string>
+    <string name="cal_all_day">Koko päivän</string>
+    <string name="cal_all_day_short">Päivä</string>
+    <string name="cal_starts">Alkaa</string>
+    <string name="cal_ends">Päättyy</string>
+    <string name="cal_end_before">Päättyy ennen kuin alkaa</string>
+    <string name="cal_calendar">Kalenteri</string>
+    <string name="cal_home_hint">Home Assistant</string>
+    <string name="cal_repeat">Toista</string>
+    <string name="cal_rep_none">Ei koskaan</string>
+    <string name="cal_rep_daily">Joka päivä</string>
+    <string name="cal_rep_weekly">Joka viikko</string>
+    <string name="cal_rep_monthly">Joka kuukausi</string>
+    <string name="cal_rep_yearly">Joka vuosi</string>
+    <string name="cal_rep_custom">Mukautettu</string>
+    <string name="cal_rep_end">Toisto päättyy</string>
+    <string name="cal_every">Joka</string>
+    <string name="cal_rep_last">Viimeinen kerta</string>
+    <plurals name="cal_unit_day">
+        <item quantity="one">päivä</item>
+        <item quantity="other">päivää</item>
+    </plurals>
+    <plurals name="cal_unit_week">
+        <item quantity="one">viikko</item>
+        <item quantity="other">viikkoa</item>
+    </plurals>
+    <plurals name="cal_unit_month">
+        <item quantity="one">kuukausi</item>
+        <item quantity="other">kuukautta</item>
+    </plurals>
+    <plurals name="cal_unit_year">
+        <item quantity="one">vuosi</item>
+        <item quantity="other">vuotta</item>
+    </plurals>
+    <string name="cal_until">%1$s asti</string>
+    <plurals name="cal_every_day">
+        <item quantity="one">%d päivän välein</item>
+        <item quantity="other">%d päivän välein</item>
+    </plurals>
+    <plurals name="cal_every_week">
+        <item quantity="one">%d viikon välein</item>
+        <item quantity="other">%d viikon välein</item>
+    </plurals>
+    <plurals name="cal_every_month">
+        <item quantity="one">%d kuukauden välein</item>
+        <item quantity="other">%d kuukauden välein</item>
+    </plurals>
+    <plurals name="cal_every_year">
+        <item quantity="one">%d vuoden välein</item>
+        <item quantity="other">%d vuoden välein</item>
+    </plurals>
+    <plurals name="cal_times">
+        <item quantity="one">%d kerta</item>
+        <item quantity="other">%d kertaa</item>
+    </plurals>
+    <string name="cal_place">Paikka</string>
+    <string name="cal_notes">Muistiinpanot</string>
+    <string name="cal_save">Tallenna</string>
+    <string name="cal_free_title">Vapaa päivä</string>
+    <string name="cal_empty_day">Ei mitään tänä päivänä</string>
+    <string name="cal_no_results">Mitään ei löytynyt</string>
+    <string name="cal_synced">Päivitetty klo %1$s</string>
+    <string name="cal_offline">Home Assistant ei vastaa: tämä on kopio ajalta %1$s</string>
+    <string name="cal_pending">Odottaa Home Assistantia: %1$d muutosta</string>
+    <string name="cal_pending_one">Odottaa Home Assistantia</string>
+    <string name="cal_waiting_badge">odottaa</string>
+    <string name="cal_queued">Tallennettu. Se menee Home Assistantiin heti, kun se vastaa</string>
+    <string name="cal_offline_save">Home Assistant ei vastaa: Sordina pitää muutoksen ja lähettää sen myöhemmin</string>
+    <string name="cal_refused">Home Assistant kieltäytyi: %1$s</string>
+    <string name="cal_failed">Tallennus ei onnistunut</string>
+    <string name="cal_read_only">Tätä kalenteria ei voi muuttaa täältä</string>
+    <string name="cal_no_books">Ei kalenteria, johon kirjoittaa: valitse yksi asetuksista</string>
+    <string name="cal_enable">Sordinan kalenteri</string>
+    <string name="cal_enable_hint">Katso, lisää ja muuta tapahtumia täällä avaamatta muita sovelluksia</string>
+    <string name="cal_remind">Sordinan muistutukset</string>
+    <string name="cal_remind_hint">15 minuuttia ennen jokaista tapahtumaa. Jätä pois, jos Home Assistant jo muistuttaa</string>
+    <string name="cal_remind_text">Klo %1$s</string>
+    <string name="ch_cal">Tapahtumamuistutukset</string>
 </resources>

@@ -1368,4 +1368,100 @@
     <string name="auto_s_voice_hint">रूटीन, घर, इंतज़ार वाली चीज़ें और कॉल, आवाज़ से</string>
     <string name="routine_car">कार में भी</string>
     <string name="routine_car_hint">कार की स्क्रीन पर घर में एक टाइल</string>
+    <string name="ch_car">कार से पुष्टि</string>
+    <string name="auto_no_events_week">अगले कुछ दिनों में कैलेंडर में कुछ नहीं है</string>
+    <!-- Il calendario di Sordina -->
+    <string name="cal_title">कैलेंडर</string>
+    <string name="cal_week">सप्ताह</string>
+    <string name="cal_month">महीना</string>
+    <string name="cal_search">इवेंट में खोजें</string>
+    <string name="cal_new">नया इवेंट</string>
+    <string name="cal_edit">इवेंट बदलें</string>
+    <string name="cal_edit_btn">बदलें</string>
+    <string name="cal_delete_btn">हटाएं</string>
+    <string name="cal_delete_q">“%1$s” हटाएं?</string>
+    <string name="cal_delete_text">यह %1$s से भी हट जाएगा।</string>
+    <string name="cal_repeats_hint">यह इवेंट दोहराया जाता है</string>
+    <string name="cal_only_this">सिर्फ़ यह</string>
+    <string name="cal_all">हर बार</string>
+    <string name="cal_following">यह और आगे वाले</string>
+    <string name="cal_what">क्या</string>
+    <string name="cal_what_missing">लिखें कि यह क्या है</string>
+    <string name="cal_all_day">पूरा दिन</string>
+    <string name="cal_all_day_short">दिन</string>
+    <string name="cal_starts">शुरू</string>
+    <string name="cal_ends">खत्म</string>
+    <string name="cal_end_before">शुरू होने से पहले खत्म हो रहा है</string>
+    <string name="cal_calendar">कैलेंडर</string>
+    <string name="cal_home_hint">Home Assistant</string>
+    <string name="cal_repeat">दोहराएं</string>
+    <string name="cal_rep_none">कभी नहीं</string>
+    <string name="cal_rep_daily">हर दिन</string>
+    <string name="cal_rep_weekly">हर हफ़्ते</string>
+    <string name="cal_rep_monthly">हर महीने</string>
+    <string name="cal_rep_yearly">हर साल</string>
+    <string name="cal_rep_custom">कस्टम</string>
+    <string name="cal_rep_end">दोहराना समाप्त</string>
+    <string name="cal_every">हर</string>
+    <string name="cal_rep_last">आख़िरी बार</string>
+    <plurals name="cal_unit_day">
+        <item quantity="one">दिन</item>
+        <item quantity="other">दिन</item>
+    </plurals>
+    <plurals name="cal_unit_week">
+        <item quantity="one">सप्ताह</item>
+        <item quantity="other">सप्ताह</item>
+    </plurals>
+    <plurals name="cal_unit_month">
+        <item quantity="one">महीना</item>
+        <item quantity="other">महीने</item>
+    </plurals>
+    <plurals name="cal_unit_year">
+        <item quantity="one">साल</item>
+        <item quantity="other">साल</item>
+    </plurals>
+    <string name="cal_until">%1$s तक</string>
+    <plurals name="cal_every_day">
+        <item quantity="one">हर %d दिन</item>
+        <item quantity="other">हर %d दिन</item>
+    </plurals>
+    <plurals name="cal_every_week">
+        <item quantity="one">हर %d सप्ताह</item>
+        <item quantity="other">हर %d सप्ताह</item>
+    </plurals>
+    <plurals name="cal_every_month">
+        <item quantity="one">हर %d महीने</item>
+        <item quantity="other">हर %d महीने</item>
+    </plurals>
+    <plurals name="cal_every_year">
+        <item quantity="one">हर %d साल</item>
+        <item quantity="other">हर %d साल</item>
+    </plurals>
+    <plurals name="cal_times">
+        <item quantity="one">%d बार</item>
+        <item quantity="other">%d बार</item>
+    </plurals>
+    <string name="cal_place">जगह</string>
+    <string name="cal_notes">नोट्स</string>
+    <string name="cal_save">सेव करें</string>
+    <string name="cal_free_title">खाली दिन</string>
+    <string name="cal_empty_day">इस दिन कुछ नहीं</string>
+    <string name="cal_no_results">कुछ नहीं मिला</string>
+    <string name="cal_synced">%1$s बजे अपडेट हुआ</string>
+    <string name="cal_offline">Home Assistant जवाब नहीं दे रहा: यह %1$s की कॉपी है</string>
+    <string name="cal_pending">Home Assistant का इंतज़ार: %1$d बदलाव</string>
+    <string name="cal_pending_one">Home Assistant का इंतज़ार</string>
+    <string name="cal_waiting_badge">इंतज़ार में</string>
+    <string name="cal_queued">सेव हो गया। Home Assistant के जवाब देते ही वहाँ पहुँच जाएगा</string>
+    <string name="cal_offline_save">Home Assistant जवाब नहीं दे रहा: Sordina बदलाव रखेगा और बाद में भेजेगा</string>
+    <string name="cal_refused">Home Assistant ने मना किया: %1$s</string>
+    <string name="cal_failed">सेव नहीं हो सका</string>
+    <string name="cal_read_only">यह कैलेंडर यहाँ से नहीं बदला जा सकता</string>
+    <string name="cal_no_books">लिखने के लिए कोई कैलेंडर नहीं: सेटिंग में एक चुनें</string>
+    <string name="cal_enable">Sordina का कैलेंडर</string>
+    <string name="cal_enable_hint">दूसरे ऐप खोले बिना यहीं इवेंट देखें, जोड़ें और बदलें</string>
+    <string name="cal_remind">Sordina के रिमाइंडर</string>
+    <string name="cal_remind_hint">हर इवेंट से 15 मिनट पहले। अगर Home Assistant पहले से याद दिलाता है तो बंद रखें</string>
+    <string name="cal_remind_text">%1$s बजे</string>
+    <string name="ch_cal">इवेंट रिमाइंडर</string>
 </resources>

@@ -276,6 +276,7 @@ class Brain(
         is Act.Call -> "call:${a.contact.token}"
         is Act.Message -> "msg:${a.contact.token}:${a.via.name}"
         Act.SordinaSettings -> "set:sordina"
+        Act.SordinaCalendar -> "set:calendar"
         is Act.Setting -> "set:${a.action}"
         is Act.Timer, is Act.Alarm, Act.Torch, is Act.Media, is Act.Navigate, is Act.Music, is Act.Assist, is Act.Routine ->
             Search.normalize(query).takeIf { it.isNotEmpty() }?.let { "cmd:$it" }

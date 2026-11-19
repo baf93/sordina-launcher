@@ -1352,4 +1352,91 @@
     <string name="auto_s_voice_hint">루틴, 집, 대기 중인 것, 전화를 음성으로</string>
     <string name="routine_car">차에서도</string>
     <string name="routine_car_hint">차량 화면의 홈에 타일 표시</string>
+    <string name="ch_car">차량에서 확인</string>
+    <string name="auto_no_events_week">앞으로 며칠 동안 일정이 없어요</string>
+    <!-- Il calendario di Sordina -->
+    <string name="cal_title">캘린더</string>
+    <string name="cal_week">주</string>
+    <string name="cal_month">월</string>
+    <string name="cal_search">일정 검색</string>
+    <string name="cal_new">새 일정</string>
+    <string name="cal_edit">일정 수정</string>
+    <string name="cal_edit_btn">수정</string>
+    <string name="cal_delete_btn">삭제</string>
+    <string name="cal_delete_q">“%1$s” 일정을 삭제할까요?</string>
+    <string name="cal_delete_text">%1$s에서도 사라집니다.</string>
+    <string name="cal_repeats_hint">반복되는 일정입니다</string>
+    <string name="cal_only_this">이 일정만</string>
+    <string name="cal_all">모든 일정</string>
+    <string name="cal_following">이 일정 및 이후 일정</string>
+    <string name="cal_what">무엇</string>
+    <string name="cal_what_missing">무엇인지 입력하세요</string>
+    <string name="cal_all_day">종일</string>
+    <string name="cal_all_day_short">종일</string>
+    <string name="cal_starts">시작</string>
+    <string name="cal_ends">종료</string>
+    <string name="cal_end_before">시작 전에 끝납니다</string>
+    <string name="cal_calendar">캘린더</string>
+    <string name="cal_home_hint">Home Assistant</string>
+    <string name="cal_repeat">반복</string>
+    <string name="cal_rep_none">안 함</string>
+    <string name="cal_rep_daily">매일</string>
+    <string name="cal_rep_weekly">매주</string>
+    <string name="cal_rep_monthly">매월</string>
+    <string name="cal_rep_yearly">매년</string>
+    <string name="cal_rep_custom">사용자 지정</string>
+    <string name="cal_rep_end">반복 종료</string>
+    <string name="cal_every">간격</string>
+    <string name="cal_rep_last">마지막</string>
+    <plurals name="cal_unit_day">
+        <item quantity="other">일</item>
+    </plurals>
+    <plurals name="cal_unit_week">
+        <item quantity="other">주</item>
+    </plurals>
+    <plurals name="cal_unit_month">
+        <item quantity="other">개월</item>
+    </plurals>
+    <plurals name="cal_unit_year">
+        <item quantity="other">년</item>
+    </plurals>
+    <string name="cal_until">%1$s까지</string>
+    <plurals name="cal_every_day">
+        <item quantity="other">%d일마다</item>
+    </plurals>
+    <plurals name="cal_every_week">
+        <item quantity="other">%d주마다</item>
+    </plurals>
+    <plurals name="cal_every_month">
+        <item quantity="other">%d개월마다</item>
+    </plurals>
+    <plurals name="cal_every_year">
+        <item quantity="other">%d년마다</item>
+    </plurals>
+    <plurals name="cal_times">
+        <item quantity="other">%d회</item>
+    </plurals>
+    <string name="cal_place">장소</string>
+    <string name="cal_notes">메모</string>
+    <string name="cal_save">저장</string>
+    <string name="cal_free_title">한가한 날</string>
+    <string name="cal_empty_day">이날은 일정 없음</string>
+    <string name="cal_no_results">찾은 항목 없음</string>
+    <string name="cal_synced">%1$s에 업데이트됨</string>
+    <string name="cal_offline">Home Assistant가 응답하지 않음: %1$s 기준 사본입니다</string>
+    <string name="cal_pending">Home Assistant 대기 중: 변경 %1$d건</string>
+    <string name="cal_pending_one">Home Assistant 대기 중</string>
+    <string name="cal_waiting_badge">대기 중</string>
+    <string name="cal_queued">저장했습니다. Home Assistant가 응답하면 바로 전달됩니다</string>
+    <string name="cal_offline_save">Home Assistant가 응답하지 않음: Sordina가 변경 사항을 보관했다가 나중에 보냅니다</string>
+    <string name="cal_refused">Home Assistant가 거부함: %1$s</string>
+    <string name="cal_failed">저장하지 못했습니다</string>
+    <string name="cal_read_only">이 캘린더는 여기서 수정할 수 없습니다</string>
+    <string name="cal_no_books">쓸 수 있는 캘린더가 없습니다: 설정에서 선택하세요</string>
+    <string name="cal_enable">Sordina 캘린더</string>
+    <string name="cal_enable_hint">다른 앱을 열지 않고 여기서 일정을 보고, 추가하고, 수정하세요</string>
+    <string name="cal_remind">Sordina 알림</string>
+    <string name="cal_remind_hint">각 일정 15분 전. Home Assistant가 이미 알려 준다면 꺼 두세요</string>
+    <string name="cal_remind_text">%1$s</string>
+    <string name="ch_cal">일정 알림</string>
 </resources>

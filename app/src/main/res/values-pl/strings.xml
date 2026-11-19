@@ -1402,4 +1402,118 @@
     <string name="auto_s_voice_hint">Rutyny, dom, to, co czeka, i połączenia, głosem</string>
     <string name="routine_car">Także w samochodzie</string>
     <string name="routine_car_hint">Kafelek w Domu na ekranie samochodu</string>
+    <string name="ch_car">Potwierdzenia z samochodu</string>
+    <string name="auto_no_events_week">W najbliższych dniach nie masz nic w kalendarzu</string>
+    <!-- Il calendario di Sordina -->
+    <string name="cal_title">Kalendarz</string>
+    <string name="cal_week">Tydzień</string>
+    <string name="cal_month">Miesiąc</string>
+    <string name="cal_search">Szukaj w wydarzeniach</string>
+    <string name="cal_new">Nowe wydarzenie</string>
+    <string name="cal_edit">Edytuj wydarzenie</string>
+    <string name="cal_edit_btn">Edytuj</string>
+    <string name="cal_delete_btn">Usuń</string>
+    <string name="cal_delete_q">Usunąć „%1$s”?</string>
+    <string name="cal_delete_text">Zniknie też z %1$s.</string>
+    <string name="cal_repeats_hint">To wydarzenie się powtarza</string>
+    <string name="cal_only_this">Tylko to</string>
+    <string name="cal_all">Wszystkie</string>
+    <string name="cal_following">To i następne</string>
+    <string name="cal_what">Co</string>
+    <string name="cal_what_missing">Napisz, co to jest</string>
+    <string name="cal_all_day">Cały dzień</string>
+    <string name="cal_all_day_short">Dzień</string>
+    <string name="cal_starts">Początek</string>
+    <string name="cal_ends">Koniec</string>
+    <string name="cal_end_before">Kończy się, zanim się zacznie</string>
+    <string name="cal_calendar">Kalendarz</string>
+    <string name="cal_home_hint">Home Assistant</string>
+    <string name="cal_repeat">Powtarzaj</string>
+    <string name="cal_rep_none">Nigdy</string>
+    <string name="cal_rep_daily">Codziennie</string>
+    <string name="cal_rep_weekly">Co tydzień</string>
+    <string name="cal_rep_monthly">Co miesiąc</string>
+    <string name="cal_rep_yearly">Co rok</string>
+    <string name="cal_rep_custom">Niestandardowe</string>
+    <string name="cal_rep_end">Koniec powtarzania</string>
+    <string name="cal_every">Co</string>
+    <string name="cal_rep_last">Ostatni raz</string>
+    <plurals name="cal_unit_day">
+        <item quantity="one">dzień</item>
+        <item quantity="few">dni</item>
+        <item quantity="many">dni</item>
+        <item quantity="other">dnia</item>
+    </plurals>
+    <plurals name="cal_unit_week">
+        <item quantity="one">tydzień</item>
+        <item quantity="few">tygodnie</item>
+        <item quantity="many">tygodni</item>
+        <item quantity="other">tygodnia</item>
+    </plurals>
+    <plurals name="cal_unit_month">
+        <item quantity="one">miesiąc</item>
+        <item quantity="few">miesiące</item>
+        <item quantity="many">miesięcy</item>
+        <item quantity="other">miesiąca</item>
+    </plurals>
+    <plurals name="cal_unit_year">
+        <item quantity="one">rok</item>
+        <item quantity="few">lata</item>
+        <item quantity="many">lat</item>
+        <item quantity="other">roku</item>
+    </plurals>
+    <string name="cal_until">do %1$s</string>
+    <plurals name="cal_every_day">
+        <item quantity="one">Co %d dzień</item>
+        <item quantity="few">Co %d dni</item>
+        <item quantity="many">Co %d dni</item>
+        <item quantity="other">Co %d dnia</item>
+    </plurals>
+    <plurals name="cal_every_week">
+        <item quantity="one">Co %d tydzień</item>
+        <item quantity="few">Co %d tygodnie</item>
+        <item quantity="many">Co %d tygodni</item>
+        <item quantity="other">Co %d tygodnia</item>
+    </plurals>
+    <plurals name="cal_every_month">
+        <item quantity="one">Co %d miesiąc</item>
+        <item quantity="few">Co %d miesiące</item>
+        <item quantity="many">Co %d miesięcy</item>
+        <item quantity="other">Co %d miesiąca</item>
+    </plurals>
+    <plurals name="cal_every_year">
+        <item quantity="one">Co %d rok</item>
+        <item quantity="few">Co %d lata</item>
+        <item quantity="many">Co %d lat</item>
+        <item quantity="other">Co %d roku</item>
+    </plurals>
+    <plurals name="cal_times">
+        <item quantity="one">%d raz</item>
+        <item quantity="few">%d razy</item>
+        <item quantity="many">%d razy</item>
+        <item quantity="other">%d razy</item>
+    </plurals>
+    <string name="cal_place">Miejsce</string>
+    <string name="cal_notes">Notatki</string>
+    <string name="cal_save">Zapisz</string>
+    <string name="cal_free_title">Wolny dzień</string>
+    <string name="cal_empty_day">Nic tego dnia</string>
+    <string name="cal_no_results">Nic nie znaleziono</string>
+    <string name="cal_synced">Zaktualizowano o %1$s</string>
+    <string name="cal_offline">Home Assistant nie odpowiada: to kopia z %1$s</string>
+    <string name="cal_pending">Czeka na Home Assistant: zmiany %1$d</string>
+    <string name="cal_pending_one">Czeka na Home Assistant</string>
+    <string name="cal_waiting_badge">czeka</string>
+    <string name="cal_queued">Zapisano. Trafi do Home Assistant, gdy tylko odpowie</string>
+    <string name="cal_offline_save">Home Assistant nie odpowiada: Sordina zachowa zmianę i wyśle ją później</string>
+    <string name="cal_refused">Home Assistant odmówił: %1$s</string>
+    <string name="cal_failed">Nie udało się zapisać</string>
+    <string name="cal_read_only">Tego kalendarza nie można tu zmienić</string>
+    <string name="cal_no_books">Brak kalendarza do zapisu: wybierz go w ustawieniach</string>
+    <string name="cal_enable">Kalendarz Sordiny</string>
+    <string name="cal_enable_hint">Przeglądaj, dodawaj i zmieniaj wydarzenia tutaj, bez otwierania innych aplikacji</string>
+    <string name="cal_remind">Przypomnienia Sordiny</string>
+    <string name="cal_remind_hint">15 minut przed każdym wydarzeniem. Zostaw wyłączone, jeśli Home Assistant już przypomina</string>
+    <string name="cal_remind_text">O %1$s</string>
+    <string name="ch_cal">Przypomnienia o wydarzeniach</string>
 </resources>

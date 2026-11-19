@@ -285,6 +285,83 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
         return out.filter { it.end > now }
     }
 
+    // ── Il calendario di Sordina: i calendari di casa per intero, con cosa permettono
+
+    /** I calendari di casa con quello che si può fare: Home Assistant lo dice in supported_features (1 crea, 2 cancella, 4 modifica) */
+    fun calendarBooks(): List<CalBook> {
+        val ids = calendars()
+        return ids.map { (id, name) ->
+            val f = runCatching { JSONObject(request("/api/states/$id") ?: "{}").optJSONObject("attributes")?.optInt("supported_features", 0) ?: 0 }.getOrDefault(0)
+            CalBook(CalBook.HA + id, name, null, f and 1 != 0, f and 4 != 0, f and 2 != 0)
+        }
+    }
+
+    /** Gli impegni di un calendario di casa fra [from] e [to], ripetizioni già espanse. null: casa non raggiungibile */
+    fun calendarRange(id: String, from: java.time.OffsetDateTime, to: java.time.OffsetDateTime): List<CalEvent>? {
+        val range = "start=${java.net.URLEncoder.encode(from.toString(), "UTF-8")}&end=${java.net.URLEncoder.encode(to.toString(), "UTF-8")}"
+        val r = request("/api/calendars/$id?$range") ?: return null
+        return runCatching {
+            val a = JSONArray(r)
+            (0 until a.length()).mapNotNull { CalEvent.fromHa(CalBook.HA + id, a.getJSONObject(it)) }
+        }.getOrNull()
+    }
+
+    /** Com'è andato un comando sul canale WebSocket */
+    sealed interface Ws {
+        data class Ok(val result: JSONObject?) : Ws
+        /** Home Assistant ha risposto di no: il motivo, nelle sue parole */
+        data class Refused(val message: String) : Ws
+        /** Casa non raggiungibile: si riprova dopo */
+        data object Unreachable : Ws
+    }
+
+    private val http by lazy {
+        okhttp3.OkHttpClient.Builder().followRedirects(false).followSslRedirects(false)
+            .readTimeout(8, java.util.concurrent.TimeUnit.SECONDS).build()
+    }
+
+    /**
+     * Un comando sul canale WebSocket di Home Assistant (crea, modifica, cancella un impegno): quello che l'API REST non fa.
+     * Stessi indirizzi e stessa prudenza delle richieste normali: in chiaro solo a casa, il token mai altrove.
+     */
+    fun ws(cmd: JSONObject): Ws {
+        val t = token() ?: return Ws.Unreachable
+        val net = context.getSystemService(android.net.ConnectivityManager::class.java)?.activeNetwork
+        for ((base, wait) in bases()) {
+            val url = base.trimEnd('/').replaceFirst("http", "ws") + "/api/websocket"
+            val q = java.util.concurrent.LinkedBlockingQueue<String>()
+            val client = http.newBuilder().connectTimeout(wait.toLong(), java.util.concurrent.TimeUnit.MILLISECONDS).build()
+            val sock = runCatching {
+                client.newWebSocket(okhttp3.Request.Builder().url(url).build(), object : okhttp3.WebSocketListener() {
+                    override fun onMessage(webSocket: okhttp3.WebSocket, text: String) { q.offer(text) }
+                    override fun onFailure(webSocket: okhttp3.WebSocket, t: Throwable, response: okhttp3.Response?) { q.offer(FAIL) }
+                    override fun onClosed(webSocket: okhttp3.WebSocket, code: Int, reason: String) { q.offer(FAIL) }
+                })
+            }.getOrNull() ?: continue
+            try {
+                fun next(): JSONObject? = q.poll(8, java.util.concurrent.TimeUnit.SECONDS)?.takeIf { it != FAIL }?.let { runCatching { JSONObject(it) }.getOrNull() }
+                // Prima "auth_required": se non arriva, da qui casa non si raggiunge
+                val hello = next() ?: continue
+                if (hello.optString("type") != "auth_required") continue
+                sock.send(JSONObject().put("type", "auth").put("access_token", t).toString())
+                val auth = next() ?: continue
+                if (auth.optString("type") != "auth_ok") return Ws.Refused(auth.optString("message", "auth"))
+                route = net to base
+                sock.send(JSONObject(cmd.toString()).put("id", 1).toString())
+                while (true) {
+                    // Il comando è partito: senza risposta non si rimanda dall'altro indirizzo (partirebbe due volte)
+                    val m = next() ?: return Ws.Unreachable
+                    if (m.optInt("id") != 1 || m.optString("type") != "result") continue
+                    return if (m.optBoolean("success")) Ws.Ok(m.optJSONObject("result"))
+                    else Ws.Refused(m.optJSONObject("error")?.optString("message").orEmpty())
+                }
+            } finally {
+                runCatching { sock.close(1000, null) }
+            }
+        }
+        return Ws.Unreachable
+    }
+
     /** Scrive un impegno nel calendario di casa scelto. Home Assistant non permette di cancellarlo da qui: niente "Annulla". */
     fun createEvent(title: String, w: When, minutes: Int = 60): Boolean {
         val id = calendar ?: return false
@@ -390,5 +467,6 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
     companion object {
         private const val ALIAS = "sordina_ha"
         const val COMPANION_PKG = "io.homeassistant.companion.android"
+        private const val FAIL = "\u0000"
     }
 }

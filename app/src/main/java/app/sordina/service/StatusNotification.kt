@@ -9,6 +9,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import app.sordina.MainActivity
+import app.sordina.car.CarAuthActivity
 import app.sordina.R
 import app.sordina.data.Held
 import androidx.core.graphics.drawable.toBitmap
@@ -41,8 +42,14 @@ class StatusNotification(private val context: Context) {
             setShowBadge(false)
             lockscreenVisibility = Notification.VISIBILITY_PRIVATE
         }
+        // "Impronta sul telefono" dallo schermo dell'auto: in alto, e passa anche Non disturbare dell'auto
+        val car = NotificationChannel(CarAuthActivity.CH_CAR, tr(R.string.ch_car), NotificationManager.IMPORTANCE_HIGH).apply {
+            setBypassDnd(true)
+            setShowBadge(false)
+            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+        }
         runCatching { nm.deleteNotificationChannel("status") }
-        nm.createNotificationChannels(listOf(status, always, budget))
+        nm.createNotificationChannels(listOf(status, always, budget, car, CalendarReminders.channel()))
         // La vecchia scheda fissa, se è rimasta da una versione precedente: si toglie una volta, all'avvio
         runCatching { nm.cancel(ID_STATUS) }
     }

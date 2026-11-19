@@ -1402,4 +1402,118 @@
     <string name="auto_s_voice_hint">Rutiny, domov, co čeká, a hovory, hlasem</string>
     <string name="routine_car">I v autě</string>
     <string name="routine_car_hint">Dlaždice v Domově na obrazovce auta</string>
+    <string name="ch_car">Potvrzení z auta</string>
+    <string name="auto_no_events_week">V příštích dnech nemáte v kalendáři nic</string>
+    <!-- Il calendario di Sordina -->
+    <string name="cal_title">Kalendář</string>
+    <string name="cal_week">Týden</string>
+    <string name="cal_month">Měsíc</string>
+    <string name="cal_search">Hledat v událostech</string>
+    <string name="cal_new">Nová událost</string>
+    <string name="cal_edit">Upravit událost</string>
+    <string name="cal_edit_btn">Upravit</string>
+    <string name="cal_delete_btn">Smazat</string>
+    <string name="cal_delete_q">Smazat „%1$s“?</string>
+    <string name="cal_delete_text">Zmizí i z %1$s.</string>
+    <string name="cal_repeats_hint">Tato událost se opakuje</string>
+    <string name="cal_only_this">Jen tuto</string>
+    <string name="cal_all">Všechny</string>
+    <string name="cal_following">Tuto a následující</string>
+    <string name="cal_what">Co</string>
+    <string name="cal_what_missing">Napiš, co to je</string>
+    <string name="cal_all_day">Celý den</string>
+    <string name="cal_all_day_short">Den</string>
+    <string name="cal_starts">Začátek</string>
+    <string name="cal_ends">Konec</string>
+    <string name="cal_end_before">Končí dřív, než začne</string>
+    <string name="cal_calendar">Kalendář</string>
+    <string name="cal_home_hint">Home Assistant</string>
+    <string name="cal_repeat">Opakovat</string>
+    <string name="cal_rep_none">Nikdy</string>
+    <string name="cal_rep_daily">Každý den</string>
+    <string name="cal_rep_weekly">Každý týden</string>
+    <string name="cal_rep_monthly">Každý měsíc</string>
+    <string name="cal_rep_yearly">Každý rok</string>
+    <string name="cal_rep_custom">Vlastní</string>
+    <string name="cal_rep_end">Konec opakování</string>
+    <string name="cal_every">Každých</string>
+    <string name="cal_rep_last">Naposledy</string>
+    <plurals name="cal_unit_day">
+        <item quantity="one">den</item>
+        <item quantity="few">dny</item>
+        <item quantity="many">dne</item>
+        <item quantity="other">dní</item>
+    </plurals>
+    <plurals name="cal_unit_week">
+        <item quantity="one">týden</item>
+        <item quantity="few">týdny</item>
+        <item quantity="many">týdne</item>
+        <item quantity="other">týdnů</item>
+    </plurals>
+    <plurals name="cal_unit_month">
+        <item quantity="one">měsíc</item>
+        <item quantity="few">měsíce</item>
+        <item quantity="many">měsíce</item>
+        <item quantity="other">měsíců</item>
+    </plurals>
+    <plurals name="cal_unit_year">
+        <item quantity="one">rok</item>
+        <item quantity="few">roky</item>
+        <item quantity="many">roku</item>
+        <item quantity="other">let</item>
+    </plurals>
+    <string name="cal_until">do %1$s</string>
+    <plurals name="cal_every_day">
+        <item quantity="one">Každý %d den</item>
+        <item quantity="few">Každé %d dny</item>
+        <item quantity="many">Každých %d dne</item>
+        <item quantity="other">Každých %d dní</item>
+    </plurals>
+    <plurals name="cal_every_week">
+        <item quantity="one">Každý %d týden</item>
+        <item quantity="few">Každé %d týdny</item>
+        <item quantity="many">Každých %d týdne</item>
+        <item quantity="other">Každých %d týdnů</item>
+    </plurals>
+    <plurals name="cal_every_month">
+        <item quantity="one">Každý %d měsíc</item>
+        <item quantity="few">Každé %d měsíce</item>
+        <item quantity="many">Každých %d měsíce</item>
+        <item quantity="other">Každých %d měsíců</item>
+    </plurals>
+    <plurals name="cal_every_year">
+        <item quantity="one">Každý %d rok</item>
+        <item quantity="few">Každé %d roky</item>
+        <item quantity="many">Každých %d roku</item>
+        <item quantity="other">Každých %d let</item>
+    </plurals>
+    <plurals name="cal_times">
+        <item quantity="one">%d krát</item>
+        <item quantity="few">%d krát</item>
+        <item quantity="many">%d krát</item>
+        <item quantity="other">%d krát</item>
+    </plurals>
+    <string name="cal_place">Místo</string>
+    <string name="cal_notes">Poznámky</string>
+    <string name="cal_save">Uložit</string>
+    <string name="cal_free_title">Volný den</string>
+    <string name="cal_empty_day">Tento den nic</string>
+    <string name="cal_no_results">Nic nenalezeno</string>
+    <string name="cal_synced">Aktualizováno v %1$s</string>
+    <string name="cal_offline">Home Assistant neodpovídá: je to kopie z %1$s</string>
+    <string name="cal_pending">Čeká na Home Assistant: změny %1$d</string>
+    <string name="cal_pending_one">Čeká na Home Assistant</string>
+    <string name="cal_waiting_badge">čeká</string>
+    <string name="cal_queued">Uloženo. Do Home Assistantu dorazí, jakmile odpoví</string>
+    <string name="cal_offline_save">Home Assistant neodpovídá: Sordina změnu podrží a pošle ji později</string>
+    <string name="cal_refused">Home Assistant odmítl: %1$s</string>
+    <string name="cal_failed">Uložit se nepodařilo</string>
+    <string name="cal_read_only">Tento kalendář tady změnit nejde</string>
+    <string name="cal_no_books">Žádný kalendář pro zápis: vyber ho v nastavení</string>
+    <string name="cal_enable">Kalendář Sordiny</string>
+    <string name="cal_enable_hint">Prohlížej, přidávej a měň události tady, bez otevírání jiných aplikací</string>
+    <string name="cal_remind">Připomínky Sordiny</string>
+    <string name="cal_remind_hint">15 minut před každou událostí. Nech vypnuté, pokud ti to Home Assistant už připomíná</string>
+    <string name="cal_remind_text">V %1$s</string>
+    <string name="ch_cal">Připomínky událostí</string>
 </resources>

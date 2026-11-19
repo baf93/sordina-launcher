@@ -1368,4 +1368,100 @@
     <string name="auto_s_voice_hint">Rutiner, hjemmet, det der venter og opkald, med stemmen</string>
     <string name="routine_car">Også i bilen</string>
     <string name="routine_car_hint">En flise i Hjem på bilens skærm</string>
+    <string name="ch_car">Bekræftelser fra bilen</string>
+    <string name="auto_no_events_week">Intet i kalenderen de næste dage</string>
+    <!-- Il calendario di Sordina -->
+    <string name="cal_title">Kalender</string>
+    <string name="cal_week">Uge</string>
+    <string name="cal_month">Måned</string>
+    <string name="cal_search">Søg i begivenheder</string>
+    <string name="cal_new">Ny begivenhed</string>
+    <string name="cal_edit">Rediger begivenhed</string>
+    <string name="cal_edit_btn">Rediger</string>
+    <string name="cal_delete_btn">Slet</string>
+    <string name="cal_delete_q">Slet “%1$s”?</string>
+    <string name="cal_delete_text">Den forsvinder også fra %1$s.</string>
+    <string name="cal_repeats_hint">Denne begivenhed gentages</string>
+    <string name="cal_only_this">Kun denne</string>
+    <string name="cal_all">Alle gange</string>
+    <string name="cal_following">Denne og de følgende</string>
+    <string name="cal_what">Hvad</string>
+    <string name="cal_what_missing">Skriv hvad det er</string>
+    <string name="cal_all_day">Hele dagen</string>
+    <string name="cal_all_day_short">Dag</string>
+    <string name="cal_starts">Starter</string>
+    <string name="cal_ends">Slutter</string>
+    <string name="cal_end_before">Slutter før den starter</string>
+    <string name="cal_calendar">Kalender</string>
+    <string name="cal_home_hint">Home Assistant</string>
+    <string name="cal_repeat">Gentag</string>
+    <string name="cal_rep_none">Aldrig</string>
+    <string name="cal_rep_daily">Hver dag</string>
+    <string name="cal_rep_weekly">Hver uge</string>
+    <string name="cal_rep_monthly">Hver måned</string>
+    <string name="cal_rep_yearly">Hvert år</string>
+    <string name="cal_rep_custom">Tilpasset</string>
+    <string name="cal_rep_end">Gentagelse slutter</string>
+    <string name="cal_every">Hver</string>
+    <string name="cal_rep_last">Sidste gang</string>
+    <plurals name="cal_unit_day">
+        <item quantity="one">dag</item>
+        <item quantity="other">dage</item>
+    </plurals>
+    <plurals name="cal_unit_week">
+        <item quantity="one">uge</item>
+        <item quantity="other">uger</item>
+    </plurals>
+    <plurals name="cal_unit_month">
+        <item quantity="one">måned</item>
+        <item quantity="other">måneder</item>
+    </plurals>
+    <plurals name="cal_unit_year">
+        <item quantity="one">år</item>
+        <item quantity="other">år</item>
+    </plurals>
+    <string name="cal_until">indtil %1$s</string>
+    <plurals name="cal_every_day">
+        <item quantity="one">Hver %d. dag</item>
+        <item quantity="other">Hver %d. dag</item>
+    </plurals>
+    <plurals name="cal_every_week">
+        <item quantity="one">Hver %d. uge</item>
+        <item quantity="other">Hver %d. uge</item>
+    </plurals>
+    <plurals name="cal_every_month">
+        <item quantity="one">Hver %d. måned</item>
+        <item quantity="other">Hver %d. måned</item>
+    </plurals>
+    <plurals name="cal_every_year">
+        <item quantity="one">Hvert %d. år</item>
+        <item quantity="other">Hvert %d. år</item>
+    </plurals>
+    <plurals name="cal_times">
+        <item quantity="one">%d gang</item>
+        <item quantity="other">%d gange</item>
+    </plurals>
+    <string name="cal_place">Sted</string>
+    <string name="cal_notes">Noter</string>
+    <string name="cal_save">Gem</string>
+    <string name="cal_free_title">En fri dag</string>
+    <string name="cal_empty_day">Intet denne dag</string>
+    <string name="cal_no_results">Fandt intet</string>
+    <string name="cal_synced">Opdateret kl. %1$s</string>
+    <string name="cal_offline">Home Assistant svarer ikke: det er kopien fra %1$s</string>
+    <string name="cal_pending">Venter på Home Assistant: %1$d ændringer</string>
+    <string name="cal_pending_one">Venter på Home Assistant</string>
+    <string name="cal_waiting_badge">venter</string>
+    <string name="cal_queued">Gemt. Det når Home Assistant, så snart den svarer</string>
+    <string name="cal_offline_save">Home Assistant svarer ikke: Sordina gemmer ændringen og sender den senere</string>
+    <string name="cal_refused">Home Assistant sagde nej: %1$s</string>
+    <string name="cal_failed">Kunne ikke gemme</string>
+    <string name="cal_read_only">Denne kalender kan ikke ændres herfra</string>
+    <string name="cal_no_books">Ingen kalender at skrive i: vælg en i indstillingerne</string>
+    <string name="cal_enable">Sordinas kalender</string>
+    <string name="cal_enable_hint">Se, tilføj og ret begivenheder her, uden at åbne andre apps</string>
+    <string name="cal_remind">Påmindelser fra Sordina</string>
+    <string name="cal_remind_hint">15 minutter før hver begivenhed. Lad den være slået fra, hvis Home Assistant allerede minder dig</string>
+    <string name="cal_remind_text">Kl. %1$s</string>
+    <string name="ch_cal">Påmindelser om begivenheder</string>
 </resources>

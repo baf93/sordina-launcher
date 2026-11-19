@@ -37,6 +37,13 @@ android {
         debug {
             applicationIdSuffix = ".debug"
         }
+        // Come quella di Play (R8, ottimizzata) ma con la chiave di debug e al posto dell'app di debug: per sentire la fluidità vera
+        create("fast") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".debug"
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -63,6 +70,8 @@ dependencies {
     // Lettore QR di Play Services: niente permesso fotocamera, si apre solo quando lo tocchi
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
     // Sordina sullo schermo dell'auto (Android Auto): solo i modelli di Google, niente disegno libero
+    // Il canale di Home Assistant per modificare e cancellare gli impegni (WebSocket)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("androidx.car.app:app:1.7.0")
     implementation("androidx.car.app:app-projected:1.7.0")
     testImplementation("junit:junit:4.13.2")

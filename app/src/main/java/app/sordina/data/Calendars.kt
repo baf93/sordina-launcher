@@ -191,9 +191,9 @@ fun Calendars.agenda(context: Context, now: Long = System.currentTimeMillis()): 
 }
 
 /** Gli impegni di oggi con un orario, non ancora finiti, dal primo: la scheda Agenda sullo schermo dell'auto. */
-fun Calendars.today(context: Context, now: Long = System.currentTimeMillis()): List<Upcoming> {
+fun Calendars.today(context: Context, now: Long = System.currentTimeMillis(), days: Int = 1): List<Upcoming> {
     if (context.checkSelfPermission(Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) return emptyList()
-    val endOfDay = java.time.LocalDate.now().plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+    val endOfDay = java.time.LocalDate.now().plusDays(days.toLong()).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
     val out = ArrayList<Upcoming>()
     runCatching {
         val b = CalendarContract.Instances.CONTENT_URI.buildUpon()

@@ -1352,4 +1352,91 @@
     <string name="auto_s_voice_hint">รูทีน บ้าน สิ่งที่รออยู่ และการโทร ด้วยเสียง</string>
     <string name="routine_car">ในรถด้วย</string>
     <string name="routine_car_hint">ไทล์ในบ้านบนหน้าจอรถ</string>
+    <string name="ch_car">การยืนยันจากรถ</string>
+    <string name="auto_no_events_week">ไม่มีนัดในปฏิทินในอีกไม่กี่วันข้างหน้า</string>
+    <!-- Il calendario di Sordina -->
+    <string name="cal_title">ปฏิทิน</string>
+    <string name="cal_week">สัปดาห์</string>
+    <string name="cal_month">เดือน</string>
+    <string name="cal_search">ค้นหากิจกรรม</string>
+    <string name="cal_new">กิจกรรมใหม่</string>
+    <string name="cal_edit">แก้ไขกิจกรรม</string>
+    <string name="cal_edit_btn">แก้ไข</string>
+    <string name="cal_delete_btn">ลบ</string>
+    <string name="cal_delete_q">ลบ “%1$s” ไหม</string>
+    <string name="cal_delete_text">กิจกรรมจะหายไปจาก %1$s ด้วย</string>
+    <string name="cal_repeats_hint">กิจกรรมนี้เกิดซ้ำ</string>
+    <string name="cal_only_this">เฉพาะครั้งนี้</string>
+    <string name="cal_all">ทุกครั้ง</string>
+    <string name="cal_following">ครั้งนี้และครั้งถัดไป</string>
+    <string name="cal_what">อะไร</string>
+    <string name="cal_what_missing">เขียนว่าเป็นอะไร</string>
+    <string name="cal_all_day">ทั้งวัน</string>
+    <string name="cal_all_day_short">ทั้งวัน</string>
+    <string name="cal_starts">เริ่ม</string>
+    <string name="cal_ends">สิ้นสุด</string>
+    <string name="cal_end_before">สิ้นสุดก่อนเริ่ม</string>
+    <string name="cal_calendar">ปฏิทิน</string>
+    <string name="cal_home_hint">Home Assistant</string>
+    <string name="cal_repeat">ทำซ้ำ</string>
+    <string name="cal_rep_none">ไม่ทำซ้ำ</string>
+    <string name="cal_rep_daily">ทุกวัน</string>
+    <string name="cal_rep_weekly">ทุกสัปดาห์</string>
+    <string name="cal_rep_monthly">ทุกเดือน</string>
+    <string name="cal_rep_yearly">ทุกปี</string>
+    <string name="cal_rep_custom">กำหนดเอง</string>
+    <string name="cal_rep_end">สิ้นสุดการทำซ้ำ</string>
+    <string name="cal_every">ทุก</string>
+    <string name="cal_rep_last">ครั้งสุดท้าย</string>
+    <plurals name="cal_unit_day">
+        <item quantity="other">วัน</item>
+    </plurals>
+    <plurals name="cal_unit_week">
+        <item quantity="other">สัปดาห์</item>
+    </plurals>
+    <plurals name="cal_unit_month">
+        <item quantity="other">เดือน</item>
+    </plurals>
+    <plurals name="cal_unit_year">
+        <item quantity="other">ปี</item>
+    </plurals>
+    <string name="cal_until">จนถึง %1$s</string>
+    <plurals name="cal_every_day">
+        <item quantity="other">ทุก %d วัน</item>
+    </plurals>
+    <plurals name="cal_every_week">
+        <item quantity="other">ทุก %d สัปดาห์</item>
+    </plurals>
+    <plurals name="cal_every_month">
+        <item quantity="other">ทุก %d เดือน</item>
+    </plurals>
+    <plurals name="cal_every_year">
+        <item quantity="other">ทุก %d ปี</item>
+    </plurals>
+    <plurals name="cal_times">
+        <item quantity="other">%d ครั้ง</item>
+    </plurals>
+    <string name="cal_place">สถานที่</string>
+    <string name="cal_notes">บันทึกย่อ</string>
+    <string name="cal_save">บันทึก</string>
+    <string name="cal_free_title">วันว่าง</string>
+    <string name="cal_empty_day">ไม่มีอะไรในวันนี้</string>
+    <string name="cal_no_results">ไม่พบอะไรเลย</string>
+    <string name="cal_synced">อัปเดตเมื่อ %1$s</string>
+    <string name="cal_offline">Home Assistant ไม่ตอบสนอง: นี่คือสำเนาเมื่อ %1$s</string>
+    <string name="cal_pending">รอ Home Assistant: %1$d การเปลี่ยนแปลง</string>
+    <string name="cal_pending_one">รอ Home Assistant</string>
+    <string name="cal_waiting_badge">กำลังรอ</string>
+    <string name="cal_queued">บันทึกแล้ว จะส่งถึง Home Assistant ทันทีที่ตอบสนอง</string>
+    <string name="cal_offline_save">Home Assistant ไม่ตอบสนอง: Sordina เก็บการเปลี่ยนแปลงไว้และส่งภายหลัง</string>
+    <string name="cal_refused">Home Assistant ปฏิเสธ: %1$s</string>
+    <string name="cal_failed">บันทึกไม่ได้</string>
+    <string name="cal_read_only">เปลี่ยนปฏิทินนี้จากที่นี่ไม่ได้</string>
+    <string name="cal_no_books">ไม่มีปฏิทินให้เขียน: เลือกในการตั้งค่า</string>
+    <string name="cal_enable">ปฏิทินของ Sordina</string>
+    <string name="cal_enable_hint">ดู เพิ่ม และแก้ไขกิจกรรมได้ที่นี่ โดยไม่ต้องเปิดแอปอื่น</string>
+    <string name="cal_remind">การแจ้งเตือนจาก Sordina</string>
+    <string name="cal_remind_hint">15 นาทีก่อนทุกกิจกรรม ปิดไว้ถ้า Home Assistant เตือนคุณอยู่แล้ว</string>
+    <string name="cal_remind_text">เวลา %1$s</string>
+    <string name="ch_cal">การแจ้งเตือนกิจกรรม</string>
 </resources>

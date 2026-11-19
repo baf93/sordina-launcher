@@ -53,7 +53,7 @@ class Actions(
         // Lo gestisce la schermata (serve l'impronta): qui non arriva
         is Act.AlarmOff, is Act.AlarmOn, is Act.Routine -> Outcome(null, false)
         is Act.Setting -> start(Intent(act.action)).let { Outcome(null, it) }
-        Act.SordinaSettings -> Outcome(null)
+        Act.SordinaSettings, Act.SordinaCalendar -> Outcome(null)
         is Act.Web -> web(act.query)
         is Act.Calc -> { copy(act.result); Outcome(tr(R.string.copied_x, act.result)) }
         is Act.Quiet -> quiet(act.until)

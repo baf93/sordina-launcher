@@ -2,6 +2,7 @@
 
 package app.sordina.ui.intent
 
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 
 import app.sordina.R
@@ -490,7 +491,7 @@ private fun Leading(cand: Candidate, icon: androidx.compose.ui.graphics.ImageBit
         Kind.HOME -> Icons.Rounded.Home
         Kind.CALC -> Icons.Rounded.Calculate
         Kind.ACTION -> when (cand.act) { is Act.Call -> Icons.Rounded.Call; is Act.Message -> Icons.AutoMirrored.Rounded.Chat; is Act.Timer -> Icons.Rounded.Timer; else -> Icons.Rounded.Bolt }
-        else -> null
+        else -> if (cand.act == Act.SordinaCalendar) Icons.Rounded.CalendarMonth else null
     }
     Box(
         Modifier.size(size).clip(if (person || glyph != null) CircleShape else RoundedCornerShape(size * 0.3f))
@@ -547,6 +548,7 @@ private fun ActionProposal(cand: Candidate, actions: ProposalActions, icon: andr
         is Act.Message -> Icons.AutoMirrored.Rounded.Chat
         is Act.Assist, is Act.AlarmOff, is Act.AlarmOn, is Act.Routine -> Icons.Rounded.Home
         is Act.Setting, Act.SordinaSettings -> Icons.Rounded.Settings
+        Act.SordinaCalendar -> Icons.Rounded.CalendarMonth
         else -> if (a is Act.Timer) Icons.Rounded.Timer else Icons.Rounded.Bolt
     }
     Box(modifier) {

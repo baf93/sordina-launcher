@@ -1368,4 +1368,100 @@
     <string name="auto_s_voice_hint">Ρουτίνες, σπίτι, ό,τι περιμένει και κλήσεις, με φωνή</string>
     <string name="routine_car">Και στο αυτοκίνητο</string>
     <string name="routine_car_hint">Ένα πλακίδιο στο Σπίτι στην οθόνη του αυτοκινήτου</string>
+    <string name="ch_car">Επιβεβαιώσεις από το αυτοκίνητο</string>
+    <string name="auto_no_events_week">Δεν έχεις τίποτα στο ημερολόγιο τις επόμενες μέρες</string>
+    <!-- Il calendario di Sordina -->
+    <string name="cal_title">Ημερολόγιο</string>
+    <string name="cal_week">Εβδομάδα</string>
+    <string name="cal_month">Μήνας</string>
+    <string name="cal_search">Αναζήτηση στα συμβάντα</string>
+    <string name="cal_new">Νέο συμβάν</string>
+    <string name="cal_edit">Επεξεργασία συμβάντος</string>
+    <string name="cal_edit_btn">Επεξεργασία</string>
+    <string name="cal_delete_btn">Διαγραφή</string>
+    <string name="cal_delete_q">Διαγραφή του «%1$s»;</string>
+    <string name="cal_delete_text">Θα εξαφανιστεί και από το %1$s.</string>
+    <string name="cal_repeats_hint">Αυτό το συμβάν επαναλαμβάνεται</string>
+    <string name="cal_only_this">Μόνο αυτό</string>
+    <string name="cal_all">Όλες τις φορές</string>
+    <string name="cal_following">Αυτό και τα επόμενα</string>
+    <string name="cal_what">Τι</string>
+    <string name="cal_what_missing">Γράψε τι είναι</string>
+    <string name="cal_all_day">Όλη μέρα</string>
+    <string name="cal_all_day_short">Μέρα</string>
+    <string name="cal_starts">Αρχίζει</string>
+    <string name="cal_ends">Τελειώνει</string>
+    <string name="cal_end_before">Τελειώνει πριν αρχίσει</string>
+    <string name="cal_calendar">Ημερολόγιο</string>
+    <string name="cal_home_hint">Home Assistant</string>
+    <string name="cal_repeat">Επανάληψη</string>
+    <string name="cal_rep_none">Ποτέ</string>
+    <string name="cal_rep_daily">Κάθε μέρα</string>
+    <string name="cal_rep_weekly">Κάθε εβδομάδα</string>
+    <string name="cal_rep_monthly">Κάθε μήνα</string>
+    <string name="cal_rep_yearly">Κάθε χρόνο</string>
+    <string name="cal_rep_custom">Προσαρμοσμένη</string>
+    <string name="cal_rep_end">Τέλος επανάληψης</string>
+    <string name="cal_every">Κάθε</string>
+    <string name="cal_rep_last">Τελευταία φορά</string>
+    <plurals name="cal_unit_day">
+        <item quantity="one">ημέρα</item>
+        <item quantity="other">ημέρες</item>
+    </plurals>
+    <plurals name="cal_unit_week">
+        <item quantity="one">εβδομάδα</item>
+        <item quantity="other">εβδομάδες</item>
+    </plurals>
+    <plurals name="cal_unit_month">
+        <item quantity="one">μήνας</item>
+        <item quantity="other">μήνες</item>
+    </plurals>
+    <plurals name="cal_unit_year">
+        <item quantity="one">έτος</item>
+        <item quantity="other">έτη</item>
+    </plurals>
+    <string name="cal_until">έως %1$s</string>
+    <plurals name="cal_every_day">
+        <item quantity="one">Κάθε %d ημέρα</item>
+        <item quantity="other">Κάθε %d ημέρες</item>
+    </plurals>
+    <plurals name="cal_every_week">
+        <item quantity="one">Κάθε %d εβδομάδα</item>
+        <item quantity="other">Κάθε %d εβδομάδες</item>
+    </plurals>
+    <plurals name="cal_every_month">
+        <item quantity="one">Κάθε %d μήνα</item>
+        <item quantity="other">Κάθε %d μήνες</item>
+    </plurals>
+    <plurals name="cal_every_year">
+        <item quantity="one">Κάθε %d χρόνο</item>
+        <item quantity="other">Κάθε %d χρόνια</item>
+    </plurals>
+    <plurals name="cal_times">
+        <item quantity="one">%d φορά</item>
+        <item quantity="other">%d φορές</item>
+    </plurals>
+    <string name="cal_place">Τοποθεσία</string>
+    <string name="cal_notes">Σημειώσεις</string>
+    <string name="cal_save">Αποθήκευση</string>
+    <string name="cal_free_title">Ελεύθερη μέρα</string>
+    <string name="cal_empty_day">Τίποτα αυτή τη μέρα</string>
+    <string name="cal_no_results">Δεν βρέθηκε τίποτα</string>
+    <string name="cal_synced">Ενημερώθηκε στις %1$s</string>
+    <string name="cal_offline">Το Home Assistant δεν απαντά: είναι το αντίγραφο των %1$s</string>
+    <string name="cal_pending">Αναμονή για το Home Assistant: %1$d αλλαγές</string>
+    <string name="cal_pending_one">Αναμονή για το Home Assistant</string>
+    <string name="cal_waiting_badge">σε αναμονή</string>
+    <string name="cal_queued">Αποθηκεύτηκε. Θα φτάσει στο Home Assistant μόλις απαντήσει</string>
+    <string name="cal_offline_save">Το Home Assistant δεν απαντά: το Sordina κρατά την αλλαγή και τη στέλνει αργότερα</string>
+    <string name="cal_refused">Το Home Assistant αρνήθηκε: %1$s</string>
+    <string name="cal_failed">Δεν ήταν δυνατή η αποθήκευση</string>
+    <string name="cal_read_only">Αυτό το ημερολόγιο δεν αλλάζει από εδώ</string>
+    <string name="cal_no_books">Κανένα ημερολόγιο για εγγραφή: διάλεξε ένα στις ρυθμίσεις</string>
+    <string name="cal_enable">Ημερολόγιο του Sordina</string>
+    <string name="cal_enable_hint">Δες, πρόσθεσε και άλλαξε συμβάντα εδώ, χωρίς να ανοίγεις άλλες εφαρμογές</string>
+    <string name="cal_remind">Υπενθυμίσεις από το Sordina</string>
+    <string name="cal_remind_hint">15 λεπτά πριν από κάθε συμβάν. Άφησέ το κλειστό αν σου το θυμίζει ήδη το Home Assistant</string>
+    <string name="cal_remind_text">Στις %1$s</string>
+    <string name="ch_cal">Υπενθυμίσεις συμβάντων</string>
 </resources>

@@ -158,9 +158,9 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
         val routines = carRoutines().entries.take(limit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID, 6))
         routines.forEach { (id, r) ->
             val alarm = r.alarm?.let { prefs.haAlarms[it]?.name }
+            // Un riquadro vero, con il bordo e il disegno della routine; l'allarme è il bollino, non una riga di testo
             list.addItem(GridItem.Builder().setTitle(r.name)
-                .apply { alarm?.let { setText(tr(if (r.arm) R.string.auto_routine_arm else R.string.auto_routine_disarm, it)) } }
-                .setImage(carContext.icon(if (alarm != null) R.drawable.car_lock else R.drawable.car_play), GridItem.IMAGE_TYPE_ICON)
+                .setImage(CarTiles.tile(carContext, CarTiles.glyph(r.name, alarm != null, r.arm), alarm != null), GridItem.IMAGE_TYPE_LARGE)
                 .setOnClickListener { routine(id) }
                 .build())
         }
@@ -197,15 +197,15 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
         return ListTemplate.Builder().setSingleList(list.build()).build()
     }
 
-    // Agenda: oggi, con "Vai" dove c'è un indirizzo
+    // Agenda: oggi e i prossimi giorni, con "Vai" dove c'è un indirizzo
 
     private fun loadEvents() {
-        events = runCatching { app.calendars.today(carContext) }.getOrDefault(emptyList())
+        events = runCatching { app.calendars.today(carContext, days = AGENDA_DAYS) }.getOrDefault(emptyList())
         lifecycleScope.launch {
-            val home = withContext(Dispatchers.IO) { runCatching { app.ha.calendarEvents(1) }.getOrDefault(emptyList()) }
+            val home = withContext(Dispatchers.IO) { runCatching { app.ha.calendarEvents(AGENDA_DAYS) }.getOrDefault(emptyList()) }
             if (home.isEmpty()) return@launch
-            val end = java.time.LocalDate.now().plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
-            events = (events + home.filter { it.begin < end }).sortedBy { it.begin }
+            val now = System.currentTimeMillis()
+            events = (events + home.filter { it.end > now }).distinctBy { it.title to it.begin }.sortedBy { it.begin }
             if (shown(Prefs.CAR_TAB_AGENDA)) invalidateSoon()
         }
     }
@@ -213,15 +213,28 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
     private fun agendaList(): Template {
         val list = ItemList.Builder()
         events.take(limit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST, 6)).forEach { e ->
-            list.addItem(Row.Builder().setTitle(time(e.begin) + " · " + e.title)
+            list.addItem(Row.Builder().setTitle(e.title)
+                .addText(day(e.begin) + " · " + time(e.begin))
                 .apply { e.location?.let { loc -> addText(tr(R.string.auto_go_to, loc)); setOnClickListener { navigate(loc) } } }
                 .build())
         }
-        if (events.isEmpty()) list.setNoItemsMessage(tr(R.string.auto_no_events))
+        if (events.isEmpty()) list.setNoItemsMessage(tr(R.string.auto_no_events_week))
         return ListTemplate.Builder().setSingleList(list.build()).build()
     }
 
     private fun time(at: Long): String = DateFormat.getTimeFormat(carContext).format(java.util.Date(at))
+
+    /** "Oggi", "Domani", "Sabato 21" */
+    private fun day(at: Long): String {
+        val zone = java.time.ZoneId.systemDefault()
+        val d = java.time.Instant.ofEpochMilli(at).atZone(zone).toLocalDate()
+        val today = java.time.LocalDate.now(zone)
+        return when (d) {
+            today -> tr(R.string.today_title)
+            today.plusDays(1) -> tr(R.string.tomorrow_cap)
+            else -> java.time.format.DateTimeFormatter.ofPattern("EEEE d", java.util.Locale.getDefault()).format(d).replaceFirstChar { it.uppercase() }
+        }
+    }
 
     // Parla
 
@@ -512,6 +525,7 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
 
     companion object {
         const val TALK = "talk"
+        private const val AGENDA_DAYS = 7
         private const val REDRAW_MILLIS = 2_000L
         private const val REPLY_PAUSE_MILLIS = 1_800L
 

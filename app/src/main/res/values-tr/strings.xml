@@ -1368,4 +1368,100 @@
     <string name="auto_s_voice_hint">Rutinler, ev, bekleyenler ve aramalar, sesle</string>
     <string name="routine_car">Arabada da</string>
     <string name="routine_car_hint">Araç ekranında Ev\'de bir kutucuk</string>
+    <string name="ch_car">Araçtan onaylar</string>
+    <string name="auto_no_events_week">Önümüzdeki günlerde takviminizde bir şey yok</string>
+    <!-- Il calendario di Sordina -->
+    <string name="cal_title">Takvim</string>
+    <string name="cal_week">Hafta</string>
+    <string name="cal_month">Ay</string>
+    <string name="cal_search">Etkinliklerde ara</string>
+    <string name="cal_new">Yeni etkinlik</string>
+    <string name="cal_edit">Etkinliği düzenle</string>
+    <string name="cal_edit_btn">Düzenle</string>
+    <string name="cal_delete_btn">Sil</string>
+    <string name="cal_delete_q">“%1$s” silinsin mi?</string>
+    <string name="cal_delete_text">%1$s takviminden de kaybolur.</string>
+    <string name="cal_repeats_hint">Bu etkinlik tekrarlanıyor</string>
+    <string name="cal_only_this">Yalnızca bu</string>
+    <string name="cal_all">Hepsi</string>
+    <string name="cal_following">Bu ve sonrakiler</string>
+    <string name="cal_what">Ne</string>
+    <string name="cal_what_missing">Ne olduğunu yaz</string>
+    <string name="cal_all_day">Tüm gün</string>
+    <string name="cal_all_day_short">Gün</string>
+    <string name="cal_starts">Başlangıç</string>
+    <string name="cal_ends">Bitiş</string>
+    <string name="cal_end_before">Başlamadan bitiyor</string>
+    <string name="cal_calendar">Takvim</string>
+    <string name="cal_home_hint">Home Assistant</string>
+    <string name="cal_repeat">Tekrarla</string>
+    <string name="cal_rep_none">Asla</string>
+    <string name="cal_rep_daily">Her gün</string>
+    <string name="cal_rep_weekly">Her hafta</string>
+    <string name="cal_rep_monthly">Her ay</string>
+    <string name="cal_rep_yearly">Her yıl</string>
+    <string name="cal_rep_custom">Özel</string>
+    <string name="cal_rep_end">Tekrar bitişi</string>
+    <string name="cal_every">Her</string>
+    <string name="cal_rep_last">Son kez</string>
+    <plurals name="cal_unit_day">
+        <item quantity="one">gün</item>
+        <item quantity="other">gün</item>
+    </plurals>
+    <plurals name="cal_unit_week">
+        <item quantity="one">hafta</item>
+        <item quantity="other">hafta</item>
+    </plurals>
+    <plurals name="cal_unit_month">
+        <item quantity="one">ay</item>
+        <item quantity="other">ay</item>
+    </plurals>
+    <plurals name="cal_unit_year">
+        <item quantity="one">yıl</item>
+        <item quantity="other">yıl</item>
+    </plurals>
+    <string name="cal_until">%1$s tarihine kadar</string>
+    <plurals name="cal_every_day">
+        <item quantity="one">%d günde bir</item>
+        <item quantity="other">%d günde bir</item>
+    </plurals>
+    <plurals name="cal_every_week">
+        <item quantity="one">%d haftada bir</item>
+        <item quantity="other">%d haftada bir</item>
+    </plurals>
+    <plurals name="cal_every_month">
+        <item quantity="one">%d ayda bir</item>
+        <item quantity="other">%d ayda bir</item>
+    </plurals>
+    <plurals name="cal_every_year">
+        <item quantity="one">%d yılda bir</item>
+        <item quantity="other">%d yılda bir</item>
+    </plurals>
+    <plurals name="cal_times">
+        <item quantity="one">%d kez</item>
+        <item quantity="other">%d kez</item>
+    </plurals>
+    <string name="cal_place">Yer</string>
+    <string name="cal_notes">Notlar</string>
+    <string name="cal_save">Kaydet</string>
+    <string name="cal_free_title">Boş bir gün</string>
+    <string name="cal_empty_day">Bu gün bir şey yok</string>
+    <string name="cal_no_results">Bir şey bulunamadı</string>
+    <string name="cal_synced">%1$s itibarıyla güncellendi</string>
+    <string name="cal_offline">Home Assistant yanıt vermiyor: bu %1$s kopyası</string>
+    <string name="cal_pending">Home Assistant bekleniyor: %1$d değişiklik</string>
+    <string name="cal_pending_one">Home Assistant bekleniyor</string>
+    <string name="cal_waiting_badge">bekliyor</string>
+    <string name="cal_queued">Kaydedildi. Home Assistant yanıt verir vermez ona ulaşır</string>
+    <string name="cal_offline_save">Home Assistant yanıt vermiyor: Sordina değişikliği saklar ve sonra gönderir</string>
+    <string name="cal_refused">Home Assistant reddetti: %1$s</string>
+    <string name="cal_failed">Kaydedilemedi</string>
+    <string name="cal_read_only">Bu takvim buradan değiştirilemez</string>
+    <string name="cal_no_books">Yazılacak takvim yok: ayarlardan bir tane seç</string>
+    <string name="cal_enable">Sordina takvimi</string>
+    <string name="cal_enable_hint">Etkinlikleri başka uygulama açmadan burada gör, ekle ve değiştir</string>
+    <string name="cal_remind">Sordina hatırlatıcıları</string>
+    <string name="cal_remind_hint">Her etkinlikten 15 dakika önce. Home Assistant zaten hatırlatıyorsa kapalı bırak</string>
+    <string name="cal_remind_text">Saat %1$s</string>
+    <string name="ch_cal">Etkinlik hatırlatıcıları</string>
 </resources>

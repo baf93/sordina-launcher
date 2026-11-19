@@ -1402,4 +1402,118 @@
     <string name="auto_s_voice_hint">Сценарії, дім, що чекає, і дзвінки, голосом</string>
     <string name="routine_car">Також в авто</string>
     <string name="routine_car_hint">Плитка в розділі Дім на екрані авто</string>
+    <string name="ch_car">Підтвердження з авто</string>
+    <string name="auto_no_events_week">Найближчими днями в календарі нічого немає</string>
+    <!-- Il calendario di Sordina -->
+    <string name="cal_title">Календар</string>
+    <string name="cal_week">Тиждень</string>
+    <string name="cal_month">Місяць</string>
+    <string name="cal_search">Пошук у подіях</string>
+    <string name="cal_new">Нова подія</string>
+    <string name="cal_edit">Змінити подію</string>
+    <string name="cal_edit_btn">Змінити</string>
+    <string name="cal_delete_btn">Видалити</string>
+    <string name="cal_delete_q">Видалити «%1$s»?</string>
+    <string name="cal_delete_text">Вона зникне і з %1$s.</string>
+    <string name="cal_repeats_hint">Ця подія повторюється</string>
+    <string name="cal_only_this">Лише цю</string>
+    <string name="cal_all">Усі</string>
+    <string name="cal_following">Цю й наступні</string>
+    <string name="cal_what">Що</string>
+    <string name="cal_what_missing">Напишіть, що це</string>
+    <string name="cal_all_day">Увесь день</string>
+    <string name="cal_all_day_short">День</string>
+    <string name="cal_starts">Початок</string>
+    <string name="cal_ends">Кінець</string>
+    <string name="cal_end_before">Закінчується раніше, ніж починається</string>
+    <string name="cal_calendar">Календар</string>
+    <string name="cal_home_hint">Home Assistant</string>
+    <string name="cal_repeat">Повтор</string>
+    <string name="cal_rep_none">Ніколи</string>
+    <string name="cal_rep_daily">Щодня</string>
+    <string name="cal_rep_weekly">Щотижня</string>
+    <string name="cal_rep_monthly">Щомісяця</string>
+    <string name="cal_rep_yearly">Щороку</string>
+    <string name="cal_rep_custom">Інше</string>
+    <string name="cal_rep_end">Кінець повторення</string>
+    <string name="cal_every">Кожні</string>
+    <string name="cal_rep_last">Останній раз</string>
+    <plurals name="cal_unit_day">
+        <item quantity="one">день</item>
+        <item quantity="few">дні</item>
+        <item quantity="many">днів</item>
+        <item quantity="other">дня</item>
+    </plurals>
+    <plurals name="cal_unit_week">
+        <item quantity="one">тиждень</item>
+        <item quantity="few">тижні</item>
+        <item quantity="many">тижнів</item>
+        <item quantity="other">тижня</item>
+    </plurals>
+    <plurals name="cal_unit_month">
+        <item quantity="one">місяць</item>
+        <item quantity="few">місяці</item>
+        <item quantity="many">місяців</item>
+        <item quantity="other">місяця</item>
+    </plurals>
+    <plurals name="cal_unit_year">
+        <item quantity="one">рік</item>
+        <item quantity="few">роки</item>
+        <item quantity="many">років</item>
+        <item quantity="other">року</item>
+    </plurals>
+    <string name="cal_until">до %1$s</string>
+    <plurals name="cal_every_day">
+        <item quantity="one">Кожен %d день</item>
+        <item quantity="few">Кожні %d дні</item>
+        <item quantity="many">Кожні %d днів</item>
+        <item quantity="other">Кожні %d дня</item>
+    </plurals>
+    <plurals name="cal_every_week">
+        <item quantity="one">Кожен %d тиждень</item>
+        <item quantity="few">Кожні %d тижні</item>
+        <item quantity="many">Кожні %d тижнів</item>
+        <item quantity="other">Кожні %d тижня</item>
+    </plurals>
+    <plurals name="cal_every_month">
+        <item quantity="one">Кожен %d місяць</item>
+        <item quantity="few">Кожні %d місяці</item>
+        <item quantity="many">Кожні %d місяців</item>
+        <item quantity="other">Кожні %d місяця</item>
+    </plurals>
+    <plurals name="cal_every_year">
+        <item quantity="one">Кожен %d рік</item>
+        <item quantity="few">Кожні %d роки</item>
+        <item quantity="many">Кожні %d років</item>
+        <item quantity="other">Кожні %d року</item>
+    </plurals>
+    <plurals name="cal_times">
+        <item quantity="one">%d раз</item>
+        <item quantity="few">%d рази</item>
+        <item quantity="many">%d разів</item>
+        <item quantity="other">%d рази</item>
+    </plurals>
+    <string name="cal_place">Місце</string>
+    <string name="cal_notes">Нотатки</string>
+    <string name="cal_save">Зберегти</string>
+    <string name="cal_free_title">Вільний день</string>
+    <string name="cal_empty_day">Цього дня нічого</string>
+    <string name="cal_no_results">Нічого не знайдено</string>
+    <string name="cal_synced">Оновлено о %1$s</string>
+    <string name="cal_offline">Home Assistant не відповідає: це копія від %1$s</string>
+    <string name="cal_pending">Чекають на Home Assistant: змін %1$d</string>
+    <string name="cal_pending_one">Чекає на Home Assistant</string>
+    <string name="cal_waiting_badge">чекає</string>
+    <string name="cal_queued">Збережено. Потрапить у Home Assistant, щойно він відповість</string>
+    <string name="cal_offline_save">Home Assistant не відповідає: Sordina збереже зміну й надішле її пізніше</string>
+    <string name="cal_refused">Home Assistant відмовив: %1$s</string>
+    <string name="cal_failed">Не вдалося зберегти</string>
+    <string name="cal_read_only">Цей календар звідси не змінити</string>
+    <string name="cal_no_books">Немає календаря для запису: виберіть його в налаштуваннях</string>
+    <string name="cal_enable">Календар Sordina</string>
+    <string name="cal_enable_hint">Переглядайте, додавайте й змінюйте події тут, не відкриваючи інших застосунків</string>
+    <string name="cal_remind">Нагадування Sordina</string>
+    <string name="cal_remind_hint">За 15 хвилин до кожної події. Не вмикайте, якщо Home Assistant уже нагадує</string>
+    <string name="cal_remind_text">О %1$s</string>
+    <string name="ch_cal">Нагадування про події</string>
 </resources>

@@ -54,6 +54,8 @@ enum class Mood {
     DONE,
     /** Impostazioni: occhiali tondi e il quaderno delle tue regole */
     FIX,
+    /** Calendario, un giorno senza impegni: occhiali da sole, il foglio del giorno bianco e un sole */
+    FREE,
 }
 
 /** La sordina a contorno, per Casa e dintorni: ferma, nel colore del testo. */
@@ -182,6 +184,24 @@ private fun DrawScope.extras(mood: Mood, soft: Color) {
             val lines = Stroke(1.6f, cap = StrokeCap.Round)
             drawPath(path { moveTo(-53f, 0f); lineTo(-43f, 0f); moveTo(-53f, 6f); lineTo(-43f, 6f); moveTo(-53f, 12f); lineTo(-47f, 12f) }, BAND, style = lines)
         }
+        // Il foglio del giorno, bianco: niente da fare. In alto a destra un piccolo sole
+        Mood.FREE -> {
+            val page = Stroke(1.8f, join = StrokeJoin.Round)
+            drawRoundRect(PAPER, Offset(-60f, -8f), Size(24f, 30f), CornerRadius(4f))
+            drawRoundRect(HAT, Offset(-60f, -8f), Size(24f, 9f), CornerRadius(4f))
+            drawRect(HAT, Offset(-60f, -3f), Size(24f, 4f))
+            drawRoundRect(BAND, Offset(-60f, -8f), Size(24f, 30f), CornerRadius(4f), style = page)
+            drawCircle(CAP, 2f, Offset(-53f, -8f)); drawCircle(CAP, 2f, Offset(-43f, -8f))
+            // Un angolo che si piega: il foglio si stacca, la giornata è tua
+            drawPath(path { moveTo(-42f, 22f); lineTo(-36f, 16f); lineTo(-42f, 16f); close() }, BODY.copy(alpha = 0.35f))
+            val ray = Stroke(2.2f, cap = StrokeCap.Round)
+            drawCircle(BODY, 6.5f, Offset(42f, -44f))
+            for (i in 0 until 8) {
+                val a = Math.PI * i / 4
+                val c = kotlin.math.cos(a).toFloat(); val sn = kotlin.math.sin(a).toFloat()
+                drawPath(path { moveTo(42f + 10f * c, -44f + 10f * sn); lineTo(42f + 14f * c, -44f + 14f * sn) }, BAND, style = ray)
+            }
+        }
         Mood.DONE -> {
             sparkle(-40f, -36f, 6f, BODY); sparkle(40f, -46f, 5f, BAND)
             sparkle(46f, -6f, 3.5f, BODY); sparkle(-46f, -4f, 3.5f, BAND); sparkle(-30f, -56f, 3f, BODY)
@@ -280,6 +300,16 @@ internal fun DrawScope.face(mood: Mood) {
             drawPath(path { moveTo(-2.5f, 1f); quadraticTo(0f, -1f, 2.5f, 1f) }, FACE, style = glass)
             drawCircle(FACE, 2.3f, Offset(-10.5f, 3f)); drawCircle(FACE, 2.3f, Offset(7.5f, 3f))
             stroke { moveTo(-4f, 14f); quadraticTo(0f, 16f, 4f, 14f) }
+        }
+        // Occhiali da sole, un riflesso sulle lenti, il sorriso di chi non ha niente da fare
+        Mood.FREE -> {
+            drawRoundRect(FACE, Offset(-16f, -3f), Size(13f, 10f), CornerRadius(5f))
+            drawRoundRect(FACE, Offset(3f, -3f), Size(13f, 10f), CornerRadius(5f))
+            drawPath(path { moveTo(-3f, 0f); quadraticTo(0f, -2f, 3f, 0f) }, FACE, style = Stroke(2f))
+            val shine = Stroke(1.4f, cap = StrokeCap.Round)
+            drawPath(path { moveTo(-13f, 0f); lineTo(-10f, -1.5f) }, PAPER.copy(alpha = 0.7f), style = shine)
+            drawPath(path { moveTo(6f, 0f); lineTo(9f, -1.5f) }, PAPER.copy(alpha = 0.7f), style = shine)
+            stroke { moveTo(-6f, 12f); quadraticTo(0f, 18f, 6f, 12f) }
         }
         // Occhi felici e un sorriso largo
         Mood.DONE -> {

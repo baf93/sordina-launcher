@@ -30,6 +30,7 @@ class SordinaApp : Application() {
     val ha by lazy { HomeAssistant(this, prefs) }
     val habits by lazy { Habits(this) }
     val calendars by lazy { Calendars(this, prefs) }
+    val diary by lazy { app.sordina.data.Diary(this, prefs, ha, app.sordina.data.PhoneCalendar(this, prefs)) }
     val brain by lazy { app.sordina.data.brain.Brain(this, prefs, people, store) }
     val intents by lazy { Intents(this, prefs, people, store, ha, brain) }
     val signals by lazy { Signals(this) }
@@ -57,6 +58,7 @@ class SordinaApp : Application() {
         runCatching { java.io.File(filesDir, "routines.json").delete() }
         status.createChannels()
         Scheduler.refresh(this)
+        app.sordina.service.CalendarReminders.plan(this)
     }
 
     companion object {

@@ -1368,4 +1368,100 @@
     <string name="auto_s_voice_hint">Rutiner, hemmet, det som väntar och samtal, med rösten</string>
     <string name="routine_car">Även i bilen</string>
     <string name="routine_car_hint">En ruta i Hem på bilens skärm</string>
+    <string name="ch_car">Bekräftelser från bilen</string>
+    <string name="auto_no_events_week">Inget i kalendern de närmaste dagarna</string>
+    <!-- Il calendario di Sordina -->
+    <string name="cal_title">Kalender</string>
+    <string name="cal_week">Vecka</string>
+    <string name="cal_month">Månad</string>
+    <string name="cal_search">Sök bland händelser</string>
+    <string name="cal_new">Ny händelse</string>
+    <string name="cal_edit">Redigera händelse</string>
+    <string name="cal_edit_btn">Redigera</string>
+    <string name="cal_delete_btn">Ta bort</string>
+    <string name="cal_delete_q">Ta bort ”%1$s”?</string>
+    <string name="cal_delete_text">Den försvinner också från %1$s.</string>
+    <string name="cal_repeats_hint">Den här händelsen upprepas</string>
+    <string name="cal_only_this">Bara den här</string>
+    <string name="cal_all">Alla gånger</string>
+    <string name="cal_following">Den här och de följande</string>
+    <string name="cal_what">Vad</string>
+    <string name="cal_what_missing">Skriv vad det är</string>
+    <string name="cal_all_day">Heldag</string>
+    <string name="cal_all_day_short">Heldag</string>
+    <string name="cal_starts">Börjar</string>
+    <string name="cal_ends">Slutar</string>
+    <string name="cal_end_before">Slutar innan den börjar</string>
+    <string name="cal_calendar">Kalender</string>
+    <string name="cal_home_hint">Home Assistant</string>
+    <string name="cal_repeat">Upprepa</string>
+    <string name="cal_rep_none">Aldrig</string>
+    <string name="cal_rep_daily">Varje dag</string>
+    <string name="cal_rep_weekly">Varje vecka</string>
+    <string name="cal_rep_monthly">Varje månad</string>
+    <string name="cal_rep_yearly">Varje år</string>
+    <string name="cal_rep_custom">Anpassad</string>
+    <string name="cal_rep_end">Upprepning slutar</string>
+    <string name="cal_every">Var</string>
+    <string name="cal_rep_last">Sista gången</string>
+    <plurals name="cal_unit_day">
+        <item quantity="one">dag</item>
+        <item quantity="other">dagar</item>
+    </plurals>
+    <plurals name="cal_unit_week">
+        <item quantity="one">vecka</item>
+        <item quantity="other">veckor</item>
+    </plurals>
+    <plurals name="cal_unit_month">
+        <item quantity="one">månad</item>
+        <item quantity="other">månader</item>
+    </plurals>
+    <plurals name="cal_unit_year">
+        <item quantity="one">år</item>
+        <item quantity="other">år</item>
+    </plurals>
+    <string name="cal_until">till %1$s</string>
+    <plurals name="cal_every_day">
+        <item quantity="one">Var %d:e dag</item>
+        <item quantity="other">Var %d:e dag</item>
+    </plurals>
+    <plurals name="cal_every_week">
+        <item quantity="one">Var %d:e vecka</item>
+        <item quantity="other">Var %d:e vecka</item>
+    </plurals>
+    <plurals name="cal_every_month">
+        <item quantity="one">Var %d:e månad</item>
+        <item quantity="other">Var %d:e månad</item>
+    </plurals>
+    <plurals name="cal_every_year">
+        <item quantity="one">Vart %d:e år</item>
+        <item quantity="other">Vart %d:e år</item>
+    </plurals>
+    <plurals name="cal_times">
+        <item quantity="one">%d gång</item>
+        <item quantity="other">%d gånger</item>
+    </plurals>
+    <string name="cal_place">Plats</string>
+    <string name="cal_notes">Anteckningar</string>
+    <string name="cal_save">Spara</string>
+    <string name="cal_free_title">En ledig dag</string>
+    <string name="cal_empty_day">Inget den här dagen</string>
+    <string name="cal_no_results">Hittade inget</string>
+    <string name="cal_synced">Uppdaterad %1$s</string>
+    <string name="cal_offline">Home Assistant svarar inte: det här är kopian från %1$s</string>
+    <string name="cal_pending">Väntar på Home Assistant: %1$d ändringar</string>
+    <string name="cal_pending_one">Väntar på Home Assistant</string>
+    <string name="cal_waiting_badge">väntar</string>
+    <string name="cal_queued">Sparat. Det når Home Assistant så fort den svarar</string>
+    <string name="cal_offline_save">Home Assistant svarar inte: Sordina sparar ändringen och skickar den senare</string>
+    <string name="cal_refused">Home Assistant sa nej: %1$s</string>
+    <string name="cal_failed">Kunde inte spara</string>
+    <string name="cal_read_only">Den här kalendern kan inte ändras härifrån</string>
+    <string name="cal_no_books">Ingen kalender att skriva i: välj en i inställningarna</string>
+    <string name="cal_enable">Sordinas kalender</string>
+    <string name="cal_enable_hint">Se, lägg till och ändra händelser här, utan att öppna andra appar</string>
+    <string name="cal_remind">Påminnelser från Sordina</string>
+    <string name="cal_remind_hint">15 minuter före varje händelse. Låt den vara av om Home Assistant redan påminner dig</string>
+    <string name="cal_remind_text">Kl. %1$s</string>
+    <string name="ch_cal">Händelsepåminnelser</string>
 </resources>

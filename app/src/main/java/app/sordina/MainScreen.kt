@@ -1,5 +1,6 @@
 package app.sordina
 
+import app.sordina.ui.calendar.CalendarScreen
 import app.sordina.service.BudgetWatch
 
 import app.sordina.ui.Celebration
@@ -300,9 +301,10 @@ internal fun MainActivity.Root() {
                             moment = if (moment == Moment.NONE) null else moment.label,
                             // Senza schede resta solo quella che dice che Sordina non funziona
                             cards = if (prefs.homeCards) cards else cards.filter { it.kind == CardKind.HEALTH },
-                            agenda = remember(agendaEvents, moment, now, scene, health) { agendaRows(waiting) }
+                            agenda = remember(agendaEvents, moment, now, scene, health, prefsVersion) { agendaRows(waiting) }
                                 // Senza impegni in Casa non resta nulla
                                 .let { r -> if (prefs.homeAgenda) r else emptyList() },
+                            calendar = remember(prefsVersion) { prefs.sordinaCalendar },
                             weather = if (prefs.homeWeather) weatherNow else null,
                             listening = voice.listening,
                             partial = voice.partial,
@@ -314,7 +316,7 @@ internal fun MainActivity.Root() {
                             scene = scene,
                             alarm = remember(now, scene) { if (scene == Scene.EVENING || scene == Scene.NIGHT) nextAlarm() else null },
                             alarmAt = remember(now, scene) { if (scene == Scene.NIGHT) nextAlarmAt() else null },
-                            tomorrow = remember(tomorrowEvents) { tomorrowEvents.map { e -> AgendaRow(hm(java.time.Instant.ofEpochMilli(e.begin).atZone(java.time.ZoneId.systemDefault()).let { it.hour * 60 + it.minute }), e.title, "event:${e.id}") } },
+                            tomorrow = remember(tomorrowEvents) { tomorrowEvents.map { e -> AgendaRow(hm(java.time.Instant.ofEpochMilli(e.begin).atZone(java.time.ZoneId.systemDefault()).let { it.hour * 60 + it.minute }), e.title, agendaKey(e)) } },
                             tomorrowWeather = if (prefs.homeWeather) tomorrowWeather else null,
                             sceneLine = remember(scene, moment, prefsVersion) { sceneLine(scene) },
                             recap = recap,
@@ -492,6 +494,8 @@ internal fun MainActivity.Root() {
                     onRevealHidden = { unlock(getString(R.string.hidden_apps)) { hiddenRevealed = true } },
                 )
                 }
+
+                Screen.CALENDAR -> CalendarScreen(app, calStart, onBack = { screen = Screen.HOME })
 
                 Screen.ONBOARDING -> Onboarding(
                     app = app,

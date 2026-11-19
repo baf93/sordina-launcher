@@ -1374,4 +1374,100 @@
     <string name="auto_s_voice_hint">Rotinas, casa, o que espera e chamadas, por voz</string>
     <string name="routine_car">Também no carro</string>
     <string name="routine_car_hint">Um quadrado em Casa no ecrã do carro</string>
+    <string name="ch_car">Confirmações do carro</string>
+    <string name="auto_no_events_week">Nada na agenda nos próximos dias</string>
+    <!-- Il calendario di Sordina -->
+    <string name="cal_title">Calendário</string>
+    <string name="cal_week">Semana</string>
+    <string name="cal_month">Mês</string>
+    <string name="cal_search">Pesquisar nos eventos</string>
+    <string name="cal_new">Novo evento</string>
+    <string name="cal_edit">Editar evento</string>
+    <string name="cal_edit_btn">Editar</string>
+    <string name="cal_delete_btn">Eliminar</string>
+    <string name="cal_delete_q">Eliminar «%1$s»?</string>
+    <string name="cal_delete_text">Também desaparece de %1$s.</string>
+    <string name="cal_repeats_hint">Este evento repete-se</string>
+    <string name="cal_only_this">Só este</string>
+    <string name="cal_all">Todas as vezes</string>
+    <string name="cal_following">Este e os seguintes</string>
+    <string name="cal_what">O quê</string>
+    <string name="cal_what_missing">Escreve o que é</string>
+    <string name="cal_all_day">Dia inteiro</string>
+    <string name="cal_all_day_short">Dia</string>
+    <string name="cal_starts">Começa</string>
+    <string name="cal_ends">Termina</string>
+    <string name="cal_end_before">Termina antes de começar</string>
+    <string name="cal_calendar">Calendário</string>
+    <string name="cal_home_hint">Home Assistant</string>
+    <string name="cal_repeat">Repetir</string>
+    <string name="cal_rep_none">Nunca</string>
+    <string name="cal_rep_daily">Todos os dias</string>
+    <string name="cal_rep_weekly">Todas as semanas</string>
+    <string name="cal_rep_monthly">Todos os meses</string>
+    <string name="cal_rep_yearly">Todos os anos</string>
+    <string name="cal_rep_custom">Personalizada</string>
+    <string name="cal_rep_end">Fim da repetição</string>
+    <string name="cal_every">A cada</string>
+    <string name="cal_rep_last">Última vez</string>
+    <plurals name="cal_unit_day">
+        <item quantity="one">dia</item>
+        <item quantity="other">dias</item>
+    </plurals>
+    <plurals name="cal_unit_week">
+        <item quantity="one">semana</item>
+        <item quantity="other">semanas</item>
+    </plurals>
+    <plurals name="cal_unit_month">
+        <item quantity="one">mês</item>
+        <item quantity="other">meses</item>
+    </plurals>
+    <plurals name="cal_unit_year">
+        <item quantity="one">ano</item>
+        <item quantity="other">anos</item>
+    </plurals>
+    <string name="cal_until">até %1$s</string>
+    <plurals name="cal_every_day">
+        <item quantity="one">A cada %d dias</item>
+        <item quantity="other">A cada %d dias</item>
+    </plurals>
+    <plurals name="cal_every_week">
+        <item quantity="one">A cada %d semanas</item>
+        <item quantity="other">A cada %d semanas</item>
+    </plurals>
+    <plurals name="cal_every_month">
+        <item quantity="one">A cada %d meses</item>
+        <item quantity="other">A cada %d meses</item>
+    </plurals>
+    <plurals name="cal_every_year">
+        <item quantity="one">A cada %d anos</item>
+        <item quantity="other">A cada %d anos</item>
+    </plurals>
+    <plurals name="cal_times">
+        <item quantity="one">%d vez</item>
+        <item quantity="other">%d vezes</item>
+    </plurals>
+    <string name="cal_place">Local</string>
+    <string name="cal_notes">Notas</string>
+    <string name="cal_save">Guardar</string>
+    <string name="cal_free_title">Dia livre</string>
+    <string name="cal_empty_day">Nada neste dia</string>
+    <string name="cal_no_results">Não encontrei nada</string>
+    <string name="cal_synced">Atualizado às %1$s</string>
+    <string name="cal_offline">O Home Assistant não responde: é a cópia das %1$s</string>
+    <string name="cal_pending">À espera do Home Assistant: %1$d alterações</string>
+    <string name="cal_pending_one">À espera do Home Assistant</string>
+    <string name="cal_waiting_badge">em espera</string>
+    <string name="cal_queued">Guardado. Chega ao Home Assistant assim que responder</string>
+    <string name="cal_offline_save">O Home Assistant não responde: o Sordina guarda a alteração e envia-a depois</string>
+    <string name="cal_refused">O Home Assistant recusou: %1$s</string>
+    <string name="cal_failed">Não consegui guardar</string>
+    <string name="cal_read_only">Este calendário não se altera daqui</string>
+    <string name="cal_no_books">Nenhum calendário onde escrever: escolhe um nas definições</string>
+    <string name="cal_enable">Calendário do Sordina</string>
+    <string name="cal_enable_hint">Vê, adiciona e altera os teus eventos aqui, sem abrir outras apps</string>
+    <string name="cal_remind">Lembretes do Sordina</string>
+    <string name="cal_remind_hint">15 minutos antes de cada evento. Deixa desligado se o Home Assistant já te lembra</string>
+    <string name="cal_remind_text">Às %1$s</string>
+    <string name="ch_cal">Lembretes de eventos</string>
 </resources>

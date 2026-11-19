@@ -35,6 +35,16 @@ Niente di aperto.
 - "Tutti per un'ora": passa tutto e dopo un'ora torna da solo a solo importanti.
 
 
+## Da provare: il calendario di Sordina
+
+- Impostazioni › Home › Calendario di Sordina: in Casa la data apre il calendario, un impegno apre il suo foglio; i nuovi si fanno dal + del calendario.
+- Settimana, mese, cerca; "calendario" nella ricerca apre questo; colori dei calendari; impegni di più giorni in ogni giorno.
+- Crea, modifica, elimina su un calendario di casa (Local Calendar) e su uno del telefono (Google).
+- Impegno che si ripete: "solo questa volta" e "questa e le prossime" (casa: recurrence_range THISANDFUTURE; telefono: la serie si chiude e ne parte una nuova).
+- Senza casa (Wi-Fi e dati spenti): la copia si apre, una modifica resta "in attesa" e parte da sola alla riapertura con casa raggiungibile.
+- Un calendario di casa in sola lettura (es. festività): niente Modifica ed Elimina.
+- Promemoria di Sordina: arriva 15 minuti prima, una volta sola, tocco apre l'impegno.
+
 ## Prima della produzione
 
 - Revisione madrelingua delle traduzioni nuove (onboarding, regole, allarmi, schermo dell'auto) e dei comandi delle 20 lingue in `LingueAltre.kt` e delle frasi di Parla in `car/CarPhrases.kt`.

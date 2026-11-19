@@ -30,6 +30,8 @@ sealed interface Act {
     data class AlarmOff(val entity: String?) : Act
     data class Setting(val action: String) : Act
     data object SordinaSettings : Act
+    /** Il calendario di Sordina (se acceso) */
+    data object SordinaCalendar : Act
     data class Web(val query: String) : Act
     data class Calc(val result: String) : Act
     /** Sordina a tempo fino a [until] (millisecondi); null = la togli */
@@ -81,6 +83,14 @@ class Intents(
     private val ha: HomeAssistant,
     private val brain: app.sordina.data.brain.Brain,
 ) {
+    /** Le app del calendario del telefono: con il calendario di Sordina acceso, "calendario" porta a quello */
+    private val calendarApps: Set<String> by lazy {
+        runCatching {
+            context.packageManager.queryIntentActivities(android.content.Intent.makeMainSelectorActivity(android.content.Intent.ACTION_MAIN, android.content.Intent.CATEGORY_APP_CALENDAR), 0)
+                .map { it.activityInfo.packageName }.toSet()
+        }.getOrDefault(emptySet())
+    }
+
     /** Quello che il telefono sa per capire le frasi libere: nomi, chi ti ha scritto, chi ti ha chiamato. */
     private fun hints(apps: List<AppEntry>) = object : Phrase.Hints {
         override fun isName(word: String) = word.length >= 3 && (
@@ -130,6 +140,12 @@ class Intents(
                 val via = viaFor(c, null)
                 out += Candidate("msg:${c.id}", tr(R.string.write_to_x, c.name), via.label, Kind.PERSON, s - 9, true, Act.Message(c, "", via))
             }
+            // Con il calendario di Sordina acceso, "calendario" apre quello, prima dell'app del telefono
+            if (prefs.sordinaCalendar) {
+                val words = listOf(tr(R.string.cal_title), "calendario", "calendar", "agenda").map { Search.normalize(it) }.distinct()
+                val s = words.maxOf { Search.score(nq, it) }
+                if (s >= 75) out += Candidate("set:calendar", tr(R.string.cal_title), "Sordina", Kind.APP, s + 3, false, Act.SordinaCalendar)
+            }
             SETTINGS.forEach { (words, title, action) ->
                 val s = words.maxOf { Search.score(nq, it) }
                 if (s >= 75) out += Candidate("set:$action", title, tr(R.string.settings_kind), Kind.SETTING, s - 8, false, if (action == "sordina") Act.SordinaSettings else Act.Setting(action))
@@ -155,7 +171,11 @@ class Intents(
 
         // Correzioni imparate (la frase intera scelta più in basso)
         val learned = prefs.aliases[Search.normalize(raw)] ?: prefs.aliases[nq]
+        // Il calendario di Sordina al posto dell'app del calendario: quando c'è lui, l'altra non si propone
+        val mine = reranked.any { it.act == Act.SordinaCalendar }
         val ranked = reranked
+            .filterNot { mine && it.kind == Kind.APP && it.app?.packageName in calendarApps }
+            .map { if (it.act == Act.SordinaCalendar) it.copy(score = 100) else it }
             .map { if (it.id == learned) it.copy(score = (it.score + 30).coerceAtMost(100)) else it }
             .groupBy { it.id }.map { g -> g.value.maxBy { it.score } }
             .sortedWith(compareByDescending<Candidate> { it.score }
@@ -193,6 +213,7 @@ class Intents(
                 }
             }
             "set" -> if (rest == "sordina") Candidate("set:sordina", tr(R.string.s_settings), null, Kind.SETTING, 60, false, Act.SordinaSettings)
+                else if (rest == "calendar") Candidate("set:calendar", tr(R.string.cal_title), "Sordina", Kind.APP, 60, false, Act.SordinaCalendar).takeIf { prefs.sordinaCalendar }
                 else SETTINGS.firstOrNull { it.third == rest }?.let { (_, title, action) -> Candidate("set:$action", title, tr(R.string.settings_kind), Kind.SETTING, 60, false, Act.Setting(action)) }
             // Un comando che ripeti: si ricapisce la frase (con le app e la casa di adesso)
             "cmd" -> understandRaw(rest, apps, usage).firstOrNull()?.takeIf { !it.toOthers && it.kind != Kind.WEB && it.kind != Kind.APP && it.kind != Kind.CALC && (it.act as? Act.Assist)?.guarded != true }

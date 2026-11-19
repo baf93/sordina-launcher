@@ -1,7 +1,12 @@
 package app.sordina.car
 
+import android.app.KeyguardManager
+import android.app.Notification
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.lifecycle.lifecycleScope
 import app.sordina.R
@@ -18,6 +23,10 @@ import kotlinx.coroutines.withContext
  * "Impronta sul telefono" dallo schermo dell'auto: sul telefono compare solo la richiesta d'impronta (o del codice
  * a mano, se l'impronta non va). Poi si fa la cosa, l'esito torna all'auto con [CarBus] e questa schermata sparisce.
  * Annullata la richiesta, sparisce e basta.
+ *
+ * Si apre sul telefono, mai sullo schermo dell'auto: Android non lascia aprire le schermate di un'app sul display
+ * dell'auto. Se il telefono è bloccato o Android non la lascia partire da sola, c'è la notifica "Conferma sul
+ * telefono": la tocchi, sblocchi e metti l'impronta.
  */
 class CarAuthActivity : androidx.activity.ComponentActivity() {
     /** La richiesta è stata mostrata (la finestra ha perso il fuoco) */
@@ -27,7 +36,21 @@ class CarAuthActivity : androidx.activity.ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        getSystemService(NotificationManager::class.java).cancel(ID_NOTIFY)
         if (savedInstanceState != null) { finish(); return }
+        if (Build.VERSION.SDK_INT >= 27) { setShowWhenLocked(true); setTurnScreenOn(true) }
+        // Telefono bloccato: prima lo sblocchi, poi la richiesta d'impronta di Sordina
+        val keyguard = getSystemService(KeyguardManager::class.java)
+        if (Build.VERSION.SDK_INT >= 27 && keyguard.isKeyguardLocked) {
+            keyguard.requestDismissKeyguard(this, object : KeyguardManager.KeyguardDismissCallback() {
+                override fun onDismissSucceeded() { ask() }
+                override fun onDismissCancelled() { cancel() }
+                override fun onDismissError() { cancel() }
+            })
+        } else ask()
+    }
+
+    private fun ask() {
         val app = SordinaApp.of(this)
         val prefs = app.prefs
         val entity = intent.getStringExtra(EXTRA_ENTITY).orEmpty()
@@ -78,11 +101,36 @@ class CarAuthActivity : androidx.activity.ComponentActivity() {
         const val OP_ALARM_ON = "alarmOn"
         const val OP_ASSIST = "assist"
 
-        /** Apre la richiesta sul telefono. Dall'auto: la chiama un pulsante "solo da fermi" */
+        private const val ID_NOTIFY = 7
+        const val CH_CAR = "auto"
+
+        /**
+         * Apre la richiesta sul telefono. Dall'auto: la chiama un pulsante "solo da fermi".
+         * Con il contesto dell'app, non quello dell'auto: quello aprirebbe sullo schermo dell'auto, e Android lo vieta.
+         */
         fun start(context: Context, op: String, entity: String, title: String, text: String? = null): Boolean = runCatching {
-            context.startActivity(Intent(context, CarAuthActivity::class.java)
+            val app = context.applicationContext
+            val intent = Intent(app, CarAuthActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
-                .putExtra(EXTRA_OP, op).putExtra(EXTRA_ENTITY, entity).putExtra(EXTRA_TITLE, title).putExtra(EXTRA_TEXT, text))
+                .putExtra(EXTRA_OP, op).putExtra(EXTRA_ENTITY, entity).putExtra(EXTRA_TITLE, title).putExtra(EXTRA_TEXT, text)
+            notify(app, intent, title)
+            app.startActivity(intent)
         }.isSuccess
+
+        /** La notifica che apre la stessa richiesta: sparisce appena la richiesta si apre */
+        private fun notify(context: Context, intent: Intent, title: String) {
+            val nm = context.getSystemService(NotificationManager::class.java)
+            val pi = PendingIntent.getActivity(context, ID_NOTIFY, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            val n = Notification.Builder(context, CH_CAR)
+                .setSmallIcon(R.drawable.ic_stat)
+                .setContentTitle(tr(R.string.auto_on_phone))
+                .setContentText(title)
+                .setContentIntent(pi)
+                .setAutoCancel(true)
+                .setTimeoutAfter(2 * 60_000L)
+                .setCategory(Notification.CATEGORY_STATUS)
+                .build()
+            runCatching { nm.notify(ID_NOTIFY, n) }
+        }
     }
 }

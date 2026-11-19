@@ -1,5 +1,8 @@
 package app.sordina.ui
 
+import app.sordina.service.CalendarReminders
+import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.material.icons.rounded.EditCalendar
 import app.sordina.data.Backup
 import app.sordina.ui.theme.autoAccent
 import app.sordina.ui.theme.themeAccent
@@ -261,11 +264,20 @@ fun SettingsScreen(
                             change { prefs.homeWeather = v }
                             if (v && !loc) ops.request(Manifest.permission.ACCESS_COARSE_LOCATION)
                         }
-                        Toggle(tr(R.string.n_agenda), prefs.homeAgenda && perms.calendar, null, Icons.Rounded.CalendarToday) { v ->
+                        Toggle(tr(R.string.n_agenda), prefs.homeAgenda && (perms.calendar || app.ha.configured), null, Icons.Rounded.CalendarToday) { v ->
                             change { prefs.homeAgenda = v }
                             if (v && !perms.calendar) ops.request(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
                         }
-                        if (prefs.homeAgenda && perms.calendar) { HomeCalendarsPick(app, ops); CalendarPick(app, ops) }
+                        // Con solo Home Assistant i calendari si scelgono anche senza il permesso del telefono
+                        if (prefs.homeAgenda && (perms.calendar || app.ha.configured)) {
+                            HomeCalendarsPick(app, ops); CalendarPick(app, ops)
+                            // Il calendario di Sordina: gli impegni si vedono e si cambiano qui. I promemoria, se Home Assistant non li fa già
+                            Toggle(tr(R.string.cal_enable), prefs.sordinaCalendar, tr(R.string.cal_enable_hint), Icons.Rounded.EditCalendar) { v -> change { prefs.sordinaCalendar = v } }
+                            if (prefs.sordinaCalendar) Toggle(tr(R.string.cal_remind), prefs.calendarReminders, tr(R.string.cal_remind_hint), Icons.Rounded.NotificationsActive) { v ->
+                                change { prefs.calendarReminders = v }
+                                CalendarReminders.plan(ctx)
+                            }
+                        }
                         Toggle(tr(R.string.n_cards), prefs.homeCards, null, Icons.Rounded.AutoAwesome) { v -> change { prefs.homeCards = v } }
                         // Solo nella versione di prova: tutti i disegni, uno sotto l'altro
                         if ((ctx.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) Line("Tutte le sordine", "", null, Icons.Rounded.Collections) { sub = Sub.MASCOTS }

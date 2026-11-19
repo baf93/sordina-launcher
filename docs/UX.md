@@ -97,6 +97,15 @@ Le app nascoste non compaiono. A mezzanotte si ricomincia; il registro resta sul
 - Le app nascoste sono una riga sola ("App nascoste · N"): chi e cosa si vedono solo dopo lo sblocco.
 - Urgenze e insistenza contano solo dai tuoi contatti: un SMS "URGENTE" da un numero sconosciuto resta in sordina.
 
+### Il calendario di Sordina
+Si accende in Impostazioni › Home, sotto "Impegni" (con i calendari scelti per Casa). Acceso:
+- **In Casa**: la data apre il calendario, un impegno apre quell'impegno. Gli impegni nuovi si fanno dal calendario (il tondo +), non da Casa.
+- **La pagina**: sotto il titolo quando si è parlato con casa ("Aggiornato alle 10:32", "Home Assistant non risponde: è la copia delle 9:10", "In attesa di Home Assistant: 2 modifiche"). Due modi, Settimana e Mese, e la lente. Settimana: i sette giorni con frecce e pallini (oggi cerchiato), sotto solo il giorno scelto, oggi all'inizio. Mese: la griglia con i pallini nei colori dei calendari, sotto il giorno scelto. Il tondo "+" in basso a destra.
+- **Dalla ricerca**: con il calendario acceso, "calendario" (o "agenda", in ogni lingua) apre questo, e l'app del calendario del telefono non si propone.
+- **Un impegno**: un foglio con quando, calendario, luogo (tocco: la mappa), ripetizione, note; Modifica (pieno) ed Elimina (bordo), solo se il calendario lo permette. Per uno che si ripete: modificare "solo questa volta" o "questa e le prossime", eliminare "solo questa volta" o "tutte le volte".
+- **Nuovo o da cambiare**: cosa, tutto il giorno, inizia, finisce (spostando l'inizio la durata resta), ripeti come in Naboo, nel modulo stesso (interruttore Ripeti; Ogni − N +; giorni / settimane / mesi / anni; per le settimane i giorni a lettere; Fine ripetizione con l'ultima volta; sotto, la frase: "Ogni 2 settimane, lun, gio, fino al 18 feb 2027"; una regola fatta altrove resta com'era finché non si tocca), calendario (solo per i nuovi), luogo, note. Giorno e ora si scelgono in un foglio di Sordina (il mese a griglia, sotto due rulli per ore e minuti a passi di 5), mai con le finestre di Android. Senza casa: "Sordina tiene la modifica e la manda dopo", e in elenco l'impegno resta "in attesa".
+- **Promemoria di Sordina** (dentro il calendario, spenti all'inizio): 15 minuti prima, solo per i calendari di casa; il tocco apre l'impegno.
+
 ### Silenzio, notte e auto
 - "Silenzio per 45 minuti", "silenzio fino alle 15" dalla barra: Non disturbare a tempo, poi tutto riprende.
 - Con Non disturbare o una modalità di Android accesa aspettano anche le persone che entrano da un'app sola, le chiamate perse e i promemoria; il resto delle eccezioni passa.

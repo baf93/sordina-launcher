@@ -1352,4 +1352,91 @@
     <string name="auto_s_voice_hint">Rutinitas, rumah, yang menunggu, dan panggilan, dengan suara</string>
     <string name="routine_car">Juga di mobil</string>
     <string name="routine_car_hint">Ubin di Rumah pada layar mobil</string>
+    <string name="ch_car">Konfirmasi dari mobil</string>
+    <string name="auto_no_events_week">Tidak ada acara di kalender beberapa hari ke depan</string>
+    <!-- Il calendario di Sordina -->
+    <string name="cal_title">Kalender</string>
+    <string name="cal_week">Minggu</string>
+    <string name="cal_month">Bulan</string>
+    <string name="cal_search">Cari acara</string>
+    <string name="cal_new">Acara baru</string>
+    <string name="cal_edit">Edit acara</string>
+    <string name="cal_edit_btn">Edit</string>
+    <string name="cal_delete_btn">Hapus</string>
+    <string name="cal_delete_q">Hapus “%1$s”?</string>
+    <string name="cal_delete_text">Acara juga hilang dari %1$s.</string>
+    <string name="cal_repeats_hint">Acara ini berulang</string>
+    <string name="cal_only_this">Hanya yang ini</string>
+    <string name="cal_all">Semuanya</string>
+    <string name="cal_following">Yang ini dan berikutnya</string>
+    <string name="cal_what">Apa</string>
+    <string name="cal_what_missing">Tulis apa ini</string>
+    <string name="cal_all_day">Sepanjang hari</string>
+    <string name="cal_all_day_short">Hari</string>
+    <string name="cal_starts">Mulai</string>
+    <string name="cal_ends">Selesai</string>
+    <string name="cal_end_before">Selesai sebelum mulai</string>
+    <string name="cal_calendar">Kalender</string>
+    <string name="cal_home_hint">Home Assistant</string>
+    <string name="cal_repeat">Ulangi</string>
+    <string name="cal_rep_none">Tidak pernah</string>
+    <string name="cal_rep_daily">Setiap hari</string>
+    <string name="cal_rep_weekly">Setiap minggu</string>
+    <string name="cal_rep_monthly">Setiap bulan</string>
+    <string name="cal_rep_yearly">Setiap tahun</string>
+    <string name="cal_rep_custom">Kustom</string>
+    <string name="cal_rep_end">Akhir pengulangan</string>
+    <string name="cal_every">Setiap</string>
+    <string name="cal_rep_last">Terakhir kali</string>
+    <plurals name="cal_unit_day">
+        <item quantity="other">hari</item>
+    </plurals>
+    <plurals name="cal_unit_week">
+        <item quantity="other">minggu</item>
+    </plurals>
+    <plurals name="cal_unit_month">
+        <item quantity="other">bulan</item>
+    </plurals>
+    <plurals name="cal_unit_year">
+        <item quantity="other">tahun</item>
+    </plurals>
+    <string name="cal_until">sampai %1$s</string>
+    <plurals name="cal_every_day">
+        <item quantity="other">Setiap %d hari</item>
+    </plurals>
+    <plurals name="cal_every_week">
+        <item quantity="other">Setiap %d minggu</item>
+    </plurals>
+    <plurals name="cal_every_month">
+        <item quantity="other">Setiap %d bulan</item>
+    </plurals>
+    <plurals name="cal_every_year">
+        <item quantity="other">Setiap %d tahun</item>
+    </plurals>
+    <plurals name="cal_times">
+        <item quantity="other">%d kali</item>
+    </plurals>
+    <string name="cal_place">Tempat</string>
+    <string name="cal_notes">Catatan</string>
+    <string name="cal_save">Simpan</string>
+    <string name="cal_free_title">Hari yang lowong</string>
+    <string name="cal_empty_day">Tidak ada apa-apa hari ini</string>
+    <string name="cal_no_results">Tidak ditemukan apa-apa</string>
+    <string name="cal_synced">Diperbarui pukul %1$s</string>
+    <string name="cal_offline">Home Assistant tidak menjawab: ini salinan pukul %1$s</string>
+    <string name="cal_pending">Menunggu Home Assistant: %1$d perubahan</string>
+    <string name="cal_pending_one">Menunggu Home Assistant</string>
+    <string name="cal_waiting_badge">menunggu</string>
+    <string name="cal_queued">Tersimpan. Sampai ke Home Assistant begitu ia menjawab</string>
+    <string name="cal_offline_save">Home Assistant tidak menjawab: Sordina menyimpan perubahan dan mengirimnya nanti</string>
+    <string name="cal_refused">Home Assistant menolak: %1$s</string>
+    <string name="cal_failed">Tidak bisa menyimpan</string>
+    <string name="cal_read_only">Kalender ini tidak bisa diubah dari sini</string>
+    <string name="cal_no_books">Tidak ada kalender untuk ditulisi: pilih satu di setelan</string>
+    <string name="cal_enable">Kalender Sordina</string>
+    <string name="cal_enable_hint">Lihat, tambah, dan ubah acara di sini, tanpa membuka aplikasi lain</string>
+    <string name="cal_remind">Pengingat dari Sordina</string>
+    <string name="cal_remind_hint">15 menit sebelum setiap acara. Biarkan mati jika Home Assistant sudah mengingatkanmu</string>
+    <string name="cal_remind_text">Pukul %1$s</string>
+    <string name="ch_cal">Pengingat acara</string>
 </resources>

@@ -136,6 +136,8 @@ data class HomeState(
     val agenda: List<AgendaRow> = emptyList(),
     /** "10° pioggia", su una riga sua sotto la data */
     val weather: String? = null,
+    /** Il calendario di Sordina è acceso: la data lo apre (gli impegni nuovi si fanno da lì) */
+    val calendar: Boolean = false,
     /** Il microfono sta ascoltando; cosa ha capito finora */
     val listening: Boolean = false,
     val partial: String = "",
@@ -249,7 +251,7 @@ private fun DayHome(
             val dayName = now.format(DateTimeFormatter.ofPattern("EEEE", Locale.getDefault())).replaceFirstChar { it.uppercase() }
             val date = now.format(DateTimeFormatter.ofPattern("d MMMM", Locale.getDefault()))
             Row {
-                Column(Modifier.weight(1f)) {
+                Column(Modifier.weight(1f).let { if (state.calendar) it.clickableNoRipple { onAgenda("calendar") } else it }) {
                     Text(dayName, style = TextStyle(fontSize = 34.sp, lineHeight = 40.sp, color = c.ink))
                     Text(date, style = TextStyle(fontSize = 34.sp, lineHeight = 40.sp, color = c.soft))
                 }
