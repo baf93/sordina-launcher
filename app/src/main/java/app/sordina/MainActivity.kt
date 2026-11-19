@@ -2,6 +2,7 @@ package app.sordina
 import app.sordina.ui.Celebration
 
 import app.sordina.data.Backup
+import app.sordina.data.HomeRun
 import app.sordina.data.Signals
 import app.sordina.data.Tally
 import app.sordina.ui.theme.autoAccent
@@ -597,26 +598,9 @@ class MainActivity : ComponentActivity(), Ops {
             screen = Screen.HOME; query = ""
             asking()
             lifecycleScope.launch {
-                val alarm = r.alarm.takeIf { code != null && a != null }
-                if (alarm != null && !r.arm) {
-                    val off = withContext(Dispatchers.IO) { app.ha.disarm(alarm, code!!) }
-                    if (!off) { answer(tr(R.string.routine_alarm_failed, alarmName, r.name), ok = false); return@launch }
-                }
-                val ok = withContext(Dispatchers.IO) { app.ha.runRoutine(entity) }
-                if (!ok) { answer(tr(R.string.routine_failed, r.name), ok = false); return@launch }
-                val armed = if (alarm != null && r.arm) withContext(Dispatchers.IO) {
-                    // Già inserito: va bene così, non si richiede
-                    val st = runCatching { app.ha.state(alarm)?.state }.getOrNull()
-                    if (st != null && (st.startsWith("armed_") || st == "arming" || st == "pending")) true
-                    else app.ha.arm(alarm, a!!.mode ?: "away", code!!)
-                } else null
-                answer(when {
-                    alarm != null && !r.arm -> tr(R.string.routine_done_alarm, r.name, alarmName)
-                    armed == true -> tr(R.string.routine_done_armed, r.name, alarmName)
-                    armed == false -> tr(R.string.routine_arm_failed, r.name, alarmName)
-                    else -> tr(R.string.routine_done, r.name)
-                }, ok = armed != false)
-                Feel(true, prefs.haptics, window.decorView).confirm()
+                val done = withContext(Dispatchers.IO) { HomeRun.routine(app, entity, code) }
+                answer(done.message, ok = done.ok)
+                if (done.ok) Feel(true, prefs.haptics, window.decorView).confirm()
             }
         }
         val lost = { answer(tr(R.string.alarm_code_lost), ok = false) }
@@ -650,9 +634,9 @@ class MainActivity : ComponentActivity(), Ops {
             screen = Screen.HOME; query = ""
             asking()
             lifecycleScope.launch {
-                val ok = withContext(Dispatchers.IO) { app.ha.disarm(entity, code) }
-                answer(if (ok) tr(R.string.alarm_off_done, name) else tr(R.string.alarm_off_failed), ok)
-                if (ok) Feel(true, prefs.haptics, window.decorView).confirm()
+                val done = withContext(Dispatchers.IO) { HomeRun.alarmOff(app, entity, code) }
+                answer(done.message, done.ok)
+                if (done.ok) Feel(true, prefs.haptics, window.decorView).confirm()
             }
         }, onLost = { answer(tr(R.string.alarm_code_lost), ok = false) }) }
     }
@@ -677,9 +661,9 @@ class MainActivity : ComponentActivity(), Ops {
             screen = Screen.HOME; query = ""
             asking()
             lifecycleScope.launch {
-                val ok = withContext(Dispatchers.IO) { app.ha.arm(entity, m, code) }
-                answer(if (ok) tr(R.string.alarm_on_done, a.name, label) else tr(R.string.alarm_on_failed), ok)
-                if (ok) Feel(true, prefs.haptics, window.decorView).confirm()
+                val done = withContext(Dispatchers.IO) { HomeRun.alarmOn(app, entity, m, code) }
+                answer(done.message, done.ok)
+                if (done.ok) Feel(true, prefs.haptics, window.decorView).confirm()
             }
         }
         lifecycleScope.launch {

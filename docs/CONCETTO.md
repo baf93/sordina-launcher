@@ -43,6 +43,9 @@ Tre momenti, ognuno si accende da solo e si spegne quando vuoi:
 - **Notte** (da un'ora scelta): solo l'essenziale, schermo scuro.
 - **Auto** (Android Auto): orologio grande, navigazione, musica, le persone scelte e un microfono che si trova senza guardare.
 
+### Sullo schermo dell'auto
+Sordina è anche un'app di Android Auto, a schermo intero, accanto a Maps e alla musica. Fa solo quello che l'assistente di Google non sa fare: la casa, quello che aspetta in sordina, l'agenda. In alto la mascotte e fino a quattro schede: **Casa** (fino a sei routine di Home Assistant con "Anche in auto"), **In sordina** (chi aspetta, da ascoltare o a cui rispondere a voce, e "fai passare tutti per un'ora"), **Agenda** (gli impegni di oggi, con "Vai") e **Parla** (un tocco: Sordina ascolta, risponde a voce e torna dov'eri). Disattivare un allarme si fa solo da fermi, col codice o con l'impronta sul telefono. Le schede si accendono, spengono e ordinano in Impostazioni › Home › Auto.
+
 ### La pagina Sordina
 Quello che non passa aspetta qui, raggruppato per persona (o per app, se non c'è una persona), finché non lo apri o lo segni letto. Niente riepiloghi a orario: ci vai tu quando vuoi. Nulla viene cancellato. Si legge tutto qui, e un tocco apre l'app nel punto giusto, come la notifica originale.
 
@@ -138,6 +141,7 @@ Escono dal telefono solo:
 - L'apertura nel punto giusto dipende dall'app di origine: se ritira la notifica, Sordina apre l'app e basta.
 - Un launcher non può leggere l'elenco dei tipi di notifica di un'app: Sordina li impara man mano che arrivano.
 - Android Auto annuncia una notifica appena arriva, prima che Sordina la metta in sordina: in auto è Non disturbare a doverla fermare.
+- Sullo schermo dell'auto Sordina non può avere la scheda piccola dello schermo diviso (è solo di navigazione e musica) né widget: per ora è solo a schermo intero.
 
 ## Come capire se funziona
 

@@ -12,8 +12,8 @@ android {
         applicationId = "app.sordina"
         minSdk = 26
         targetSdk = 36
-        versionCode = 17
-        versionName = "0.2.7"
+        versionCode = 18
+        versionName = "0.3.0"
     }
 
     // La chiave di caricamento Play non sta mai su disco: la ricava signing/release.sh da una password e la passa qui
@@ -62,6 +62,9 @@ dependencies {
     implementation("com.google.mlkit:entity-extraction:16.0.0-beta5")
     // Lettore QR di Play Services: niente permesso fotocamera, si apre solo quando lo tocchi
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+    // Sordina sullo schermo dell'auto (Android Auto): solo i modelli di Google, niente disegno libero
+    implementation("androidx.car.app:app:1.7.0")
+    implementation("androidx.car.app:app-projected:1.7.0")
     testImplementation("junit:junit:4.13.2")
     // org.json vero nei test (quello di Android lì è solo uno stub): per provare la copia delle impostazioni
     testImplementation("org.json:json:20240303")

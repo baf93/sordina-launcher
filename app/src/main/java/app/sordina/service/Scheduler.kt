@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import app.sordina.SordinaApp
 import app.sordina.data.Moments
+import app.sordina.data.Prefs
 import java.time.LocalDateTime
 
 /**
@@ -41,13 +42,15 @@ object Scheduler {
         val focusEnd = app.moments.focusUntil()
         // In auto: quando finisce la conversazione in corso, Non disturbare torna ai soli preferiti
         val talkEnd = if (app.prefs.quietCar) Talking.lastUntil()?.let { it + 1_000 } else null
+        // "Fai passare tutti per un'ora" dall'auto: allo scadere Non disturbare torna ai soli preferiti
+        val passEnd = if (app.prefs.quietCar) app.prefs.passUntil[Prefs.PASS_ALL]?.let { it + 1_000 } else null
         val renew = app.store.held.value.values.filter { it.releaseAt > now }.minOfOrNull { it.releaseAt }
             ?.let { maxOf(now + 60_000, it - RENEW_MARGIN) }
         // Un servizio acceso ma scollegato (Android non l'ha riavviato): fra poco si riprova a svegliarlo
         val asleep = (SordinaListener.instance == null && SordinaListener.isEnabled(context)) ||
             (!SordinaAccess.active() && SordinaAccess.isEnabled(context))
         val heal = if (asleep) now + HEAL_GAP else null
-        val next = listOfNotNull(focusEnd, talkEnd, renew, heal).filter { it > now }.minOrNull()
+        val next = listOfNotNull(focusEnd, talkEnd, passEnd, renew, heal).filter { it > now }.minOrNull()
         val am = context.getSystemService(AlarmManager::class.java)
         val pi = PendingIntent.getBroadcast(
             context, 0, Intent(context, TickReceiver::class.java).setAction(ACTION_TICK),

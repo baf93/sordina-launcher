@@ -321,6 +321,9 @@ fun SettingsScreen(
                         DragList(people.map { it.name }, add = tr(R.string.car_pick_people), onAdd = { sub = Sub.CAR_PEOPLE }) { order -> change { prefs.carPeople = order.map { people[it].id } } }
                         if (car.size > 1 || people.size > 1) Hint(tr(R.string.drag_hint), Modifier.padding(start = 12.dp, top = 10.dp))
                     }
+                    // Sullo schermo dell'auto (Android Auto): le schede accese, il loro ordine e Parla
+                    Topic(tr(R.string.auto_s_screen), tr(R.string.auto_s_screen_hint))
+                    CarScreenTabs(prefs, tick) { change(it) }
                 }
 
                 // ── Freno: le opzioni compaiono solo quando c'è almeno un'app frenata
@@ -624,6 +627,34 @@ private fun AppKeys(keys: List<String>, apps: List<AppEntry>, byPackage: Boolean
             })
         }
         if (add != null) Line(add, icon = Icons.Rounded.Add, trailing = {}, onClick = onAdd)
+    }
+}
+
+/** Le schede di Sordina sullo schermo dell'auto: accese o spente (una resta sempre accesa), l'ordine col trascinamento, poi Parla */
+@Composable
+private fun CarScreenTabs(prefs: app.sordina.data.Prefs, tick: Int, change: (() -> Unit) -> Unit) {
+    fun label(id: String) = tr(when (id) {
+        app.sordina.data.Prefs.CAR_TAB_HOME -> R.string.auto_tab_home
+        app.sordina.data.Prefs.CAR_TAB_SORDINA -> R.string.auto_tab_sordina
+        else -> R.string.auto_tab_agenda
+    })
+    fun icon(id: String) = when (id) {
+        app.sordina.data.Prefs.CAR_TAB_HOME -> Icons.Rounded.Home
+        app.sordina.data.Prefs.CAR_TAB_SORDINA -> Icons.Rounded.NotificationsPaused
+        else -> Icons.Rounded.Event
+    }
+    val order = remember(tick) { prefs.carTabs }
+    val off = remember(tick) { prefs.carTabsOff }
+    DragList(order.map(::label)) { o -> change { prefs.carTabs = o.map { order[it] } } }
+    Spacer(Modifier.height(12.dp))
+    Group {
+        order.forEach { id ->
+            val on = id !in off
+            // L'ultima accesa non si spegne
+            val last = on && order.count { it !in off } == 1
+            Toggle(label(id), on, null, icon(id)) { v -> if (!last || v) change { prefs.carTabsOff = if (v) off - id else off + id } }
+        }
+        Toggle(tr(R.string.auto_s_voice), prefs.carVoice, tr(R.string.auto_s_voice_hint), Icons.Rounded.Mic) { v -> change { prefs.carVoice = v } }
     }
 }
 

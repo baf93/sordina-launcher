@@ -190,6 +190,32 @@ fun Calendars.agenda(context: Context, now: Long = System.currentTimeMillis()): 
     return out.ifEmpty { listOfNotNull(next(context, now)) }
 }
 
+/** Gli impegni di oggi con un orario, non ancora finiti, dal primo: la scheda Agenda sullo schermo dell'auto. */
+fun Calendars.today(context: Context, now: Long = System.currentTimeMillis()): List<Upcoming> {
+    if (context.checkSelfPermission(Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) return emptyList()
+    val endOfDay = java.time.LocalDate.now().plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+    val out = ArrayList<Upcoming>()
+    runCatching {
+        val b = CalendarContract.Instances.CONTENT_URI.buildUpon()
+        ContentUris.appendId(b, now - 24 * 3600_000L)
+        ContentUris.appendId(b, endOfDay)
+        context.contentResolver.query(
+            b.build(),
+            arrayOf(CalendarContract.Instances.EVENT_ID, CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN,
+                CalendarContract.Instances.END, CalendarContract.Instances.EVENT_LOCATION),
+            "${shown()} AND ${CalendarContract.Instances.ALL_DAY}=0", null,
+            "${CalendarContract.Instances.BEGIN} ASC",
+        )?.use { c ->
+            while (c.moveToNext()) {
+                if (c.getLong(3) <= now || c.getLong(2) >= endOfDay) continue
+                out += Upcoming(c.getLong(0), c.getString(1).orEmpty().ifBlank { tr(R.string.event) }, c.getLong(2), c.getLong(3),
+                    c.getString(4)?.takeIf { it.isNotBlank() }, null, false)
+            }
+        }
+    }
+    return out
+}
+
 /** Gli appuntamenti di domani (al massimo [limit]), per la sera e la notte. */
 fun Calendars.tomorrow(context: Context, limit: Int = 3): List<Upcoming> {
     if (context.checkSelfPermission(Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) return emptyList()

@@ -312,7 +312,7 @@ object Classifier {
         if (n.ongoing) return Verdict(null, "in corso")
 
         val who = personKey(n)
-        if ((s.passUntil["a:" + n.pkg] ?: 0L) > s.now || (who != null && (s.passUntil["p:$who"] ?: 0L) > s.now)) return Verdict(null, "lasciata passare")
+        if ((s.passUntil[Prefs.PASS_ALL] ?: 0L) > s.now || (s.passUntil["a:" + n.pkg] ?: 0L) > s.now || (who != null && (s.passUntil["p:$who"] ?: 0L) > s.now)) return Verdict(null, "lasciata passare")
 
         if (otp) return Verdict(Level.SUBITO, REASON_OTP)
         if (payAlert) return Verdict(Level.SUBITO, REASON_PAY_ALERT)

@@ -21,7 +21,9 @@ enum class Level { SEMPRE, SUBITO, RIEPILOGO }
  * Una routine di Home Assistant in Sordina. [on]: si lancia (spenta tiene le scelte). [alarm]: un allarme salvato,
  * da disattivare prima ([arm] false) o da inserire dopo ([arm] true). Con un allarme l'impronta c'è sempre.
  */
-data class SavedRoutine(val name: String, val auth: Boolean, val alarm: String? = null, val phrases: List<String> = emptyList(), val arm: Boolean = false, val on: Boolean = true)
+data class SavedRoutine(val name: String, val auth: Boolean, val alarm: String? = null, val phrases: List<String> = emptyList(), val arm: Boolean = false, val on: Boolean = true,
+    /** Anche fra i riquadri di Casa sullo schermo dell'auto */
+    val car: Boolean = false)
 
 /**
  * Un allarme di Home Assistant salvato per l'impronta: [enc] è il codice cifrato, vuoto se l'allarme non lo chiede.
@@ -289,6 +291,20 @@ class Prefs(context: Context) {
     var carHidden: Set<String>
         get() = sp.getStringSet("carHidden", emptySet())!!.toSet()
         set(v) = put { putStringSet("carHidden", v) }
+
+    /** Sullo schermo dell'auto: l'ordine delle schede (tutte, anche quelle spente). Sempre le tre, senza doppioni */
+    var carTabs: List<String>
+        get() = sp.getString("carTabs", null)?.split('|')?.filter { it in CAR_TABS }?.distinct()
+            ?.let { it + CAR_TABS.filter { t -> t !in it } } ?: CAR_TABS
+        set(v) = put { putString("carTabs", v.filter { it in CAR_TABS }.distinct().joinToString("|")) }
+    /** Le schede spente sullo schermo dell'auto. Una resta sempre accesa: se le spegni tutte, torna Casa */
+    var carTabsOff: Set<String>
+        get() = sp.getStringSet("carTabsOff", emptySet())!!.filter { it in CAR_TABS }.toSet().let { if (it.size >= CAR_TABS.size) it - CAR_TAB_HOME else it }
+        set(v) = put { putStringSet("carTabsOff", v) }
+    /** Sullo schermo dell'auto: la scheda Parla */
+    var carVoice: Boolean
+        get() = sp.getBoolean("carVoice", true)
+        set(v) = put { putBoolean("carVoice", v) }
     /** Le parole di casa imparate dalle frasi mandate ad Assist (nomi di dispositivi e stanze), normalizzate */
     var homeWords: Set<String>
         get() = sp.getStringSet("homeWords", emptySet())!!.toSet()
@@ -390,11 +406,11 @@ class Prefs(context: Context) {
                 o.getJSONObject(k).let { j ->
                     val f = j.optJSONArray("f")
                     SavedRoutine(j.optString("n"), j.optBoolean("a", true), j.optString("al").ifBlank { null },
-                        if (f == null) emptyList() else (0 until f.length()).map { f.getString(it) }, j.optBoolean("ar"), j.optBoolean("on", true))
+                        if (f == null) emptyList() else (0 until f.length()).map { f.getString(it) }, j.optBoolean("ar"), j.optBoolean("on", true), j.optBoolean("c"))
                 }
             } }
         }.getOrDefault(emptyMap())
-        set(v) = put { putString("haRoutines", JSONObject().apply { v.forEach { (k, r) -> put(k, JSONObject().put("n", r.name).put("a", r.auth).put("al", r.alarm ?: "").put("f", org.json.JSONArray(r.phrases)).put("ar", r.arm).put("on", r.on)) } }.toString()) }
+        set(v) = put { putString("haRoutines", JSONObject().apply { v.forEach { (k, r) -> put(k, JSONObject().put("n", r.name).put("a", r.auth).put("al", r.alarm ?: "").put("f", org.json.JSONArray(r.phrases)).put("ar", r.arm).put("on", r.on).put("c", r.car)) } }.toString()) }
 
     /** I nomi delle entità di casa che aprono o disarmano (serrature, allarmi, garage, cancelli): vedi [HomeRisk]. Solo su questo telefono */
     var haGuarded: Set<String>
@@ -672,6 +688,13 @@ class Prefs(context: Context) {
             "hidden", "appLevels", "passUntil", "importantNames", "importantInGroups", "talkPass",
             "urgentEnabled", "urgentWords", "channelRules", "personRules", "braked", "systemPass", "missedPass", "remindPass", "noGuess",
         )
+        /** Le schede di Sordina sullo schermo dell'auto, nell'ordine di partenza */
+        const val CAR_TAB_HOME = "home"
+        const val CAR_TAB_SORDINA = "sordina"
+        const val CAR_TAB_AGENDA = "agenda"
+        val CAR_TABS = listOf(CAR_TAB_HOME, CAR_TAB_SORDINA, CAR_TAB_AGENDA)
+        /** "Lascia passare tutto", in [passUntil]: dall'auto, "fai passare tutti per un'ora" */
+        const val PASS_ALL = "*"
         const val MAX_PINNED = 4
         /** Una fissata che non è un'app ("scrivi a Elisa su Telegram"): davanti alla cosa del cervello */
         const val PIN_ACTION = "do:"

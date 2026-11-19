@@ -102,6 +102,16 @@ Le app nascoste non compaiono. A mezzanotte si ricomincia; il registro resta sul
 - Con Non disturbare o una modalità di Android accesa aspettano anche le persone che entrano da un'app sola, le chiamate perse e i promemoria; il resto delle eccezioni passa.
 - In auto, Non disturbare fa passare solo i messaggi delle persone importanti e, mentre scrivi a qualcuno, di tutti: Android Auto annuncia una notifica appena arriva, prima che Sordina la metta in sordina. Le chiamate, se scegli, solo dai contatti; chi richiama entro pochi minuti passa comunque.
 
+### Sullo schermo dell'auto (Android Auto)
+Un'app nel launcher di Android Auto, solo a schermo intero (niente scheda piccola, niente widget). La Modalità Auto del telefono resta com'è. Fa solo cose di Sordina; l'unica eccezione sono le chiamate, e solo a voce.
+
+- **In alto**: la mascotte vera (la sordina d'ottone) e le schede Casa · In sordina · N · Agenda · Parla.
+- **Impostazioni › Home › Auto**: le schede si accendono, spengono e ordinano trascinando; almeno una resta accesa. All'avvio la prima, poi l'ultima usata. Con una scheda sola e senza voce le schede spariscono; con la voce restano quella scheda e Parla. "Pulsante voce" acceso all'inizio, per chi preferisce solo "Ok Google".
+- **Casa**: fino a sei routine con "Anche in auto" acceso nella pagina della routine. Inserire: tocco e conferma. Disattivare: solo da fermi, con il tastierino del codice subito e sotto "Oppure: impronta sul telefono"; il codice scritto vale una volta e non si salva. In movimento Sordina dice "Fermati per disattivare l'allarme" (niente errore rosso). Dopo la routine: la mascotte contenta e si torna indietro da sola.
+- **In sordina**: in cima l'interruttore di cosa passa, "solo importanti" o "tutti per un'ora". Sotto, persone e app che aspettano, con "Ascolta" e "Rispondi a voce" (il testo non si vede mai sullo schermo). Le app nascoste sono solo un numero.
+- **Agenda**: gli impegni di oggi; "Vai" se hanno un indirizzo.
+- **Parla**: una scheda che fa da pulsante. Tocchi, Sordina ascolta, risponde a voce e torna alla scheda di prima. Prima le cose di Sordina (routine, cosa aspetta, cosa passa, agenda, "chiama Anna" con "Chiamo Anna?" da toccare), il resto va ad Assist di Home Assistant: se Home Assistant c'è, non dice mai "non ho capito". Verso le persone serve sempre un tocco; aprire e disattivare chiedono codice o impronta da fermi. App, timer, musica, navigazione libera e messaggi nuovi no: "Questo chiedilo a Google". Le frasi di Sordina valgono in tutte le lingue dell'app, nella lingua scelta.
+
 ## 5. Aspetto
 
 - Un tema sobrio, chiaro, scuro o automatico, con un colore principale (anche quello del telefono).

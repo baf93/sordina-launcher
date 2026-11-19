@@ -5,6 +5,7 @@ import app.sordina.data.TodayItem
 import app.sordina.data.HeldLine
 import app.sordina.data.NotifImages
 import android.app.ActivityOptions
+import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.ComponentName
@@ -493,6 +494,34 @@ class SordinaListener : NotificationListenerService() {
         private const val SYNC_GAP = 30_000L
         /** La prova delle chat a schermo acceso non si ripete prima di così */
         private const val PROBE_GAP = 15 * 60_000L
+
+        /**
+         * Il "Rispondi" di una notifica (quello che mette l'app: WhatsApp, Telegram, Messaggi), anche se è in sordina.
+         * null se la notifica non c'è più o non si può rispondere da fuori.
+         */
+        fun replyAction(key: String): Notification.Action? {
+            val l = instance ?: return null
+            val sbn = runCatching { l.activeNotifications.orEmpty().firstOrNull { it.key == key } }.getOrNull()
+                ?: runCatching { l.snoozedNotifications.orEmpty().firstOrNull { it.key == key } }.getOrNull() ?: return null
+            val n = sbn.notification
+            val all = n.actions.orEmpty().toList() + runCatching { Notification.WearableExtender(n).actions }.getOrNull().orEmpty()
+            fun free(a: Notification.Action) = a.actionIntent != null && a.remoteInputs.orEmpty().any { it.allowFreeFormInput }
+            return all.firstOrNull { free(it) && it.semanticAction == Notification.Action.SEMANTIC_ACTION_REPLY } ?: all.firstOrNull(::free)
+        }
+
+        /** Risponde con [text] col "Rispondi" dell'app. Dopo, la sua risposta passa: state parlando */
+        fun reply(key: String, text: String): Boolean {
+            val l = instance ?: return false
+            val action = replyAction(key) ?: return false
+            return runCatching {
+                val inputs = action.remoteInputs.orEmpty().filter { it.allowFreeFormInput }.toTypedArray()
+                val fill = android.content.Intent()
+                val values = android.os.Bundle().apply { inputs.forEach { putCharSequence(it.resultKey, text) } }
+                android.app.RemoteInput.addResultsToIntent(inputs, fill, values)
+                action.actionIntent.send(l, 0, fill)
+                SordinaApp.of(l).store.get(key)?.let { h -> Talking.mark(h.pkg, h.conversation ?: h.person) }
+            }.isSuccess
+        }
 
         /** Tornato a Casa: ciò che hai letto nelle app aperte nel frattempo esce dalla sordina. */
         fun returnedHome() {

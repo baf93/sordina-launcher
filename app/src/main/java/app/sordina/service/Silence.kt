@@ -47,13 +47,16 @@ class Silence(private val context: Context, private val prefs: Prefs) {
      * Passano chiamate e messaggi dei preferiti (le tue persone importanti), chiamate ripetute,
      * conversazioni prioritarie, sveglie e musica. [messagesFromAnyone]: mentre stai scrivendo a qualcuno.
      */
+    /** Dall'auto hai chiesto di far passare tutti per un po' */
+    private fun passingAll(now: Long) = (prefs.passUntil[app.sordina.data.Prefs.PASS_ALL] ?: 0L) > now
+
     private fun policy(messagesFromAnyone: Boolean) {
         if (Build.VERSION.SDK_INT < 35) return
         // Chiamate: le persone importanti (i preferiti), in auto tutti i contatti, e chi richiama entro pochi minuti. Sveglie e musica sempre.
         // Messaggi: solo i preferiti, o tutti mentre stai scrivendo a qualcuno. Anche in auto: Android Auto annuncia
         // una notifica appena arriva, prima che Sordina la metta in sordina, quindi è Non disturbare a doverla fermare.
         val car = prefs.quietCar
-        val messages = if (messagesFromAnyone && prefs.talkPass) Policy.PRIORITY_SENDERS_ANY else Policy.PRIORITY_SENDERS_STARRED
+        val messages = if ((messagesFromAnyone && prefs.talkPass) || passingAll(System.currentTimeMillis())) Policy.PRIORITY_SENDERS_ANY else Policy.PRIORITY_SENDERS_STARRED
         val categories = Policy.PRIORITY_CATEGORY_CALLS or Policy.PRIORITY_CATEGORY_REPEAT_CALLERS or Policy.PRIORITY_CATEGORY_MESSAGES or
             Policy.PRIORITY_CATEGORY_CONVERSATIONS or Policy.PRIORITY_CATEGORY_ALARMS or Policy.PRIORITY_CATEGORY_MEDIA
         val conversations = Policy.CONVERSATION_SENDERS_IMPORTANT
@@ -81,7 +84,7 @@ class Silence(private val context: Context, private val prefs: Prefs) {
                 // Spento a mano durante il viaggio: resta spento fino al prossimo
                 !isActive() -> { prefs.carDeclined = true; prefs.quietOwned = false; prefs.quietCar = false }
                 // Mentre scrivi a qualcuno passano i messaggi di tutti; finita la conversazione, solo i preferiti
-                else -> runCatching { policy(messagesFromAnyone = Talking.lastUntil(now) != null) }
+                else -> runCatching { policy(messagesFromAnyone = Talking.lastUntil(now) != null || passingAll(now)) }
             }
             return
         }
@@ -89,7 +92,7 @@ class Silence(private val context: Context, private val prefs: Prefs) {
             runCatching {
                 // Prima segna che è il silenzio dell'auto: così valgono le tue scelte per l'auto
                 prefs.quietCar = true
-                policy(messagesFromAnyone = Talking.lastUntil(now) != null)
+                policy(messagesFromAnyone = Talking.lastUntil(now) != null || passingAll(now))
                 nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
                 prefs.quietOwned = true
                 prefs.quietUntil = Long.MAX_VALUE

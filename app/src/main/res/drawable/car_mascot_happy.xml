@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- La sordina contenta, tra le stelline: una routine è andata (come Mood.DONE in ui/Mascot.kt) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp" android:height="96dp"
+    android:viewportWidth="112" android:viewportHeight="112">
+    <group android:translateX="56" android:translateY="64">
+        <path android:strokeColor="#E8A93A" android:strokeWidth="2.6" android:strokeLineCap="round" android:fillColor="#00000000"
+            android:pathData="M-40,-42 L-40,-30 M-46,-36 L-34,-36 M40,-52 L40,-42 M35,-47 L45,-47 M46,-9 L46,-2 M42.5,-5.5 L49.5,-5.5" />
+        <path android:fillColor="#9A6A16" android:pathData="M-3,-54 L3,-54 Q9,-54 9,-48 L9,-46 Q9,-40 3,-40 L-3,-40 Q-9,-40 -9,-46 L-9,-48 Q-9,-54 -3,-54 Z" />
+        <path android:fillColor="#E8A93A" android:pathData="M-12,-42 Q0,-46 12,-42 L33,26 Q34,40 0,40 Q-34,40 -33,26 Z" />
+        <path android:fillColor="#B07A1E" android:pathData="M-30,24 Q0,34 30,24 L32,30 Q0,40 -32,30 Z" />
+        <path android:fillColor="#66D85A30" android:pathData="M-23.25,12 a6.25,3.75 0 1,0 12.5,0 a6.25,3.75 0 1,0 -12.5,0 M10.75,12 a6.25,3.75 0 1,0 12.5,0 a6.25,3.75 0 1,0 -12.5,0" />
+        <path android:strokeColor="#3A2A0E" android:strokeWidth="2.5" android:strokeLineCap="round" android:fillColor="#00000000"
+            android:pathData="M-12,3 Q-8,-3 -4,3 M4,3 Q8,-3 12,3 M-8,11 Q0,20 8,11" />
+    </group>
+</vector>

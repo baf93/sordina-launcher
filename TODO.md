@@ -22,6 +22,19 @@ Niente di aperto.
 - In auto: Android Auto rispetta Non disturbare e annuncia solo i preferiti.
 - "Prova collegamento" di Home Assistant da casa, se l'indirizzo locale è http.
 
+## Da provare in auto (Android Auto, anche con la Desktop Head Unit)
+
+- Sordina compare nel launcher di Android Auto (in debug: "Sorgenti sconosciute" nelle impostazioni sviluppatore di Android Auto).
+- Schede: ordine e accensione da Impostazioni › Home › Auto; una sola scheda senza voce diventa schermata semplice.
+- Parla come scheda: dopo la risposta si torna alla scheda di prima, senza scatti.
+- Microfono dell'auto (Android 13+, Car API 5): Sordina sente dall'auto, non dal telefono in tasca.
+- Velocità: in movimento "Fermati per disattivare l'allarme"; se l'auto non dà la velocità, decidono i pulsanti "solo da fermi".
+- "Impronta sul telefono": l'attività sul telefono si apre davvero mentre Android Auto è collegato.
+- Codice sbagliato: si resta sul tastierino con il motivo.
+- "Rispondi a voce": la risposta parte dall'azione della notifica (WhatsApp, Telegram, SMS).
+- "Tutti per un'ora": passa tutto e dopo un'ora torna da solo a solo importanti.
+
+
 ## Prima della produzione
 
-- Revisione madrelingua delle traduzioni nuove (onboarding, regole, allarmi) e dei comandi delle 20 lingue in `LingueAltre.kt`.
+- Revisione madrelingua delle traduzioni nuove (onboarding, regole, allarmi, schermo dell'auto) e dei comandi delle 20 lingue in `LingueAltre.kt` e delle frasi di Parla in `car/CarPhrases.kt`.

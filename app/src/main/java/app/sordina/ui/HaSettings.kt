@@ -22,6 +22,7 @@ import androidx.compose.material.icons.rounded.Accessibility
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ContentPaste
+import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Key
@@ -375,6 +376,7 @@ internal fun HaRoutinePage(app: SordinaApp, id: String, name: String) {
             Toggle(tr(R.string.routine_auth), r.auth || forced, if (forced) tr(R.string.routine_auth_needed) else null, Icons.Rounded.Fingerprint) { v ->
                 if (!forced) update(r.copy(auth = v))
             }
+            Toggle(tr(R.string.routine_car), r.car, tr(R.string.routine_car_hint), Icons.Rounded.DirectionsCar) { v -> update(r.copy(car = v)) }
             alarms.forEach { (a, s) ->
                 Toggle(tr(R.string.routine_arm_x, s.name), r.alarm == a && r.arm, null, Icons.Rounded.Shield) { v ->
                     update(if (v) r.copy(alarm = a, arm = true, auth = true) else r.copy(alarm = null, arm = false))
