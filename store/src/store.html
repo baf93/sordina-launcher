@@ -97,6 +97,35 @@
   .acts { display: flex; gap: 8px; margin-top: 4px; }
   .acts div { flex: 1; height: 38px; border-radius: 19px; background: var(--line); display: flex; align-items: center; justify-content: center; }
   .acts .mi { font-size: 20px; }
+  /* La pagina Sordina com'è nell'app: testata grande, categorie piccole, gruppi impilati e chiusi, il chip col numero */
+  .sphead { display: flex; align-items: flex-start; padding: 14px 16px 8px; }
+  .sphead .back { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; margin-right: 4px; }
+  .sphead .back .mi { font-size: 24px; }
+  .sphead h2 { font-size: 30px; line-height: 36px; font-weight: 400; margin: 4px 0 0; }
+  .sphead p { font-size: 15px; color: var(--usoft); margin: 2px 0 0; }
+  .spsec { font-size: 14px; color: var(--usoft); padding: 18px 24px 8px; }
+  .spg { margin: 0 12px 2px; background: var(--card); border-radius: 6px; padding: 14px 16px; }
+  .spg.top { border-top-left-radius: 20px; border-top-right-radius: 20px; }
+  .spg.bot { border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
+  .sprow { display: flex; align-items: center; }
+  .spav { width: 40px; height: 40px; border-radius: 20px; flex: none; position: relative; display: flex; align-items: center; justify-content: center; font-size: 17px;
+          background: color-mix(in srgb, var(--uacc) 16%, transparent); color: var(--uacc); }
+  .spav.app { border-radius: 11px; color: #fff; }
+  .spav.app .mi { font-size: 22px; }
+  .spav small { position: absolute; right: -2px; bottom: -2px; width: 18px; height: 18px; border-radius: 5px; background: var(--card); padding: 1.5px; box-sizing: border-box; }
+  .spav small span { display: flex; width: 100%; height: 100%; border-radius: 4px; align-items: center; justify-content: center; }
+  .spav small .mi { font-size: 10px; color: #fff; }
+  .spcol { flex: 1; min-width: 0; margin-left: 12px; }
+  .spt { font-size: 16.5px; display: flex; align-items: baseline; white-space: nowrap; }
+  .spt span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .spt i { font-style: normal; font-size: 13px; color: var(--usoft); flex: none; margin-left: 4px; }
+  .spp { font-size: 14.5px; color: var(--usoft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  .spchip { margin-left: 10px; border: 1px solid var(--line); border-radius: 11px; padding: 2px 3px 2px 8px; display: flex; align-items: center; color: var(--usoft); font-size: 13px; }
+  .spchip.one { padding-left: 3px; }
+  .spchip .mi { font-size: 18px; }
+  .spmsg { padding: 8px 0 8px 52px; display: flex; font-size: 15.5px; line-height: 21px; }
+  .spmsg i { margin-left: auto; padding-left: 10px; font-style: normal; font-size: 12px; color: var(--usoft); }
+  .spall { margin: 18px auto 0; height: 40px; border-radius: 20px; border: 1px solid var(--line); padding: 0 20px; display: flex; align-items: center; justify-content: center; font-size: 14px; width: max-content; }
   .readall { position: absolute; left: 16px; right: 16px; bottom: 22px; height: 52px; border-radius: 26px; background: #EDEDED; color: #121212;
              display: flex; align-items: center; justify-content: center; font-size: 17px; box-shadow: 0 -10px 30px #000; }
 
@@ -177,6 +206,7 @@
 <script>
 const T = {
   it: {
+    waiting: '8 in attesa',
     day: 'Lunedì', date: '16 novembre', weather: '8° sereno', today: 'Oggi', tomorrow: 'Domani',
     ev1: 'Riunione di progetto', ev2: 'Pranzo con Giulia', ev3: 'Dentista',
     search: 'Cosa ti serve?', inMin: 'Tra 5 min', calendar: 'Calendario',
@@ -202,6 +232,7 @@ const T = {
     fSay: 'Niente di urgente fino alle&nbsp;13', fSmall: 'Sordina', fTag: 'Il telefono che non ti interrompe.',
   },
   en: {
+    waiting: '8 waiting',
     day: 'Monday', date: 'November 16', weather: '46° clear', today: 'Today', tomorrow: 'Tomorrow',
     ev1: 'Project meeting', ev2: 'Lunch with Julia', ev3: 'Dentist',
     search: 'What do you need to do?', inMin: 'In 5 min', calendar: 'Calendar',
@@ -227,6 +258,7 @@ const T = {
     fSay: 'Nothing urgent until 1&nbsp;PM', fSmall: 'Sordina', fTag: "The phone that doesn't interrupt you.",
   },
   es: {
+    waiting: '8 en espera',
     day: 'Lunes', date: '16 de noviembre', weather: '8° despejado', today: 'Hoy', tomorrow: 'Mañana',
     ev1: 'Reunión de proyecto', ev2: 'Comida con Julia', ev3: 'Dentista',
     search: '¿Qué necesitas?', inMin: 'En 5 min', calendar: 'Calendario',
@@ -252,6 +284,7 @@ const T = {
     fSay: 'Nada urgente hasta las&nbsp;13', fSmall: 'Sordina', fTag: 'El móvil que no te interrumpe.',
   },
   fr: {
+    waiting: '8 en attente',
     day: 'Lundi', date: '16 novembre', weather: '8° dégagé', today: "Aujourd'hui", tomorrow: 'Demain',
     ev1: 'Réunion de projet', ev2: 'Déjeuner avec Julie', ev3: 'Dentiste',
     search: "De quoi avez-vous besoin ?", inMin: 'Dans 5 min', calendar: 'Agenda',
@@ -277,6 +310,7 @@ const T = {
     fSay: "Rien d'urgent avant&nbsp;13&nbsp;h", fSmall: 'Sordina', fTag: 'Le téléphone qui ne vous interrompt pas.',
   },
   de: {
+    waiting: '8 warten',
     day: 'Montag', date: '16. November', weather: '8° klar', today: 'Heute', tomorrow: 'Morgen',
     ev1: 'Projektbesprechung', ev2: 'Mittagessen mit Julia', ev3: 'Zahnarzt',
     search: 'Was brauchst du?', inMin: 'In 5 Min.', calendar: 'Kalender',
@@ -302,6 +336,7 @@ const T = {
     fSay: 'Nichts Dringendes bis 13&nbsp;Uhr', fSmall: 'Sordina', fTag: 'Das Handy, das dich nicht unterbricht.',
   },
   pt: {
+    waiting: '8 à espera',
     day: 'Segunda-feira', date: '16 de novembro', weather: '8° céu limpo', today: 'Hoje', tomorrow: 'Amanhã',
     ev1: 'Reunião do projeto', ev2: 'Almoço com a Júlia', ev3: 'Dentista',
     search: 'Do que você precisa?', inMin: 'Em 5 min', calendar: 'Agenda',
@@ -376,24 +411,25 @@ function shot(lang, n) {
       <div class="zone">${mascot(3)}<div class="bubble"><div class="col">${sig('#1C6FD1', 'event', t.calendar + ' · 1/3')}<div class="ttl">${t.ev1}</div><div class="sub">${t.inMin}</div></div>
       <div class="round">${mi('videocam')}</div></div></div>`);
   } else if (n === 2) {
-    const blk = (init, col, appCol, appIc, title, cnt, who, prev, time) => `<div class="block"><div class="brow">
-      <div class="av" style="background:${col}">${init}<small style="background:${appCol}">${mi(appIc)}</small></div>
-      <div class="bcol"><div class="bt">${title}${cnt ? `<b>${cnt}</b>` : ''}</div><div class="bp">${who ? `<b>${who}</b> ` : ''}${prev}</div></div>
-      <span class="btime">${time}</span>${mi('keyboard_arrow_down', 'font-size:20px;color:var(--usoft);margin-left:2px')}</div></div>`;
-    inner = phone('dark', `<div class="pagehead">${mi('arrow_back')}${t.sordina}</div>
-      <div class="sec">${t.people}<span>2</span></div>
-      <div class="block"><div class="brow"><div class="av" style="background:${FACE[3]}">${t.p1[0]}<small style="background:#25A35A">${mi('chat')}</small></div>
-        <div class="bcol"><div class="bt">${t.p1}<b>2</b></div></div><span class="btime">18:42</span>${mi('keyboard_arrow_up', 'font-size:20px;color:var(--usoft);margin-left:2px')}</div>
-        <div class="msg"><div class="h">${t.p1m}<i>18:40</i></div></div>
-        <div class="msg"><div class="h">${t.p1m2}<i>18:42</i></div></div>
-        <div class="acts"><div>${mi('notifications_active', 'color:var(--uacc)')}</div><div>${mi('drive_file_move')}</div><div>${mi('done_all')}</div></div></div>
-      ${blk(t.p2[0], FACE[1], '#25A35A', 'chat', t.p2, 5, t.p2s, t.p2m, '18:15')}
-      <div class="sec">${t.work}<span>2</span></div>
-      ${blk('O', '#A8C5DA', '#1C6FD1', 'mail', t.w1, 0, t.w1s, t.w1m, '17:30')}
-      ${blk('T', '#B8A9D9', '#5B5FC7', 'groups', t.w2, 3, t.w2s, t.w2m, '17:02')}
-      <div class="sec">${t.shop}<span>1</span></div>
-      ${blk('C', '#CFB194', '#8A6A3A', 'local_shipping', t.s1, 0, t.s1s, t.s1m, '15:20')}
-      <div class="readall">${t.readAll}</div>`);
+    // Gruppi chiusi come nell'app; Giulia aperta per far vedere i messaggi
+    const av = (init, appCol, appIc) => `<div class="spav">${init}<small><span style="background:${appCol}">${mi(appIc)}</span></small></div>`;
+    const avApp = (col, ic) => `<div class="spav app" style="background:${col}">${mi(ic)}</div>`;
+    const chip = (n, up) => `<div class="spchip${n > 1 ? '' : ' one'}">${n > 1 ? n : ''}${mi(up ? 'keyboard_arrow_up' : 'keyboard_arrow_down')}</div>`;
+    const grp = (cls, avatar, title, time, prev, n) => `<div class="spg ${cls}"><div class="sprow">${avatar}
+      <div class="spcol"><div class="spt"><span>${title}</span><i>· ${time}</i></div><div class="spp">${prev}</div></div>${chip(n, false)}</div></div>`;
+    inner = phone('dark', `<div class="sphead"><div class="back">${mi('arrow_back')}</div><div><h2>${t.sordina}</h2><p>${t.waiting} · 18:42</p></div></div>
+      <div class="spsec">${t.people}</div>
+      <div class="spg top"><div class="sprow">${av(t.p1[0], '#25A35A', 'chat')}
+        <div class="spcol"><div class="spt"><span>${t.p1}</span><i>· 18:42</i></div></div>${chip(2, true)}</div>
+        <div class="spmsg" style="padding-top:12px">${t.p1m}<i>18:40</i></div>
+        <div class="spmsg">${t.p1m2}<i>18:42</i></div></div>
+      ${grp('bot', av(t.p2[0], '#25A35A', 'chat'), t.p2, '18:15', t.p2s + ': ' + t.p2m, 3)}
+      <div class="spsec">${t.work}</div>
+      ${grp('top', avApp('#1C6FD1', 'mail'), t.w1s, '17:30', t.w1 + ' · ' + t.w1m, 1)}
+      ${grp('bot', avApp('#5B5FC7', 'groups'), t.w2, '17:02', t.w2m, 2)}
+      <div class="spsec">${t.shop}</div>
+      ${grp('top bot', avApp('#8A6A3A', 'local_shipping'), t.s1s, '15:20', t.s1 + ' · ' + t.s1m, 1)}
+      <div class="spall">${t.readAll}</div>`);
   } else if (n === 3) {
     inner = phone('dark', `${homeTop(t)}<div class="grow"></div>${searchBar(t)}
       <div class="zone">${mascot(2)}<div class="bubble"><div class="col">${sig('#2E7D5B', 'account_balance', t.bank + ' · 1/2')}<div class="code">482 913</div>

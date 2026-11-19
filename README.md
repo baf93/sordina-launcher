@@ -188,14 +188,6 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 The debug build installs as `app.sordina.debug`, next to the release one (`app.sordina`).
 
-### Release
-
-The upload key is never stored: `signing/release.sh` derives it from a password (PBKDF2-HMAC-SHA256, 2²¹ rounds, then a deterministic RSA-3072 key), checks its fingerprint against [signing/upload-cert.sha256](signing/upload-cert.sha256) and builds the signed bundle. Google Play App Signing holds the app key.
-
-```bash
-signing/release.sh   # → app/build/outputs/bundle/release/app-release.aab
-```
-
 ## 🗂️ Repository
 
 - `app/src/main/java/app/sordina/data`: Intents, rules, cards, calendar, people, weather, Home Assistant, the on-device learning (`brain/`); languages in `Lingue.kt` (it, en, es, fr, de, pt) and `LingueAltre.kt` (one data pack per other language)
@@ -205,7 +197,6 @@ signing/release.sh   # → app/build/outputs/bundle/release/app-release.aab
 - `app/src/test`: Unit tests (dates, commands in every language, rules, home safety, screen time…)
 - `docs/`: Concept and UX notes (Italian)
 - `store/`: Play Store texts (it, en, es, fr, de, pt), graphics (rendered from `store/src/store.html`), privacy policy, Play Console notes
-- `signing/`: Password-derived upload key
 
 ## 🤝 Contributing
 
