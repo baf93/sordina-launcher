@@ -65,7 +65,8 @@ class Contexts(private val service: SordinaListener) {
                     UiModeManager.ACTION_EXIT_CAR_MODE -> { Tally.onCarExit(c); app.brain.onState("car", false); Scheduler.refresh(c) }
                     // Schermo acceso: prima che tu guardi, le posticipate aggiornate (un messaggio urgente
                     // arrivato in una chat in sordina) tornano; e il freno ricomincia a guardare, se serve
-                    Intent.ACTION_SCREEN_ON -> { SordinaListener.sync(); BrakeGuard.screenOn(c, app.prefs) }
+                    // Anche le chat lette altrove (dal PC) escono dalla sordina, al massimo ogni quarto d'ora
+                    Intent.ACTION_SCREEN_ON -> { SordinaListener.sync(); SordinaListener.screenOn(); BrakeGuard.screenOn(c, app.prefs) }
                     // Sbloccato: quello che è scaduto mentre dormiva va rimesso a posto subito, non al prossimo giro
                     Intent.ACTION_USER_PRESENT -> SordinaListener.sync(force = true)
                 }

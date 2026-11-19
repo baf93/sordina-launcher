@@ -379,7 +379,8 @@ class MainActivity : ComponentActivity(), Ops {
         // Le app frenate possono essere cambiate: l'accessibilità ascolta solo quelle
         SordinaAccess.refresh()
         SordinaListener.sync()
-        moment = app.moments.current()
+        SordinaListener.returnedHome()
+        moment =app.moments.current()
         scene = app.moments.scene()
         alarmFeedback()
         // Tornando da un'app la situazione è cambiata (l'app di prima, il luogo): si ricalcola, mai mentre guardi.

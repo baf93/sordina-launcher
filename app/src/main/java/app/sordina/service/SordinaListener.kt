@@ -47,6 +47,69 @@ class SordinaListener : NotificationListenerService() {
     }
     private var lastResync = 0L
 
+    /*
+     * Letto nell'app: quando un'app chiude una notifica posticipata, Android la segna chiusa ma la lascia
+     * nell'elenco delle posticipate e non avvisa nessuno. Sordina la rinnoverebbe per sempre. L'unico modo
+     * per saperlo è farla tornare: fra mezzo secondo quelle chiuse Android le scarta, le altre tornano e
+     * vanno di nuovo in sordina (come quando arrivano). Solo a eventi: ritorno a Casa da un'app che ha
+     * notifiche in sordina, e schermo acceso per le chat (lette dal PC), al massimo ogni [PROBE_GAP].
+     */
+    /** Le notifiche fatte tornare per prova: al ritorno non sono nuove (niente conteggi né schede) */
+    private val probing = HashSet<String>()
+    private val probed = HashSet<String>()
+    private val probeDone = Runnable {
+        probing.clear()
+        val pkgs = HashSet(probed); probed.clear()
+        Faults.guard("probe.done") { resync(pkgs) }
+    }
+    private var lastAppsCheck = 0L
+    private var lastChatProbe = 0L
+
+    private fun probe(pkgs: Set<String>) {
+        if (pkgs.isEmpty()) return
+        val now = System.currentTimeMillis()
+        val keys = SordinaApp.of(this).store.held.value.values.filter { it.releaseAt > now && it.pkg in pkgs }.map { it.key }
+        if (keys.isEmpty()) return
+        val snoozed = Faults.guard("probe.snoozed") { snoozedNotifications }?.mapTo(HashSet()) { it.key } ?: return
+        for (k in keys) if (k in snoozed && runCatching { snoozeNotification(k, 500) }.isSuccess) probing += k
+        probed += pkgs
+        main.removeCallbacks(probeDone)
+        main.postDelayed(probeDone, 2_500)
+    }
+
+    /** Le app che sono state davanti da [since]: poche righe di eventi, solo quelle con qualcosa in sordina. */
+    private fun usedSince(since: Long, among: Set<String>): Set<String> {
+        val usm = getSystemService(android.app.usage.UsageStatsManager::class.java) ?: return emptySet()
+        val ev = usm.queryEvents(since, System.currentTimeMillis()) ?: return emptySet()
+        val e = android.app.usage.UsageEvents.Event()
+        val used = HashSet<String>()
+        while (ev.hasNextEvent()) {
+            ev.getNextEvent(e)
+            if (e.eventType == android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED && e.packageName in among) used += e.packageName
+        }
+        return used
+    }
+
+    /** Ritorno a Casa: le app aperte da allora che hanno notifiche in sordina fanno la prova. */
+    private fun checkUsedApps() {
+        val now = System.currentTimeMillis()
+        val since = maxOf(lastAppsCheck, now - 30 * 60_000L)
+        lastAppsCheck = now
+        val waiting = SordinaApp.of(this).store.held.value.values.filter { it.releaseAt > now }.mapTo(HashSet()) { it.pkg }
+        if (waiting.isEmpty()) return
+        probe(usedSince(since, waiting))
+    }
+
+    /** Schermo acceso: le chat lette altrove (PC, altro telefono). Poche volte l'ora. */
+    private fun checkChats() {
+        val now = System.currentTimeMillis()
+        if (now - lastChatProbe < PROBE_GAP) return
+        val chats = SordinaApp.of(this).store.held.value.values.filter { it.releaseAt > now && it.isMessage }.mapTo(HashSet()) { it.pkg }
+        if (chats.isEmpty()) return
+        lastChatProbe = now
+        probe(chats)
+    }
+
     /** Una regola è cambiata (da qualunque schermata): fra un attimo si ricontrolla tutto, una volta sola anche se ne cambiano tante */
     private val rulesRun = Runnable { reapply(this, all = true) }
     private var rulesWatch: android.content.SharedPreferences.OnSharedPreferenceChangeListener? = null
@@ -85,7 +148,8 @@ class SordinaListener : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         main.post {
-            Faults.guard("posted") { handle(sbn, fresh = true) }
+            val back = probing.remove(sbn.key)
+            Faults.guard("posted") { handle(sbn, fresh = !back) }
             trayChanges.value++
         }
     }
@@ -417,6 +481,18 @@ class SordinaListener : NotificationListenerService() {
         private const val RENEW_BELOW = 18L * 3_600_000
         /** Un giro completo chiesto da fuori (sblocco, ritorno a Casa) non si ripete prima di così */
         private const val SYNC_GAP = 30_000L
+        /** La prova delle chat a schermo acceso non si ripete prima di così */
+        private const val PROBE_GAP = 15 * 60_000L
+
+        /** Tornato a Casa: ciò che hai letto nelle app aperte nel frattempo esce dalla sordina. */
+        fun returnedHome() {
+            instance?.let { l -> l.main.post { Faults.guard("probe.apps") { l.checkUsedApps() } } }
+        }
+
+        /** Schermo acceso: le chat lette altrove escono dalla sordina. */
+        fun screenOn() {
+            instance?.let { l -> l.main.post { Faults.guard("probe.chats") { l.checkChats() } } }
+        }
         /** Cresce a ogni notifica arrivata o tolta: chi mostra la tendina si aggiorna solo allora */
         val trayChanges = kotlinx.coroutines.flow.MutableStateFlow(0)
         @Volatile var instance: SordinaListener? = null
