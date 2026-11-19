@@ -4,55 +4,61 @@
 Sordina – Launcher calmo
 
 ## Descrizione breve (max 80)
-Il telefono che non ti interrompe: l'importante passa, il resto aspetta te.
+Le notifiche aspettano te. Dici cosa ti serve, e il telefono torna in silenzio.
 
 ## Descrizione completa (max 4000)
-Prendi il telefono perché ti serve, fai la cosa, e lui torna in silenzio. Niente ti invita a restare, niente di importante ti sfugge.
+Quante volte hai preso il telefono per guardare l'ora e l'hai posato venti minuti dopo?
 
-Sordina è un launcher per Android che mette il telefono in sordina. Non è una griglia di icone con meno icone: parte da quello che vuoi fare e dal momento in cui sei.
+Sordina è un launcher per Android che rimette il telefono al suo posto: lo prendi perché ti serve, fai la cosa e lui torna in silenzio. L'importante passa subito, il resto aspetta che sia tu a cercarlo. Funziona dal primo minuto, senza configurare niente; poi lo cambi come vuoi.
 
-★ CASA, CALMA
-Data, meteo e i prossimi impegni. Una barra dove scrivere o dire cosa ti serve. In basso la sordina, la piccola mascotte d'ottone, che ti dice solo quello che conta adesso. Nient'altro.
+★ UNA CASA CHE NON TI CHIAMA
+Al posto della griglia di icone: data, meteo, il prossimo impegno e una barra dove scrivere o dire cosa ti serve. In basso c'è la sordina, la piccola mascotte d'ottone, che ti dice solo quello che conta adesso.
 
 ★ LE NOTIFICHE ASPETTANO TE
-Le persone importanti, le chiamate, i codici di verifica e le urgenze passano subito. Il resto resta in sordina: lo trovi nella pagina Sordina, raggruppato per persona, quando decidi tu. Nulla si perde e nulla si cancella da solo.
-• Regole semplici per persona, per app o per tipo di notifica
-• Ogni notifica in attesa ti dice perché aspetta
-• Le foto delle notifiche si vedono anche lì
-• "Sordina per 45 minuti": silenzio a tempo, poi tutto riparte
+Tutto resta in sordina, tranne quello che scegli tu:
+• Importanti: codici di verifica, banca, chiamate perse, messaggi urgenti
+• Le app che vuoi far passare, intere o senza i tipi di notifica che non ti servono
+• Le persone che contano, ovunque o solo su un'app
+Il resto lo ritrovi nella pagina Sordina, raggruppato per persona, quando decidi tu. Non si perde niente. E se qualcuno ti scrive tre volte in cinque minuti, passa lo stesso.
+Ti serve silenzio? "Sordina per 45 minuti", poi tutto riparte.
 
-★ QUELLO CHE SERVE, QUANDO SERVE
-Il fumetto della sordina ti porge una cosa alla volta, già pronta da toccare:
+★ UNA COSA ALLA VOLTA, GIÀ PRONTA
+Il fumetto della sordina ti porge quello che serve adesso:
 • il codice di verifica da copiare, con il tempo che scade
-• la riunione che sta per iniziare, con "Partecipa" per Teams, Meet e Zoom
-• la corsa, il pacco, il pagamento, la musica che stai ascoltando
-• le domande della tua casa intelligente, con le sue risposte
-Scorri di lato per passare alla cosa dopo. Se c'è un'immagine, trascina in su per vederla.
+• la riunione che inizia, con "Partecipa" per Teams, Meet, Zoom e Webex
+• la corsa, il pacco, il pagamento, la canzone che stai ascoltando
+• la foto del citofono o del corriere: trascina in su e la vedi senza aprire l'app
 
-★ PRIMA L'INTENZIONE, POI L'APP
-"Chiama Anna", "scrivi a Marco che arrivo", "timer 10 minuti", "calcetto domani alle 17", "spegni le luci della sala". Scrivi o parla: Sordina fa la cosa giusta, senza farti cercare l'app. La voce viene riconosciuta sul telefono.
+★ DILLO, ED È FATTO
+"Chiama Anna". "Scrivi a Marco che arrivo". "Svegliami domani alle 7". "Calcetto giovedì alle 20". "Spegni le luci della sala".
+Sordina fa la cosa giusta senza farti cercare l'app: chiama, scrive su WhatsApp, Telegram, Signal o SMS, mette sveglia e timer, segna l'impegno in calendario, avvia il navigatore. La voce è riconosciuta sul telefono, e i comandi funzionano in tutte le 27 lingue dell'app.
+
+★ UN DOSSO PER LE APP DEL "TANTO PER"
+Le app che apri per riflesso ti chiedono qualche secondo prima di aprirsi, e così i loro siti nel browser. Se vuoi, dai a ognuna un tempo al giorno. Quelle che ti servono si aprono subito.
 
 ★ LA CASA CAMBIA CON TE
-• Sera: la giornata si chiude, un riassunto in una riga, nessun grafico
+• Sera: la giornata si chiude con una riga, tempo al telefono e sblocchi, nessun grafico
 • Notte: solo l'essenziale, schermo scuro
-• In auto: ora grande, le tue app di navigazione e musica, le persone che hai scelto e un microfono che si colpisce senza guardare
-Ogni modalità si accende e si spegne quando vuoi.
+• In auto: ora grande, navigazione, musica, le persone che hai scelto e un microfono da toccare senza guardare
 
-★ FRENA LE APP DEL "TANTO PER"
-Le app che apri per riflesso chiedono un attimo prima di aprirsi. Quelle che ti servono si aprono subito.
+★ PICCOLE VITTORIE, NESSUNA PRESSIONE
+Imprese e adesivi della mascotte festeggiano le scelte fatte. Nessuna notifica per tenere viva una serie: quello che vinci resta tuo.
 
-★ HOME ASSISTANT (FACOLTATIVO)
-Collega la tua casa: comandi a voce o scritti e le domande della casa direttamente nel fumetto. Sordina funziona benissimo anche senza.
+★ HOME ASSISTANT, SE CE L'HAI
+Luci, tapparelle, scene e domande dalla stessa barra. Routine come "Esco" o "Entro" con un tocco, anche insieme all'allarme. Aprire porte, cancelli e garage o disattivare l'allarme chiede prima l'impronta. Senza Home Assistant, Sordina funziona benissimo.
 
 ★ TUTTO RESTA SUL TELEFONO
-Niente account, niente pubblicità, niente tracciamento, nessun server di Sordina. Le uniche richieste in rete sono il meteo (Open-Meteo, con una posizione approssimata a circa 10 km) e, se lo colleghi, il tuo Home Assistant. Il codice è open source (GPL-3.0).
+Niente account, niente pubblicità, niente tracciamento, nessun server di Sordina. Notifiche, contatti, calendario e quello che Sordina impara restano sul telefono. In rete escono solo il meteo (Open-Meteo, posizione arrotondata a circa 10 km) e, se lo colleghi, il tuo Home Assistant. Il codice è open source (GPL-3.0): chiunque può controllarlo.
 
-★ FATTA BENE
-Chiara, scura o automatica, con sfondi a tinta unita, astratti o il tuo sfondo: le scritte restano sempre leggibili. Disponibile in 27 lingue.
+★ FATTA CON CURA
+Chiara, scura o automatica. Sfondo a tinta unita, astratto o il tuo, con le scritte sempre leggibili. Telefoni e tablet, 27 lingue. Gratis, senza acquisti in app.
 
-Sordina è gratuita, senza acquisti in app.
-
-Nota: Sordina usa l'accesso alle notifiche per decidere cosa passa e cosa aspetta, e l'accesso all'utilizzo per ordinare le app nella ricerca e per il riassunto della sera. Questi dati non lasciano mai il telefono.
+Permessi: l'accesso alle notifiche serve a decidere cosa passa e cosa aspetta; l'accesso all'utilizzo a ordinare le app nella ricerca e al riepilogo della sera. Il servizio di accessibilità è facoltativo: serve al freno istantaneo, al doppio tocco per bloccare lo schermo e a scrivere le frasi in Home Assistant o Signal. Sordina lo spiega e chiede il consenso prima di attivarlo. Nessuno di questi dati lascia il telefono.
 
 ## Novità di questa versione (max 500)
-Prima versione di prova: Casa calma, notifiche in sordina, fumetti con codici, riunioni e immagini, modalità sera, notte e auto. Grazie per provarla: ogni commento è prezioso.
+• I comandi funzionano in tutte le 27 lingue dell'app
+• Il fumetto della sordina risponde anche ai comandi scritti e alle routine di casa
+• Riepilogo della sera più essenziale: tempo al telefono e sblocchi
+• Impronta prima di aprire porte e cancelli, anche dai pulsanti delle notifiche
+• Tempo al telefono contato come Benessere digitale
+• Se manca la lingua per la voce, Sordina la scarica

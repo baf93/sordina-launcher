@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  Android 8+ · 27 languages · no account · no ads · no tracking · no servers · GPL-3.0
+  Android 8+ · 27 languages, voice and typed commands included · no account · no ads · no tracking · no servers · GPL-3.0
 </p>
 
 > 🇮🇹 *Sordina* è un launcher per Android che mette il telefono in sordina: l'importante passa, il resto aspetta te. Tutto resta sul telefono. La scheda del Play Store in italiano è in [store/listing/it.md](store/listing/it.md).
@@ -64,10 +64,16 @@ Light, dark or automatic; solid, abstract or your own wallpaper, and text always
 
 ### 🔕 Notifications wait for you
 
-Important people, calls, verification codes and urgent messages **get through instantly**. Everything else is held on the Sordina page, grouped by person, until *you* decide to look.
+Everything waits in Sordina, **except what you choose**:
+
+1. **Important**: verification codes, banking and security, missed calls, messages marked urgent (on from the start)
+2. **Apps** you let in, whole or minus the notification types you don't want
+3. **People** who matter, everywhere or only on one app
+
+The rest is held on the Sordina page, grouped by person, until *you* decide to look.
 
 - **nothing gets lost**: held notifications stay until you read them
-- **you set the rules**, per person, per app, per notification type, and every held notification tells you why it's waiting
+- **every held notification tells you why it's waiting**, and one long-press changes the rule
 - **real urgency still gets through**: "urgent", "call me", or three messages in five minutes from one person
 - **timed silence**: "mute for 45 minutes", "quiet until 3pm", then everything resumes
 - **pictures included**: the photo from the doorbell or the chat, right there
@@ -111,10 +117,14 @@ You see what you need without opening a single app.
 
 Intent first, app second. Type or speak like you'd talk to a person:
 
-> *"call Anna"* · *"text Mark I'm on my way"* · *"timer 10 minutes"*
-> *"football tomorrow at 5pm"* · *"turn off the living room lights"*
+> *"call Anna"* · *"text Mark I'm on my way"* · *"wake me up tomorrow at 7"* · *"timer 10 minutes"*
+> *"football tomorrow at 5pm"* · *"remind me to call the bank on Friday"* · *"turn off the living room lights"*
 
-Sordina does the right thing: places the call, writes the message in WhatsApp, Telegram, Signal or SMS, sets the timer without opening the Clock, puts the event in your calendar (with *Undo*). Voice is recognised **on the phone**, and Sordina learns from your corrections.
+Sordina does the right thing: places the call, writes the message in WhatsApp, Telegram, Signal or SMS, sets the alarm or the timer without opening the Clock, puts the event in your calendar (with *Undo*), starts navigation. The mascot answers in its bubble, whether you spoke or typed.
+
+- **every language of the app**: commands, dates and durations are understood in all 27, from *"llama a Ana"* to *"zavolej Petrovi"*, *"Ahmet'i ara"* or *"明天早上7点叫醒我"*
+- **voice stays on the phone**: Android's on-device recogniser (Android 12+); if your language isn't downloaded yet, Sordina asks Android to fetch it (Android 13+)
+- **it learns from you**: corrections, nicknames ("mum"), the app you prefer for each person
 
 <br clear="right">
 
@@ -125,7 +135,7 @@ Sordina does the right thing: places the call, writes the message in WhatsApp, T
 ### 🚗 Home changes with you
 
 - **Car**: a big clock, your navigation and music apps, the people you picked and a microphone you can hit without looking
-- **Evening**: the day winds down, with a one-line recap and no charts
+- **Evening**: the day winds down, with a one-line recap (time on the phone, unlocks) and no charts
 - **Night**: only the essentials, on a dark screen
 
 Each mode switches on by itself and can be turned off whenever you like.
@@ -136,11 +146,22 @@ Each mode switches on by itself and can be turned off whenever you like.
 
 ### 🖐️ A brake for "just because" apps
 
-The apps you open out of habit ask for a moment before opening (and so do their websites in the browser). The apps you open with a purpose open straight away. It's not a lock, it's a speed bump.
+The apps you open out of habit ask for a moment before opening (and so do their websites in the browser). The apps you open with a purpose open straight away. Give each braked app a daily budget if you like. It's not a lock, it's a speed bump.
+
+### 🏅 Small wins, no pressure
+
+Achievements and mascot stickers celebrate the choices you made: putting the phone down, staying within budget. No notifications to keep a streak alive, and what you win stays yours.
 
 ### 🏡 Home Assistant, if you have it
 
-Connect your home and ask it from the same bar: lights, shutters, scenes, questions. Your home can ask *you* things too, right in the bubble. Everything else works perfectly without it.
+Connect your home and ask it from the same bar, in your language: lights, shutters, scenes, questions. Your home can ask *you* things too, right in the bubble.
+
+- **routines** like *Leaving* or *Coming home* in one tap, optionally arming or disarming your alarm with them
+- **alarm panels**: "disarm the alarm", "arm night mode", with the code kept encrypted on the phone
+- **safety first**: opening doors, gates, garages and locks, or disarming an alarm, asks for your fingerprint or PIN, from voice, keyboard or a notification button. Securing (close, lock, arm) stays instant
+- works with a token (answers right in the bubble) or just with the Home Assistant app installed
+
+Everything else works perfectly without it.
 
 ### 📱 Phones and tablets
 
@@ -208,13 +229,18 @@ signing/release.sh   # → app/build/outputs/bundle/release/app-release.aab
 
 | Path | What's there |
 |---|---|
-| `app/src/main/java/app/sordina/data` | Intents, rules, cards, calendar, people, weather, Home Assistant, the on-device learning (`brain/`) |
+| `app/src/main/java/app/sordina/data` | Intents, rules, cards, calendar, people, weather, Home Assistant, the on-device learning (`brain/`); languages in `Lingue.kt` (it, en, es, fr, de, pt) and `LingueAltre.kt` (one data pack per other language) |
 | `app/src/main/java/app/sordina/service` | Notification listener, accessibility service, brake, scheduling |
 | `app/src/main/java/app/sordina/ui` | Compose screens: Home, bubble, Sordina page, search, settings, onboarding |
 | `app/src/main/res/values-*` | The 27 translations |
+| `app/src/test` | Unit tests (dates, commands in every language, rules, home safety, screen time…) |
 | `docs/` | Concept and UX notes (Italian) |
-| `store/` | Play Store texts, graphics (rendered from `store/src/store.html`), privacy policy, Play Console notes |
+| `store/` | Play Store texts (it, en, es, fr, de, pt), graphics (rendered from `store/src/store.html`), privacy policy, Play Console notes |
 | `signing/` | Password-derived upload key |
+
+## 🤝 Contributing
+
+Bug reports and ideas are welcome in [Issues](https://github.com/baf93/sordina-launcher/issues). Native speakers especially: the translations are in `app/src/main/res/values-*`, and the commands of each language are plain word lists in `LingueAltre.kt`. A wrong word is a one-line fix.
 
 ## 📄 License
 
