@@ -1,5 +1,8 @@
 package app.sordina
 
+import app.sordina.service.HomeGuard
+import app.sordina.data.Intents
+import app.sordina.data.HomeRisk
 import app.sordina.ui.shortDuration
 
 import app.sordina.ui.Celebration
@@ -242,7 +245,15 @@ internal fun MainActivity.cardAction(card: Card, a: CardAction) {
         CardOp.MusicPrev -> music?.skipToPrevious()
         CardOp.MusicNext -> music?.skipToNext()
         CardOp.MusicToggle -> if (app.signals.musicPlaying()) music?.pause() else music?.play()
-        is CardOp.Fire -> { if (SordinaListener.fire(this, op.key, op.index)) dismissCard(card) else SordinaListener.open(this, op.key) }
+        is CardOp.Fire -> {
+            fun fire() { if (SordinaListener.fire(this, op.key, op.index)) dismissCard(card) else SordinaListener.open(this, op.key) }
+            // Un pulsante di Home Assistant che apre o disarma ("Apri cancello", "Sì" a "Apro il cancello?"): prima impronta o PIN
+            val fromHa = op.key.split('|').getOrNull(1) in CardDetector.HA_PKGS
+            val label = card.actions.firstOrNull { it.op == op }?.label.orEmpty()
+            if (fromHa && HomeRisk.buttonNeedsAuth("${card.title} ${card.subtitle.orEmpty()}", label, prefs.haGuarded) { Intents.sensitive(it) })
+                HomeGuard.ask(this, label.ifBlank { card.title }) { fire() }
+            else fire()
+        }
         is CardOp.Done -> { SordinaListener.done(op.key); dismissCard(card) }
         is CardOp.Later -> { SordinaListener.later(op.key); app.signals.remove(card.key) }
         CardOp.Weather -> openWeather()

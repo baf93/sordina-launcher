@@ -225,6 +225,7 @@
     <string name="voice_offline">Recunoașterea vocală nu e disponibilă. Descarcă limba din setările de dictare.</string>
     <string name="not_understood">Nu am înțeles</string>
     <string name="voice_no_lang">Lipsește limba: descarc-o din setările de dictare.</string>
+    <string name="voice_downloading">Se descarcă limba pentru voce: încearcă din nou în câteva minute.</string>
     <string name="mic_unavailable">Microfon indisponibil</string>
     <string name="hold_speak">Ține apăsat și vorbește</string>
     <string name="why_pinned">Ai fixat-o tu.</string>

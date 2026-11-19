@@ -225,6 +225,7 @@
     <string name="voice_offline">Распознавание речи недоступно. Скачайте язык в настройках диктовки.</string>
     <string name="not_understood">Не понял</string>
     <string name="voice_no_lang">Нет языка: скачайте его в настройках диктовки.</string>
+    <string name="voice_downloading">Загружаю язык для голоса: попробуй снова через несколько минут.</string>
     <string name="mic_unavailable">Микрофон недоступен</string>
     <string name="hold_speak">Удерживайте и говорите</string>
     <string name="why_pinned">Вы его закрепили.</string>

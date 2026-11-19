@@ -422,13 +422,19 @@ class Intents(
         val haVerbs = mapOf("accendi" to HaOp.ON, "attiva" to HaOp.ON, "apri" to HaOp.ON, "alza" to HaOp.ON,
             "spegni" to HaOp.OFF, "disattiva" to HaOp.OFF, "chiudi" to HaOp.OFF, "abbassa" to HaOp.OFF, "stacca" to HaOp.OFF,
             "imposta" to HaOp.LEVEL, "regola" to HaOp.LEVEL,
-            "turn" to HaOp.ON, "switch" to HaOp.ON, "open" to HaOp.ON, "close" to HaOp.OFF, "dim" to HaOp.LEVEL, "set" to HaOp.LEVEL, "lock" to HaOp.OFF, "unlock" to HaOp.ON) + HA_FOREIGN
+            "turn" to HaOp.ON, "switch" to HaOp.ON, "open" to HaOp.ON, "close" to HaOp.OFF, "dim" to HaOp.LEVEL, "set" to HaOp.LEVEL, "lock" to HaOp.OFF, "unlock" to HaOp.ON) + HA_FOREIGN + LingueAltre.homeFirst()
+        // Il verbo in fondo o attaccato ("salon ışığını aç", "電気をつけて", "เปิดไฟ"): la frase va ad Assist com'è
+        if (ha.canAssist && haVerbs[first] == null) LingueAltre.home(ow)?.let {
+            val phrase = ow.joinToString(" ")
+            out += Candidate("assist", phrase, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, 90, false, Act.Assist(phrase, HomeRisk.needsAuth(nw, prefs.haGuarded, sensitive(nw), namesKnown = ha.configured)))
+            return
+        }
         haVerbs[first]?.let { op0 ->
             val level = Regex("(?:al|a|su|to|auf|sur|para|em) (\\d{1,3}) ?(%|percento|per cento|gradi|percent|degrees|grados|degres|grad|graus|prozent|por ciento|pour cent)?").find(restN)?.groupValues?.get(1)?.toIntOrNull()
             val target = restN.replace(Regex("(?:al|a|su|to|auf|sur|para|em) \\d{1,3} ?(%|percento|per cento|gradi|percent|degrees|grados|degres|grad|graus|prozent|por ciento|pour cent)?"), "").split(' ').filter { it !in setOf("on", "off", "the", "an", "aus", "ein") }.joinToString(" ").trim()
             if (ha.canAssist && target.isNotBlank()) {
                 // Casa: la frase va ad Assist, che conosce stanze, alias ed entità esposte (e la tua lingua: la frase resta com'è)
-                out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, if (first in OPEN) 80 else 90, false, Act.Assist(ow.joinToString(" "), HomeRisk.needsAuth(nw, prefs.haGuarded, sensitive(nw))))
+                out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, if (first in OPEN) 80 else 90, false, Act.Assist(ow.joinToString(" "), HomeRisk.needsAuth(nw, prefs.haGuarded, sensitive(nw), namesKnown = ha.configured)))
             }
             if (first in OPEN) {
                 Search.apps(restN, apps, emptyMap(), 2).forEach { a ->
@@ -445,12 +451,12 @@ class Intents(
         }
         // Un canale TV ("metti Rai 1", "guarda il 5"): a casa, non nella musica
         if (ha.canAssist && HomeTalk.channel(nw, prefs.homeWords + ha.names())) {
-            out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, 93, false, Act.Assist(ow.joinToString(" "), HomeRisk.needsAuth(nw, emptyList(), sensitive(nw))))
+            out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, 93, false, Act.Assist(ow.joinToString(" "), HomeRisk.needsAuth(nw, emptyList(), sensitive(nw), namesKnown = ha.configured)))
             return
         }
         // Casa senza comando: domande e stati ("che luci sono accese", "quanti gradi in salotto") vanno ad Assist, non sul web
         if (ha.canAssist) HomeTalk.score(nw, prefs.homeWords + ha.names())?.let { s ->
-            out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, s, false, Act.Assist(ow.joinToString(" "), HomeRisk.needsAuth(nw, emptyList(), sensitive(nw))))
+            out += Candidate("assist", ow.joinToString(" ").replaceFirstChar { it.uppercase() }, if (ha.configured) tr(R.string.home_kind) else tr(R.string.ha_in_app), Kind.HOME, s, false, Act.Assist(ow.joinToString(" "), HomeRisk.needsAuth(nw, emptyList(), sensitive(nw), namesKnown = ha.configured)))
         }
         // Musica
         if (first in PLAY && restN.isNotBlank()) {
@@ -531,6 +537,10 @@ class Intents(
                     .thenBy { if (people.isImportant(it.first.name)) 1 else 0 }
                     .thenBy { if (it.first.starred) 1 else 0 })
             if (best != null) return Triple(best.first, best.second, n)
+            // Il nome declinato (polacco, ceco, russo, ucraino, finlandese): "zavolej Petrovi" è Petr
+            people.all().filter { LingueAltre.sameName(name, it.normalized) }
+                .maxByOrNull { (if (people.isImportant(it.name)) 2 else 0) + (if (it.starred) 1 else 0) }
+                ?.let { return Triple(it, 85, n) }
         }
         return null
     }
@@ -643,7 +653,7 @@ class Intents(
             "haustur", "haustuer", "wohnungstur", "eingangstur", "hintertur", "terrassentur", "balkontur", "gartentur", "kellertur")
         fun sensitive(words: List<String>) = words.any { w ->
             w in SENSITIVE || SENSITIVE_STEMS.any { st -> w.startsWith(st) || (st.length >= 3 && w.endsWith(st)) || (st.length >= 5 && st in w) }
-        }
+        } || LingueAltre.sensitive(words.filter { it.isNotEmpty() })
         /** I messaggi arrivati da meno di così non sono "lei" di "rispondile" */
         private const val PRONOUN_SETTLE = 10_000L
         private val OPEN = setOf("apri", "open", "abre", "ouvre", "offne", "oeffne", "öffne", "abra")

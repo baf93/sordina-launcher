@@ -225,6 +225,7 @@
     <string name="voice_offline">Talegjenkjenning utilgjengelig. Last ned språket i dikteringsinnstillingene.</string>
     <string name="not_understood">Fikk det ikke med meg</string>
     <string name="voice_no_lang">Språket mangler: last det ned i dikteringsinnstillingene.</string>
+    <string name="voice_downloading">Laster ned språket for stemme: prøv igjen om noen minutter.</string>
     <string name="mic_unavailable">Mikrofon utilgjengelig</string>
     <string name="hold_speak">Hold og snakk</string>
     <string name="why_pinned">Du har festet den.</string>

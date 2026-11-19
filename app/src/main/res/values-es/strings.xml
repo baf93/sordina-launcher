@@ -225,6 +225,7 @@
     <string name="voice_offline">Reconocimiento de voz no disponible. Descarga el idioma en los ajustes de dictado.</string>
     <string name="not_understood">No te he entendido</string>
     <string name="voice_no_lang">Falta el idioma: descárgalo en los ajustes de dictado.</string>
+    <string name="voice_downloading">Descargando el idioma para la voz: vuelve a intentarlo en unos minutos.</string>
     <string name="mic_unavailable">Micrófono no disponible</string>
     <string name="hold_speak">Mantén pulsado y habla</string>
     <string name="why_pinned">La has fijado tú.</string>

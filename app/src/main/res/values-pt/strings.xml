@@ -225,6 +225,7 @@
     <string name="voice_offline">Reconhecimento de voz indisponível. Baixe o idioma nas configurações de ditado.</string>
     <string name="not_understood">Não entendi</string>
     <string name="voice_no_lang">Falta o idioma: baixe nas configurações de ditado.</string>
+    <string name="voice_downloading">A transferir o idioma para a voz: tenta de novo daqui a alguns minutos.</string>
     <string name="mic_unavailable">Microfone indisponível</string>
     <string name="hold_speak">Segure e fale</string>
     <string name="why_pinned">Você fixou.</string>

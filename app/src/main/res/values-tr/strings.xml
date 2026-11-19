@@ -225,6 +225,7 @@
     <string name="voice_offline">Ses tanıma yok. Dili dikte ayarlarından indir.</string>
     <string name="not_understood">Anlayamadım</string>
     <string name="voice_no_lang">Dil eksik: dikte ayarlarından indir.</string>
+    <string name="voice_downloading">Ses için dil indiriliyor: birkaç dakika sonra tekrar dene.</string>
     <string name="mic_unavailable">Mikrofon kullanılamıyor</string>
     <string name="hold_speak">Basılı tut ve konuş</string>
     <string name="why_pinned">Sen sabitledin.</string>

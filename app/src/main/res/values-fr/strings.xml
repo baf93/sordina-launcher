@@ -225,6 +225,7 @@
     <string name="voice_offline">Reconnaissance vocale indisponible. Téléchargez la langue dans les réglages de dictée.</string>
     <string name="not_understood">Je n\'ai pas compris</string>
     <string name="voice_no_lang">Langue manquante : téléchargez-la dans les réglages de dictée.</string>
+    <string name="voice_downloading">Téléchargement de la langue pour la voix : réessaie dans quelques minutes.</string>
     <string name="mic_unavailable">Micro indisponible</string>
     <string name="hold_speak">Maintenez et parlez</string>
     <string name="why_pinned">Vous l\'avez épinglée.</string>

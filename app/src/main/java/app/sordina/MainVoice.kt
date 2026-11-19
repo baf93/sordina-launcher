@@ -190,7 +190,9 @@ internal fun MainActivity.voiceDown(handsFree: Boolean = false) {
             voiceHandler.removeCallbacks(noSpeech)
             voice = voice.copy(listening = false, partial = "", level = 0f)
             val n = when (error) {
-                12, 13 -> Notice(tr(R.string.voice_no_lang))
+                // Manca la lingua sul telefono: da Android 13 la si fa scaricare subito, prima bisogna andarla a prendere
+                SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED, SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE ->
+                    if (downloadVoiceLanguage(r)) Notice(tr(R.string.voice_downloading)) else Notice(tr(R.string.voice_no_lang))
                 SpeechRecognizer.ERROR_NO_MATCH, SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> Notice(tr(R.string.not_understood))
                 SpeechRecognizer.ERROR_CLIENT -> null
                 else -> Notice(tr(R.string.mic_unavailable))
@@ -252,3 +254,12 @@ internal fun MainActivity.voiceUp() {
 }
 
 // Ops
+
+/** Chiede ad Android di scaricare la lingua del telefono per la voce offline. false se non si può (prima di Android 13). */
+internal fun MainActivity.downloadVoiceLanguage(r: SpeechRecognizer): Boolean {
+    if (Build.VERSION.SDK_INT < 33) return false
+    val i = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+        .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+        .putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag())
+    return runCatching { r.triggerModelDownload(i) }.isSuccess
+}

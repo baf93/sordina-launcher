@@ -63,7 +63,7 @@ class Habits(private val context: Context) {
         val now = System.currentTimeMillis()
         var unlocks = 0
         val r = runCatching {
-            val evs = Foreground.read(usm.queryEvents(start, now)) { e -> if (e.eventType == KEYGUARD_HIDDEN) unlocks++ }
+            val evs = Foreground.read(usm.queryEvents(start - Foreground.LOOKBACK, now), from = start) { e -> if (e.eventType == KEYGUARD_HIDDEN) unlocks++ }
             Foreground.fold(evs, start, now, exclude = setOf(context.packageName))
         }.getOrNull() ?: return Day(null, emptyMap())
         return Day(if (Build.VERSION.SDK_INT >= 28) unlocks else null, r.perPkg.mapValues { (it.value / 60_000).toInt() }, (r.total / 60_000).toInt())
@@ -86,7 +86,7 @@ class Habits(private val context: Context) {
         var opens = 0
         var lastOpen = 0L
         return runCatching {
-            val evs = Foreground.read(usm.queryEvents(start, now), only = setOf(pkg)) { e ->
+            val evs = Foreground.read(usm.queryEvents(start - Foreground.LOOKBACK, now), only = setOf(pkg), from = start) { e ->
                 if (e.packageName != pkg) return@read
                 when (e.eventType) {
                     // Un'apertura sola se rientri entro un minuto
@@ -269,7 +269,7 @@ class Habits(private val context: Context) {
         val end = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
         return runCatching {
             var events = 0
-            val evs = Foreground.read(usm.queryEvents(start, end), only = pkgs) { events++ }
+            val evs = Foreground.read(usm.queryEvents(start - Foreground.LOOKBACK, end), only = pkgs, from = start) { events++ }
             if (events == 0) null else Foreground.fold(evs, start, end).perPkg.filterKeys { it in pkgs }.mapValues { (it.value / 60_000).toInt() }
         }.getOrNull()
     }
@@ -486,7 +486,7 @@ class Habits(private val context: Context) {
             var brakedMorning = false
             var brakedLunch = false
             var brakedAny = false
-            val evs = Foreground.read(usm.queryEvents(start, end)) { e ->
+            val evs = Foreground.read(usm.queryEvents(start - Foreground.LOOKBACK, end), from = start) { e ->
                 events++
                 val t = e.timeStamp
                 when (e.eventType) {

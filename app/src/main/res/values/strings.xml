@@ -289,6 +289,7 @@
     <string name="voice_offline">Voice needs the language downloaded: you\'ll find it in the dictation settings.</string>
     <string name="not_understood">Didn\'t catch that</string>
     <string name="voice_no_lang">Download the language in the dictation settings.</string>
+    <string name="voice_downloading">Downloading the language for voice: try again in a few minutes.</string>
     <string name="mic_unavailable">Microphone unavailable</string>
     <string name="hold_speak">Hold and speak</string>
     <string name="why_pinned">You pinned it.</string>

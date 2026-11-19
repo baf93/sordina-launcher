@@ -2,6 +2,11 @@
 
 package app.sordina.ui.apps
 
+import app.sordina.ui.LocalFeel
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.graphicsLayer
+
 import app.sordina.R
 import app.sordina.tr
 import app.sordina.trn
@@ -193,8 +198,17 @@ private fun AppRow(
 ) {
     val c = S.c
     var menu by remember { mutableStateOf(false) }
+    val feel = LocalFeel.current
+    // Tieni premuto: la riga si illumina e si stringe appena sotto il dito, poi vibra e resta accesa finché il menu è aperto
+    val press = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val pressed by press.collectIsPressedAsState()
+    val lit by androidx.compose.animation.animateColorAsState(if (pressed || menu) c.tile else c.tile.copy(alpha = 0f), label = "lit")
+    val squeeze by androidx.compose.animation.core.animateFloatAsState(if (pressed) 0.97f else 1f, label = "squeeze")
     Box {
-        Row(Modifier.fillMaxWidth().combinedClickable(onClick = { onLaunch(app) }, onLongClick = { menu = true }).padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().graphicsLayer { scaleX = squeeze; scaleY = squeeze }
+            // La luce sborda un po' ai lati: il testo resta allineato al resto della pagina
+            .drawBehind { val m = 10.dp.toPx(); drawRoundRect(lit, androidx.compose.ui.geometry.Offset(-m, 0f), androidx.compose.ui.geometry.Size(size.width + 2 * m, size.height), androidx.compose.ui.geometry.CornerRadius(14.dp.toPx())) }
+            .combinedClickable(interactionSource = press, indication = null, onClick = { onLaunch(app) }, onLongClick = { feel.longPress(); menu = true }).padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
         // Mai caricare un'icona mentre scorri: se non è pronta arriva un attimo dopo, con lo spazio già tenuto
         if (icon != null) {
             val bmp by androidx.compose.runtime.produceState(cachedIcon(app), app.key) {

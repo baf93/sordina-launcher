@@ -94,10 +94,49 @@ object HomeRisk {
         }
     }
 
-    /** Da confermare con impronta o PIN: parole sensibili o entità protetta, e non un verbo che mette in sicurezza. */
-    fun needsAuth(phrase: List<String>, guardedNames: Collection<String>, sensitive: Boolean): Boolean {
+    /** I verbi che aprono o sbloccano */
+    private val OPENING = setOf(
+        "apri", "sblocca", "disarma", "disinserisci",
+        "open", "unlock", "disarm",
+        "abre", "abra", "desbloquea", "desarma", "ouvre", "deverrouille", "desarme",
+        "offne", "oeffne", "entriegle", "entsperre", "desbloqueia", "destranca",
+    )
+    /** Quello che si apre senza rischi: tapparelle, tende, persiane */
+    private val HARMLESS = listOf("tapparell", "persian", "tend", "blind", "shutter", "curtain", "rolladen", "jalousie", "vorhang",
+        "cortin", "estor", "volet", "rideau", "store", "veneziana")
+
+    /**
+     * Da confermare con impronta o PIN: parole sensibili o entità protetta, e non un verbo che mette in sicurezza.
+     * [namesKnown] false (Home Assistant senza token: i nomi delle serrature non si conoscono): ogni "apri" o "sblocca"
+     * si conferma, tranne tapparelle e tende. Meglio un'impronta in più che un cancello aperto per sbaglio.
+     */
+    fun needsAuth(phrase: List<String>, guardedNames: Collection<String>, sensitive: Boolean, namesKnown: Boolean = true): Boolean {
         val first = phrase.firstOrNull()?.let { Search.normalize(it) } ?: return false
         if (first in SECURING) return false
-        return sensitive || namesGuarded(phrase, guardedNames)
+        if (sensitive || namesGuarded(phrase, guardedNames)) return true
+        if (namesKnown || (first !in OPENING && !LingueAltre.opening(words(phrase.joinToString(" "))))) return false
+        // Tutta la frase: in molte lingue il verbo è in fondo ("salon perdesini aç")
+        val all = words(phrase.joinToString(" "))
+        return all.none { w -> HARMLESS.any { w.startsWith(it) } } && !LingueAltre.harmless(all)
+    }
+
+    /** Le domande di casa che stanno per aprire: "Apro il cancello?", "Disarmo l'allarme?", "Unlock the door?" */
+    private val OPENING_ASKED = setOf("apro", "apriamo", "sblocco", "disarmo", "disattivo", "disinserisco", "opening", "unlocking",
+        "abro", "desbloqueo", "ouvrir", "ouvre", "offnen", "oeffnen", "abrir")
+
+    /** "No", "annulla", "più tardi": un pulsante che non fa niente di rischioso */
+    private val DECLINE = setOf("no", "non", "annulla", "ignora", "dopo", "tardi", "cancel", "dismiss", "ignore", "later", "nein",
+        "abbrechen", "spater", "cancelar", "ignorar", "despues", "annuler", "ignorer", "nao", "depois", "chiudi", "close")
+
+    /**
+     * Un pulsante di una notifica di Home Assistant ("Apri cancello", o "Sì" sotto "Apro il cancello?"): si conferma
+     * se apre o disarma, dal pulsante stesso o dalla domanda. [sensitive]: le parole di porte, cancelli, allarmi.
+     */
+    fun buttonNeedsAuth(question: String, button: String, guardedNames: Collection<String>, sensitive: (List<String>) -> Boolean): Boolean {
+        val b = words(button)
+        if (b.isEmpty() || b.first() in SECURING || b.any { it in DECLINE }) return false
+        if (b.first() in OPENING || LingueAltre.opening(b) || sensitive(b) || namesGuarded(b, guardedNames)) return true
+        val q = words(question)
+        return (q.any { it in OPENING || it in OPENING_ASKED } || LingueAltre.opening(q)) && (sensitive(q) || namesGuarded(q, guardedNames))
     }
 }

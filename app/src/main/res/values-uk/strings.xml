@@ -225,6 +225,7 @@
     <string name="voice_offline">Розпізнавання мовлення недоступне. Завантажте мову в налаштуваннях диктування.</string>
     <string name="not_understood">Не зрозумів</string>
     <string name="voice_no_lang">Немає мови: завантажте її в налаштуваннях диктування.</string>
+    <string name="voice_downloading">Завантажую мову для голосу: спробуй ще раз за кілька хвилин.</string>
     <string name="mic_unavailable">Мікрофон недоступний</string>
     <string name="hold_speak">Утримуйте й говоріть</string>
     <string name="why_pinned">Ви його закріпили.</string>

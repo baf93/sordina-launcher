@@ -51,13 +51,19 @@ object Foreground {
         return Result(per, total)
     }
 
-    /** Legge tutti gli eventi di una finestra. [only]: se c'è, tiene solo quei pacchetti (gli eventi di schermo restano). */
-    fun read(events: UsageEvents, only: Set<String>? = null, onEvent: (UsageEvents.Event) -> Unit = {}): List<Ev> {
+    /** Quanto prima di mezzanotte si guarda, solo per sapere cosa era già aperto (non conta nel tempo). */
+    const val LOOKBACK = 12 * 3_600_000L
+
+    /**
+     * Legge tutti gli eventi di una finestra. [only]: se c'è, tiene solo quei pacchetti (gli eventi di schermo restano).
+     * [onEvent] vede solo gli eventi da [from] in poi: quelli prima servono solo a sapere cosa era aperto.
+     */
+    fun read(events: UsageEvents, only: Set<String>? = null, from: Long = Long.MIN_VALUE, onEvent: (UsageEvents.Event) -> Unit = {}): List<Ev> {
         val out = ArrayList<Ev>()
         val e = UsageEvents.Event()
         while (events.hasNextEvent()) {
             events.getNextEvent(e)
-            onEvent(e)
+            if (e.timeStamp >= from) onEvent(e)
             val screen = e.eventType == SCREEN_OFF || e.eventType == KEYGUARD_SHOWN || e.eventType == SHUTDOWN
             val act = e.eventType == RESUMED || e.eventType == PAUSED || e.eventType == STOPPED
             if (screen || act && (only == null || e.packageName in only)) out += Ev(e.eventType, e.packageName.orEmpty(), e.className, e.timeStamp)

@@ -225,6 +225,7 @@
     <string name="voice_offline">語音辨識無法使用。請在聽寫設定中下載語言。</string>
     <string name="not_understood">沒聽清楚</string>
     <string name="voice_no_lang">缺少語言：請在聽寫設定中下載。</string>
+    <string name="voice_downloading">正在下載語音所需的語言，請幾分鐘後再試。</string>
     <string name="mic_unavailable">麥克風無法使用</string>
     <string name="hold_speak">按住說話</string>
     <string name="why_pinned">你釘選了它。</string>

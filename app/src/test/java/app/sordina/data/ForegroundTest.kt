@@ -48,4 +48,13 @@ class ForegroundTest {
     @Test fun unaChiusuraSenzaAperturaNonConta() {
         assertEquals(0L, Foreground.fold(listOf(p("x", "A", 30)), 0, 100).total)
     }
+
+    @Test fun unAppApertaPrimaDiMezzanotteContaDaMezzanotte() {
+        // Mezzanotte = 0: l'app era davanti da prima, si chiude alle 30
+        assertEquals(30L, Foreground.fold(listOf(r("x", "A", -500), p("x", "A", 30)), 0, 100).total)
+    }
+
+    @Test fun quelloChiusoPrimaDiMezzanotteNonConta() {
+        assertEquals(0L, Foreground.fold(listOf(r("x", "A", -500), Ev(SCREEN_OFF, "android", null, -100)), 0, 100).total)
+    }
 }

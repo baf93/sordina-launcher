@@ -90,7 +90,7 @@ object Phrase {
         if (w.isEmpty()) return text.trim()
 
         // Il verbo scritto male, solo se non è un nome che conosci ("Chiara" resta Chiara)
-        if (w.size >= 2 && w[0].n !in VERBS && w[0].n !in ENGLISH && w[0].n !in Lingue.VERBS && w[0].n !in CALL_HER && w[0].n !in WRITE_HER && w[0].n !in FORMS && w[0].n !in SAY && w[0].n !in SEND && !hints.isName(w[0].n)) {
+        if (w.size >= 2 && w[0].n !in VERBS && w[0].n !in ENGLISH && w[0].n !in Lingue.VERBS && w[0].n !in LingueAltre.VERBS && !LingueAltre.on() && w[0].n !in CALL_HER && w[0].n !in WRITE_HER && w[0].n !in FORMS && w[0].n !in SAY && w[0].n !in SEND && !hints.isName(w[0].n)) {
             val fix = closestVerb(w[0].n)
             if (fix != null) w = listOf(W(fix)) + w.drop(1)
         }

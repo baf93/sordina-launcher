@@ -225,6 +225,7 @@
     <string name="voice_offline">Spraakherkenning niet beschikbaar. Download de taal in de dicteerinstellingen.</string>
     <string name="not_understood">Niet verstaan</string>
     <string name="voice_no_lang">Taal ontbreekt: download die in de dicteerinstellingen.</string>
+    <string name="voice_downloading">De taal voor spraak wordt gedownload: probeer het over een paar minuten opnieuw.</string>
     <string name="mic_unavailable">Microfoon niet beschikbaar</string>
     <string name="hold_speak">Vasthouden en spreken</string>
     <string name="why_pinned">Je hebt hem vastgezet.</string>

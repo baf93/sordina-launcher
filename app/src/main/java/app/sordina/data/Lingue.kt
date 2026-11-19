@@ -22,16 +22,20 @@ object Lingue {
     }
     private fun rule(p: String, to: (MatchResult) -> String) = Rule(Regex(p), to)
 
+    /** La ı turca e la ł polacca non hanno accento da togliere: diventano i e l, così le regole valgono comunque si scriva */
+    fun flat(s: String) = s.replace('ı', 'i').replace('ł', 'l')
+
     // ── Date, ore, durate
 
     /** Testo già pulito ([DateParser.clean]: minuscolo, senza accenti, apostrofi come spazi). */
     fun dates(s0: String): String {
-        var s = " $s0 "
+        var s = " ${flat(LingueAltre.dates(flat(s0)))} "
         for (r in DATE_RULES) s = r.re.replace(s) { r.to(it) }
         return s.replace(Regex("\\s+"), " ").trim()
     }
 
-    private val UNIT = "(minutos?|minutes?|minuten|mn|horas?|heures?|stunden?|segundos?|secondes?|sekunden?|dias?|jours?|tagen?|semanas?|semaines?|wochen?)"
+    private val UNIT = "(minutos?|minutes?|minuten|mn|horas?|heures?|stunden?|segundos?|secondes?|sekunden?|dias?|jours?|tagen?|semanas?|semaines?|wochen?" +
+        "|minuut|uur|uren|seconden?|dagen|weken|minuty?|godzin[aey]?|sekundy?|dni|tygodni[ea]?|минут[уы]?|час(а|ов)?|секунд[уы]?|дн(я|еи)|недел[юиь]|dakika|dakikalik|saat|saniye|gun|hafta)"
 
     private val NUMBERS = listOf(
         "dos" to 2, "tres" to 3, "cuatro" to 4, "cinco" to 5, "seis" to 6, "siete" to 7, "ocho" to 8, "nueve" to 9, "diez" to 10,
@@ -42,6 +46,14 @@ object Lingue {
         "zwolf" to 12, "funfzehn" to 15, "zwanzig" to 20, "dreissig" to 30, "vierzig" to 40, "funfzig" to 50,
         "dois" to 2, "duas" to 2, "quatro" to 4, "sete" to 7, "oito" to 8, "dez" to 10, "doze" to 12, "vinte" to 20, "trinta" to 30,
         "quarenta" to 40,
+        "twee" to 2, "drie" to 3, "vier" to 4, "vijf" to 5, "zes" to 6, "zeven" to 7, "negen" to 9, "tien" to 10, "twaalf" to 12,
+        "vijftien" to 15, "twintig" to 20, "dertig" to 30, "veertig" to 40, "vijftig" to 50,
+        "dwie" to 2, "trzy" to 3, "cztery" to 4, "piec" to 5, "szesc" to 6, "siedem" to 7, "osiem" to 8, "dziewiec" to 9, "dziesiec" to 10,
+        "pietnascie" to 15, "dwadziescia" to 20, "trzydziesci" to 30, "czterdziesci" to 40, "piecdziesiat" to 50,
+        "два" to 2, "две" to 2, "три" to 3, "четыре" to 4, "пять" to 5, "шесть" to 6, "семь" to 7, "восемь" to 8, "девять" to 9,
+        "десять" to 10, "пятнадцать" to 15, "двадцать" to 20, "тридцать" to 30, "сорок" to 40, "пятьдесят" to 50,
+        "iki" to 2, "uc" to 3, "dort" to 4, "bes" to 5, "alti" to 6, "yedi" to 7, "sekiz" to 8, "dokuz" to 9, "on" to 10,
+        "onbes" to 15, "yirmi" to 20, "otuz" to 30, "kirk" to 40, "elli" to 50,
     )
 
     /** Giorni della settimana: parola → italiano. Il portoghese dal lunedì al venerdì a parte, vedi sotto. */
@@ -52,17 +64,30 @@ object Lingue {
         "montag" to "lunedi", "dienstag" to "martedi", "mittwoch" to "mercoledi", "donnerstag" to "giovedi", "freitag" to "venerdi",
         "samstag" to "sabato", "sonnabend" to "sabato", "sonntag" to "domenica",
         "sabado" to "sabato", "domingo" to "domenica",
+        "maandag" to "lunedi", "dinsdag" to "martedi", "woensdag" to "mercoledi", "donderdag" to "giovedi", "vrijdag" to "venerdi",
+        "zaterdag" to "sabato", "zondag" to "domenica",
+        "poniedzialek" to "lunedi", "wtorek" to "martedi", "sroda" to "mercoledi", "srode" to "mercoledi", "czwartek" to "giovedi",
+        "piatek" to "venerdi", "sobota" to "sabato", "sobote" to "sabato", "niedziela" to "domenica", "niedziele" to "domenica",
+        "понедельник" to "lunedi", "вторник" to "martedi", "среда" to "mercoledi", "среду" to "mercoledi", "четверг" to "giovedi",
+        "пятница" to "venerdi", "пятницу" to "venerdi", "суббота" to "sabato", "субботу" to "sabato", "воскресенье" to "domenica",
+        "pazartesi" to "lunedi", "sali" to "martedi", "carsamba" to "mercoledi", "persembe" to "giovedi", "cuma" to "venerdi",
+        "cumartesi" to "sabato", "pazar" to "domenica",
     )
     private val PT_DAYS = listOf("segunda" to "lunedi", "terca" to "martedi", "quarta" to "mercoledi", "quinta" to "giovedi", "sexta" to "venerdi")
-    private val NEXT = Regex("proxim|siguiente|que viene|que vem|prochain|nachsten|kommenden")
+    private val NEXT = Regex("proxim|siguiente|que viene|que vem|prochain|nachsten|kommenden|volgende|aanstaande|przysz|nastepn|следующ|ближаиш|gelecek|onumuzdeki|haftaya")
 
     private val IT_MONTHS = listOf("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
     private val MONTHS = listOf(
-        listOf("enero", "janvier", "januar", "janeiro"), listOf("febrero", "fevrier", "februar", "fevereiro"),
-        listOf("marzo", "mars", "marz"), listOf("abril", "avril", "april"), listOf("mayo", "mai", "maio"),
-        listOf("junio", "juin", "juni", "junho"), listOf("julio", "juillet", "juli", "julho"), listOf("agosto", "aout", "august"),
-        listOf("septiembre", "setiembre", "septembre", "september", "setembro"), listOf("octubre", "octobre", "oktober", "outubro"),
-        listOf("noviembre", "novembre", "november", "novembro"), listOf("diciembre", "decembre", "dezember", "dezembro"),
+        listOf("enero", "janvier", "januar", "janeiro", "januari", "stycznia", "января", "ocak"),
+        listOf("febrero", "fevrier", "februar", "fevereiro", "februari", "lutego", "февраля", "subat"),
+        listOf("marzo", "mars", "marz", "maart", "marca", "марта", "mart"), listOf("abril", "avril", "april", "kwietnia", "апреля", "nisan"),
+        listOf("mayo", "mai", "maio", "mei", "maja", "мая", "mayis"),
+        listOf("junio", "juin", "juni", "junho", "czerwca", "июня", "haziran"), listOf("julio", "juillet", "juli", "julho", "lipca", "июля", "temmuz"),
+        listOf("agosto", "aout", "august", "augustus", "sierpnia", "августа", "agustos"),
+        listOf("septiembre", "setiembre", "septembre", "september", "setembro", "wrzesnia", "сентября", "eylul"),
+        listOf("octubre", "octobre", "oktober", "outubro", "pazdziernika", "октября", "ekim"),
+        listOf("noviembre", "novembre", "november", "novembro", "listopada", "ноября", "kasim"),
+        listOf("diciembre", "decembre", "dezember", "dezembro", "december", "grudnia", "декабря", "aralik"),
     )
     private val MONTH_OF = MONTHS.flatMapIndexed { i, ws -> ws.map { it to IT_MONTHS[i] } }.toMap()
 
@@ -78,13 +103,28 @@ object Lingue {
         return " alle $h$min$f "
     }
 
+    /** "в 7 вечера": la parte del giorno dopo l'ora */
+    private fun partRu(p: String) = when (p.trim()) { "утра" -> " di mattina"; "вечера" -> " di sera"; "дня" -> " del pomeriggio"; "ночи" -> " di notte"; else -> "" }
+
     private val DATE_RULES: List<Rule> = buildList {
         // Prima delle durate: "à 5 heures", "às 5 horas" sono un'ora, non cinque ore
         add(rule(" (a|vers|pour|jusqu a|jusqu|avant|des) (\\d{1,2}) ?(?:h|heures?)(?: ?(\\d{2}))?( et demie| et quart| moins le quart| moins quart)? ") { m -> at(m.groupValues[2], m.groupValues[3], m.groupValues[4]) })
         add(rule(" (as|ate as|pelas|para as|antes das) (\\d{1,2})(?:[:h.](\\d{2}))?( horas| h)?( e meia| e quinze)? ") { m -> at(m.groupValues[2], m.groupValues[3], m.groupValues[5]) })
+        // Olandese, polacco, russo, turco: l'ora prima delle durate ("om 7 uur" non sono sette ore)
+        val monthsLook = MONTH_OF.keys.sortedByDescending { it.length }.joinToString("|")
+        add(rule(" (om|rond|tegen) (\\d{1,2})(?:[:.](\\d{2}))?( uur)? ") { m -> at(m.groupValues[2], m.groupValues[3]) })
+        add(rule(" o (?:godzinie )?(\\d{1,2})(?:[:.](\\d{2}))? (?!($monthsLook) )") { m -> at(m.groupValues[1], m.groupValues[2]) })
+        add(rule(" na (?:godzine )?(\\d{1,2})(?:[:.](\\d{2}))? (?!(minut|godzin|sekund|dni|tygodni)\\S* |($monthsLook) )") { m -> at(m.groupValues[1], m.groupValues[2]) })
+        add(rule(" в (\\d{1,2})(?:[:.](\\d{2}))?(?: часов| часа| час)?( утра| вечера| дня| ночи)? (?!(минут|секунд)\\S* |($monthsLook) )") { m -> at(m.groupValues[1], m.groupValues[2]).trimEnd() + partRu(m.groupValues[3]) + " " })
+        add(rule(" (на|к) (\\d{1,2})(?:[:.](\\d{2}))?( утра| вечера| дня| ночи)? (?!(минут|час|секунд|дн|недел)\\S* |($monthsLook) )") { m -> at(m.groupValues[2], m.groupValues[3]).trimEnd() + partRu(m.groupValues[4]) + " " })
+        add(rule(" saat (\\d{1,2})(?:[:.](\\d{2}))?(?: de| da| te| ta| ye| ya| e| a)? ") { m -> at(m.groupValues[1], m.groupValues[2]) })
+        add(rule(" (\\d{1,2})[:.](\\d{2}) (de|da|te|ta|ye|ya) ") { m -> at(m.groupValues[1], m.groupValues[2]) })
+        add(rule(" (\\d+) dakikalik ", " $1 dakika "))
         // Numeri a parole davanti a una durata; "un/une/ein/um" come "un"
         for ((w, n) in NUMBERS.sortedByDescending { it.first.length }) add(rule(" $w (?=$UNIT )", " $n "))
-        add(rule(" (una|une|ein|eine|einen|einer|um|uma) (?=$UNIT )", " un "))
+        add(rule(" (una|une|ein|eine|einen|einer|um|uma|een|bir) (?=$UNIT )", " un "))
+        // "через минуту", "za minutę": un minuto
+        add(rule(" (через|za) (минуту|час|minute|godzine) ") { m -> if (m.groupValues[2] in setOf("минуту", "minute")) " tra 1 minuti " else " tra 1 ore " })
         // Mezz'ora e quarto d'ora
         add(rule(" (una |un )?media hora ", " mezz ora "))
         add(rule(" (une )?demie? heure ", " mezz ora "))
@@ -94,15 +134,25 @@ object Lingue {
         add(rule(" (un )?quart d heure ", " quarto d ora "))
         add(rule(" (eine |einer )?viertelstunde ", " quarto d ora "))
         add(rule(" (um )?quarto de hora ", " quarto d ora "))
+        add(rule(" (een )?half ?uur ", " mezz ora "))
+        add(rule(" (een )?kwartier ", " quarto d ora "))
+        add(rule(" pol godziny ", " mezz ora "))
+        add(rule(" kwadrans ", " quarto d ora "))
+        add(rule(" (полчаса|пол часа) ", " mezz ora "))
+        add(rule(" четверть часа ", " quarto d ora "))
+        add(rule(" yarim saat ", " mezz ora "))
+        add(rule(" ceyrek saat ", " quarto d ora "))
         // Durate
-        add(rule(" (\\d+|un) ?(minutos|minuto|minutes|minute|minuten|mn) ", " $1 minuti "))
-        add(rule(" (\\d+|un) (horas|hora|heures|heure|stunden|stunde) ", " $1 ore "))
-        add(rule(" (\\d+|un) (segundos|segundo|secondes|seconde|sekunden|sekunde) ", " $1 secondi "))
-        add(rule(" (\\d+|un) (dias|dia|jours|jour|tagen|tage|tag) ", " $1 giorni "))
-        add(rule(" (\\d+|un) (semanas|semana|semaines|semaine|wochen|woche) ", " $1 settimane "))
+        add(rule(" (\\d+|un) ?(minutos|minuto|minutes|minute|minuten|mn|minuut|minuty|minut|минуты|минуту|минут|dakika) ", " $1 minuti "))
+        add(rule(" (\\d+|un) (horas|hora|heures|heure|stunden|stunde|uur|uren|godziny|godzine|godzina|godzin|часов|часа|час|saat) ", " $1 ore "))
+        add(rule(" (\\d+|un) (segundos|segundo|secondes|seconde|sekunden|sekunde|seconden|sekundy|sekund|секунды|секунду|секунд|saniye) ", " $1 secondi "))
+        add(rule(" (\\d+|un) (dias|dia|jours|jour|tagen|tage|tag|dagen|dag|dni|дней|дня|день|gun) ", " $1 giorni "))
+        add(rule(" (\\d+|un) (semanas|semana|semaines|semaine|wochen|woche|weken|week|tygodnie|tygodni|tygodnia|недели|неделю|недель|hafta) ", " $1 settimane "))
         add(rule(" (\\d+|un) ore (y|et|und|e) (media|demie|halb|meia) ", " $1 ore e 30 "))
         // "en 10 minutos", "dans 10 minutes", "in 10 Minuten", "daqui a 10 minutos"
-        add(rule(" (en|dentro de|dans|in|em|daqui a|daqui|d ici) (?=(mezz ora|quarto d ora|(\\d+|un) (minuti|ore|secondi|giorni|settimane)) )", " tra "))
+        add(rule(" (en|dentro de|dans|in|em|daqui a|daqui|d ici|over|binnen|za|через) (?=(mezz ora|quarto d ora|(\\d+|un) (minuti|ore|secondi|giorni|settimane)) )", " tra "))
+        // Turco: "10 dakika sonra", "yarim saat içinde"
+        add(rule(" (mezz ora|quarto d ora|(\\d+|un) (minuti|ore|secondi|giorni|settimane)) (sonra|icinde) ", " tra $1 "))
 
         // Giorni: prima le coppie ("mañana por la mañana"), poi le parole sole
         add(rule(" pasado manana ", " dopodomani "))
@@ -147,6 +197,61 @@ object Lingue {
         add(rule(" (nachmittags|am nachmittag) ", " del pomeriggio "))
         add(rule(" nachts ", " di notte "))
 
+        add(rule(" overmorgen ", " dopodomani "))
+        add(rule(" morgen ?(ochtend|vroeg) ", " domani mattina "))
+        add(rule(" morgen ?middag ", " domani pomeriggio "))
+        add(rule(" morgen ?avond ", " domani sera "))
+        add(rule(" (vanochtend|vanmorgen) ", " stamattina "))
+        add(rule(" vanmiddag ", " oggi pomeriggio "))
+        add(rule(" vanavond ", " stasera "))
+        add(rule(" vannacht ", " stanotte "))
+        add(rule(" vandaag ", " oggi "))
+        add(rule(" ('s ochtends|s ochtends|s morgens) ", " di mattina "))
+        add(rule(" s middags ", " del pomeriggio "))
+        add(rule(" s avonds ", " di sera "))
+
+        add(rule(" pojutrze ", " dopodomani "))
+        add(rule(" jutro rano ", " domani mattina "))
+        add(rule(" jutro po poludniu ", " domani pomeriggio "))
+        add(rule(" jutro wieczorem ", " domani sera "))
+        add(rule(" (dzis|dzisiaj) rano ", " stamattina "))
+        add(rule(" (dzis|dzisiaj) po poludniu ", " oggi pomeriggio "))
+        add(rule(" (dzis|dzisiaj) wieczorem ", " stasera "))
+        add(rule(" (dzis|dzisiaj) ", " oggi "))
+        add(rule(" jutro ", " domani "))
+        add(rule(" rano ", " di mattina "))
+        add(rule(" po poludniu ", " del pomeriggio "))
+        add(rule(" wieczorem ", " di sera "))
+
+        add(rule(" послезавтра ", " dopodomani "))
+        add(rule(" завтра утром ", " domani mattina "))
+        add(rule(" завтра днем ", " domani pomeriggio "))
+        add(rule(" завтра вечером ", " domani sera "))
+        add(rule(" сегодня утром ", " stamattina "))
+        add(rule(" сегодня днем ", " oggi pomeriggio "))
+        add(rule(" сегодня вечером ", " stasera "))
+        add(rule(" сегодня ночью ", " stanotte "))
+        add(rule(" сегодня ", " oggi "))
+        add(rule(" завтра ", " domani "))
+        add(rule(" утром ", " di mattina "))
+        add(rule(" днем ", " del pomeriggio "))
+        add(rule(" вечером ", " di sera "))
+        add(rule(" ночью ", " di notte "))
+
+        add(rule(" (yarindan sonra|obur gun) ", " dopodomani "))
+        add(rule(" yarin sabah ", " domani mattina "))
+        add(rule(" yarin ogleden sonra ", " domani pomeriggio "))
+        add(rule(" yarin aksam ", " domani sera "))
+        add(rule(" bu sabah ", " stamattina "))
+        add(rule(" bu ogleden sonra ", " oggi pomeriggio "))
+        add(rule(" bu aksam ", " stasera "))
+        add(rule(" bu gece ", " stanotte "))
+        add(rule(" bugun ", " oggi "))
+        add(rule(" yarin ", " domani "))
+        add(rule(" sabah ", " di mattina "))
+        add(rule(" ogleden sonra ", " del pomeriggio "))
+        add(rule(" aksam ", " di sera "))
+
         add(rule(" depois de amanha ", " dopodomani "))
         add(rule(" amanha (de|pela) manha ", " domani mattina "))
         add(rule(" amanha (a|de|pela) tarde ", " domani pomeriggio "))
@@ -162,7 +267,7 @@ object Lingue {
 
         // Giorni della settimana: "el próximo viernes", "vendredi prochain", "nächsten Freitag", "na próxima sexta"
         for ((w, it) in DAYS) {
-            add(rule(" (el |le |la |am |no |na |ce |este |diesen )?(proximo |proxima |siguiente |prochain |nachsten |kommenden )?$w( que viene| que vem| prochain| proximo)? ") { m ->
+            add(rule(" (el |le |la |am |no |na |ce |este |diesen |op |w |we |в |во )?(proximo |proxima |siguiente |prochain |nachsten |kommenden |volgende |aanstaande |przyszly |przyszla |przyszlą |nastepny |nastepna |следующии |следующую |следующее |ближаишии |ближаишую |gelecek |onumuzdeki |haftaya )?$w( que viene| que vem| prochain| proximo| gunu)? ") { m ->
                 if (NEXT.containsMatchIn(m.value)) " $it prossimo " else " $it "
             })
         }
@@ -297,7 +402,7 @@ object Lingue {
      */
     fun command(words: List<String>): List<String>? {
         if (words.isEmpty()) return null
-        val n = words.map(Search::normalize)
+        val n = words.map { flat(Search.normalize(it)) }
         // Tedesco, il verbo in due pezzi: "ruf Elisa an"
         if (n.size >= 3 && n[0] in setOf("ruf", "rufe") && n.last() == "an") return listOf("chiama") + words.subList(1, words.size - 1)
         if (n.size >= 2 && n[0] in setOf("ruf", "rufe")) return listOf("chiama") + words.drop(1)
@@ -310,6 +415,6 @@ object Lingue {
             while (tokens > 0 && used < words.size) { tokens -= n[used].split(' ').size; used++ }
             return c.to(m).split(' ').filter { it.isNotEmpty() } + words.drop(used)
         }
-        return null
+        return LingueAltre.command(words)
     }
 }

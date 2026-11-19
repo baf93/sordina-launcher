@@ -225,6 +225,7 @@
     <string name="voice_offline">Rozpoznávání hlasu není k dispozici. Stáhni jazyk v nastavení diktování.</string>
     <string name="not_understood">Nerozuměl jsem</string>
     <string name="voice_no_lang">Chybí jazyk: stáhni ho v nastavení diktování.</string>
+    <string name="voice_downloading">Stahuji jazyk pro hlas: zkus to znovu za pár minut.</string>
     <string name="mic_unavailable">Mikrofon není k dispozici</string>
     <string name="hold_speak">Podrž a mluv</string>
     <string name="why_pinned">Připnul sis ji.</string>

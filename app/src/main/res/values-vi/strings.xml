@@ -225,6 +225,7 @@
     <string name="voice_offline">Không có nhận dạng giọng nói. Tải ngôn ngữ trong cài đặt đọc chính tả.</string>
     <string name="not_understood">Không nghe rõ</string>
     <string name="voice_no_lang">Thiếu ngôn ngữ: tải trong cài đặt đọc chính tả.</string>
+    <string name="voice_downloading">Đang tải ngôn ngữ cho giọng nói: hãy thử lại sau vài phút.</string>
     <string name="mic_unavailable">Micrô không khả dụng</string>
     <string name="hold_speak">Giữ và nói</string>
     <string name="why_pinned">Bạn đã ghim nó.</string>

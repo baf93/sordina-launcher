@@ -225,6 +225,7 @@
     <string name="voice_offline">Pengenalan suara tidak tersedia. Unduh bahasanya di setelan dikte.</string>
     <string name="not_understood">Tidak terdengar jelas</string>
     <string name="voice_no_lang">Bahasa belum ada: unduh di setelan dikte.</string>
+    <string name="voice_downloading">Mengunduh bahasa untuk suara: coba lagi dalam beberapa menit.</string>
     <string name="mic_unavailable">Mikrofon tidak tersedia</string>
     <string name="hold_speak">Tahan dan bicara</string>
     <string name="why_pinned">Kamu menyematkannya.</string>

@@ -288,6 +288,7 @@
     <string name="voice_offline">Scarica la lingua nelle impostazioni di dettatura per usare la voce offline.</string>
     <string name="not_understood">Non ho capito</string>
     <string name="voice_no_lang">Scarica la lingua nelle impostazioni di dettatura.</string>
+    <string name="voice_downloading">Sto scaricando la lingua per la voce: riprova tra qualche minuto.</string>
     <string name="mic_unavailable">Microfono non disponibile</string>
     <string name="hold_speak">Tieni premuto e parla</string>
     <string name="why_pinned">Fissata da te.</string>

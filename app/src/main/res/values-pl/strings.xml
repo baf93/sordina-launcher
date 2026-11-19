@@ -225,6 +225,7 @@
     <string name="voice_offline">Rozpoznawanie mowy niedostępne. Pobierz język w ustawieniach dyktowania.</string>
     <string name="not_understood">Nie zrozumiałem</string>
     <string name="voice_no_lang">Brak języka: pobierz go w ustawieniach dyktowania.</string>
+    <string name="voice_downloading">Pobieram język do rozpoznawania mowy: spróbuj ponownie za kilka minut.</string>
     <string name="mic_unavailable">Mikrofon niedostępny</string>
     <string name="hold_speak">Przytrzymaj i mów</string>
     <string name="why_pinned">Przypiąłeś ją.</string>

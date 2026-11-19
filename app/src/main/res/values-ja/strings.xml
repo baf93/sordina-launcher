@@ -225,6 +225,7 @@
     <string name="voice_offline">音声認識を使えません。音声入力の設定で言語をダウンロードしてください。</string>
     <string name="not_understood">聞き取れませんでした</string>
     <string name="voice_no_lang">言語がありません: 音声入力の設定でダウンロードしてください。</string>
+    <string name="voice_downloading">音声用の言語をダウンロード中です。数分後にもう一度お試しください。</string>
     <string name="mic_unavailable">マイクを使えません</string>
     <string name="hold_speak">長押しして話す</string>
     <string name="why_pinned">あなたが固定しました。</string>

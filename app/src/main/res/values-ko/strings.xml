@@ -225,6 +225,7 @@
     <string name="voice_offline">음성 인식을 쓸 수 없어요. 음성 입력 설정에서 언어를 내려받으세요.</string>
     <string name="not_understood">알아듣지 못했어요</string>
     <string name="voice_no_lang">언어가 없어요: 음성 입력 설정에서 내려받으세요.</string>
+    <string name="voice_downloading">음성용 언어를 다운로드하는 중입니다. 몇 분 후에 다시 시도하세요.</string>
     <string name="mic_unavailable">마이크를 쓸 수 없어요</string>
     <string name="hold_speak">길게 누르고 말하기</string>
     <string name="why_pinned">직접 고정했어요.</string>

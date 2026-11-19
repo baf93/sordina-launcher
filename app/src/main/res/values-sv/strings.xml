@@ -225,6 +225,7 @@
     <string name="voice_offline">Röstigenkänning saknas. Ladda ner språket i dikteringsinställningarna.</string>
     <string name="not_understood">Uppfattade inte</string>
     <string name="voice_no_lang">Språket saknas: ladda ner det i dikteringsinställningarna.</string>
+    <string name="voice_downloading">Laddar ner språket för röst: försök igen om några minuter.</string>
     <string name="mic_unavailable">Mikrofonen är inte tillgänglig</string>
     <string name="hold_speak">Håll in och tala</string>
     <string name="why_pinned">Du har fäst den.</string>

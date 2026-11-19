@@ -225,6 +225,7 @@
     <string name="voice_offline">التعرف على الصوت غير متاح. نزّل اللغة من إعدادات الإملاء.</string>
     <string name="not_understood">لم أفهم</string>
     <string name="voice_no_lang">اللغة غير موجودة: نزّلها من إعدادات الإملاء.</string>
+    <string name="voice_downloading">جارٍ تنزيل اللغة للصوت: حاول مرة أخرى بعد بضع دقائق.</string>
     <string name="mic_unavailable">الميكروفون غير متاح</string>
     <string name="hold_speak">اضغط مطولًا وتحدّث</string>
     <string name="why_pinned">أنت ثبّته.</string>

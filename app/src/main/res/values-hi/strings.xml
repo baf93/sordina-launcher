@@ -225,6 +225,7 @@
     <string name="voice_offline">आवाज़ पहचान उपलब्ध नहीं। डिक्टेशन सेटिंग में भाषा डाउनलोड करें।</string>
     <string name="not_understood">समझ नहीं आया</string>
     <string name="voice_no_lang">भाषा नहीं है: डिक्टेशन सेटिंग में डाउनलोड करें।</string>
+    <string name="voice_downloading">आवाज़ के लिए भाषा डाउनलोड हो रही है: कुछ मिनट बाद फिर कोशिश करें।</string>
     <string name="mic_unavailable">माइक उपलब्ध नहीं</string>
     <string name="hold_speak">दबाकर रखें और बोलें</string>
     <string name="why_pinned">आपने इसे पिन किया।</string>

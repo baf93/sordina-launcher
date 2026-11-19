@@ -562,7 +562,11 @@ class MainActivity : ComponentActivity(), Ops {
                     act is Act.Media || act is Act.Calc
                 if (stays && out.ok) query = ""
                 val undo = out.undo
-                if (out.message != null && !here) notice = Notice(out.message, undo?.let { u -> { lifecycleScope.launch { u(); notice = Notice(tr(R.string.undone)) } } })
+                // Fatto (sveglia, timer, evento, torcia…): si torna a Casa e risponde la sordina nel suo fumetto, come a voce.
+                // Restano nella ricerca il conto (lo stai leggendo) e quello che si può annullare
+                val home = stays && out.ok && undo == null && !here && act !is Act.Calc && out.message != null
+                if (home) screen = Screen.HOME
+                if (out.message != null && !here && !home) notice = Notice(out.message, undo?.let { u -> { lifecycleScope.launch { u(); notice = Notice(tr(R.string.undone)) } } })
                 if (out.message != null && screen == Screen.HOME && !here) answer(out.message, out.ok)
                 // Hai appena scritto o chiamato qualcuno: la sua risposta passa per i prossimi 15 minuti
                 val talkTo = (act as? Act.Message)?.contact ?: (act as? Act.Call)?.contact
@@ -590,27 +594,27 @@ class MainActivity : ComponentActivity(), Ops {
         /** [code]: quello dell'allarme legato ("" se non lo chiede), null senza allarme */
         fun start(code: String?) {
             screen = Screen.HOME; query = ""
-            bubble = Said(tr(R.string.ha_asking), wait = true)
+            asking()
             lifecycleScope.launch {
                 val alarm = r.alarm.takeIf { code != null && a != null }
                 if (alarm != null && !r.arm) {
                     val off = withContext(Dispatchers.IO) { app.ha.disarm(alarm, code!!) }
-                    if (!off) { bubble = Said(tr(R.string.routine_alarm_failed, alarmName, r.name), long = true); return@launch }
+                    if (!off) { answer(tr(R.string.routine_alarm_failed, alarmName, r.name), ok = false); return@launch }
                 }
                 val ok = withContext(Dispatchers.IO) { app.ha.runRoutine(entity) }
-                if (!ok) { bubble = Said(tr(R.string.routine_failed, r.name), long = true); return@launch }
+                if (!ok) { answer(tr(R.string.routine_failed, r.name), ok = false); return@launch }
                 val armed = if (alarm != null && r.arm) withContext(Dispatchers.IO) {
                     // Già inserito: va bene così, non si richiede
                     val st = runCatching { app.ha.state(alarm)?.state }.getOrNull()
                     if (st != null && (st.startsWith("armed_") || st == "arming" || st == "pending")) true
                     else app.ha.arm(alarm, a!!.mode ?: "away", code!!)
                 } else null
-                bubble = Said(when {
+                answer(when {
                     alarm != null && !r.arm -> tr(R.string.routine_done_alarm, r.name, alarmName)
                     armed == true -> tr(R.string.routine_done_armed, r.name, alarmName)
                     armed == false -> tr(R.string.routine_arm_failed, r.name, alarmName)
                     else -> tr(R.string.routine_done, r.name)
-                }, long = true)
+                }, ok = armed != false)
                 Feel(true, prefs.haptics, window.decorView).confirm()
             }
         }
@@ -643,10 +647,10 @@ class MainActivity : ComponentActivity(), Ops {
         val name = saved[entity]?.name ?: return
         unlessOff(entity) { AlarmCode.use(this, prefs, entity, onCode = { code ->
             screen = Screen.HOME; query = ""
-            bubble = Said(tr(R.string.ha_asking), wait = true)
+            asking()
             lifecycleScope.launch {
                 val ok = withContext(Dispatchers.IO) { app.ha.disarm(entity, code) }
-                bubble = Said(if (ok) tr(R.string.alarm_off_done, name) else tr(R.string.alarm_off_failed), long = true)
+                answer(if (ok) tr(R.string.alarm_off_done, name) else tr(R.string.alarm_off_failed), ok)
                 if (ok) Feel(true, prefs.haptics, window.decorView).confirm()
             }
         }, onLost = { answer(tr(R.string.alarm_code_lost), ok = false) }) }
@@ -670,10 +674,10 @@ class MainActivity : ComponentActivity(), Ops {
         val label = AlarmCode.modeLabel(m)
         fun arm(code: String) {
             screen = Screen.HOME; query = ""
-            bubble = Said(tr(R.string.ha_asking), wait = true)
+            asking()
             lifecycleScope.launch {
                 val ok = withContext(Dispatchers.IO) { app.ha.arm(entity, m, code) }
-                bubble = Said(if (ok) tr(R.string.alarm_on_done, a.name, label) else tr(R.string.alarm_on_failed), long = true)
+                answer(if (ok) tr(R.string.alarm_on_done, a.name, label) else tr(R.string.alarm_on_failed), ok)
                 if (ok) Feel(true, prefs.haptics, window.decorView).confirm()
             }
         }
@@ -681,7 +685,7 @@ class MainActivity : ComponentActivity(), Ops {
             val st = withContext(Dispatchers.IO) { runCatching { app.ha.state(entity)?.state }.getOrNull() }
             if (st != null && (st.startsWith("armed_") || st == "arming" || st == "pending" || st == "triggered")) {
                 screen = Screen.HOME; query = ""
-                bubble = Said(tr(R.string.alarm_already_on, a.name), long = true)
+                answer(tr(R.string.alarm_already_on, a.name))
                 return@launch
             }
             if (a.codeArm && a.enc.isNotEmpty())
@@ -700,9 +704,14 @@ class MainActivity : ComponentActivity(), Ops {
             val st = withContext(Dispatchers.IO) { runCatching { app.ha.state(entity)?.state }.getOrNull() }
             if (st == "disarmed") {
                 screen = Screen.HOME; query = ""
-                bubble = Said(tr(R.string.alarm_already_off, prefs.haAlarms[entity]?.name ?: entity), long = true)
+                answer(tr(R.string.alarm_already_off, prefs.haAlarms[entity]?.name ?: entity))
             } else go()
         }
+    }
+
+    /** Casa sta rispondendo: la sordina sale e aspetta (con le animazioni), se no il fumetto piccolo "Chiedo a casa…" */
+    private fun asking() {
+        if (screen == Screen.HOME && prefs.animations) { bubble = null; reply = HomeReply(null) } else bubble = Said(tr(R.string.ha_asking), wait = true)
     }
 
     // Schede di Casa

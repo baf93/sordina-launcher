@@ -225,6 +225,7 @@
     <string name="voice_offline">Puheentunnistus ei käytettävissä. Lataa kieli sanelun asetuksista.</string>
     <string name="not_understood">En saanut selvää</string>
     <string name="voice_no_lang">Kieli puuttuu: lataa se sanelun asetuksista.</string>
+    <string name="voice_downloading">Ladataan kieltä puhetta varten: yritä uudelleen muutaman minuutin päästä.</string>
     <string name="mic_unavailable">Mikrofoni ei käytettävissä</string>
     <string name="hold_speak">Pidä painettuna ja puhu</string>
     <string name="why_pinned">Kiinnitit sen.</string>

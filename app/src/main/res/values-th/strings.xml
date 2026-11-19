@@ -225,6 +225,7 @@
     <string name="voice_offline">ไม่มีการรู้จำเสียง ดาวน์โหลดภาษาในการตั้งค่าการป้อนด้วยเสียง</string>
     <string name="not_understood">ฟังไม่ชัด</string>
     <string name="voice_no_lang">ไม่มีภาษา: ดาวน์โหลดในการตั้งค่าการป้อนด้วยเสียง</string>
+    <string name="voice_downloading">กำลังดาวน์โหลดภาษาสำหรับเสียง ลองอีกครั้งในอีกไม่กี่นาที</string>
     <string name="mic_unavailable">ใช้ไมโครโฟนไม่ได้</string>
     <string name="hold_speak">กดค้างแล้วพูด</string>
     <string name="why_pinned">คุณปักหมุดไว้</string>

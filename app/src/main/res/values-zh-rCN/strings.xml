@@ -225,6 +225,7 @@
     <string name="voice_offline">语音识别不可用。请在听写设置中下载语言。</string>
     <string name="not_understood">没听清</string>
     <string name="voice_no_lang">缺少语言：请在听写设置中下载。</string>
+    <string name="voice_downloading">正在下载语音所需的语言，请几分钟后再试。</string>
     <string name="mic_unavailable">麦克风不可用</string>
     <string name="hold_speak">按住说话</string>
     <string name="why_pinned">你固定了它。</string>

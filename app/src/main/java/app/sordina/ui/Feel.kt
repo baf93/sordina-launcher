@@ -21,6 +21,9 @@ class Feel(val animations: Boolean, val haptics: Boolean, private val view: View
     /** Una conferma: segnata come letta, azione eseguita */
     fun confirm() = buzz(if (Build.VERSION.SDK_INT >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.VIRTUAL_KEY)
 
+    /** Tieni premuto: il menu sta per aprirsi */
+    fun longPress() = buzz(HapticFeedbackConstants.LONG_PRESS)
+
     /** Superata una soglia (es. lo swipe che diventa "letta") */
     fun threshold() = buzz(if (Build.VERSION.SDK_INT >= 34) HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE else HapticFeedbackConstants.CLOCK_TICK)
 

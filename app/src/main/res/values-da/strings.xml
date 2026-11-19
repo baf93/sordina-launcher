@@ -225,6 +225,7 @@
     <string name="voice_offline">Talegenkendelse utilgængelig. Hent sproget i dikteringsindstillingerne.</string>
     <string name="not_understood">Forstod det ikke</string>
     <string name="voice_no_lang">Sproget mangler: hent det i dikteringsindstillingerne.</string>
+    <string name="voice_downloading">Henter sproget til stemmen: prøv igen om et par minutter.</string>
     <string name="mic_unavailable">Mikrofon utilgængelig</string>
     <string name="hold_speak">Hold og tal</string>
     <string name="why_pinned">Du har fastgjort den.</string>

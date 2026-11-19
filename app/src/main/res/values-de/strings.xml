@@ -225,6 +225,7 @@
     <string name="voice_offline">Spracherkennung nicht verfügbar. Lade die Sprache in den Diktier-Einstellungen.</string>
     <string name="not_understood">Nicht verstanden</string>
     <string name="voice_no_lang">Sprache fehlt: lade sie in den Diktier-Einstellungen.</string>
+    <string name="voice_downloading">Die Sprache für die Stimme wird geladen: versuch es in ein paar Minuten noch mal.</string>
     <string name="mic_unavailable">Mikrofon nicht verfügbar</string>
     <string name="hold_speak">Halten und sprechen</string>
     <string name="why_pinned">Du hast sie angeheftet.</string>

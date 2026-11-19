@@ -225,6 +225,7 @@
     <string name="voice_offline">Η αναγνώριση φωνής δεν είναι διαθέσιμη. Κατέβασε τη γλώσσα στις ρυθμίσεις υπαγόρευσης.</string>
     <string name="not_understood">Δεν κατάλαβα</string>
     <string name="voice_no_lang">Λείπει η γλώσσα: κατέβασέ τη στις ρυθμίσεις υπαγόρευσης.</string>
+    <string name="voice_downloading">Γίνεται λήψη της γλώσσας για τη φωνή: δοκίμασε ξανά σε λίγα λεπτά.</string>
     <string name="mic_unavailable">Το μικρόφωνο δεν είναι διαθέσιμο</string>
     <string name="hold_speak">Κράτα και μίλα</string>
     <string name="why_pinned">Την καρφίτσωσες εσύ.</string>
