@@ -100,6 +100,7 @@ object CarVoice {
 
     @androidx.annotation.RequiresApi(33)
     private fun carMic(cc: CarContext, i: Intent) {
+        if (cc.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) return
         val rec = CarAudioRecord.create(cc)
         val (read, write) = ParcelFileDescriptor.createPipe()
         i.putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE, read)

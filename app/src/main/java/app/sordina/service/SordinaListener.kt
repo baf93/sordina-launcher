@@ -506,7 +506,7 @@ class SordinaListener : NotificationListenerService() {
             val n = sbn.notification
             val all = n.actions.orEmpty().toList() + runCatching { Notification.WearableExtender(n).actions }.getOrNull().orEmpty()
             fun free(a: Notification.Action) = a.actionIntent != null && a.remoteInputs.orEmpty().any { it.allowFreeFormInput }
-            return all.firstOrNull { free(it) && it.semanticAction == Notification.Action.SEMANTIC_ACTION_REPLY } ?: all.firstOrNull(::free)
+            return all.firstOrNull { free(it) && android.os.Build.VERSION.SDK_INT >= 28 && it.semanticAction == Notification.Action.SEMANTIC_ACTION_REPLY } ?: all.firstOrNull(::free)
         }
 
         /** Risponde con [text] col "Rispondi" dell'app. Dopo, la sua risposta passa: state parlando */
