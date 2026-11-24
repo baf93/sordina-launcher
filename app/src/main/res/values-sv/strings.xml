@@ -1288,7 +1288,7 @@
     <string name="today_summary">%1$d släpptes igenom · %2$d väntar</string>
     <string name="today_none">Inget än</string>
     <string name="today_passed">Släpptes igenom · %d</string>
-    <string name="today_held">Väntar · %d</string>
+    <string name="today_held">Sordina · %d</string>
     <string name="today_empty_passed">Inget har kommit igenom idag.</string>
     <string name="today_empty_held">Inget har väntat i Sordina idag.</string>
     <string name="today_morning">Morgon</string>
@@ -1311,8 +1311,8 @@
     <string name="today_r_default">ingen regel släpper igenom den</string>
     <!-- Sordina sullo schermo dell'auto (Android Auto) -->
     <string name="auto_tab_home">Hem</string>
-    <string name="auto_tab_sordina">Väntar</string>
-    <string name="auto_tab_sordina_n">Väntar · %1$d</string>
+    <string name="auto_tab_sordina">Sordina</string>
+    <string name="auto_tab_sordina_n">Sordina · %1$d</string>
     <string name="auto_tab_agenda">Kalender</string>
     <string name="auto_no_routines">Välj rutiner i telefonen: Inställningar › Home Assistant › Rutiner, ”Även i bilen”</string>
     <string name="auto_no_ha">Anslut Home Assistant i Sordinas inställningar i telefonen</string>

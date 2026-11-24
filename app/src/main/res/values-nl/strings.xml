@@ -1288,7 +1288,7 @@
     <string name="today_summary">%1$d doorgelaten · %2$d wachten</string>
     <string name="today_none">Nog niets</string>
     <string name="today_passed">Doorgelaten · %d</string>
-    <string name="today_held">Wachten · %d</string>
+    <string name="today_held">Sordina · %d</string>
     <string name="today_empty_passed">Vandaag is er niets doorgekomen.</string>
     <string name="today_empty_held">Vandaag heeft er niets in Sordina gewacht.</string>
     <string name="today_morning">Ochtend</string>
@@ -1311,8 +1311,8 @@
     <string name="today_r_default">geen regel laat hem door</string>
     <!-- Sordina sullo schermo dell'auto (Android Auto) -->
     <string name="auto_tab_home">Thuis</string>
-    <string name="auto_tab_sordina">Wacht</string>
-    <string name="auto_tab_sordina_n">Wacht · %1$d</string>
+    <string name="auto_tab_sordina">Sordina</string>
+    <string name="auto_tab_sordina_n">Sordina · %1$d</string>
     <string name="auto_tab_agenda">Agenda</string>
     <string name="auto_no_routines">Kies routines op je telefoon: Instellingen › Home Assistant › Routines, ‘Ook in de auto\'</string>
     <string name="auto_no_ha">Verbind Home Assistant in de instellingen van Sordina op je telefoon</string>

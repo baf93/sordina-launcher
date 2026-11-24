@@ -1288,7 +1288,7 @@
     <string name="today_summary">%1$d आईं · %2$d इंतज़ार में</string>
     <string name="today_none">अभी कुछ नहीं</string>
     <string name="today_passed">आईं · %d</string>
-    <string name="today_held">इंतज़ार में · %d</string>
+    <string name="today_held">Sordina · %d</string>
     <string name="today_empty_passed">आज कुछ नहीं आया।</string>
     <string name="today_empty_held">आज Sordina में कुछ इंतज़ार में नहीं रहा।</string>
     <string name="today_morning">सुबह</string>
@@ -1311,8 +1311,8 @@
     <string name="today_r_default">कोई नियम इसे आने नहीं देता</string>
     <!-- Sordina sullo schermo dell'auto (Android Auto) -->
     <string name="auto_tab_home">घर</string>
-    <string name="auto_tab_sordina">इंतज़ार में</string>
-    <string name="auto_tab_sordina_n">इंतज़ार में · %1$d</string>
+    <string name="auto_tab_sordina">Sordina</string>
+    <string name="auto_tab_sordina_n">Sordina · %1$d</string>
     <string name="auto_tab_agenda">एजेंडा</string>
     <string name="auto_no_routines">फ़ोन पर रूटीन चुनें: सेटिंग › Home Assistant › रूटीन, “कार में भी”</string>
     <string name="auto_no_ha">फ़ोन पर Sordina सेटिंग में Home Assistant जोड़ें</string>

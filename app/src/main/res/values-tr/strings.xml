@@ -1288,7 +1288,7 @@
     <string name="today_summary">%1$d geçti · %2$d bekliyor</string>
     <string name="today_none">Henüz bir şey yok</string>
     <string name="today_passed">Geçenler · %d</string>
-    <string name="today_held">Bekleyenler · %d</string>
+    <string name="today_held">Sordina · %d</string>
     <string name="today_empty_passed">Bugün hiçbir şey geçmedi.</string>
     <string name="today_empty_held">Bugün Sordina\'da hiçbir şey beklemedi.</string>
     <string name="today_morning">Sabah</string>
@@ -1311,8 +1311,8 @@
     <string name="today_r_default">hiçbir kural geçirmiyor</string>
     <!-- Sordina sullo schermo dell'auto (Android Auto) -->
     <string name="auto_tab_home">Ev</string>
-    <string name="auto_tab_sordina">Bekleyen</string>
-    <string name="auto_tab_sordina_n">Bekleyen · %1$d</string>
+    <string name="auto_tab_sordina">Sordina</string>
+    <string name="auto_tab_sordina_n">Sordina · %1$d</string>
     <string name="auto_tab_agenda">Ajanda</string>
     <string name="auto_no_routines">Rutinleri telefonda seçin: Ayarlar › Home Assistant › Rutinler, “Arabada da”</string>
     <string name="auto_no_ha">Home Assistant\'ı telefondaki Sordina ayarlarından bağlayın</string>

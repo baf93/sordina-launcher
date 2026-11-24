@@ -1322,7 +1322,7 @@
     <string name="today_summary">%1$d przepuszczonych · %2$d czeka</string>
     <string name="today_none">Jeszcze nic</string>
     <string name="today_passed">Przepuszczone · %d</string>
-    <string name="today_held">Czekają · %d</string>
+    <string name="today_held">Sordina · %d</string>
     <string name="today_empty_passed">Dziś nic nie przeszło.</string>
     <string name="today_empty_held">Dziś nic nie czekało w Sordinie.</string>
     <string name="today_morning">Rano</string>
@@ -1345,8 +1345,8 @@
     <string name="today_r_default">żadna reguła jej nie przepuszcza</string>
     <!-- Sordina sullo schermo dell'auto (Android Auto) -->
     <string name="auto_tab_home">Dom</string>
-    <string name="auto_tab_sordina">Czeka</string>
-    <string name="auto_tab_sordina_n">Czeka · %1$d</string>
+    <string name="auto_tab_sordina">Sordina</string>
+    <string name="auto_tab_sordina_n">Sordina · %1$d</string>
     <string name="auto_tab_agenda">Kalendarz</string>
     <string name="auto_no_routines">Wybierz rutyny w telefonie: Ustawienia › Home Assistant › Rutyny, „Także w samochodzie”</string>
     <string name="auto_no_ha">Połącz Home Assistant w ustawieniach Sordiny w telefonie</string>

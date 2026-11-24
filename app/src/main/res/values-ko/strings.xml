@@ -1272,7 +1272,7 @@
     <string name="today_summary">%1$d개 통과 · %2$d개 대기 중</string>
     <string name="today_none">아직 없음</string>
     <string name="today_passed">통과 · %d</string>
-    <string name="today_held">대기 중 · %d</string>
+    <string name="today_held">Sordina · %d</string>
     <string name="today_empty_passed">오늘은 통과한 알림이 없어요.</string>
     <string name="today_empty_held">오늘은 Sordina에서 기다린 알림이 없어요.</string>
     <string name="today_morning">오전</string>
@@ -1295,8 +1295,8 @@
     <string name="today_r_default">통과시키는 규칙 없음</string>
     <!-- Sordina sullo schermo dell'auto (Android Auto) -->
     <string name="auto_tab_home">홈</string>
-    <string name="auto_tab_sordina">대기 중</string>
-    <string name="auto_tab_sordina_n">대기 중 · %1$d</string>
+    <string name="auto_tab_sordina">Sordina</string>
+    <string name="auto_tab_sordina_n">Sordina · %1$d</string>
     <string name="auto_tab_agenda">일정</string>
     <string name="auto_no_routines">휴대전화에서 루틴을 선택하세요: 설정 › Home Assistant › 루틴, \'차에서도\'</string>
     <string name="auto_no_ha">휴대전화의 Sordina 설정에서 Home Assistant를 연결하세요</string>

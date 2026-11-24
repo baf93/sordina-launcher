@@ -1322,7 +1322,7 @@
     <string name="today_summary">%1$d prošlo · %2$d čeká</string>
     <string name="today_none">Zatím nic</string>
     <string name="today_passed">Prošlo · %d</string>
-    <string name="today_held">Čeká · %d</string>
+    <string name="today_held">Sordina · %d</string>
     <string name="today_empty_passed">Dnes nic neprošlo.</string>
     <string name="today_empty_held">Dnes v Sordině nic nečekalo.</string>
     <string name="today_morning">Ráno</string>
@@ -1345,8 +1345,8 @@
     <string name="today_r_default">žádné pravidlo ji nepustí</string>
     <!-- Sordina sullo schermo dell'auto (Android Auto) -->
     <string name="auto_tab_home">Domov</string>
-    <string name="auto_tab_sordina">Čeká</string>
-    <string name="auto_tab_sordina_n">Čeká · %1$d</string>
+    <string name="auto_tab_sordina">Sordina</string>
+    <string name="auto_tab_sordina_n">Sordina · %1$d</string>
     <string name="auto_tab_agenda">Kalendář</string>
     <string name="auto_no_routines">Vyberte rutiny v telefonu: Nastavení › Home Assistant › Rutiny, „I v autě“</string>
     <string name="auto_no_ha">Připojte Home Assistant v nastavení Sordiny v telefonu</string>

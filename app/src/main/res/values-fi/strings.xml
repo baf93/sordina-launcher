@@ -1288,7 +1288,7 @@
     <string name="today_summary">%1$d päästetty läpi · %2$d odottaa</string>
     <string name="today_none">Ei vielä mitään</string>
     <string name="today_passed">Päästetty läpi · %d</string>
-    <string name="today_held">Odottaa · %d</string>
+    <string name="today_held">Sordina · %d</string>
     <string name="today_empty_passed">Tänään mitään ei ole päässyt läpi.</string>
     <string name="today_empty_held">Tänään mikään ei ole odottanut Sordinassa.</string>
     <string name="today_morning">Aamu</string>
@@ -1311,8 +1311,8 @@
     <string name="today_r_default">mikään sääntö ei päästä sitä läpi</string>
     <!-- Sordina sullo schermo dell'auto (Android Auto) -->
     <string name="auto_tab_home">Koti</string>
-    <string name="auto_tab_sordina">Odottaa</string>
-    <string name="auto_tab_sordina_n">Odottaa · %1$d</string>
+    <string name="auto_tab_sordina">Sordina</string>
+    <string name="auto_tab_sordina_n">Sordina · %1$d</string>
     <string name="auto_tab_agenda">Kalenteri</string>
     <string name="auto_no_routines">Valitse rutiinit puhelimessa: Asetukset › Home Assistant › Rutiinit, ”Myös autossa”</string>
     <string name="auto_no_ha">Yhdistä Home Assistant Sordinan asetuksissa puhelimessa</string>

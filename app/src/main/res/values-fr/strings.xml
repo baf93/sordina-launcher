@@ -1294,7 +1294,7 @@
     <string name="today_summary">%1$d passées · %2$d en attente</string>
     <string name="today_none">Rien pour l\'instant</string>
     <string name="today_passed">Passées · %d</string>
-    <string name="today_held">En attente · %d</string>
+    <string name="today_held">Sordina · %d</string>
     <string name="today_empty_passed">Rien n\'est passé aujourd\'hui.</string>
     <string name="today_empty_held">Rien n\'a attendu dans Sordina aujourd\'hui.</string>
     <string name="today_morning">Matin</string>
@@ -1317,8 +1317,8 @@
     <string name="today_r_default">aucune règle ne la laisse passer</string>
     <!-- Sordina sullo schermo dell'auto (Android Auto) -->
     <string name="auto_tab_home">Maison</string>
-    <string name="auto_tab_sordina">En attente</string>
-    <string name="auto_tab_sordina_n">En attente · %1$d</string>
+    <string name="auto_tab_sordina">Sordina</string>
+    <string name="auto_tab_sordina_n">Sordina · %1$d</string>
     <string name="auto_tab_agenda">Agenda</string>
     <string name="auto_no_routines">Choisissez des routines sur le téléphone : Réglages › Home Assistant › Routines, « Aussi en voiture »</string>
     <string name="auto_no_ha">Connectez Home Assistant dans les réglages de Sordina sur le téléphone</string>

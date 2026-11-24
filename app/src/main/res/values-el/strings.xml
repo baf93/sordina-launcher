@@ -1288,7 +1288,7 @@
     <string name="today_summary">%1$d πέρασαν · %2$d περιμένουν</string>
     <string name="today_none">Τίποτα ακόμα</string>
     <string name="today_passed">Πέρασαν · %d</string>
-    <string name="today_held">Περιμένουν · %d</string>
+    <string name="today_held">Sordina · %d</string>
     <string name="today_empty_passed">Σήμερα δεν πέρασε τίποτα.</string>
     <string name="today_empty_held">Σήμερα τίποτα δεν περίμενε στη Sordina.</string>
     <string name="today_morning">Πρωί</string>
@@ -1311,8 +1311,8 @@
     <string name="today_r_default">κανένας κανόνας δεν την αφήνει να περάσει</string>
     <!-- Sordina sullo schermo dell'auto (Android Auto) -->
     <string name="auto_tab_home">Σπίτι</string>
-    <string name="auto_tab_sordina">Σε αναμονή</string>
-    <string name="auto_tab_sordina_n">Σε αναμονή · %1$d</string>
+    <string name="auto_tab_sordina">Sordina</string>
+    <string name="auto_tab_sordina_n">Sordina · %1$d</string>
     <string name="auto_tab_agenda">Ατζέντα</string>
     <string name="auto_no_routines">Επίλεξε ρουτίνες στο τηλέφωνο: Ρυθμίσεις › Home Assistant › Ρουτίνες, «Και στο αυτοκίνητο»</string>
     <string name="auto_no_ha">Σύνδεσε το Home Assistant στις ρυθμίσεις του Sordina στο τηλέφωνο</string>

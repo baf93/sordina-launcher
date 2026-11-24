@@ -1322,7 +1322,7 @@
     <string name="today_summary">%1$d пропущено · %2$d чекають</string>
     <string name="today_none">Поки нічого</string>
     <string name="today_passed">Пропущені · %d</string>
-    <string name="today_held">Чекають · %d</string>
+    <string name="today_held">Sordina · %d</string>
     <string name="today_empty_passed">Сьогодні нічого не пройшло.</string>
     <string name="today_empty_held">Сьогодні в Sordina нічого не чекало.</string>
     <string name="today_morning">Ранок</string>
@@ -1345,8 +1345,8 @@
     <string name="today_r_default">жодне правило її не пропускає</string>
     <!-- Sordina sullo schermo dell'auto (Android Auto) -->
     <string name="auto_tab_home">Дім</string>
-    <string name="auto_tab_sordina">Чекає</string>
-    <string name="auto_tab_sordina_n">Чекає · %1$d</string>
+    <string name="auto_tab_sordina">Sordina</string>
+    <string name="auto_tab_sordina_n">Sordina · %1$d</string>
     <string name="auto_tab_agenda">Календар</string>
     <string name="auto_no_routines">Виберіть сценарії на телефоні: Налаштування › Home Assistant › Сценарії, «Також в авто»</string>
     <string name="auto_no_ha">Підключіть Home Assistant у налаштуваннях Sordina на телефоні</string>

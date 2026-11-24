@@ -1305,7 +1305,7 @@
     <string name="today_summary">%1$d au trecut · %2$d așteaptă</string>
     <string name="today_none">Încă nimic</string>
     <string name="today_passed">Au trecut · %d</string>
-    <string name="today_held">Așteaptă · %d</string>
+    <string name="today_held">Sordina · %d</string>
     <string name="today_empty_passed">Azi n-a trecut nimic.</string>
     <string name="today_empty_held">Azi nimic n-a așteptat în Sordina.</string>
     <string name="today_morning">Dimineață</string>
@@ -1328,8 +1328,8 @@
     <string name="today_r_default">nicio regulă n-o lasă să treacă</string>
     <!-- Sordina sullo schermo dell'auto (Android Auto) -->
     <string name="auto_tab_home">Acasă</string>
-    <string name="auto_tab_sordina">În așteptare</string>
-    <string name="auto_tab_sordina_n">În așteptare · %1$d</string>
+    <string name="auto_tab_sordina">Sordina</string>
+    <string name="auto_tab_sordina_n">Sordina · %1$d</string>
     <string name="auto_tab_agenda">Agendă</string>
     <string name="auto_no_routines">Alege rutine pe telefon: Setări › Home Assistant › Rutine, „Și în mașină”</string>
     <string name="auto_no_ha">Conectează Home Assistant în setările Sordina de pe telefon</string>

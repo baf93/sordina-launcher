@@ -1272,7 +1272,7 @@
     <string name="today_summary">%1$d lolos · %2$d menunggu</string>
     <string name="today_none">Belum ada</string>
     <string name="today_passed">Lolos · %d</string>
-    <string name="today_held">Menunggu · %d</string>
+    <string name="today_held">Sordina · %d</string>
     <string name="today_empty_passed">Hari ini belum ada yang lolos.</string>
     <string name="today_empty_held">Hari ini tidak ada yang menunggu di Sordina.</string>
     <string name="today_morning">Pagi</string>
@@ -1295,8 +1295,8 @@
     <string name="today_r_default">tidak ada aturan yang meloloskannya</string>
     <!-- Sordina sullo schermo dell'auto (Android Auto) -->
     <string name="auto_tab_home">Rumah</string>
-    <string name="auto_tab_sordina">Menunggu</string>
-    <string name="auto_tab_sordina_n">Menunggu · %1$d</string>
+    <string name="auto_tab_sordina">Sordina</string>
+    <string name="auto_tab_sordina_n">Sordina · %1$d</string>
     <string name="auto_tab_agenda">Agenda</string>
     <string name="auto_no_routines">Pilih rutinitas di ponsel: Setelan › Home Assistant › Rutinitas, “Juga di mobil”</string>
     <string name="auto_no_ha">Hubungkan Home Assistant di setelan Sordina pada ponsel</string>

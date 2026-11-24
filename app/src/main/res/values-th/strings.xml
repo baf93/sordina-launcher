@@ -1272,7 +1272,7 @@
     <string name="today_summary">ผ่าน %1$d · รอ %2$d</string>
     <string name="today_none">ยังไม่มี</string>
     <string name="today_passed">ผ่าน · %d</string>
-    <string name="today_held">รอ · %d</string>
+    <string name="today_held">Sordina · %d</string>
     <string name="today_empty_passed">วันนี้ยังไม่มีอะไรผ่านเข้ามา</string>
     <string name="today_empty_held">วันนี้ไม่มีอะไรรอใน Sordina</string>
     <string name="today_morning">เช้า</string>
@@ -1295,8 +1295,8 @@
     <string name="today_r_default">ไม่มีกฎที่ให้ผ่าน</string>
     <!-- Sordina sullo schermo dell'auto (Android Auto) -->
     <string name="auto_tab_home">บ้าน</string>
-    <string name="auto_tab_sordina">รออยู่</string>
-    <string name="auto_tab_sordina_n">รออยู่ · %1$d</string>
+    <string name="auto_tab_sordina">Sordina</string>
+    <string name="auto_tab_sordina_n">Sordina · %1$d</string>
     <string name="auto_tab_agenda">กำหนดการ</string>
     <string name="auto_no_routines">เลือกรูทีนในโทรศัพท์: การตั้งค่า › Home Assistant › รูทีน, “ในรถด้วย”</string>
     <string name="auto_no_ha">เชื่อมต่อ Home Assistant ในการตั้งค่า Sordina บนโทรศัพท์</string>

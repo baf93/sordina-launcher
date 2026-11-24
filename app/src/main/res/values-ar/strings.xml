@@ -1356,7 +1356,7 @@
     <string name="today_summary">مرّ %1$d · ينتظر %2$d</string>
     <string name="today_none">لا شيء بعد</string>
     <string name="today_passed">مرّت · %d</string>
-    <string name="today_held">تنتظر · %d</string>
+    <string name="today_held">Sordina · %d</string>
     <string name="today_empty_passed">لم يمرّ شيء اليوم.</string>
     <string name="today_empty_held">لم ينتظر شيء في Sordina اليوم.</string>
     <string name="today_morning">الصباح</string>
@@ -1379,8 +1379,8 @@
     <string name="today_r_default">لا توجد قاعدة تسمح بمرورها</string>
     <!-- Sordina sullo schermo dell'auto (Android Auto) -->
     <string name="auto_tab_home">المنزل</string>
-    <string name="auto_tab_sordina">في الانتظار</string>
-    <string name="auto_tab_sordina_n">في الانتظار · %1$d</string>
+    <string name="auto_tab_sordina">Sordina</string>
+    <string name="auto_tab_sordina_n">Sordina · %1$d</string>
     <string name="auto_tab_agenda">المواعيد</string>
     <string name="auto_no_routines">اختر الروتينات على الهاتف: الإعدادات › Home Assistant › الروتينات، «في السيارة أيضًا»</string>
     <string name="auto_no_ha">اربط Home Assistant من إعدادات Sordina على الهاتف</string>

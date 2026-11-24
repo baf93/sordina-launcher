@@ -1272,7 +1272,7 @@
     <string name="today_summary">%1$d 則已放行 · %2$d 則等待中</string>
     <string name="today_none">還沒有</string>
     <string name="today_passed">已放行 · %d</string>
-    <string name="today_held">等待中 · %d</string>
+    <string name="today_held">Sordina · %d</string>
     <string name="today_empty_passed">今天還沒有放行任何通知。</string>
     <string name="today_empty_held">今天沒有通知在 Sordina 等待。</string>
     <string name="today_morning">上午</string>
@@ -1295,8 +1295,8 @@
     <string name="today_r_default">沒有規則放行它</string>
     <!-- Sordina sullo schermo dell'auto (Android Auto) -->
     <string name="auto_tab_home">家</string>
-    <string name="auto_tab_sordina">等待中</string>
-    <string name="auto_tab_sordina_n">等待中 · %1$d</string>
+    <string name="auto_tab_sordina">Sordina</string>
+    <string name="auto_tab_sordina_n">Sordina · %1$d</string>
     <string name="auto_tab_agenda">行程</string>
     <string name="auto_no_routines">在手機上選擇例行程序：設定 › Home Assistant › 例行程序，「車上也可用」</string>
     <string name="auto_no_ha">在手機上的 Sordina 設定中連結 Home Assistant</string>
