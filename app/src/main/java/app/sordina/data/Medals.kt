@@ -155,7 +155,7 @@ enum class Medal(val group: Group, val tier: Int, val n: Int = 0) {
             PERFECT -> Progress(byDay[today].orEmpty().let { v -> if (spotless(today, v)) v.count { it.minutes > 0 } else 0 }, m.n)
             LOYAL -> Progress(all.filter { it.minutes > 0 }.groupingBy { it.pkg }.eachCount().values.maxOrNull() ?: 0, m.n)
             SKIP_RUN -> Progress(runs.second, m.n)
-            ALL_OF_THEM -> if (ev.braked.size < 2) null else Progress(byDay[today].orEmpty().filter { it.minutes > 0 && it.pkg in ev.braked }.map { it.pkg }.toSet().size, ev.braked.size)
+            ALL_OF_THEM -> if (ev.braked.size < 2) null else Progress(byDay[today].orEmpty().filter { it.minutes >= 0 && it.pkg in ev.braked }.map { it.pkg }.toSet().size, ev.braked.size)
             CLEAN_3, CLEAN_7, CLEAN_14, CLEAN_30 -> Progress(ev.cleanRun, m.n)
             CLEAN_10, CLEAN_50, CLEAN_100, CLEAN_365 -> Progress(ev.cleanTotal, m.n)
             HOUR, DAY_2H -> Progress(weekSum(monday(today)).coerceAtLeast(0), m.n)
@@ -206,7 +206,8 @@ enum class Medal(val group: Group, val tier: Int, val n: Int = 0) {
             NIGHT -> byDay.any { (d, v) -> d.isBefore(today) && v.any { it.minutes > 0 && it.hour >= 22 } && v.none { it.minutes < 0 && it.hour >= 22 } }
             WEEKEND -> (0L..400L).map { today.minusDays(it) }.filter { it.dayOfWeek == DayOfWeek.SUNDAY && ev.brakeSince?.let { s -> !it.minusDays(1).isBefore(s) } == true }
                 .any { kept(it) && kept(it.minusDays(1)) }
-            ALL_OF_THEM -> ev.braked.size >= 2 && byDay.values.any { v -> v.filter { it.minutes > 0 }.map { it.pkg }.toSet().containsAll(ev.braked) }
+            // Anche le rinunce a zero (subito dopo un'altra): lasciare stare le app una dietro l'altra vale
+            ALL_OF_THEM -> ev.braked.size >= 2 && byDay.values.any { v -> v.filter { it.minutes >= 0 }.map { it.pkg }.toSet().containsAll(ev.braked) }
             // ── Senza tentazioni
             CLEAN_1, CLEAN_10, CLEAN_50, CLEAN_100, CLEAN_365 -> ev.cleanTotal >= m.n
             CLEAN_3, CLEAN_7, CLEAN_14, CLEAN_30 -> ev.cleanBest >= m.n

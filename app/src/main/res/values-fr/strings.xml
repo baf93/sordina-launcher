@@ -1159,6 +1159,7 @@
     <string name="ob2_ph_s1">Android demande quel écran d\'accueil utiliser</string>
     <string name="ob2_ph_s2">Choisis Sordina</string>
     <string name="ob2_ph_s3">S\'il le demande, appuie sur « Toujours »</string>
+    <string name="ob2_ph_xiaomi">Sur les téléphones Xiaomi, le système passe aux trois boutons de navigation quand je suis ton écran d\'accueil. C\'est une limite de Xiaomi, pas la mienne : pour retrouver les gestes, choisis à nouveau l\'écran d\'accueil de Xiaomi.</string>
     <string name="ob2_pb_title">Ne me laisse pas m\'endormir</string>
     <string name="ob2_pb_why">Pour économiser la batterie, Android ferme parfois des apps. S\'il me ferme, toutes tes notifications se remettent à sonner.</string>
     <string name="ob2_pb_s1">Une fenêtre d\'Android s\'ouvre</string>
@@ -1376,6 +1377,18 @@
     <string name="routine_car_hint">Une case dans Maison sur l\'écran de la voiture</string>
     <string name="ch_car">Confirmations depuis la voiture</string>
     <string name="auto_no_events_week">Rien dans ton agenda ces prochains jours</string>
+    <string name="auto_alarm_on">Activée · %1$s</string>
+    <string name="auto_alarm_off">Désactivée</string>
+    <string name="auto_running">En cours…</string>
+    <string name="auto_search_hint">Routines, discussions, rendez-vous</string>
+    <string name="auto_section_alarms">Alarmes</string>
+    <string name="auto_section_routines">Routines</string>
+    <string name="auto_search_none">Rien ici. Appuie sur Entrée et Parler essaiera</string>
+    <string name="auto_since_car_none">Rien depuis que tu es en voiture</string>
+    <string name="auto_older_on_phone">Les plus anciennes sont sur le téléphone</string>
+    <string name="auto_go">Y aller</string>
+    <string name="auto_alarm_triggered">Déclenchée !</string>
+    <string name="auto_arm">Activer</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">Calendrier</string>
     <string name="cal_week">Semaine</string>
@@ -1410,19 +1423,19 @@
     <string name="cal_rep_end">Fin de la répétition</string>
     <string name="cal_every">Tous les</string>
     <string name="cal_rep_last">Dernière fois</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="one">jour</item>
         <item quantity="other">jours</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="one">semaine</item>
         <item quantity="other">semaines</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="one">mois</item>
         <item quantity="other">mois</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="one">an</item>
         <item quantity="other">ans</item>
     </plurals>

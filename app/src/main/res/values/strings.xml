@@ -1165,6 +1165,7 @@
     <string name="ob2_ph_s1">Android asks which Home to use</string>
     <string name="ob2_ph_s2">Choose Sordina</string>
     <string name="ob2_ph_s3">If it asks, tap \u201cAlways\u201d</string>
+    <string name="ob2_ph_xiaomi">On Xiaomi phones, the system switches to the three navigation buttons when I\'m your Home. It\'s a Xiaomi limit, not mine: to get gestures back, choose the Xiaomi Home again.</string>
     <string name="ob2_pb_title">Don\'t let me fall asleep</string>
     <string name="ob2_pb_why">To save battery, Android sometimes shuts apps down. If it shuts me down, all your notifications ring again.</string>
     <string name="ob2_pb_s1">An Android window opens</string>
@@ -1375,6 +1376,18 @@
     <string name="routine_car_hint">A tile in Home on the car screen</string>
     <string name="ch_car">Confirmations from the car</string>
     <string name="auto_no_events_week">Nothing on your calendar in the next few days</string>
+    <string name="auto_alarm_on">Armed · %1$s</string>
+    <string name="auto_alarm_off">Disarmed</string>
+    <string name="auto_running">Running…</string>
+    <string name="auto_search_hint">Routines, chats, appointments</string>
+    <string name="auto_section_alarms">Alarms</string>
+    <string name="auto_section_routines">Routines</string>
+    <string name="auto_search_none">Nothing here. Press Enter and Talk will try</string>
+    <string name="auto_since_car_none">Nothing since you got in the car</string>
+    <string name="auto_older_on_phone">Older ones are on your phone</string>
+    <string name="auto_go">Go</string>
+    <string name="auto_alarm_triggered">Triggered!</string>
+    <string name="auto_arm">Arm</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">Calendar</string>
     <string name="cal_week">Week</string>
@@ -1409,19 +1422,19 @@
     <string name="cal_rep_end">End repeat</string>
     <string name="cal_every">Every</string>
     <string name="cal_rep_last">Last time</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="one">day</item>
         <item quantity="other">days</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="one">week</item>
         <item quantity="other">weeks</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="one">month</item>
         <item quantity="other">months</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="one">year</item>
         <item quantity="other">years</item>
     </plurals>

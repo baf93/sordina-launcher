@@ -1154,6 +1154,7 @@
     <string name="ob2_ph_s1">Android पूछेगा कि कौन-सी होम स्क्रीन इस्तेमाल करनी है</string>
     <string name="ob2_ph_s2">Sordina चुनें</string>
     <string name="ob2_ph_s3">अगर पूछे, तो “हमेशा” पर टैप करें</string>
+    <string name="ob2_ph_xiaomi">Xiaomi फ़ोन पर, जब मैं आपकी होम स्क्रीन होती हूँ तो सिस्टम तीन नेविगेशन बटन पर चला जाता है। यह Xiaomi की सीमा है, मेरी नहीं: जेस्चर वापस पाने के लिए फिर से Xiaomi की होम स्क्रीन चुनें।</string>
     <string name="ob2_pb_title">मुझे सोने न दें</string>
     <string name="ob2_pb_why">बैटरी बचाने के लिए Android कभी-कभी ऐप बंद कर देता है। अगर उसने मुझे बंद किया, तो आपकी सारी सूचनाएँ फिर से बजेंगी।</string>
     <string name="ob2_pb_s1">Android की एक विंडो खुलेगी</string>
@@ -1370,6 +1371,18 @@
     <string name="routine_car_hint">कार की स्क्रीन पर घर में एक टाइल</string>
     <string name="ch_car">कार से पुष्टि</string>
     <string name="auto_no_events_week">अगले कुछ दिनों में कैलेंडर में कुछ नहीं है</string>
+    <string name="auto_alarm_on">चालू · %1$s</string>
+    <string name="auto_alarm_off">बंद</string>
+    <string name="auto_running">चल रहा है…</string>
+    <string name="auto_search_hint">रूटीन, चैट, अपॉइंटमेंट</string>
+    <string name="auto_section_alarms">अलार्म</string>
+    <string name="auto_section_routines">रूटीन</string>
+    <string name="auto_search_none">यहाँ कुछ नहीं। Enter दबाएँ, बोलें कोशिश करेगा</string>
+    <string name="auto_since_car_none">कार में बैठने के बाद से कुछ नहीं</string>
+    <string name="auto_older_on_phone">पुरानी सूचनाएँ फ़ोन पर मिलेंगी</string>
+    <string name="auto_go">चलें</string>
+    <string name="auto_alarm_triggered">बज उठा!</string>
+    <string name="auto_arm">चालू करें</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">कैलेंडर</string>
     <string name="cal_week">सप्ताह</string>
@@ -1404,19 +1417,19 @@
     <string name="cal_rep_end">दोहराना समाप्त</string>
     <string name="cal_every">हर</string>
     <string name="cal_rep_last">आख़िरी बार</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="one">दिन</item>
         <item quantity="other">दिन</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="one">सप्ताह</item>
         <item quantity="other">सप्ताह</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="one">महीना</item>
         <item quantity="other">महीने</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="one">साल</item>
         <item quantity="other">साल</item>
     </plurals>

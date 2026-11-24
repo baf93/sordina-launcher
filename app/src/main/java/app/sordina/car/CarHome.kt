@@ -12,12 +12,16 @@ import androidx.car.app.Screen
 import androidx.car.app.constraints.ConstraintManager
 import androidx.car.app.model.Action
 import androidx.car.app.model.ActionStrip
+import androidx.car.app.model.CarColor
 import androidx.car.app.model.GridItem
+import androidx.car.app.model.GridSection
 import androidx.car.app.model.GridTemplate
+import androidx.car.app.model.Header
 import androidx.car.app.model.ItemList
 import androidx.car.app.model.ListTemplate
-import androidx.car.app.model.MessageTemplate
 import androidx.car.app.model.Row
+import androidx.car.app.model.SearchTemplate
+import androidx.car.app.model.SectionedItemTemplate
 import androidx.car.app.model.Tab
 import androidx.car.app.model.TabContents
 import androidx.car.app.model.TabTemplate
@@ -34,6 +38,7 @@ import app.sordina.data.Held
 import app.sordina.data.HeldLine
 import app.sordina.data.HomeRun
 import app.sordina.data.Prefs
+import app.sordina.data.Search
 import app.sordina.data.Upcoming
 import app.sordina.data.today
 import app.sordina.service.AlarmCode
@@ -50,21 +55,22 @@ import kotlinx.coroutines.withContext
 
 /**
  * Sordina sullo schermo dell'auto. In alto la sordina (l'icona dell'app) e le schede che hai acceso, nel tuo ordine:
- * Casa (le routine "Anche in auto"), In sordina (cosa passa e chi aspetta), Agenda (oggi) e, per ultima, Parla.
- * Con una scheda sola (o un'auto senza schede, prima della Car API 6) resta una schermata sola, col microfono in alto.
+ * Casa (allarmi e routine "Anche in auto", a riquadri grandi), In sordina (cosa è arrivato da quando sei in auto),
+ * Agenda (i prossimi impegni). Su ogni scheda il pulsante Cerca, come in Spotify: la barra col microfono di Android
+ * Auto (la tastiera la spegne lui mentre guidi); quello che dici o scrivi e non trova lo capisce Parla.
+ * Con una scheda sola (o un'auto senza schede, prima della Car API 6) resta una schermata sola. Prima della Car API 7
+ * (niente pulsanti tondi) al posto di Cerca c'è il microfono in alto.
  */
 class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
     val app: SordinaApp = SordinaApp.of(cc)
     private val prefs get() = app.prefs
     private val main = Handler(Looper.getMainLooper())
 
-    /** La scheda aperta, e quella da cui sei arrivato a Parla (ci si torna dopo) */
+    /** La scheda aperta */
     private var active: String? = null
-    private var back: String? = null
-    /** Parla: sta ascoltando, e cosa ha sentito finora */
+    /** Parla sta ascoltando */
     private var listening = false
-    private var heard: String? = null
-    /** Parla fuori dalle schede: la sua schermata */
+    /** La schermata di Parla mentre ascolta */
     private var talkScreen: SayScreen? = null
     /** Dopo "rispondi a Paolo": la prossima frase è la risposta */
     private var replyTo: List<Held>? = null
@@ -75,7 +81,7 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
         // Arriva o se ne va qualcosa in sordina: la scheda si aggiorna (al massimo ogni paio di secondi)
         lifecycleScope.launch { app.store.held.drop(1).collect { if (shown(Prefs.CAR_TAB_SORDINA)) invalidateSoon() } }
         lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onStart(owner: LifecycleOwner) { loadEvents() }
+            override fun onStart(owner: LifecycleOwner) { loadEvents(); loadAlarmStates() }
             override fun onStop(owner: LifecycleOwner) { if (listening) endTalk(null) }
         })
     }
@@ -83,13 +89,12 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
     // Le schede
 
     private fun tabs(): List<String> = prefs.carTabs.filter { it !in prefs.carTabsOff }.ifEmpty { listOf(Prefs.CAR_TAB_HOME) }
-    private fun ids(): List<String> = tabs() + if (prefs.carVoice) listOf(TALK) else emptyList()
-    private fun withTabs(): Boolean = carContext.carAppApiLevel >= 6 && ids().size >= 2
-    private fun shown(id: String) = (if (withTabs()) active ?: ids().first() else tabs().first()) == id
+    private fun withTabs(): Boolean = carContext.carAppApiLevel >= 6 && tabs().size >= 2
+    private fun shown(id: String) = (if (withTabs()) active ?: tabs().first() else tabs().first()) == id
 
     override fun onGetTemplate(): Template {
         redraw = false
-        val ids = ids()
+        val ids = tabs()
         if (!withTabs()) return single(tabs().first())
         val cur = active?.takeIf { it in ids } ?: ids.first()
         active = cur
@@ -106,35 +111,39 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
     private fun tab(id: String): Tab = Tab.Builder().setContentId(id).setTitle(title(id)).setIcon(carContext.icon(when (id) {
         Prefs.CAR_TAB_HOME -> R.drawable.car_home
         Prefs.CAR_TAB_SORDINA -> R.drawable.car_bell
-        Prefs.CAR_TAB_AGENDA -> R.drawable.car_calendar
-        else -> R.drawable.car_mic
+        else -> R.drawable.car_calendar
     })).build()
 
     private fun title(id: String): String = when (id) {
         Prefs.CAR_TAB_HOME -> tr(R.string.auto_tab_home)
-        Prefs.CAR_TAB_SORDINA -> CarTalk.groups(app).sumOf { g -> g.sumOf { it.count } }.let { n -> if (n > 0) tr(R.string.auto_tab_sordina_n, n) else tr(R.string.auto_tab_sordina) }
-        Prefs.CAR_TAB_AGENDA -> tr(R.string.auto_tab_agenda)
-        else -> tr(R.string.auto_tab_talk)
+        Prefs.CAR_TAB_SORDINA -> sinceCar().size.let { n -> if (n > 0) tr(R.string.auto_tab_sordina_n, n) else tr(R.string.auto_tab_sordina) }
+        else -> tr(R.string.auto_tab_agenda)
     }
 
     private fun select(id: String) {
         if (id == active) return
-        if (id == TALK) { back = active; active = TALK; invalidate(); talk(); return }
-        if (listening) endTalk(null, stay = true)
         active = id
         if (id == Prefs.CAR_TAB_AGENDA) loadEvents()
         invalidate()
     }
 
-    /** Una scheda sola: la sordina e il nome in alto, il microfono a destra se Parla è acceso */
+    /** Una scheda sola: la sordina e il nome in alto; il microfono a destra se l'auto non ha il pulsante Cerca */
     private fun single(id: String): Template {
-        val strip = if (prefs.carVoice) ActionStrip.Builder().addAction(Action.Builder().setIcon(carContext.icon(R.drawable.car_mic))
+        val strip = if (searchFab() == null) ActionStrip.Builder().addAction(Action.Builder().setIcon(carContext.icon(R.drawable.car_mic))
             .setOnClickListener { talkAlone() }.build()).build() else null
         return when (val t = content(id)) {
+            is SectionedItemTemplate -> SectionedItemTemplate.Builder(t).setHeader(Header.Builder().setTitle(tr(R.string.app_name))
+                .setStartHeaderAction(Action.APP_ICON)
+                .build()).build()
             is GridTemplate -> GridTemplate.Builder().setTitle(tr(R.string.app_name)).setHeaderAction(Action.APP_ICON)
-                .setSingleList(t.singleList!!).apply { strip?.let { setActionStrip(it) } }.build()
+                .setSingleList(t.singleList!!).large().apply { strip?.let { setActionStrip(it) }; searchFab()?.let(::addAction) }.build()
             is ListTemplate -> ListTemplate.Builder().setTitle(tr(R.string.app_name)).setHeaderAction(Action.APP_ICON)
-                .setSingleList(t.singleList!!).apply { strip?.let { setActionStrip(it) } }.build()
+                .apply {
+                    t.singleList?.let(::setSingleList)
+                    t.sectionedLists.forEach(::addSectionedList)
+                    strip?.let { setActionStrip(it) }
+                    searchFab()?.let(::addAction)
+                }.build()
             else -> t
         }
     }
@@ -142,9 +151,15 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
     private fun content(id: String): Template = when (id) {
         Prefs.CAR_TAB_HOME -> homeGrid()
         Prefs.CAR_TAB_SORDINA -> sordinaList()
-        Prefs.CAR_TAB_AGENDA -> agendaList()
-        else -> talkMessage()
+        else -> agendaList()
     }
+
+    /** Il pulsante Cerca su ogni scheda (Car API 7: i pulsanti tondi della schermata) */
+    private fun searchFab(): Action? = if (carContext.carAppApiLevel < 7) null else Action.Builder()
+        .setIcon(CarTiles.glyph(carContext, R.drawable.car_search))
+        .setBackgroundColor(CarTiles.accent(prefs).let { CarColor.createCustom(it, it) })
+        .setOnClickListener { openSearch() }
+        .build()
 
     private fun limit(type: Int, fallback: Int) =
         runCatching { carContext.getCarService(ConstraintManager::class.java).getContentLimit(type) }.getOrDefault(fallback).coerceAtLeast(1)
@@ -152,25 +167,194 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
     // Casa: le routine "Anche in auto", nell'ordine in cui le hai abilitate
 
     private fun carRoutines() = prefs.haRoutines.filter { (_, r) -> r.on && r.car }
+    private fun carAlarms() = prefs.haAlarms.filter { (_, a) -> a.car }
 
-    private fun homeGrid(): Template {
-        val list = ItemList.Builder()
-        val routines = carRoutines().entries.take(limit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID, 6))
-        routines.forEach { (id, r) ->
-            val alarm = r.alarm?.let { prefs.haAlarms[it]?.name }
-            // Un riquadro vero, con il bordo e il disegno della routine; l'allarme è il bollino, non una riga di testo
-            list.addItem(GridItem.Builder().setTitle(r.name)
-                .setImage(CarTiles.tile(carContext, CarTiles.glyph(r.name, alarm != null, r.arm), alarm != null), GridItem.IMAGE_TYPE_LARGE)
-                .setOnClickListener { routine(id) }
-                .build())
+    /** Lo stato degli allarmi in Casa ("armed_away", "disarmed"…), letto quando la schermata si apre e dopo ogni comando */
+    private var alarmStates: Map<String, String?> = emptyMap()
+
+    private fun loadAlarmStates() {
+        val ids = carAlarms().keys
+        if (ids.isEmpty()) return
+        lifecycleScope.launch {
+            alarmStates = withContext(Dispatchers.IO) { ids.associateWith { HomeRun.state(app, it) } }
+            if (shown(Prefs.CAR_TAB_HOME)) invalidate()
         }
-        if (routines.isEmpty()) list.setNoItemsMessage(tr(if (app.ha.configured) R.string.auto_no_routines else R.string.auto_no_ha))
-        return GridTemplate.Builder().setSingleList(list.build()).build()
+    }
+
+    /**
+     * Casa: prima gli allarmi (un tocco inserisce o disinserisce), poi le routine. Dalla Car API 8 riquadri grandi
+     * che scorrono (il nome sotto, su due righe; lo stato dentro); prima la griglia normale, coi riquadri da 64dp.
+     */
+    private fun homeGrid(): Template {
+        val room = limit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID, 6)
+        // Con le sezioni la griglia scorre: tutti; prima, quanti ne entrano
+        val big = carContext.carAppApiLevel >= 8
+        val accent = CarTiles.accent(prefs)
+        // Grande: nome e stato dentro il riquadro (sotto, l'auto li taglierebbe); piccolo: sotto, come sempre
+        fun item(name: String, caption: String?, glyph: Int, state: CarTiles.State, onClick: () -> Unit): GridItem {
+            // Grande: l'auto taglia il titolo a una riga stretta; il nome va a capo tra titolo e testo, lo stato nel riquadro
+            val (first, rest) = if (big) CarTiles.split(name) else name to caption
+            return GridItem.Builder().setTitle(first)
+                .apply { rest?.let { setText(it) } }
+                .setImage(CarTiles.tile(carContext, glyph, state, accent, if (big) caption else null), GridItem.IMAGE_TYPE_LARGE)
+                .setOnClickListener(onClick)
+                .build()
+        }
+        val alarms = carAlarms().entries.let { if (big) it else it.take(room) }.map { (id, a) ->
+            val st = alarmStates[id]
+            val state = when {
+                running == id -> CarTiles.State.RUNNING
+                st == "triggered" -> CarTiles.State.TRIGGERED
+                HomeRun.armed(st) -> CarTiles.State.ARMED
+                else -> CarTiles.State.DISARMED
+            }
+            val text = when {
+                running == id -> tr(R.string.auto_running)
+                st == null -> null
+                st == "triggered" -> tr(R.string.auto_alarm_triggered)
+                HomeRun.armed(st) -> tr(R.string.auto_alarm_on, AlarmCode.modeLabel(st.removePrefix("armed_")))
+                else -> tr(R.string.auto_alarm_off)
+            }
+            item(a.name, text, R.drawable.car_shield, state) { alarmTile(id) }
+        }
+        val routines = carRoutines().entries.let { if (big) it else it.take((room - alarms.size).coerceAtLeast(0)) }.map { (id, r) ->
+            val alarm = r.alarm?.let { prefs.haAlarms[it]?.name }
+            // Sotto il nome: in corso, oppure cosa fa all'allarme
+            val text = when {
+                running == id -> tr(R.string.auto_running)
+                alarm != null -> tr(if (r.arm) R.string.auto_routine_arm else R.string.auto_routine_disarm, alarm)
+                else -> null
+            }
+            item(r.name, text, R.drawable.car_play, if (running == id) CarTiles.State.RUNNING else CarTiles.State.IDLE) { routine(id) }
+        }
+        if (big && (alarms.isNotEmpty() || routines.isNotEmpty())) {
+            // Una griglia sola, prima gli allarmi: i titoli delle sezioni l'auto li fa grigi e quasi invisibili
+            return SectionedItemTemplate.Builder()
+                .addSection(GridSection.Builder().setItems(alarms + routines).setItemSize(GridSection.ITEM_SIZE_LARGE).build())
+                .apply { searchFab()?.let(::addAction) }
+                .build()
+        }
+        val list = ItemList.Builder()
+        (alarms + routines).forEach(list::addItem)
+        if (alarms.isEmpty() && routines.isEmpty()) list.setNoItemsMessage(tr(if (app.ha.configured) R.string.auto_no_routines else R.string.auto_no_ha))
+        return GridTemplate.Builder().setSingleList(list.build()).large().apply { searchFab()?.let(::addAction) }.build()
+    }
+
+    /** Riquadri grandi, come le copertine di Spotify (dove l'auto li sa fare) */
+    private fun GridTemplate.Builder.large() = apply { if (carContext.carAppApiLevel >= 7) setItemSize(GridTemplate.ITEM_SIZE_LARGE) }
+
+    /** Il riquadro di un allarme: inserito (o scattato) lo disinserisce, disinserito lo inserisce se gliel'hai permesso */
+    private fun alarmTile(entity: String) {
+        val a = prefs.haAlarms[entity] ?: return
+        lifecycleScope.launch {
+            val st = withContext(Dispatchers.IO) { HomeRun.state(app, entity) }
+            alarmStates = alarmStates + (entity to st)
+            when {
+                st == null -> say(tr(R.string.home_no_answer))
+                HomeRun.armed(st) || st == "triggered" -> alarmOff(entity)
+                !a.arm -> say(tr(R.string.alarm_already_off, a.name))
+                a.codeArm && a.enc.isNotEmpty() -> alarmOn(entity, null)
+                else -> screenManager.push(SayScreen(carContext, a.name, tr(R.string.alarm_on_mode_x, a.name, AlarmCode.modeLabel(a.mode ?: "away")), R.drawable.car_shield) { s ->
+                    listOf(carContext.button(tr(R.string.cancel)) { s.finish() }, carContext.button(tr(R.string.auto_arm), primary = true) { s.finish(); alarmOn(entity, null) })
+                })
+            }
+            invalidate()
+        }
+    }
+
+    // Cerca: allarmi, routine, chat in sordina e impegni che contengono quello che scrivi; Invio lo fa capire a Parla
+
+    private var query = ""
+
+    /** Cerca, sopra la scheda: la barra con la tastiera (da fermi) e il microfono */
+    private fun openSearch() {
+        query = ""
+        screenManager.push(object : Screen(carContext) {
+            override fun onGetTemplate(): Template = searchTemplate(this)
+        })
+    }
+
+    private fun searchTemplate(screen: Screen): Template {
+        val results = found(query)
+        val list = ItemList.Builder()
+        results.take(limit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST, 6)).forEach { (go, row) ->
+            list.addItem(row.setOnClickListener { screen.finish(); go() }.build())
+        }
+        if (query.isNotBlank() && results.isEmpty()) list.setNoItemsMessage(tr(R.string.auto_search_none))
+        return SearchTemplate.Builder(object : SearchTemplate.SearchCallback {
+            override fun onSearchTextChanged(searchText: String) {
+                if (searchText == query) return
+                query = searchText
+                screen.invalidate()
+            }
+            override fun onSearchSubmitted(searchText: String) {
+                query = searchText
+                val hits = found(searchText)
+                // Una cosa sola: la si fa; niente: la frase va a Parla ("esco", "fai passare tutti per un'ora"…)
+                when {
+                    hits.size == 1 && searchText.isNotBlank() -> { screen.finish(); hits.first().first.invoke() }
+                    hits.isEmpty() && searchText.isNotBlank() -> { screen.finish(); handle(searchText) }
+                    else -> screen.invalidate()
+                }
+            }
+        })
+            .setHeaderAction(Action.BACK)
+            .setSearchHint(tr(R.string.auto_search_hint))
+            .setInitialSearchText(query)
+            .setShowKeyboardByDefault(motion.moving != true)
+            .setItemList(list.build())
+            .build()
+    }
+
+    /**
+     * Quello che corrisponde a [q]: cosa fare col tocco, e la riga da mostrare. Barra vuota: allarmi e routine.
+     * Il microfono è quello della barra (lo mette Android Auto): la frase detta arriva come se l'avessi scritta.
+     */
+    private fun found(q: String): List<Pair<() -> Unit, Row.Builder>> {
+        val n = Search.normalize(q)
+        fun hit(s: String?) = n.isEmpty() || s != null && n in Search.normalize(s)
+        val out = ArrayList<Pair<() -> Unit, Row.Builder>>()
+        val accent = CarTiles.accent(prefs)
+        carAlarms().filter { hit(it.value.name) }.forEach { (id, a) ->
+            out += { alarmTile(id) } to Row.Builder().setTitle(a.name).addText(tr(R.string.auto_section_alarms))
+                .setImage(CarTiles.tile(carContext, R.drawable.car_shield, CarTiles.State.IDLE, accent), Row.IMAGE_TYPE_LARGE)
+        }
+        carRoutines().filter { hit(it.value.name) }.forEach { (id, r) ->
+            out += { routine(id) } to Row.Builder().setTitle(r.name).addText(tr(R.string.auto_section_routines))
+                .setImage(CarTiles.tile(carContext, R.drawable.car_play, CarTiles.State.IDLE, accent), Row.IMAGE_TYPE_LARGE)
+        }
+        if (n.isEmpty()) return out
+        CarTalk.groups(app).filter { g -> hit(g.first().groupTitle) || hit(g.first().appLabel) }.forEach { g ->
+            val h = g.first()
+            val open = { screenManager.push(GroupScreen(carContext, this, g)) }
+            out += open to Row.Builder().setTitle(h.groupTitle).addText(waiting(g))
+                .apply { CarTiles.framed(carContext, h.pkg, CarTiles.accent(prefs))?.let { setImage(it, Row.IMAGE_TYPE_LARGE) } }
+                .setBrowsable(true)
+        }
+        events.filter { hit(it.title) || hit(it.location) }.forEach { e ->
+            val go = { e.location?.let(::navigate) ?: Unit }
+            out += go to Row.Builder().setTitle(e.title).addText(day(e.begin) + " · " + time(e.begin))
+                .apply { e.location?.let { loc -> addText(tr(R.string.auto_go_to, loc)) } }
+        }
+        return out
+    }
+
+    /** "5 in attesa", con l'app solo se il nome del gruppo non è già quello dell'app */
+    private fun waiting(g: List<Held>): String {
+        val h = g.first()
+        val n = tr(R.string.auto_n_waiting, g.sumOf { it.count })
+        return if (h.groupTitle == h.appLabel) n else n + " · " + h.appLabel
     }
 
     // In sordina: cosa passa, poi chi aspetta
 
     private fun passingAll(): Long? = prefs.passUntil[Prefs.PASS_ALL]?.takeIf { it > System.currentTimeMillis() }
+
+    /** Quando è partita Sordina sull'auto: In sordina mostra solo quello arrivato da allora (il resto è sul telefono) */
+    private val since = System.currentTimeMillis()
+
+    /** Le notifiche in sordina arrivate da quando sei in auto, una per una, dalla più recente */
+    private fun sinceCar(): List<Held> = CarTalk.groups(app).flatten().filter { it.time >= since }.sortedByDescending { it.time }
 
     private fun sordinaList(): Template {
         val list = ItemList.Builder()
@@ -180,21 +364,21 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
             .addText(tr(if (all == null) R.string.auto_pass_important_sub else R.string.auto_pass_all_sub))
             .setToggle(Toggle.Builder { on -> if (on) passImportant() else passAll(60) }.setChecked(all == null).build())
             .build())
-        val groups = CarTalk.groups(app)
-        val room = limit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST, 6) - 1
-        groups.take(room).forEach { g ->
-            val h = g.first()
+        val room = limit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST, 6) - 2
+        val fresh = sinceCar()
+        // Chi scrive, da quale app e quando: il testo mai, lo legge "Ascolta"
+        fresh.take(room).forEach { h ->
             list.addItem(Row.Builder().setTitle(h.groupTitle)
-                .addText(tr(R.string.auto_n_waiting, g.sumOf { it.count }) + " · " + h.appLabel)
-                .setOnClickListener { screenManager.push(GroupScreen(carContext, this, g)) }
+                .addText((if (h.groupTitle == h.appLabel) "" else h.appLabel + " · ") + time(h.time) + (if (h.count > 1) " · " + tr(R.string.auto_n_waiting, h.count) else ""))
+                .apply { CarTiles.framed(carContext, h.pkg, CarTiles.accent(prefs))?.let { setImage(it, Row.IMAGE_TYPE_LARGE) } }
+                .setOnClickListener { screenManager.push(GroupScreen(carContext, this, listOf(h))) }
                 .setBrowsable(true)
                 .build())
         }
-        // Le app nascoste: quante, mai chi
-        val hidden = app.store.groups().filter { it.first().reason == Classifier.REASON_HIDDEN }.sumOf { g -> g.sumOf { it.count } }
-        if (hidden > 0 && groups.size < room) list.addItem(Row.Builder().setTitle(tr(R.string.hidden_apps)).addText(tr(R.string.auto_n_waiting, hidden)).build())
-        if (groups.isEmpty() && hidden == 0) list.addItem(Row.Builder().setTitle(tr(R.string.auto_nothing_waiting)).build())
-        return ListTemplate.Builder().setSingleList(list.build()).build()
+        list.addItem(Row.Builder().setTitle(tr(if (fresh.isEmpty()) R.string.auto_since_car_none else R.string.auto_older_on_phone))
+            .apply { if (fresh.isEmpty()) addText(tr(R.string.auto_older_on_phone)) }
+            .build())
+        return ListTemplate.Builder().setSingleList(list.build()).apply { searchFab()?.let(::addAction) }.build()
     }
 
     // Agenda: oggi e i prossimi giorni, con "Vai" dove c'è un indirizzo
@@ -210,16 +394,40 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
         }
     }
 
+    /**
+     * Agenda come quella di Teams: una riga per impegno, divise da una linea, con a sinistra il riquadro dell'ora e il
+     * giorno sopra ("OGGI 19:00"); sotto il titolo la durata e il posto, con "Vai" per andarci.
+     */
     private fun agendaList(): Template {
         val list = ItemList.Builder()
+        val accent = CarTiles.accent(prefs)
         events.take(limit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST, 6)).forEach { e ->
             list.addItem(Row.Builder().setTitle(e.title)
-                .addText(day(e.begin) + " · " + time(e.begin))
-                .apply { e.location?.let { loc -> addText(tr(R.string.auto_go_to, loc)); setOnClickListener { navigate(loc) } } }
+                .setImage(CarTiles.badge(shortDay(e.begin), if (e.allDay) tr(R.string.cal_all_day_short) else time(e.begin), accent), Row.IMAGE_TYPE_LARGE)
+                .addText(if (e.allDay) tr(R.string.cal_all_day) else time(e.begin) + " – " + time(e.end))
+                .apply {
+                    e.location?.let { loc ->
+                        addText(loc)
+                        if (carContext.carAppApiLevel >= 6) addAction(Action.Builder().setTitle(tr(R.string.auto_go)).setOnClickListener { navigate(loc) }.build())
+                        else setOnClickListener { navigate(loc) }
+                    }
+                }
                 .build())
         }
         if (events.isEmpty()) list.setNoItemsMessage(tr(R.string.auto_no_events_week))
-        return ListTemplate.Builder().setSingleList(list.build()).build()
+        return ListTemplate.Builder().setSingleList(list.build()).apply { searchFab()?.let(::addAction) }.build()
+    }
+
+    /** Il giorno nel riquadro dell'ora: "Oggi", "Domani", "Lun 30" */
+    private fun shortDay(at: Long): String {
+        val zone = java.time.ZoneId.systemDefault()
+        val d = java.time.Instant.ofEpochMilli(at).atZone(zone).toLocalDate()
+        val today = java.time.LocalDate.now(zone)
+        return when (d) {
+            today -> tr(R.string.today_title)
+            today.plusDays(1) -> tr(R.string.tomorrow_cap)
+            else -> java.time.format.DateTimeFormatter.ofPattern("EEE d", java.util.Locale.getDefault()).format(d).trimEnd('.')
+        }
     }
 
     private fun time(at: Long): String = DateFormat.getTimeFormat(carContext).format(java.util.Date(at))
@@ -238,16 +446,10 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
 
     // Parla
 
-    private fun talkMessage(): Template = MessageTemplate.Builder(
-        if (listening) heard?.let { "“$it”" } ?: tr(R.string.auto_listening_hint) else heard?.let { "“$it”" } ?: tr(R.string.auto_listening_hint))
-        .setTitle(tr(if (replyTo != null) R.string.auto_reply_what_title else R.string.auto_listening))
-        .setIcon(carContext.icon(R.drawable.car_mic))
-        .addAction(carContext.button(tr(R.string.cancel)) { endTalk(null) })
-        .build()
-
-    /** Parla senza schede: una schermata sua sopra Casa */
+    /** Parla: una schermata sua sopra le schede, finché ascolta */
     private fun talkAlone() {
-        val s = SayScreen(carContext, tr(R.string.auto_listening), tr(R.string.auto_listening_hint), R.drawable.car_mic) { s ->
+        val title = tr(if (replyTo != null) R.string.auto_reply_what_title else R.string.auto_listening)
+        val s = SayScreen(carContext, title, tr(R.string.auto_listening_hint), R.drawable.car_mic) { s ->
             listOf(carContext.button(tr(R.string.cancel)) { endTalk(null); s.finish() })
         }
         talkScreen = s
@@ -263,21 +465,13 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
             return
         }
         listening = true
-        heard = null
         invalidate()
-        var shownAt = 0L
         CarVoice.listen(carContext,
-            onPartial = { t ->
-                heard = t
-                // Le parole compaiono mentre parli, senza ridisegnare a ogni sillaba
-                val now = System.currentTimeMillis()
-                if (now - shownAt > 700) { shownAt = now; if (active == TALK) invalidate() }
-            },
+            onPartial = { },
             onHeard = { all ->
                 listening = false
                 val t = all.firstOrNull()
                 if (t == null) { endTalk(tr(R.string.not_understood)); return@listen }
-                heard = t
                 val to = replyTo
                 replyTo = null
                 endTalk(null)
@@ -287,11 +481,10 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
         )
     }
 
-    /** Fine dell'ascolto: si torna alla scheda di prima (o si chiude la schermata di Parla). [stay]: hai cambiato scheda tu */
-    private fun endTalk(say: String?, stay: Boolean = false) {
+    /** Fine dell'ascolto: si chiude la schermata di Parla */
+    private fun endTalk(say: String?) {
         if (listening) CarVoice.cancel(carContext)
         listening = false
-        if (!stay && active == TALK) active = back?.takeIf { it != TALK }
         talkScreen?.let { s -> talkScreen = null; runCatching { if (screenManager.top == s) s.finish() } }
         invalidate()
         say?.let(::say)
@@ -351,10 +544,10 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
             a != null && a.codeArm && a.enc.isNotEmpty() -> if (!stopFirst(R.string.auto_stop_code, r.name)) screenManager.push(CodeScreen(carContext, this,
                 tr(R.string.auto_code_title), tr(R.string.auto_code_arm, r.name, a.name), CodeOp.Routine(entity)))
             a != null -> screenManager.push(SayScreen(carContext, r.name, tr(R.string.auto_confirm_arm, a.name, AlarmCode.modeLabel(a.mode ?: "away"))) { s ->
-                listOf(carContext.button(tr(R.string.cancel)) { s.finish() }, carContext.button(tr(R.string.auto_run), primary = true) { s.finish(); home { HomeRun.routine(app, entity, "") } })
+                listOf(carContext.button(tr(R.string.cancel)) { s.finish() }, carContext.button(tr(R.string.auto_run), primary = true) { s.finish(); home(entity) { HomeRun.routine(app, entity, "") } })
             })
             r.auth -> if (!stopFirst(R.string.auto_stop_guard, r.name)) onPhone(r.name) { CarAuthActivity.start(carContext, CarAuthActivity.OP_ROUTINE, entity, r.name) }
-            else -> home { HomeRun.routine(app, entity, null) }
+            else -> home(entity) { HomeRun.routine(app, entity, null) }
         }
     }
 
@@ -374,7 +567,7 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
             if (a.codeArm && a.enc.isNotEmpty()) {
                 if (!stopFirst(R.string.auto_stop_code, a.name)) screenManager.push(CodeScreen(carContext, this@CarHome,
                     tr(R.string.auto_code_title), a.name, CodeOp.AlarmOn(entity, mode)))
-            } else home { HomeRun.alarmOn(app, entity, mode, "") }
+            } else home(entity) { HomeRun.alarmOn(app, entity, mode, "") }
         }
     }
 
@@ -421,7 +614,11 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
     }
 
     /** Fa una cosa di casa fuori dal thread principale, poi l'esito */
-    private fun home(job: () -> HomeRun.Done) {
+    /** La routine (o l'allarme) che sta andando adesso: il suo riquadro si riempie del colore d'accento */
+    private var running: String? = null
+
+    private fun home(entity: String? = null, job: () -> HomeRun.Done) {
+        if (entity != null) { running = entity; if (shown(Prefs.CAR_TAB_HOME)) invalidate() }
         CarToast.makeText(carContext, tr(R.string.ha_asking), CarToast.LENGTH_SHORT).show()
         lifecycleScope.launch {
             done(withContext(Dispatchers.IO) { runCatching(job).getOrElse { HomeRun.Done(tr(R.string.home_no_answer), false) } })
@@ -430,7 +627,9 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
 
     /** L'esito di una routine o di un allarme: la sordina (contenta se è andata), la frase detta, e si torna a Casa da soli */
     fun done(d: HomeRun.Done) {
+        running = null
         say(d.message)
+        loadAlarmStates()
         screenManager.push(SayScreen(carContext, null, d.message, if (d.ok) R.drawable.car_mascot_happy else R.drawable.car_mascot, autoClose = true))
     }
 
@@ -498,7 +697,7 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
         say(tr(R.string.auto_reply_what, name))
         // Prima la domanda, poi il microfono
         main.postDelayed({
-            if (withTabs()) { back = active?.takeIf { it != TALK } ?: back; active = TALK; invalidate(); talk() } else talkAlone()
+            talkAlone()
         }, REPLY_PAUSE_MILLIS)
     }
 
@@ -524,7 +723,6 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
     }
 
     companion object {
-        const val TALK = "talk"
         private const val AGENDA_DAYS = 7
         private const val REDRAW_MILLIS = 2_000L
         private const val REPLY_PAUSE_MILLIS = 1_800L

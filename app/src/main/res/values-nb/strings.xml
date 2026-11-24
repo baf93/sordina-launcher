@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="moment_none">Ingen</string>
     <string name="theme_auto">Automatisk</string>
     <string name="theme_light">Lyst</string>
@@ -1154,6 +1154,7 @@
     <string name="ob2_ph_s1">Android spør hvilken startskjerm som skal brukes</string>
     <string name="ob2_ph_s2">Velg Sordina</string>
     <string name="ob2_ph_s3">Hvis den spør, trykk på «Alltid»</string>
+    <string name="ob2_ph_xiaomi">På Xiaomi-telefoner bytter systemet til de tre navigasjonsknappene når jeg er startskjermen din. Det er en begrensning hos Xiaomi, ikke meg: velg Xiaomis startskjerm igjen for å få tilbake bevegelsene.</string>
     <string name="ob2_pb_title">Ikke la meg sovne</string>
     <string name="ob2_pb_why">For å spare batteri lukker Android noen ganger apper. Hvis den lukker meg, ringer alle varslene dine igjen.</string>
     <string name="ob2_pb_s1">Et Android-vindu åpnes</string>
@@ -1370,6 +1371,18 @@
     <string name="routine_car_hint">En flis i Hjem på bilskjermen</string>
     <string name="ch_car">Bekreftelser fra bilen</string>
     <string name="auto_no_events_week">Ingenting i kalenderen de neste dagene</string>
+    <string name="auto_alarm_on">Påslått · %1$s</string>
+    <string name="auto_alarm_off">Avslått</string>
+    <string name="auto_running">Pågår…</string>
+    <string name="auto_search_hint">Rutiner, chatter, avtaler</string>
+    <string name="auto_section_alarms">Alarmer</string>
+    <string name="auto_section_routines">Rutiner</string>
+    <string name="auto_search_none">Ingenting her. Trykk Enter, så prøver Snakk</string>
+    <string name="auto_since_car_none">Ingenting siden du satte deg i bilen</string>
+    <string name="auto_older_on_phone">De eldre finner du på telefonen</string>
+    <string name="auto_go">Kjør</string>
+    <string name="auto_alarm_triggered">Utløst!</string>
+    <string name="auto_arm">Slå på</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">Kalender</string>
     <string name="cal_week">Uke</string>
@@ -1404,19 +1417,19 @@
     <string name="cal_rep_end">Gjentakelse slutter</string>
     <string name="cal_every">Hver</string>
     <string name="cal_rep_last">Siste gang</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="one">dag</item>
         <item quantity="other">dager</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="one">uke</item>
         <item quantity="other">uker</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="one">måned</item>
         <item quantity="other">måneder</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="one">år</item>
         <item quantity="other">år</item>
     </plurals>

@@ -1180,6 +1180,7 @@
     <string name="ob2_ph_s1">Android спитає, який головний екран використовувати</string>
     <string name="ob2_ph_s2">Оберіть Sordina</string>
     <string name="ob2_ph_s3">Якщо спитає, торкніться «Завжди»</string>
+    <string name="ob2_ph_xiaomi">На телефонах Xiaomi система перемикається на три кнопки навігації, коли я ваш головний екран. Це обмеження Xiaomi, а не моє: щоб повернути жести, знову виберіть головний екран Xiaomi.</string>
     <string name="ob2_pb_title">Не дайте мені заснути</string>
     <string name="ob2_pb_why">Щоб заощадити заряд, Android іноді закриває застосунки. Якщо він закриє мене, усі сповіщення знову дзвонитимуть.</string>
     <string name="ob2_pb_s1">Відкриється вікно Android</string>
@@ -1404,6 +1405,18 @@
     <string name="routine_car_hint">Плитка в розділі Дім на екрані авто</string>
     <string name="ch_car">Підтвердження з авто</string>
     <string name="auto_no_events_week">Найближчими днями в календарі нічого немає</string>
+    <string name="auto_alarm_on">Увімкнена · %1$s</string>
+    <string name="auto_alarm_off">Вимкнена</string>
+    <string name="auto_running">Виконується…</string>
+    <string name="auto_search_hint">Сценарії, чати, зустрічі</string>
+    <string name="auto_section_alarms">Сигналізації</string>
+    <string name="auto_section_routines">Сценарії</string>
+    <string name="auto_search_none">Нічого немає. Натисніть Enter — спробує «Говорити»</string>
+    <string name="auto_since_car_none">Нічого відтоді, як ви в авто</string>
+    <string name="auto_older_on_phone">Давніші — на телефоні</string>
+    <string name="auto_go">Їхати</string>
+    <string name="auto_alarm_triggered">Спрацювала!</string>
+    <string name="auto_arm">Увімкнути</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">Календар</string>
     <string name="cal_week">Тиждень</string>
@@ -1438,25 +1451,25 @@
     <string name="cal_rep_end">Кінець повторення</string>
     <string name="cal_every">Кожні</string>
     <string name="cal_rep_last">Останній раз</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="one">день</item>
         <item quantity="few">дні</item>
         <item quantity="many">днів</item>
         <item quantity="other">дня</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="one">тиждень</item>
         <item quantity="few">тижні</item>
         <item quantity="many">тижнів</item>
         <item quantity="other">тижня</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="one">місяць</item>
         <item quantity="few">місяці</item>
         <item quantity="many">місяців</item>
         <item quantity="other">місяця</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="one">рік</item>
         <item quantity="few">роки</item>
         <item quantity="many">років</item>

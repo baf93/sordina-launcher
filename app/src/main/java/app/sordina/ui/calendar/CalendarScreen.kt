@@ -28,6 +28,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
@@ -206,8 +208,18 @@ fun CalendarScreen(app: SordinaApp, start: CalStart, onBack: () -> Unit) {
 
             when {
                 searching -> SearchPart(app, query, { query = it }, version, ::colorOf, byKey, locale) { shown = it }
-                month -> MonthPart(app, selected, version, ::colorOf, byKey, locale, onDay = { selectedEpoch = it.toEpochDay() }) { shown = it }
-                else -> WeekPart(app, selected, version, ::colorOf, byKey, locale, onDay = { selectedEpoch = it.toEpochDay() }) { shown = it }
+                // Uno swipe a destra o a sinistra: il mese (o la settimana) prima o dopo, come le frecce
+                else -> Column(Modifier.swipeSides(selectedEpoch to month) { next ->
+                    val d = when {
+                        month -> monthOf(if (next) selected.plusMonths(1) else selected.minusMonths(1))
+                        next -> selected.plusWeeks(1)
+                        else -> selected.minusWeeks(1)
+                    }
+                    selectedEpoch = d.toEpochDay()
+                }) {
+                    if (month) MonthPart(app, selected, version, ::colorOf, byKey, locale, onDay = { selectedEpoch = it.toEpochDay() }) { shown = it }
+                    else WeekPart(app, selected, version, ::colorOf, byKey, locale, onDay = { selectedEpoch = it.toEpochDay() }) { shown = it }
+                }
             }
             Spacer(Modifier.height(96.dp))
         }
@@ -293,10 +305,10 @@ private fun MonthPart(
     val perDay = remember(events) { HashMap<LocalDate, MutableList<CalEvent>>().apply { events.forEach { e -> e.days().forEach { getOrPut(it) { ArrayList() } += e } } } }
 
     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Arrow(Icons.AutoMirrored.Rounded.KeyboardArrowLeft) { onDay(selected.minusMonths(1).withDayOfMonth(1)) }
+        Arrow(Icons.AutoMirrored.Rounded.KeyboardArrowLeft) { onDay(monthOf(selected.minusMonths(1))) }
         Text(DateTimeFormatter.ofPattern("LLLL yyyy", locale).format(first).replaceFirstChar { it.titlecase(locale) }, Modifier.weight(1f),
             textAlign = TextAlign.Center, style = TextStyle(fontSize = 19.sp, color = c.ink))
-        Arrow(Icons.AutoMirrored.Rounded.KeyboardArrowRight) { onDay(selected.plusMonths(1).withDayOfMonth(1)) }
+        Arrow(Icons.AutoMirrored.Rounded.KeyboardArrowRight) { onDay(monthOf(selected.plusMonths(1))) }
     }
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(c.card).padding(horizontal = 8.dp, vertical = 6.dp)) {
         Row(Modifier.padding(bottom = 2.dp)) {
@@ -663,8 +675,8 @@ private fun Editor(app: SordinaApp, books: List<CalBook>, original: CalEvent?, i
         Header(tr(if (original == null) R.string.cal_new else R.string.cal_edit), onClose)
 
         Group {
-            Box(Modifier.fillMaxWidth().background(c.card).padding(horizontal = 16.dp, vertical = 8.dp)) {
-                Field(title, { title = it }, tr(R.string.cal_what))
+            Box(Modifier.fillMaxWidth()) {
+                EditField(title, { title = it }, tr(R.string.cal_what), big = true)
             }
         }
         Spacer(Modifier.height(16.dp))
@@ -682,8 +694,8 @@ private fun Editor(app: SordinaApp, books: List<CalBook>, original: CalEvent?, i
             // Il calendario si sceglie solo per un impegno nuovo: spostarlo da un calendario all'altro non lo fa nessuno dei due
             if (original == null && creatable.size > 1) Pick(tr(R.string.cal_calendar), chosen?.name.orEmpty(), creatable.map { Option(it.name, if (it.home) tr(R.string.cal_home_hint) else null) }, { creatable[it].key == book }) { book = creatable[it].key }
             else Line(tr(R.string.cal_calendar), chosen?.name.orEmpty())
-            Box(Modifier.fillMaxWidth().background(c.card).padding(horizontal = 16.dp, vertical = 8.dp)) { Field(place, { place = it }, tr(R.string.cal_place)) }
-            Box(Modifier.fillMaxWidth().background(c.card).padding(horizontal = 16.dp, vertical = 8.dp)) { Field(notes, { notes = it }, tr(R.string.cal_notes)) }
+            EditField(place, { place = it }, tr(R.string.cal_place))
+            EditField(notes, { notes = it }, tr(R.string.cal_notes), lines = 6)
         }
         if (chosen?.home == true && !app.diary.reachable) Text(tr(R.string.cal_offline_save), Modifier.padding(start = 12.dp, top = 10.dp), style = TextStyle(fontSize = 14.sp, color = c.soft))
 
@@ -710,5 +722,37 @@ private fun Editor(app: SordinaApp, books: List<CalBook>, original: CalEvent?, i
     if (ask) Sheet(tr(R.string.cal_edit), tr(R.string.cal_repeats_hint), onDismiss = { ask = false }) {
         SheetRow(tr(R.string.cal_only_this)) { ask = false; save(false) }
         SheetRow(tr(R.string.cal_following), accent = true) { ask = false; save(true) }
+    }
+}
+
+/** Andando a un altro mese: oggi se è il mese di oggi, altrimenti il primo del mese. */
+private fun monthOf(d: LocalDate): LocalDate = LocalDate.now().let { t -> if (t.year == d.year && t.month == d.month) t else d.withDayOfMonth(1) }
+
+/** Uno swipe deciso a destra o a sinistra ([next]: verso sinistra, cioè avanti). Lo scorrimento in su e in giù resta alla pagina. */
+private fun Modifier.swipeSides(key: Any, onSwipe: (next: Boolean) -> Unit): Modifier = pointerInput(key) {
+    val min = 64.dp.toPx()
+    var dx = 0f
+    detectHorizontalDragGestures(
+        onDragStart = { dx = 0f },
+        onDragEnd = { if (kotlin.math.abs(dx) > min) onSwipe(dx < 0); dx = 0f },
+        onDragCancel = { dx = 0f },
+    ) { _, amount -> dx += amount }
+}
+
+/**
+ * Un campo da scrivere che sta nelle righe del modulo: stessa altezza, stesso carattere, niente linea sotto.
+ * [big]: il titolo dell'impegno, un po' più grande. [lines] > 1: va a capo (le note).
+ */
+@Composable
+private fun EditField(value: String, onChange: (String) -> Unit, placeholder: String, big: Boolean = false, lines: Int = 1) {
+    val c = S.c
+    val style = TextStyle(fontSize = if (big) 20.sp else 17.sp, lineHeight = if (big) 26.sp else 23.sp, color = c.ink)
+    Box(Modifier.fillMaxWidth().background(c.card).padding(horizontal = 16.dp, vertical = 14.dp).heightIn(min = 36.dp), contentAlignment = Alignment.CenterStart) {
+        if (value.isEmpty()) Text(placeholder, style = style.copy(color = c.soft))
+        BasicTextField(
+            value, onChange, singleLine = lines == 1, maxLines = lines, textStyle = style, cursorBrush = SolidColor(c.accent),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Sentences),
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }

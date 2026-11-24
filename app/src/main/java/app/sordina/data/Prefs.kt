@@ -30,7 +30,9 @@ data class SavedRoutine(val name: String, val auth: Boolean, val alarm: String? 
  * [arm]: si può anche inserire da Sordina (spento all'inizio); [mode] la modalità predefinita (away, home, night…);
  * [codeArm]: l'allarme vuole il codice anche per inserire (allora serve l'impronta, se no si inserisce subito).
  */
-data class SavedAlarm(val name: String, val enc: String, val arm: Boolean = false, val mode: String? = null, val codeArm: Boolean = true)
+data class SavedAlarm(val name: String, val enc: String, val arm: Boolean = false, val mode: String? = null, val codeArm: Boolean = true,
+    /** Anche fra i riquadri di Casa sullo schermo dell'auto: lo stato, e un tocco inserisce o disinserisce */
+    val car: Boolean = false)
 
 /** Quanto mostrare sulla schermata di blocco. */
 enum class LockPrivacy(private val labelRes: Int, private val exampleRes: Int) {
@@ -395,9 +397,9 @@ class Prefs(context: Context) {
     /** Gli allarmi di Home Assistant da disattivare con l'impronta: entità → nome e codice cifrato ([app.sordina.service.AlarmCode]). Mai nel backup */
     var haAlarms: Map<String, SavedAlarm>
         get() = runCatching {
-            JSONObject(str("haAlarms", "{}")).let { o -> o.keys().asSequence().associateWith { k -> o.getJSONObject(k).let { SavedAlarm(it.optString("n"), it.optString("c"), it.optBoolean("arm"), it.optString("m").ifBlank { null }, it.optBoolean("ca", true)) } } }
+            JSONObject(str("haAlarms", "{}")).let { o -> o.keys().asSequence().associateWith { k -> o.getJSONObject(k).let { SavedAlarm(it.optString("n"), it.optString("c"), it.optBoolean("arm"), it.optString("m").ifBlank { null }, it.optBoolean("ca", true), it.optBoolean("car")) } } }
         }.getOrDefault(emptyMap())
-        set(v) = put { putString("haAlarms", JSONObject().apply { v.forEach { (k, a) -> put(k, JSONObject().put("n", a.name).put("c", a.enc).put("arm", a.arm).put("m", a.mode ?: "").put("ca", a.codeArm)) } }.toString()) }
+        set(v) = put { putString("haAlarms", JSONObject().apply { v.forEach { (k, a) -> put(k, JSONObject().put("n", a.name).put("c", a.enc).put("arm", a.arm).put("m", a.mode ?: "").put("ca", a.codeArm).put("car", a.car)) } }.toString()) }
 
     /** Le routine di Home Assistant abilitate: entità → nome, impronta, allarme da disattivare. Solo su questo telefono */
     var haRoutines: Map<String, SavedRoutine>
@@ -700,7 +702,7 @@ class Prefs(context: Context) {
         const val CAR_TAB_HOME = "home"
         const val CAR_TAB_SORDINA = "sordina"
         const val CAR_TAB_AGENDA = "agenda"
-        val CAR_TABS = listOf(CAR_TAB_HOME, CAR_TAB_SORDINA, CAR_TAB_AGENDA)
+        val CAR_TABS = listOf(CAR_TAB_HOME, CAR_TAB_AGENDA, CAR_TAB_SORDINA)
         /** "Lascia passare tutto", in [passUntil]: dall'auto, "fai passare tutti per un'ora" */
         const val PASS_ALL = "*"
         const val MAX_PINNED = 4

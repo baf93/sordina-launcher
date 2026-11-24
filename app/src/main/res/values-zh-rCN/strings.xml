@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="moment_none">无</string>
     <string name="theme_auto">自动</string>
     <string name="theme_light">浅色</string>
@@ -1142,6 +1142,7 @@
     <string name="ob2_ph_s1">Android 会问要用哪个主屏幕</string>
     <string name="ob2_ph_s2">选择 Sordina</string>
     <string name="ob2_ph_s3">如果有提示，点“始终”</string>
+    <string name="ob2_ph_xiaomi">在小米手机上，当我成为你的主屏幕时，系统会改用三个导航按钮。这是小米的限制，不是我的：要恢复手势，请重新选择小米的主屏幕。</string>
     <string name="ob2_pb_title">别让我睡着</string>
     <string name="ob2_pb_why">为了省电，Android 有时会关闭应用。如果把我关了，你的所有通知又会响起来。</string>
     <string name="ob2_pb_s1">会打开一个 Android 窗口</string>
@@ -1354,6 +1355,18 @@
     <string name="routine_car_hint">在车载屏幕的“家”中显示磁贴</string>
     <string name="ch_car">来自车上的确认</string>
     <string name="auto_no_events_week">未来几天日历上没有安排</string>
+    <string name="auto_alarm_on">已布防 · %1$s</string>
+    <string name="auto_alarm_off">已撤防</string>
+    <string name="auto_running">进行中…</string>
+    <string name="auto_search_hint">例行程序、聊天、日程</string>
+    <string name="auto_section_alarms">警报</string>
+    <string name="auto_section_routines">例行程序</string>
+    <string name="auto_search_none">没有结果。按回车，让“说话”试试</string>
+    <string name="auto_since_car_none">上车后还没有新通知</string>
+    <string name="auto_older_on_phone">更早的请在手机上查看</string>
+    <string name="auto_go">出发</string>
+    <string name="auto_alarm_triggered">已触发!</string>
+    <string name="auto_arm">布防</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">日历</string>
     <string name="cal_week">周</string>
@@ -1388,16 +1401,16 @@
     <string name="cal_rep_end">结束重复</string>
     <string name="cal_every">每</string>
     <string name="cal_rep_last">最后一次</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="other">天</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="other">周</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="other">个月</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="other">年</item>
     </plurals>
     <string name="cal_until">直到 %1$s</string>

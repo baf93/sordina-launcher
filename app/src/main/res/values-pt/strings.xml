@@ -1159,6 +1159,7 @@
     <string name="ob2_ph_s1">O Android pergunta qual tela inicial usar</string>
     <string name="ob2_ph_s2">Escolha Sordina</string>
     <string name="ob2_ph_s3">Se perguntar, toque em “Sempre”</string>
+    <string name="ob2_ph_xiaomi">Nos celulares Xiaomi, o sistema muda para os três botões de navegação quando sou sua tela inicial. É um limite da Xiaomi, não meu: para ter os gestos de volta, escolha de novo a tela inicial da Xiaomi.</string>
     <string name="ob2_pb_title">Não me deixe dormir</string>
     <string name="ob2_pb_why">Para economizar bateria, o Android às vezes fecha apps. Se ele me fechar, todas as suas notificações voltam a tocar.</string>
     <string name="ob2_pb_s1">Uma janela do Android vai abrir</string>
@@ -1376,6 +1377,18 @@
     <string name="routine_car_hint">Um quadrado em Casa no ecrã do carro</string>
     <string name="ch_car">Confirmações do carro</string>
     <string name="auto_no_events_week">Nada na agenda nos próximos dias</string>
+    <string name="auto_alarm_on">Ativado · %1$s</string>
+    <string name="auto_alarm_off">Desativado</string>
+    <string name="auto_running">Em curso…</string>
+    <string name="auto_search_hint">Rotinas, conversas, compromissos</string>
+    <string name="auto_section_alarms">Alarmes</string>
+    <string name="auto_section_routines">Rotinas</string>
+    <string name="auto_search_none">Nada aqui. Prima Enter e o Falar tenta</string>
+    <string name="auto_since_car_none">Nada desde que entraste no carro</string>
+    <string name="auto_older_on_phone">As mais antigas estão no telemóvel</string>
+    <string name="auto_go">Ir</string>
+    <string name="auto_alarm_triggered">Disparou!</string>
+    <string name="auto_arm">Ativar</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">Calendário</string>
     <string name="cal_week">Semana</string>
@@ -1410,19 +1423,19 @@
     <string name="cal_rep_end">Fim da repetição</string>
     <string name="cal_every">A cada</string>
     <string name="cal_rep_last">Última vez</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="one">dia</item>
         <item quantity="other">dias</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="one">semana</item>
         <item quantity="other">semanas</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="one">mês</item>
         <item quantity="other">meses</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="one">ano</item>
         <item quantity="other">anos</item>
     </plurals>

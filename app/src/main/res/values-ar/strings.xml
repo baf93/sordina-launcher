@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="moment_none">لا شيء</string>
     <string name="theme_auto">تلقائي</string>
     <string name="theme_light">فاتح</string>
@@ -1206,6 +1206,7 @@
     <string name="ob2_ph_s1">يسأل Android أي شاشة رئيسية يستخدم</string>
     <string name="ob2_ph_s2">اختر Sordina</string>
     <string name="ob2_ph_s3">إن سأل، المس «دائمًا»</string>
+    <string name="ob2_ph_xiaomi">على هواتف Xiaomi، يتحوّل النظام إلى أزرار التنقل الثلاثة عندما أكون شاشتك الرئيسية. هذا قيد من Xiaomi وليس مني: لاستعادة الإيماءات، اختر الشاشة الرئيسية من Xiaomi مجددًا.</string>
     <string name="ob2_pb_title">لا تدعني أنام</string>
     <string name="ob2_pb_why">لتوفير البطارية، يغلق Android التطبيقات أحيانًا. إن أغلقني، تعود كل إشعاراتك إلى الرنين.</string>
     <string name="ob2_pb_s1">تُفتح نافذة من Android</string>
@@ -1438,6 +1439,18 @@
     <string name="routine_car_hint">مربع في المنزل على شاشة السيارة</string>
     <string name="ch_car">تأكيدات من السيارة</string>
     <string name="auto_no_events_week">لا شيء في تقويمك في الأيام القادمة</string>
+    <string name="auto_alarm_on">مُفعّل · %1$s</string>
+    <string name="auto_alarm_off">غير مُفعّل</string>
+    <string name="auto_running">قيد التشغيل…</string>
+    <string name="auto_search_hint">الروتينات، الدردشات، المواعيد</string>
+    <string name="auto_section_alarms">أجهزة الإنذار</string>
+    <string name="auto_section_routines">الروتينات</string>
+    <string name="auto_search_none">لا شيء هنا. اضغط إدخال وسيحاول «تحدّث»</string>
+    <string name="auto_since_car_none">لا شيء منذ ركبت السيارة</string>
+    <string name="auto_older_on_phone">الأقدم تجدها على الهاتف</string>
+    <string name="auto_go">انطلق</string>
+    <string name="auto_alarm_triggered">انطلق الإنذار!</string>
+    <string name="auto_arm">تفعيل</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">التقويم</string>
     <string name="cal_week">أسبوع</string>
@@ -1472,7 +1485,7 @@
     <string name="cal_rep_end">نهاية التكرار</string>
     <string name="cal_every">كل</string>
     <string name="cal_rep_last">آخر مرة</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="zero">يوم</item>
         <item quantity="one">يوم</item>
         <item quantity="two">يوم</item>
@@ -1480,7 +1493,7 @@
         <item quantity="many">يوم</item>
         <item quantity="other">يوم</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="zero">أسبوع</item>
         <item quantity="one">أسبوع</item>
         <item quantity="two">أسبوع</item>
@@ -1488,7 +1501,7 @@
         <item quantity="many">أسبوع</item>
         <item quantity="other">أسبوع</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="zero">شهر</item>
         <item quantity="one">شهر</item>
         <item quantity="two">شهر</item>
@@ -1496,7 +1509,7 @@
         <item quantity="many">شهر</item>
         <item quantity="other">شهر</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="zero">سنة</item>
         <item quantity="one">سنة</item>
         <item quantity="two">سنة</item>

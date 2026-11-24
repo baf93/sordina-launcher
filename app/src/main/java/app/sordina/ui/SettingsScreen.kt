@@ -666,7 +666,6 @@ private fun CarScreenTabs(prefs: app.sordina.data.Prefs, tick: Int, change: (() 
             val last = on && order.count { it !in off } == 1
             Toggle(label(id), on, null, icon(id)) { v -> if (!last || v) change { prefs.carTabsOff = if (v) off - id else off + id } }
         }
-        Toggle(tr(R.string.auto_s_voice), prefs.carVoice, tr(R.string.auto_s_voice_hint), Icons.Rounded.Mic) { v -> change { prefs.carVoice = v } }
     }
 }
 

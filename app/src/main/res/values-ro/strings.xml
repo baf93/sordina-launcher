@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="moment_none">Niciunul</string>
     <string name="theme_auto">Automat</string>
     <string name="theme_light">Luminos</string>
@@ -1167,6 +1167,7 @@
     <string name="ob2_ph_s1">Android întreabă ce ecran principal să folosească</string>
     <string name="ob2_ph_s2">Alege Sordina</string>
     <string name="ob2_ph_s3">Dacă întreabă, atinge „Întotdeauna”</string>
+    <string name="ob2_ph_xiaomi">Pe telefoanele Xiaomi, sistemul trece la cele trei butoane de navigare când sunt ecranul tău principal. E o limită a Xiaomi, nu a mea: ca să ai din nou gesturile, alege iar ecranul principal Xiaomi.</string>
     <string name="ob2_pb_title">Nu mă lăsa să adorm</string>
     <string name="ob2_pb_why">Ca să economisească bateria, Android închide uneori aplicații. Dacă mă închide pe mine, toate notificările încep iar să sune.</string>
     <string name="ob2_pb_s1">Se deschide o fereastră Android</string>
@@ -1387,6 +1388,18 @@
     <string name="routine_car_hint">O casetă în Acasă pe ecranul mașinii</string>
     <string name="ch_car">Confirmări din mașină</string>
     <string name="auto_no_events_week">Nu ai nimic în calendar în zilele următoare</string>
+    <string name="auto_alarm_on">Armată · %1$s</string>
+    <string name="auto_alarm_off">Dezarmată</string>
+    <string name="auto_running">În curs…</string>
+    <string name="auto_search_hint">Rutine, conversații, întâlniri</string>
+    <string name="auto_section_alarms">Alarme</string>
+    <string name="auto_section_routines">Rutine</string>
+    <string name="auto_search_none">Nimic aici. Apasă Enter și încearcă Vorbește</string>
+    <string name="auto_since_car_none">Nimic de când ești în mașină</string>
+    <string name="auto_older_on_phone">Pe cele mai vechi le găsești pe telefon</string>
+    <string name="auto_go">Mergi</string>
+    <string name="auto_alarm_triggered">S-a declanșat!</string>
+    <string name="auto_arm">Armează</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">Calendar</string>
     <string name="cal_week">Săptămână</string>
@@ -1421,22 +1434,22 @@
     <string name="cal_rep_end">Sfârșitul repetării</string>
     <string name="cal_every">La fiecare</string>
     <string name="cal_rep_last">Ultima dată</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="one">zi</item>
         <item quantity="few">zile</item>
         <item quantity="other">zile</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="one">săptămână</item>
         <item quantity="few">săptămâni</item>
         <item quantity="other">săptămâni</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="one">lună</item>
         <item quantity="few">luni</item>
         <item quantity="other">luni</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="one">an</item>
         <item quantity="few">ani</item>
         <item quantity="other">ani</item>

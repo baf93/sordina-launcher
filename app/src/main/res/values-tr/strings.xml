@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="moment_none">Yok</string>
     <string name="theme_auto">Otomatik</string>
     <string name="theme_light">Açık</string>
@@ -1154,6 +1154,7 @@
     <string name="ob2_ph_s1">Android hangi ana ekranın kullanılacağını sorar</string>
     <string name="ob2_ph_s2">Sordina\'yı seç</string>
     <string name="ob2_ph_s3">Sorarsa “Her zaman”a dokun</string>
+    <string name="ob2_ph_xiaomi">Xiaomi telefonlarda ben ana ekranın olduğumda sistem üç gezinme düğmesine geçer. Bu benim değil Xiaomi\'nin sınırı: hareketleri geri almak için Xiaomi ana ekranını yeniden seç.</string>
     <string name="ob2_pb_title">Uyumama izin verme</string>
     <string name="ob2_pb_why">Pil tasarrufu için Android bazen uygulamaları kapatır. Beni kapatırsa tüm bildirimlerin yeniden çalar.</string>
     <string name="ob2_pb_s1">Bir Android penceresi açılır</string>
@@ -1370,6 +1371,18 @@
     <string name="routine_car_hint">Araç ekranında Ev\'de bir kutucuk</string>
     <string name="ch_car">Araçtan onaylar</string>
     <string name="auto_no_events_week">Önümüzdeki günlerde takviminizde bir şey yok</string>
+    <string name="auto_alarm_on">Kurulu · %1$s</string>
+    <string name="auto_alarm_off">Devre dışı</string>
+    <string name="auto_running">Çalışıyor…</string>
+    <string name="auto_search_hint">Rutinler, sohbetler, randevular</string>
+    <string name="auto_section_alarms">Alarmlar</string>
+    <string name="auto_section_routines">Rutinler</string>
+    <string name="auto_search_none">Burada bir şey yok. Enter\'a bas, Konuş denesin</string>
+    <string name="auto_since_car_none">Arabaya bindiğinden beri bir şey yok</string>
+    <string name="auto_older_on_phone">Eskileri telefonda bulabilirsin</string>
+    <string name="auto_go">Git</string>
+    <string name="auto_alarm_triggered">Çaldı!</string>
+    <string name="auto_arm">Kur</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">Takvim</string>
     <string name="cal_week">Hafta</string>
@@ -1404,19 +1417,19 @@
     <string name="cal_rep_end">Tekrar bitişi</string>
     <string name="cal_every">Her</string>
     <string name="cal_rep_last">Son kez</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="one">gün</item>
         <item quantity="other">gün</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="one">hafta</item>
         <item quantity="other">hafta</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="one">ay</item>
         <item quantity="other">ay</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="one">yıl</item>
         <item quantity="other">yıl</item>
     </plurals>

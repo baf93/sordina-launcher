@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="moment_none">Κανένα</string>
     <string name="theme_auto">Αυτόματο</string>
     <string name="theme_light">Φωτεινό</string>
@@ -1154,6 +1154,7 @@
     <string name="ob2_ph_s1">Το Android ρωτά ποια αρχική οθόνη να χρησιμοποιήσει</string>
     <string name="ob2_ph_s2">Διάλεξε Sordina</string>
     <string name="ob2_ph_s3">Αν ρωτήσει, πάτησε «Πάντα»</string>
+    <string name="ob2_ph_xiaomi">Στα κινητά Xiaomi, το σύστημα περνά στα τρία κουμπιά πλοήγησης όταν είμαι η αρχική σου οθόνη. Είναι περιορισμός της Xiaomi, όχι δικός μου: για να ξαναέχεις χειρονομίες, διάλεξε ξανά την αρχική οθόνη της Xiaomi.</string>
     <string name="ob2_pb_title">Μη με αφήσεις να κοιμηθώ</string>
     <string name="ob2_pb_why">Για να εξοικονομεί μπαταρία, το Android κλείνει μερικές φορές εφαρμογές. Αν κλείσει εμένα, όλες οι ειδοποιήσεις σου ξαναχτυπούν.</string>
     <string name="ob2_pb_s1">Ανοίγει ένα παράθυρο του Android</string>
@@ -1370,6 +1371,18 @@
     <string name="routine_car_hint">Ένα πλακίδιο στο Σπίτι στην οθόνη του αυτοκινήτου</string>
     <string name="ch_car">Επιβεβαιώσεις από το αυτοκίνητο</string>
     <string name="auto_no_events_week">Δεν έχεις τίποτα στο ημερολόγιο τις επόμενες μέρες</string>
+    <string name="auto_alarm_on">Οπλισμένος · %1$s</string>
+    <string name="auto_alarm_off">Αφοπλισμένος</string>
+    <string name="auto_running">Σε εξέλιξη…</string>
+    <string name="auto_search_hint">Ρουτίνες, συνομιλίες, ραντεβού</string>
+    <string name="auto_section_alarms">Συναγερμοί</string>
+    <string name="auto_section_routines">Ρουτίνες</string>
+    <string name="auto_search_none">Τίποτα εδώ. Πάτησε Enter και θα δοκιμάσει η Ομιλία</string>
+    <string name="auto_since_car_none">Τίποτα από τότε που μπήκες στο αυτοκίνητο</string>
+    <string name="auto_older_on_phone">Τις παλαιότερες θα τις βρεις στο τηλέφωνο</string>
+    <string name="auto_go">Πάμε</string>
+    <string name="auto_alarm_triggered">Χτύπησε!</string>
+    <string name="auto_arm">Όπλιση</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">Ημερολόγιο</string>
     <string name="cal_week">Εβδομάδα</string>
@@ -1404,19 +1417,19 @@
     <string name="cal_rep_end">Τέλος επανάληψης</string>
     <string name="cal_every">Κάθε</string>
     <string name="cal_rep_last">Τελευταία φορά</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="one">ημέρα</item>
         <item quantity="other">ημέρες</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="one">εβδομάδα</item>
         <item quantity="other">εβδομάδες</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="one">μήνας</item>
         <item quantity="other">μήνες</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="one">έτος</item>
         <item quantity="other">έτη</item>
     </plurals>

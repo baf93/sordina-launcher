@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="moment_none">ไม่มี</string>
     <string name="theme_auto">อัตโนมัติ</string>
     <string name="theme_light">สว่าง</string>
@@ -1142,6 +1142,7 @@
     <string name="ob2_ph_s1">Android จะถามว่าจะใช้หน้าจอหลักไหน</string>
     <string name="ob2_ph_s2">เลือก Sordina</string>
     <string name="ob2_ph_s3">ถ้าถาม ให้แตะ “ทุกครั้ง”</string>
+    <string name="ob2_ph_xiaomi">บนโทรศัพท์ Xiaomi ระบบจะเปลี่ยนเป็นปุ่มนำทางสามปุ่มเมื่อฉันเป็นหน้าจอหลักของคุณ นี่เป็นข้อจำกัดของ Xiaomi ไม่ใช่ของฉัน: หากต้องการใช้ท่าทางอีกครั้ง ให้เลือกหน้าจอหลักของ Xiaomi อีกครั้ง</string>
     <string name="ob2_pb_title">อย่าปล่อยให้ฉันหลับ</string>
     <string name="ob2_pb_why">เพื่อประหยัดแบตเตอรี่ บางครั้ง Android จะปิดแอป ถ้าปิดฉัน การแจ้งเตือนทั้งหมดจะกลับมาดังอีก</string>
     <string name="ob2_pb_s1">หน้าต่าง Android จะเปิดขึ้น</string>
@@ -1354,6 +1355,18 @@
     <string name="routine_car_hint">ไทล์ในบ้านบนหน้าจอรถ</string>
     <string name="ch_car">การยืนยันจากรถ</string>
     <string name="auto_no_events_week">ไม่มีนัดในปฏิทินในอีกไม่กี่วันข้างหน้า</string>
+    <string name="auto_alarm_on">เปิดอยู่ · %1$s</string>
+    <string name="auto_alarm_off">ปิดอยู่</string>
+    <string name="auto_running">กำลังทำงาน…</string>
+    <string name="auto_search_hint">รูทีน แชท นัดหมาย</string>
+    <string name="auto_section_alarms">สัญญาณกันขโมย</string>
+    <string name="auto_section_routines">รูทีน</string>
+    <string name="auto_search_none">ไม่พบ กด Enter แล้ว พูด จะลองให้</string>
+    <string name="auto_since_car_none">ไม่มีอะไรตั้งแต่ขึ้นรถ</string>
+    <string name="auto_older_on_phone">อันเก่ากว่าดูได้ในโทรศัพท์</string>
+    <string name="auto_go">ไป</string>
+    <string name="auto_alarm_triggered">สัญญาณดัง!</string>
+    <string name="auto_arm">เปิด</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">ปฏิทิน</string>
     <string name="cal_week">สัปดาห์</string>
@@ -1388,16 +1401,16 @@
     <string name="cal_rep_end">สิ้นสุดการทำซ้ำ</string>
     <string name="cal_every">ทุก</string>
     <string name="cal_rep_last">ครั้งสุดท้าย</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="other">วัน</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="other">สัปดาห์</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="other">เดือน</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="other">ปี</item>
     </plurals>
     <string name="cal_until">จนถึง %1$s</string>

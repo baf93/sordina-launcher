@@ -76,6 +76,17 @@ class MedalsTest {
         assertFalse(Medal.ALL_OF_THEM in Medal.earned(listOf(s(0, 5, pkg = "a")), today, ev = ev))
     }
 
+    @Test fun everyBrakedAppOneAfterAnother() {
+        // Una dietro l'altra: solo la prima vale minuti, le altre entrano a zero ma contano lo stesso
+        val ev = Medal.Evidence(braked = setOf("a", "b", "c"))
+        val row = listOf(s(0, 1, pkg = "a"), s(0, 0, pkg = "b"), s(0, 0, pkg = "c"))
+        assertTrue(Medal.ALL_OF_THEM in Medal.earned(row, today, ev = ev))
+        assertEquals(Medal.Progress(3, 3), Medal.Score(row, today, ev = ev).progress(Medal.ALL_OF_THEM))
+        // Le rinunce a zero non fanno numero
+        assertFalse(Medal.TEN in Medal.earned(listOf(s(0, 1)) + List(9) { s(0, 0) }, today))
+        assertFalse(Medal.SKIP_RUN in Medal.earned(listOf(s(0, 1)) + List(4) { s(0, 0) }, today))
+    }
+
     @Test fun skipRun() {
         val five = List(5) { s(0, 3) }
         assertTrue(Medal.SKIP_RUN in Medal.earned(five, today))

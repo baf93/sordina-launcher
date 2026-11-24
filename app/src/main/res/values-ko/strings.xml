@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="moment_none">없음</string>
     <string name="theme_auto">자동</string>
     <string name="theme_light">밝게</string>
@@ -1142,6 +1142,7 @@
     <string name="ob2_ph_s1">Android가 어떤 홈을 쓸지 물어요</string>
     <string name="ob2_ph_s2">Sordina를 선택하세요</string>
     <string name="ob2_ph_s3">물어보면 \'항상\'을 탭하세요</string>
+    <string name="ob2_ph_xiaomi">Xiaomi 휴대전화에서는 제가 홈 화면이 되면 시스템이 3버튼 탐색으로 바뀝니다. 제가 아니라 Xiaomi의 제한이에요. 제스처를 다시 쓰려면 Xiaomi 홈을 다시 선택하세요.</string>
     <string name="ob2_pb_title">제가 잠들지 않게 해 주세요</string>
     <string name="ob2_pb_why">배터리를 아끼려고 Android가 가끔 앱을 종료해요. 저를 종료하면 모든 알림이 다시 울려요.</string>
     <string name="ob2_pb_s1">Android 창이 열려요</string>
@@ -1354,6 +1355,18 @@
     <string name="routine_car_hint">차량 화면의 홈에 타일 표시</string>
     <string name="ch_car">차량에서 확인</string>
     <string name="auto_no_events_week">앞으로 며칠 동안 일정이 없어요</string>
+    <string name="auto_alarm_on">경계 중 · %1$s</string>
+    <string name="auto_alarm_off">해제됨</string>
+    <string name="auto_running">실행 중…</string>
+    <string name="auto_search_hint">루틴, 채팅, 일정</string>
+    <string name="auto_section_alarms">경보</string>
+    <string name="auto_section_routines">루틴</string>
+    <string name="auto_search_none">결과 없음. Enter를 누르면 말하기가 시도해요</string>
+    <string name="auto_since_car_none">차에 탄 뒤로 온 알림이 없어요</string>
+    <string name="auto_older_on_phone">이전 알림은 휴대폰에서 확인하세요</string>
+    <string name="auto_go">가기</string>
+    <string name="auto_alarm_triggered">울렸어요!</string>
+    <string name="auto_arm">경계 설정</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">캘린더</string>
     <string name="cal_week">주</string>
@@ -1388,16 +1401,16 @@
     <string name="cal_rep_end">반복 종료</string>
     <string name="cal_every">간격</string>
     <string name="cal_rep_last">마지막</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="other">일</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="other">주</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="other">개월</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="other">년</item>
     </plurals>
     <string name="cal_until">%1$s까지</string>

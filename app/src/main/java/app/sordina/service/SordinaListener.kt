@@ -20,6 +20,7 @@ import app.sordina.data.CardDetector
 import app.sordina.data.CardKind
 import app.sordina.data.Held
 import app.sordina.data.Level
+import app.sordina.data.ReadLines
 import app.sordina.data.Moments
 import app.sordina.data.Faults
 
@@ -79,6 +80,24 @@ class SordinaListener : NotificationListenerService() {
         main.postDelayed(probeDone, 2_500)
     }
 
+    /**
+     * Mettendo in sordina l'ultima chat visibile Android può posticipare anche il riassunto del gruppo (e prima di
+     * questa versione lo faceva Sordina). Per le chat il riassunto deve restare: si fa tornare fra mezzo secondo.
+     */
+    private val freeing = HashSet<String>()
+    private val freeRun = Runnable {
+        val pkgs = HashSet(freeing); freeing.clear()
+        val snoozed = Faults.guard("free.snoozed") { snoozedNotifications }.orEmpty()
+        for (s in snoozed) if (s.packageName in pkgs && (s.notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY) != 0)
+            runCatching { snoozeNotification(s.key, 500) }
+    }
+
+    private fun freeSummariesSoon(pkg: String) {
+        freeing += pkg
+        main.removeCallbacks(freeRun)
+        main.postDelayed(freeRun, 1_000)
+    }
+
     /** Le app che sono state davanti da [since]: poche righe di eventi, solo quelle con qualcosa in sordina. */
     private fun usedSince(since: Long, among: Set<String>): Set<String> {
         val usm = getSystemService(android.app.usage.UsageStatsManager::class.java) ?: return emptySet()
@@ -119,7 +138,11 @@ class SordinaListener : NotificationListenerService() {
     override fun onListenerConnected() {
         instance = this
         rulesWatch = SordinaApp.of(this).prefs.watchRules { main.removeCallbacks(rulesRun); main.postDelayed(rulesRun, 400) }
-        main.post { Faults.guard("reconcile") { reconcile() }; startPolling() }
+        main.post {
+            Faults.guard("reconcile") { reconcile() }
+            SordinaApp.of(this).store.held.value.values.filter { it.isMessage && it.releaseAt > 0 }.forEach { freeSummariesSoon(it.pkg) }
+            startPolling()
+        }
         contexts = Contexts(this).also { it.start() }
         Scheduler.refresh(this)
     }
@@ -179,6 +202,10 @@ class SordinaListener : NotificationListenerService() {
                 info.person?.let { app.brain.onMessageOpened(info.pkg, it) }
             }
         }
+        // Tolta da te dalla tendina: quei messaggi li hai visti, se l'app li ripubblica non tornano in Sordina
+        if (reason == REASON_CANCEL || reason == REASON_CANCEL_ALL) Faults.guard("removed.lines") {
+            app.store.markLinesRead(sbn.key, ReadLines.fps(Classifier.read(sbn)))
+        }
         app.signals.removeSource(sbn.key)
         if (app.store.get(sbn.key) != null) {
             app.store.remove(sbn.key)
@@ -203,12 +230,19 @@ class SordinaListener : NotificationListenerService() {
         val app = SordinaApp.of(this)
         val store = app.store
         val key = sbn.key
-        val info = info(sbn, app)
-        val verdict = Classifier.classify(info, snapshot(app))
+        val whole = info(sbn, app)
+        val verdict = Classifier.classify(whole, snapshot(app))
         val level = verdict.level
         // Già letta in Sordina mentre era in sordina, e tornata identica (dalla sospensione, o ripubblicata): si chiude.
         // Solo per quello che aspetterebbe di nuovo: ciò che passa (un allarme, un codice) non si chiude mai da solo.
-        if (level == Level.RIEPILOGO && store.alreadyRead(key) { textOf(info) }) { Faults.guard("cancel.read") { cancelNotification(key) }; return }
+        if (level == Level.RIEPILOGO && store.alreadyRead(key) { textOf(whole) }) { Faults.guard("cancel.read") { cancelNotification(key) }; return }
+        // Una chat che torna con dentro messaggi che hai già letto (per l'app sono ancora da leggere): restano solo i nuovi.
+        // Se non ce n'è nessuno, si chiude
+        val info = (if (level == Level.RIEPILOGO) ReadLines.unread(whole, store.seenLines(key)) else whole) ?: run {
+            Faults.guard("cancel.readLines") { cancelNotification(key) }
+            store.remove(key)
+            return
+        }
 
         // Un'app che ha altre notifiche in sordina: Android non avvisa quando aggiorna quelle posticipate
         // (un nuovo messaggio nella stessa chat), ma di solito ripubblica qualcosa (il riassunto del gruppo).
@@ -236,7 +270,9 @@ class SordinaListener : NotificationListenerService() {
 
         // Una notifica fissa o silenziosa (la "connessione attiva" di un'app) messa in sordina con una regola per tipo:
         // sparisce dalla tendina ma non entra nell'elenco, non c'è niente da leggere. Quando Android la rimette, si riposticipa.
-        val yours = level == Level.RIEPILOGO && verdict.reason in YOUR_RULES
+        // Anche l'app frenata o nascosta è una scelta tua: le sue notifiche silenziose ("Per te" di YouTube) aspettano
+        // come le altre, non restano nella tendina come se fossero tecniche
+        val yours = level == Level.RIEPILOGO && verdict.reason in Classifier.MUTED_BY_YOU
         val technical = info.ongoing || (importance in 1..NotificationManager.IMPORTANCE_LOW && !yours)
         // Un'app che ti ha appena scritto qualcosa che vedi: è probabile che la apri, il cervello la porta su.
         // Quello che aspetta in sordina no: Sordina non riporta davanti ciò che ha messo da parte.
@@ -264,10 +300,13 @@ class SordinaListener : NotificationListenerService() {
         val label = label(sbn.packageName)
 
         if (info.isGroupSummary) {
-            // Il riassunto del gruppo segue i suoi messaggi: sparisce solo se tutti i suoi messaggi sono in sordina
+            // Il riassunto del gruppo segue i suoi messaggi: sparisce solo se tutti i suoi messaggi sono in sordina.
+            // Le chat no: Android aggiorna in silenzio le notifiche posticipate, e il riassunto che l'app ripubblica a
+            // ogni messaggio è l'unico segnale che ne è arrivato uno (vedi [dirty]). Resta, e Sordina ricontrolla subito
             val mine = store.held.value.values.filter { it.pkg == sbn.packageName }
             val allWaiting = mine.isNotEmpty() && mine.all { it.releaseAt > 0 }
-            if (level == Level.RIEPILOGO && allWaiting) Faults.guard("snooze.summary") { snoozeNotification(key, HOLD_MILLIS) }
+            val chats = whole.isMessage || mine.any { it.isMessage }
+            if (level == Level.RIEPILOGO && allWaiting && !chats) Faults.guard("snooze.summary") { snoozeNotification(key, HOLD_MILLIS) }
             return
         }
         if (info.text.isBlank() && info.title.isBlank()) return
@@ -277,6 +316,7 @@ class SordinaListener : NotificationListenerService() {
         val until = if (level == Level.RIEPILOGO) now + HOLD_MILLIS else 0L
         val held = heldOf(sbn, info, label, level, until, verdict.reason, ranking?.channel?.name?.toString())
         if (until > 0) Faults.guard("snooze") { snoozeNotification(key, HOLD_MILLIS) }
+        if (until > 0 && info.isMessage) freeSummariesSoon(sbn.packageName)
         if (fresh && until > 0 && existing == null) Tally.add("held")
         store.put(held, sbn.notification.contentIntent)
         if (until > 0) { Scheduler.plan(this); startPolling() }
@@ -305,6 +345,7 @@ class SordinaListener : NotificationListenerService() {
             title = if (info.isMessage) null else info.title.takeIf { it.isNotBlank() && it != info.text },
             shortcut = if (info.isMessage) info.shortcut else null,
             // Più messaggi nella stessa notifica: si tengono tutti, così in Sordina si leggono uno per uno
+            msgs = ReadLines.fps(info),
             lines = if (info.isMessage && info.lines.size > 1) info.lines.takeLast(MAX_LINES).map { (t, s, x) -> HeldLine(t, s, x) } else emptyList(),
             reason = reason,
             channel = info.channel, channelName = chName ?: channelName(sbn.key),
@@ -346,7 +387,10 @@ class SordinaListener : NotificationListenerService() {
                 if (h.key !in active) { store.remove(h.key); app.status.cancelAlert(h.key) }
                 continue
             }
-            val info = info(sbn, app)
+            // Aggiornata in silenzio: i messaggi già letti restano fuori; se sono tutti letti, si chiude
+            val info = ReadLines.unread(info(sbn, app), store.seenLines(h.key)) ?: run {
+                store.remove(h.key); runCatching { cancelNotification(h.key) }; null
+            } ?: continue
             val fresh = heldOf(sbn, info, h.appLabel, h.level, store.get(h.key)?.releaseAt ?: h.releaseAt, h.reason, h.channelName)
             if (fresh.postTime == h.postTime && fresh.text == h.text && fresh.count == h.count && fresh.lines == h.lines) continue
             val verdict = Classifier.classify(info, snap)
@@ -486,8 +530,6 @@ class SordinaListener : NotificationListenerService() {
         const val HOLD_MILLIS = 24L * 3_600_000
         /** Quanti messaggi di una chat tenere in una notifica (gli ultimi) */
         const val MAX_LINES = 30
-        /** I motivi del [Classifier] che vengono da una scelta tua, non da un'ipotesi di Sordina */
-        private val YOUR_RULES = setOf("regola dell'app", "regola della persona", "regola del tipo")
         /** Si rinnova quando ne mancano meno di queste */
         private const val RENEW_BELOW = 18L * 3_600_000
         /** Un giro completo chiesto da fuori (sblocco, ritorno a Casa) non si ripete prima di così */
@@ -728,6 +770,8 @@ class SordinaListener : NotificationListenerService() {
                 app.signals.removeSource(h.key)
                 // Ricordata con il suo testo, solo se aspettava: se l'app la ripubblica uguale si chiude da sola
                 if (h.releaseAt > 0) app.store.markRead(h.key, h.text)
+                // E i suoi messaggi uno per uno: se l'app li ripubblica insieme a uno nuovo, si vede solo il nuovo
+                app.store.markLinesRead(h.key, h.msgs)
                 // Chiusa anche se è posticipata (Android chiude anche quelle): altrimenti tornerebbe nella tendina
                 // entro un giorno, già letta, ogni volta che l'app l'ha aggiornata nel frattempo
                 runCatching { instance?.cancelNotification(h.key) }

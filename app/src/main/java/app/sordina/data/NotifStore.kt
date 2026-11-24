@@ -40,6 +40,8 @@ data class Held(
     val shortcut: String? = null,
     /** I messaggi della conversazione, dal più vecchio (una chat mette più messaggi in una notifica sola); vuoto = solo [text] */
     val lines: List<HeldLine> = emptyList(),
+    /** Le impronte di tutti i messaggi della notifica ([ReadLines]): letta, si ricordano uno per uno */
+    val msgs: List<Int> = emptyList(),
 ) {
     /** Raggruppa per persona; se non c'è una persona, per app. */
     val groupKey: String
@@ -105,12 +107,16 @@ class NotifStore(private val context: Context) {
      * Se sulla stessa notifica arriva un testo nuovo, è una notifica nuova e passa dalle regole.
      */
     private val read = LinkedHashMap<String, Pair<Int, Long>>()
+    /** I singoli messaggi letti di ogni chat (chiave → impronte, quando): vedi [ReadLines] */
+    private val readLinesFile = File(context.filesDir, "read_lines.json")
+    private val readLines = LinkedHashMap<String, Pair<Set<Int>, Long>>()
     /** Persona normalizzata → (pacchetto → quante notifiche) */
     private val personApps = HashMap<String, HashMap<String, Int>>()
 
     init {
         runCatching { load() }
         runCatching { loadLearn() }
+        runCatching { loadReadLines() }
         runCatching {
             // "impronta<TAB>quando<TAB>chiave". I formati vecchi (senza quando, o senza impronta) si lasciano cadere:
             // al peggio una notifica già letta torna una volta, mai il contrario
@@ -145,6 +151,44 @@ class NotifStore(private val context: Context) {
         if (System.currentTimeMillis() - at < READ_TTL && hash == text().hashCode()) return true
         read.remove(key); saveRead()
         return false
+    }
+
+    /** I messaggi [fps] della chat [key] li hai letti (in Sordina, o togliendoli dalla tendina). */
+    @Synchronized
+    fun markLinesRead(key: String, fps: Collection<Int>) {
+        if (fps.isEmpty()) return
+        val old = readLines.remove(key)?.first.orEmpty()
+        readLines[key] = (old + fps).toList().takeLast(MAX_READ_LINES).toSet() to System.currentTimeMillis()
+        while (readLines.size > MAX_READ_CHATS) readLines.remove(readLines.keys.first())
+        saveReadLines()
+    }
+
+    /** I messaggi della chat [key] che hai già letto (vuoto se nessuno, o se è passato troppo tempo). */
+    @Synchronized
+    fun seenLines(key: String): Set<Int> {
+        val (fps, at) = readLines[key] ?: return emptySet()
+        return if (System.currentTimeMillis() - at < READ_LINES_TTL) fps else emptySet()
+    }
+
+    private fun saveReadLines() {
+        val now = System.currentTimeMillis()
+        val o = JSONObject()
+        readLines.filterValues { now - it.second < READ_LINES_TTL }.forEach { (k, v) ->
+            o.put(k, JSONObject().apply { put("at", v.second); put("m", JSONArray(v.first.toList())) })
+        }
+        io.execute { runCatching { readLinesFile.writeSafely(o.toString()) } }
+    }
+
+    private fun loadReadLines() {
+        if (!readLinesFile.exists()) return
+        val o = JSONObject(readLinesFile.readText())
+        val now = System.currentTimeMillis()
+        o.keys().forEach { k ->
+            val e = o.getJSONObject(k)
+            val at = e.optLong("at")
+            val m = e.optJSONArray("m") ?: return@forEach
+            if (now - at < READ_LINES_TTL) readLines[k] = (0 until m.length()).map { m.getInt(it) }.toSet() to at
+        }
     }
 
     private fun saveRead() {
@@ -227,6 +271,10 @@ class NotifStore(private val context: Context) {
         const val MAX_PEOPLE = 400
         /** Quanto vale una lettura: oltre, una notifica uguale è una notifica nuova (Android ne restituisce una posticipata entro un giorno) */
         const val READ_TTL = 48L * 3_600_000
+        /** I messaggi letti si ricordano una settimana: le app li ripubblicano finché non li apri lì */
+        const val READ_LINES_TTL = 7L * 24 * 3_600_000
+        const val MAX_READ_CHATS = 300
+        const val MAX_READ_LINES = 200
     }
 
     /** Le app con cui questa persona ti scrive, la più usata per prima. */
@@ -256,6 +304,7 @@ class NotifStore(private val context: Context) {
                     put("text", h.text); put("time", h.time); put("level", h.level.name)
                     put("count", h.count); put("msg", h.isMessage)
                     put("release", h.releaseAt); put("post", h.postTime); put("title", h.title ?: JSONObject.NULL); put("why", h.reason ?: JSONObject.NULL); put("ch", h.channel ?: JSONObject.NULL); put("chn", h.channelName ?: JSONObject.NULL); put("img", h.image ?: JSONObject.NULL); put("sc", h.shortcut ?: JSONObject.NULL)
+                    if (h.msgs.isNotEmpty()) put("m", JSONArray(h.msgs))
                     if (h.lines.isNotEmpty()) put("lines", JSONArray().apply {
                         h.lines.forEach { l -> put(JSONObject().apply { put("t", l.time); put("s", l.sender ?: JSONObject.NULL); put("x", l.text) }) }
                     })
@@ -290,6 +339,7 @@ class NotifStore(private val context: Context) {
                 lines = o.optJSONArray("lines")?.let { a -> (0 until a.length()).map { j -> a.getJSONObject(j) }.map { l ->
                     HeldLine(l.optLong("t"), l.optString("s").takeIf { !l.isNull("s") && it.isNotEmpty() }, l.optString("x"))
                 } } ?: emptyList(),
+                msgs = o.optJSONArray("m")?.let { a -> (0 until a.length()).map { a.getInt(it) } } ?: emptyList(),
             )
             m[h.key] = h
         }

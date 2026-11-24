@@ -1,8 +1,25 @@
 # Da fare
 
+## Ordine di marcia (dal 23/11)
+
+1. Chiudere calendario di Sordina e Android Auto: le prove qui sotto ("Da provare in auto", "Da provare: il calendario di Sordina") e quello che ne esce.
+2. Nuova versione: release nel test chiuso.
+3. Solo dopo, la scheda dello store: testi e novità nelle sei lingue (`store/listing`), screenshot (pagina Oggi, calendario), schermate e fattore di forma Android Auto in Play Console, `store/play-console.md` (CAR_SPEED, REQUEST_DELETE_PACKAGES, WRITE_CALENDAR, promemoria).
+
 ## Codice
 
 Niente di aperto.
+
+## Punti aperti e bug da chiudere prima della release
+
+- **Sveglia appena impostata, mai vista funzionare.** Con l'accessibilità accesa Sordina legge la conferma dell'Orologio ("Sveglia impostata tra…") e risponde "Sveglia alle 7:15, tra…". Provata solo con i test, mai con una sveglia vera: impostarne una e guardare il log `SordinaAlarm`.
+- **Pulsante "Ignora" del fumetto sveglia.** Il fumetto ora usa i pulsanti veri della notifica dell'Orologio, ma l'ho visto solo con una notifica finta. Provarlo quando Samsung mostra "Sveglia in arrivo".
+- **Spotify in pausa da ieri nel fumetto.** Corretto il 16/11: la musica in pausa compare solo se Sordina l'ha sentita suonare. Da confermare nel caso vero, cioè Spotify che tiene viva la sessione senza notifica.
+- **Simbolino del suggerimento.** Il fumetto "Di solito adesso" ha il tondino con le stelline al posto della scritta, e il perché si legge tenendo premuto. Non l'ho mai visto a schermo.
+- **Rimisurare il cervello (era per il 20/11).** Scaricare `files/brain.tsv` dal telefono, rifare `RealReplayTest` e `UsualReplayTest`, ricontrollare la soglia `USUAL_P` del fumetto "Di solito adesso" con più dati.
+- **Batteria su una build release.** L'ultima misura è del 15/11 ed era una build di debug, prima di Android Auto e del calendario. Una giornata staccata dal caricatore, `dumpsys batterystats`, confronto con One UI Home.
+- **Impostazioni che si ricostruiscono a ogni modifica.** Lo scroll ora torna dov'eri, ma la pagina intera si rifà a ogni tocco (`key(tick)` in `SettingsScreen`). Funziona, ma se si vede uno scatto va tolto alla radice.
+- **Limite noto, non un bug:** su Samsung senza accessibilità la sveglia appena impostata compare solo dopo il promemoria della buonanotte (23:30), perché Android mostra una sola "prossima sveglia". Va detto in Impostazioni, accanto all'accessibilità.
 
 ## Da provare sul telefono
 
@@ -33,6 +50,8 @@ Niente di aperto.
 - Codice sbagliato: si resta sul tastierino con il motivo.
 - "Rispondi a voce": la risposta parte dall'azione della notifica (WhatsApp, Telegram, SMS).
 - "Tutti per un'ora": passa tutto e dopo un'ora torna da solo a solo importanti.
+- Grafica nuova di Casa: cerchi pieni (verde le routine, ottone allarme inserito, grigio disinserito, rosso scattato) al posto dei riquadri col bordo; icona dell'app nelle righe di In sordina.
+- Allarme da solo in Casa (Impostazioni › Home Assistant › l'allarme › "Anche in auto"): sotto il nome lo stato; inserito → tocco disinserisce (codice o impronta, da fermi), disinserito → conferma e inserisce nella modalità predefinita (solo se "Anche inserire" è acceso).
 
 
 ## Da provare: il calendario di Sordina

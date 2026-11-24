@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="moment_none">Ingen</string>
     <string name="theme_auto">Automatisk</string>
     <string name="theme_light">Lyst</string>
@@ -1154,6 +1154,7 @@
     <string name="ob2_ph_s1">Android spørger, hvilken startskærm der skal bruges</string>
     <string name="ob2_ph_s2">Vælg Sordina</string>
     <string name="ob2_ph_s3">Hvis den spørger, tryk på “Altid”</string>
+    <string name="ob2_ph_xiaomi">På Xiaomi-telefoner skifter systemet til de tre navigationsknapper, når jeg er din startskærm. Det er en begrænsning hos Xiaomi, ikke mig: vælg Xiaomis startskærm igen for at få bevægelserne tilbage.</string>
     <string name="ob2_pb_title">Lad mig ikke falde i søvn</string>
     <string name="ob2_pb_why">For at spare strøm lukker Android nogle gange apps. Hvis den lukker mig, ringer alle dine notifikationer igen.</string>
     <string name="ob2_pb_s1">Et Android-vindue åbner</string>
@@ -1370,6 +1371,18 @@
     <string name="routine_car_hint">En flise i Hjem på bilens skærm</string>
     <string name="ch_car">Bekræftelser fra bilen</string>
     <string name="auto_no_events_week">Intet i kalenderen de næste dage</string>
+    <string name="auto_alarm_on">Tilkoblet · %1$s</string>
+    <string name="auto_alarm_off">Frakoblet</string>
+    <string name="auto_running">I gang…</string>
+    <string name="auto_search_hint">Rutiner, chats, aftaler</string>
+    <string name="auto_section_alarms">Alarmer</string>
+    <string name="auto_section_routines">Rutiner</string>
+    <string name="auto_search_none">Intet her. Tryk Enter, så prøver Tal</string>
+    <string name="auto_since_car_none">Intet siden du satte dig i bilen</string>
+    <string name="auto_older_on_phone">De ældre finder du på telefonen</string>
+    <string name="auto_go">Kør</string>
+    <string name="auto_alarm_triggered">Udløst!</string>
+    <string name="auto_arm">Tilkobl</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">Kalender</string>
     <string name="cal_week">Uge</string>
@@ -1404,19 +1417,19 @@
     <string name="cal_rep_end">Gentagelse slutter</string>
     <string name="cal_every">Hver</string>
     <string name="cal_rep_last">Sidste gang</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="one">dag</item>
         <item quantity="other">dage</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="one">uge</item>
         <item quantity="other">uger</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="one">måned</item>
         <item quantity="other">måneder</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="one">år</item>
         <item quantity="other">år</item>
     </plurals>

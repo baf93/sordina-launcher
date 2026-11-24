@@ -152,7 +152,15 @@ class MainActivity : ComponentActivity(), Ops {
     internal lateinit var actions: Actions
     internal var appsCallback: LauncherApps.Callback? = null
 
-    internal var screen by mutableStateOf(Screen.HOME)
+    private var screenState by mutableStateOf(Screen.HOME)
+    /** La schermata di adesso. Lasciando la ricerca (e Tutte le app, che ci torna) quello che avevi scritto si cancella:
+     *  riaprendola, dopo il freno, una scheda, le impostazioni, si riparte da vuota */
+    internal var screen: Screen
+        get() = screenState
+        set(v) {
+            if (v != Screen.INTENT && v != Screen.ALL_APPS) query = ""
+            screenState = v
+        }
     /** Le app nascoste nella pagina Sordina: sbloccate fino a quando si lascia la pagina */
     internal var hiddenRevealed by mutableStateOf(false)
     /** Da dove si entra nel calendario di Sordina */

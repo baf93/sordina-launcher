@@ -119,8 +119,8 @@ class Habits(private val context: Context) {
         if (rewarded(sp.getLong("lastWin", 0L), now)) visit else 0
 
     fun logSkip(pkg: String, minutes: Int) {
-        // Una rinuncia che non vale niente (appena dopo un'altra) non entra nello storico: non conta per le imprese
-        if (minutes == 0) return
+        // Una rinuncia che non vale niente (appena dopo un'altra) entra nello storico a zero: niente minuti, non conta
+        // per le imprese a numero, ma vale per "Tutte quante" (lasciare stare le app frenate una dietro l'altra)
         if (minutes > 0) { Tally.add("skips"); sp.edit().putLong("lastWin", System.currentTimeMillis()).apply() }
         val from = budgetFrom()
         val keep = LocalDate.now().minusDays(60)

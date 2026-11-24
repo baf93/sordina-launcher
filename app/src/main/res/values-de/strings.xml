@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="moment_none">Keiner</string>
     <string name="theme_auto">Automatisch</string>
     <string name="theme_light">Hell</string>
@@ -1158,6 +1158,7 @@
     <string name="ob2_ph_s1">Android fragt, welcher Startbildschirm genutzt werden soll</string>
     <string name="ob2_ph_s2">Wähle Sordina</string>
     <string name="ob2_ph_s3">Wenn gefragt, tippe auf „Immer“</string>
+    <string name="ob2_ph_xiaomi">Auf Xiaomi-Handys wechselt das System zu den drei Navigationstasten, wenn ich dein Startbildschirm bin. Das ist eine Grenze von Xiaomi, nicht meine: Für die Gesten wähle wieder den Xiaomi-Startbildschirm.</string>
     <string name="ob2_pb_title">Lass mich nicht einschlafen</string>
     <string name="ob2_pb_why">Um Akku zu sparen, beendet Android manchmal Apps. Wenn es mich beendet, klingeln wieder alle Benachrichtigungen.</string>
     <string name="ob2_pb_s1">Ein Android-Fenster öffnet sich</string>
@@ -1374,6 +1375,18 @@
     <string name="routine_car_hint">Eine Kachel in Zuhause auf dem Autodisplay</string>
     <string name="ch_car">Bestätigungen aus dem Auto</string>
     <string name="auto_no_events_week">In den nächsten Tagen steht nichts im Kalender</string>
+    <string name="auto_alarm_on">Scharf · %1$s</string>
+    <string name="auto_alarm_off">Unscharf</string>
+    <string name="auto_running">Läuft…</string>
+    <string name="auto_search_hint">Routinen, Chats, Termine</string>
+    <string name="auto_section_alarms">Alarmanlagen</string>
+    <string name="auto_section_routines">Routinen</string>
+    <string name="auto_search_none">Nichts gefunden. Drück Enter, dann versucht es Sprechen</string>
+    <string name="auto_since_car_none">Nichts, seit du im Auto bist</string>
+    <string name="auto_older_on_phone">Ältere findest du auf dem Handy</string>
+    <string name="auto_go">Los</string>
+    <string name="auto_alarm_triggered">Ausgelöst!</string>
+    <string name="auto_arm">Scharf schalten</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">Kalender</string>
     <string name="cal_week">Woche</string>
@@ -1408,19 +1421,19 @@
     <string name="cal_rep_end">Wiederholung endet</string>
     <string name="cal_every">Alle</string>
     <string name="cal_rep_last">Letztes Mal</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="one">Tag</item>
         <item quantity="other">Tage</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="one">Woche</item>
         <item quantity="other">Wochen</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="one">Monat</item>
         <item quantity="other">Monate</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="one">Jahr</item>
         <item quantity="other">Jahre</item>
     </plurals>

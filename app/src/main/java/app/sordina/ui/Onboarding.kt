@@ -204,8 +204,10 @@ fun Onboarding(
                 Step.ASK -> AskMe(app)
                 Step.P_NOTIF -> PermStep(R.string.ob2_pn_title, R.string.ob2_pn_why, perms.listener,
                     R.string.ob2_pn_s1, R.string.ob2_pn_s2, R.string.ob2_pn_s3, R.string.ob2_back_here)
+                // Xiaomi (anche Redmi e POCO) toglie le gesture di sistema con un launcher che non è il suo: meglio saperlo prima
                 Step.P_HOME -> PermStep(R.string.ob2_ph_title, R.string.ob2_ph_why, perms.home,
-                    R.string.ob2_ph_s1, R.string.ob2_ph_s2, R.string.ob2_ph_s3)
+                    R.string.ob2_ph_s1, R.string.ob2_ph_s2, R.string.ob2_ph_s3,
+                    note = if (Build.MANUFACTURER.equals("xiaomi", ignoreCase = true)) R.string.ob2_ph_xiaomi else null)
                 Step.P_BATTERY -> PermStep(R.string.ob2_pb_title, R.string.ob2_pb_why, perms.battery,
                     R.string.ob2_pb_s1, R.string.ob2_pb_s2)
                 Step.P_SAMSUNG -> PermStep(R.string.ob2_ps_title, R.string.ob2_ps_why, samsungDone,
@@ -762,7 +764,7 @@ private fun BrakeDemo() {
  * la spunta grande.
  */
 @Composable
-private fun PermStep(title: Int, why: Int, done: Boolean, vararg how: Int) {
+private fun PermStep(title: Int, why: Int, done: Boolean, vararg how: Int, note: Int? = null) {
     val c = S.c
     Screen("", tr(title), tr(why)) {
         AnimatedContent(done, transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) }, label = "perm") { ok ->
@@ -784,6 +786,8 @@ private fun PermStep(title: Int, why: Int, done: Boolean, vararg how: Int) {
                         androidx.compose.material3.Text(tr(res), Modifier.padding(top = 4.dp), style = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, lineHeight = 22.sp, color = c.ink))
                     }
                 }
+                if (note != null) androidx.compose.material3.Text(tr(note), Modifier.padding(top = 6.dp),
+                    style = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, lineHeight = 19.sp, color = c.soft))
             }
         }
     }

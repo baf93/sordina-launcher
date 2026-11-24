@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="moment_none">Không</string>
     <string name="theme_auto">Tự động</string>
     <string name="theme_light">Sáng</string>
@@ -1142,6 +1142,7 @@
     <string name="ob2_ph_s1">Android hỏi dùng màn hình chính nào</string>
     <string name="ob2_ph_s2">Chọn Sordina</string>
     <string name="ob2_ph_s3">Nếu được hỏi, chạm “Luôn luôn”</string>
+    <string name="ob2_ph_xiaomi">Trên điện thoại Xiaomi, hệ thống chuyển sang ba nút điều hướng khi tôi là màn hình chính của bạn. Đó là giới hạn của Xiaomi, không phải của tôi: để dùng lại cử chỉ, hãy chọn lại màn hình chính của Xiaomi.</string>
     <string name="ob2_pb_title">Đừng để tôi ngủ quên</string>
     <string name="ob2_pb_why">Để tiết kiệm pin, đôi khi Android đóng ứng dụng. Nếu nó đóng tôi, mọi thông báo của bạn sẽ reo lại.</string>
     <string name="ob2_pb_s1">Một cửa sổ Android sẽ mở ra</string>
@@ -1354,6 +1355,18 @@
     <string name="routine_car_hint">Một ô trong Nhà trên màn hình xe</string>
     <string name="ch_car">Xác nhận từ xe</string>
     <string name="auto_no_events_week">Vài ngày tới lịch của bạn trống</string>
+    <string name="auto_alarm_on">Đã bật · %1$s</string>
+    <string name="auto_alarm_off">Đã tắt</string>
+    <string name="auto_running">Đang chạy…</string>
+    <string name="auto_search_hint">Quy trình, trò chuyện, cuộc hẹn</string>
+    <string name="auto_section_alarms">Báo động</string>
+    <string name="auto_section_routines">Quy trình</string>
+    <string name="auto_search_none">Không có gì. Nhấn Enter để Nói thử</string>
+    <string name="auto_since_car_none">Chưa có gì từ khi bạn lên xe</string>
+    <string name="auto_older_on_phone">Thông báo cũ hơn có trên điện thoại</string>
+    <string name="auto_go">Đi</string>
+    <string name="auto_alarm_triggered">Đã kêu!</string>
+    <string name="auto_arm">Bật</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">Lịch</string>
     <string name="cal_week">Tuần</string>
@@ -1388,16 +1401,16 @@
     <string name="cal_rep_end">Kết thúc lặp lại</string>
     <string name="cal_every">Mỗi</string>
     <string name="cal_rep_last">Lần cuối</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="other">ngày</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="other">tuần</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="other">tháng</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="other">năm</item>
     </plurals>
     <string name="cal_until">đến %1$s</string>

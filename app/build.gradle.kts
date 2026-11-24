@@ -12,8 +12,8 @@ android {
         applicationId = "app.sordina"
         minSdk = 26
         targetSdk = 36
-        versionCode = 18
-        versionName = "0.3.0"
+        versionCode = 19
+        versionName = "0.3.1"
     }
 
     // La chiave di caricamento Play non sta mai su disco: la ricava signing/release.sh da una password e la passa qui
@@ -72,8 +72,8 @@ dependencies {
     // Sordina sullo schermo dell'auto (Android Auto): solo i modelli di Google, niente disegno libero
     // Il canale di Home Assistant per modificare e cancellare gli impegni (WebSocket)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("androidx.car.app:app:1.7.0")
-    implementation("androidx.car.app:app-projected:1.7.0")
+    implementation("androidx.car.app:app:1.8.0-rc01")
+    implementation("androidx.car.app:app-projected:1.8.0-rc01")
     testImplementation("junit:junit:4.13.2")
     // org.json vero nei test (quello di Android lì è solo uno stub): per provare la copia delle impostazioni
     testImplementation("org.json:json:20240303")

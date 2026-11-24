@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="moment_none">Ei mitään</string>
     <string name="theme_auto">Automaattinen</string>
     <string name="theme_light">Vaalea</string>
@@ -1154,6 +1154,7 @@
     <string name="ob2_ph_s1">Android kysyy, mitä aloitusnäyttöä käytetään</string>
     <string name="ob2_ph_s2">Valitse Sordina</string>
     <string name="ob2_ph_s3">Jos se kysyy, napauta ”Aina”</string>
+    <string name="ob2_ph_xiaomi">Xiaomi-puhelimissa järjestelmä vaihtaa kolmeen navigointipainikkeeseen, kun olen aloitusnäyttösi. Se on Xiaomin rajoitus, ei minun: saat eleet takaisin valitsemalla uudelleen Xiaomin aloitusnäytön.</string>
     <string name="ob2_pb_title">Älä anna minun nukahtaa</string>
     <string name="ob2_pb_why">Säästääkseen akkua Android sulkee joskus sovelluksia. Jos se sulkee minut, kaikki ilmoituksesi soivat taas.</string>
     <string name="ob2_pb_s1">Android-ikkuna avautuu</string>
@@ -1370,6 +1371,18 @@
     <string name="routine_car_hint">Ruutu Kodissa auton näytöllä</string>
     <string name="ch_car">Vahvistukset autosta</string>
     <string name="auto_no_events_week">Kalenterissa ei ole mitään lähipäivinä</string>
+    <string name="auto_alarm_on">Päällä · %1$s</string>
+    <string name="auto_alarm_off">Pois päältä</string>
+    <string name="auto_running">Käynnissä…</string>
+    <string name="auto_search_hint">Rutiinit, keskustelut, tapaamiset</string>
+    <string name="auto_section_alarms">Hälytykset</string>
+    <string name="auto_section_routines">Rutiinit</string>
+    <string name="auto_search_none">Ei tuloksia. Paina Enter, niin Puhu yrittää</string>
+    <string name="auto_since_car_none">Ei mitään sen jälkeen kun nousit autoon</string>
+    <string name="auto_older_on_phone">Vanhemmat löydät puhelimesta</string>
+    <string name="auto_go">Aja</string>
+    <string name="auto_alarm_triggered">Laukesi!</string>
+    <string name="auto_arm">Kytke päälle</string>
     <!-- Il calendario di Sordina -->
     <string name="cal_title">Kalenteri</string>
     <string name="cal_week">Viikko</string>
@@ -1404,19 +1417,19 @@
     <string name="cal_rep_end">Toisto päättyy</string>
     <string name="cal_every">Joka</string>
     <string name="cal_rep_last">Viimeinen kerta</string>
-    <plurals name="cal_unit_day">
+    <plurals name="cal_unit_day" tools:ignore="ImpliedQuantity">
         <item quantity="one">päivä</item>
         <item quantity="other">päivää</item>
     </plurals>
-    <plurals name="cal_unit_week">
+    <plurals name="cal_unit_week" tools:ignore="ImpliedQuantity">
         <item quantity="one">viikko</item>
         <item quantity="other">viikkoa</item>
     </plurals>
-    <plurals name="cal_unit_month">
+    <plurals name="cal_unit_month" tools:ignore="ImpliedQuantity">
         <item quantity="one">kuukausi</item>
         <item quantity="other">kuukautta</item>
     </plurals>
-    <plurals name="cal_unit_year">
+    <plurals name="cal_unit_year" tools:ignore="ImpliedQuantity">
         <item quantity="one">vuosi</item>
         <item quantity="other">vuotta</item>
     </plurals>

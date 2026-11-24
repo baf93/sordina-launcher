@@ -309,6 +309,7 @@ internal fun HaAlarmPage(app: SordinaApp, id: String, name: String, onGone: () -
         Toggle(tr(R.string.alarm_can_arm), s.arm, if (s.arm) tr(R.string.alarm_hint_arm, AlarmCode.modeLabel(s.mode ?: modes.firstOrNull() ?: "away")) else null, Icons.Rounded.Shield) { v ->
             update(s.copy(arm = v, codeArm = e?.codeArmRequired ?: s.codeArm))
         }
+        Toggle(tr(R.string.routine_car), s.car, tr(R.string.routine_car_hint), Icons.Rounded.DirectionsCar) { v -> update(s.copy(car = v)) }
     }
     if (s.arm && modes.isNotEmpty()) {
         Topic(tr(R.string.alarm_pick_mode))
