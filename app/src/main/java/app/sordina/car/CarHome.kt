@@ -38,6 +38,7 @@ import app.sordina.data.Held
 import app.sordina.data.HeldLine
 import app.sordina.data.HomeRun
 import app.sordina.data.Prefs
+import app.sordina.data.ReadLines
 import app.sordina.data.Search
 import app.sordina.data.Upcoming
 import app.sordina.data.today
@@ -191,12 +192,12 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
         val big = carContext.carAppApiLevel >= 8
         val accent = CarTiles.accent(prefs)
         // Grande: nome e stato dentro il riquadro (sotto, l'auto li taglierebbe); piccolo: sotto, come sempre
-        fun item(name: String, caption: String?, glyph: Int, state: CarTiles.State, onClick: () -> Unit): GridItem {
+        fun item(name: String, caption: String?, glyph: Int, state: CarTiles.State, inner: String? = null, onClick: () -> Unit): GridItem {
             // Grande: l'auto taglia il titolo a una riga stretta; il nome va a capo tra titolo e testo, lo stato nel riquadro
             val (first, rest) = if (big) CarTiles.split(name) else name to caption
             return GridItem.Builder().setTitle(first)
                 .apply { rest?.let { setText(it) } }
-                .setImage(CarTiles.tile(carContext, glyph, state, accent, if (big) caption else null), GridItem.IMAGE_TYPE_LARGE)
+                .setImage(CarTiles.tile(carContext, glyph, state, accent, if (big) caption else null, if (big) inner else null), GridItem.IMAGE_TYPE_LARGE)
                 .setOnClickListener(onClick)
                 .build()
         }
@@ -205,6 +206,7 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
             val state = when {
                 running == id -> CarTiles.State.RUNNING
                 st == "triggered" -> CarTiles.State.TRIGGERED
+                st == "arming" || st == "pending" -> CarTiles.State.ARMING
                 HomeRun.armed(st) -> CarTiles.State.ARMED
                 else -> CarTiles.State.DISARMED
             }
@@ -212,10 +214,14 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
                 running == id -> tr(R.string.auto_running)
                 st == null -> null
                 st == "triggered" -> tr(R.string.auto_alarm_triggered)
-                HomeRun.armed(st) -> tr(R.string.auto_alarm_on, AlarmCode.modeLabel(st.removePrefix("armed_")))
+                st == "arming" || st == "pending" -> tr(R.string.auto_alarm_arming)
+                // Grande: dentro il riquadro solo il modo ("Notte"); piccolo: "Inserito · Notte"
+                HomeRun.armed(st) -> AlarmCode.modeLabel(st.removePrefix("armed_")).let { if (big) it else tr(R.string.auto_alarm_on, it) }
                 else -> tr(R.string.auto_alarm_off)
             }
-            item(a.name, text, R.drawable.car_shield, state) { alarmTile(id) }
+            // Grande: sotto il riquadro "Allarme", dentro il nome corto ("Centrale Naboo" → "Naboo") e lo stato
+            if (big) item(tr(R.string.alarm_topic), text, R.drawable.car_shield, state, CarTiles.shortName(a.name)) { alarmTile(id) }
+            else item(a.name, text, R.drawable.car_shield, state) { alarmTile(id) }
         }
         val routines = carRoutines().entries.let { if (big) it else it.take((room - alarms.size).coerceAtLeast(0)) }.map { (id, r) ->
             val alarm = r.alarm?.let { prefs.haAlarms[it]?.name }
@@ -354,25 +360,37 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
     private val since = System.currentTimeMillis()
 
     /** Le notifiche in sordina arrivate da quando sei in auto, una per una, dalla più recente */
-    private fun sinceCar(): List<Held> = CarTalk.groups(app).flatten().filter { it.time >= since }.sortedByDescending { it.time }
+    private fun sinceCar(): List<Held> = (CarTalk.groups(app).flatten() + Demo.held(carContext, since)).filter { it.time >= since }.sortedByDescending { it.time }
 
     private fun sordinaList(): Template {
         val list = ItemList.Builder()
         val all = passingAll()
+        // Una riga sola: cosa fa l'interruttore
         list.addItem(Row.Builder()
-            .setTitle(if (all == null) tr(R.string.auto_pass_important) else tr(R.string.auto_pass_all_until, time(all)))
-            .addText(tr(if (all == null) R.string.auto_pass_important_sub else R.string.auto_pass_all_sub))
+            .setTitle(if (all == null) tr(R.string.auto_pass_important_sub) else tr(R.string.auto_pass_all_until, time(all)))
             .setToggle(Toggle.Builder { on -> if (on) passImportant() else passAll(60) }.setChecked(all == null).build())
             .build())
         val room = limit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST, 6) - 2
         val fresh = sinceCar()
-        // Chi scrive, da quale app e quando: il testo mai, lo legge "Ascolta"
+        // Chi scrive, da quale app e quando: il testo mai. Un tocco sulla riga la legge (solo i messaggi che non hai
+        // sentito, o tutta se non ce ne sono di nuovi); il pulsante risponde a voce, o la segna letta se non si può
+        // rispondere. Android Auto nelle liste
+        // mostra un pulsante solo. Prima della Car API 6 (niente pulsanti) la riga apre la sua scheda.
+        val inRow = carContext.carAppApiLevel >= 6
         fresh.take(room).forEach { h ->
+            val one = listOf(h)
+            val canReply = replyKey(one) != null
             list.addItem(Row.Builder().setTitle(h.groupTitle)
-                .addText((if (h.groupTitle == h.appLabel) "" else h.appLabel + " · ") + time(h.time) + (if (h.count > 1) " · " + tr(R.string.auto_n_waiting, h.count) else ""))
+                .addText((if (h.groupTitle == h.appLabel) "" else h.appLabel + " · ") + time(h.time) +
+                    (if (h.count > 1) " · " + tr(R.string.auto_n_waiting, h.count) else ""))
                 .apply { CarTiles.framed(carContext, h.pkg, CarTiles.accent(prefs))?.let { setImage(it, Row.IMAGE_TYPE_LARGE) } }
-                .setOnClickListener { screenManager.push(GroupScreen(carContext, this, listOf(h))) }
-                .setBrowsable(true)
+                .apply {
+                    if (!inRow) { setOnClickListener { screenManager.push(GroupScreen(carContext, this@CarHome, one)) }; setBrowsable(true); return@apply }
+                    setOnClickListener { listen(h) }
+                    // Sempre lo stesso pulsante: ascoltare non ridisegna la lista (l'auto la rifarebbe tutta, con l'animazione)
+                    if (canReply) addAction(Action.Builder().setIcon(CarTiles.glyph(carContext, R.drawable.car_reply)).setOnClickListener { replyByVoice(one) }.build())
+                    else addAction(Action.Builder().setIcon(CarTiles.glyph(carContext, R.drawable.car_check)).setOnClickListener { markRead(h) }.build())
+                }
                 .build())
         }
         list.addItem(Row.Builder().setTitle(tr(if (fresh.isEmpty()) R.string.auto_since_car_none else R.string.auto_older_on_phone))
@@ -381,10 +399,32 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
         return ListTemplate.Builder().setSingleList(list.build()).apply { searchFab()?.let(::addAction) }.build()
     }
 
+    /** I messaggi già ascoltati in auto, per notifica: "Ascolta" legge solo i nuovi */
+    private val heard = HashMap<String, Set<Int>>()
+
+    private fun lineFps(h: Held): List<Int> =
+        h.lines.ifEmpty { listOf(HeldLine(h.time, null, h.text)) }.map { ReadLines.fp(Triple(it.time, it.sender, it.text)) }
+
+    /** Legge quello che non hai ancora sentito (tutto, se l'avevi già sentito tutto) */
+    private fun listen(h: Held) {
+        val old = heard[h.key].orEmpty()
+        val lines = h.lines.ifEmpty { listOf(HeldLine(h.time, null, h.text)) }
+        val fresh = lines.filter { ReadLines.fp(Triple(it.time, it.sender, it.text)) !in old }.ifEmpty { lines }
+        say(readAloud(listOf(h.copy(lines = fresh))))
+        heard[h.key] = old + lineFps(h)
+    }
+
+    /** La spunta: letta, come in Sordina sul telefono (i suoi messaggi non tornano) */
+    private fun markRead(h: Held) {
+        if (Demo.isDemo(h.key)) Demo.read(h.key) else SordinaListener.readOne(carContext, h.key)
+        heard.remove(h.key)
+        invalidateSoon()
+    }
+
     // Agenda: oggi e i prossimi giorni, con "Vai" dove c'è un indirizzo
 
     private fun loadEvents() {
-        events = runCatching { app.calendars.today(carContext, days = AGENDA_DAYS) }.getOrDefault(emptyList())
+        events = (runCatching { app.calendars.today(carContext, days = AGENDA_DAYS) }.getOrDefault(emptyList()) + Demo.events(carContext)).sortedBy { it.begin }
         lifecycleScope.launch {
             val home = withContext(Dispatchers.IO) { runCatching { app.ha.calendarEvents(AGENDA_DAYS) }.getOrDefault(emptyList()) }
             if (home.isEmpty()) return@launch
@@ -395,21 +435,24 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
     }
 
     /**
-     * Agenda come quella di Teams: una riga per impegno, divise da una linea, con a sinistra il riquadro dell'ora e il
-     * giorno sopra ("OGGI 19:00"); sotto il titolo la durata e il posto, con "Vai" per andarci.
+     * Agenda come quella di Teams: una riga per impegno, divise da una linea; sotto il titolo il giorno e l'orario
+     * ("Oggi · 19:00 – 20:00", con "Teams" se è una riunione online) e il posto. Dove c'è un indirizzo, il pulsante
+     * tondo per andarci, come quelli di In sordina.
      */
     private fun agendaList(): Template {
         val list = ItemList.Builder()
-        val accent = CarTiles.accent(prefs)
         events.take(limit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST, 6)).forEach { e ->
+            val hours = if (e.allDay) tr(R.string.cal_all_day) else time(e.begin) + " – " + time(e.end)
             list.addItem(Row.Builder().setTitle(e.title)
-                .setImage(CarTiles.badge(shortDay(e.begin), if (e.allDay) tr(R.string.cal_all_day_short) else time(e.begin), accent), Row.IMAGE_TYPE_LARGE)
-                .addText(if (e.allDay) tr(R.string.cal_all_day) else time(e.begin) + " – " + time(e.end))
+                .addText(day(e.begin) + " · " + hours + (online(e.link)?.let { " · $it" } ?: ""))
                 .apply {
-                    e.location?.let { loc ->
-                        addText(loc)
-                        if (carContext.carAppApiLevel >= 6) addAction(Action.Builder().setTitle(tr(R.string.auto_go)).setOnClickListener { navigate(loc) }.build())
-                        else setOnClickListener { navigate(loc) }
+                    e.location?.let(::addText)
+                    // Un pulsante solo (l'auto ne mostra uno). Partecipa: Android Auto non lascia aprire Teams (o Meet,
+                    // Zoom) da un'altra app, ma lascia telefonare: si entra solo audio, col numero dell'invito.
+                    when {
+                        carContext.carAppApiLevel < 6 -> e.location?.let { loc -> setOnClickListener { navigate(loc) } }
+                        e.dialIn != null -> addAction(Action.Builder().setIcon(CarTiles.glyph(carContext, R.drawable.car_join)).setOnClickListener { joinByPhone(e.dialIn) }.build())
+                        e.location != null -> addAction(Action.Builder().setIcon(CarTiles.glyph(carContext, R.drawable.car_navigate)).setOnClickListener { navigate(e.location) }.build())
                     }
                 }
                 .build())
@@ -418,15 +461,20 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
         return ListTemplate.Builder().setSingleList(list.build()).apply { searchFab()?.let(::addAction) }.build()
     }
 
-    /** Il giorno nel riquadro dell'ora: "Oggi", "Domani", "Lun 30" */
-    private fun shortDay(at: Long): String {
-        val zone = java.time.ZoneId.systemDefault()
-        val d = java.time.Instant.ofEpochMilli(at).atZone(zone).toLocalDate()
-        val today = java.time.LocalDate.now(zone)
-        return when (d) {
-            today -> tr(R.string.today_title)
-            today.plusDays(1) -> tr(R.string.tomorrow_cap)
-            else -> java.time.format.DateTimeFormatter.ofPattern("EEE d", java.util.Locale.getDefault()).format(d).trimEnd('.')
+    /** Partecipa solo audio: il numero della riunione, con il codice dopo la pausa */
+    private fun joinByPhone(number: String) {
+        runCatching { carContext.startCarApp(Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + Uri.encode(number)))) }
+            .onFailure { say(tr(R.string.auto_ask_google)) }
+    }
+
+    /** Una riunione online: il servizio dal link ("Teams", "Meet", "Zoom"); null se non c'è un link */
+    private fun online(link: String?): String? {
+        val host = link?.let { runCatching { Uri.parse(it).host }.getOrNull() } ?: return null
+        return when {
+            "teams" in host -> "Teams"
+            "meet.google" in host -> "Meet"
+            "zoom" in host -> "Zoom"
+            else -> host.removePrefix("www.")
         }
     }
 
@@ -687,7 +735,7 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
     // Rispondere
 
     /** La chiave della notifica più recente del gruppo a cui si può rispondere, se c'è */
-    fun replyKey(group: List<Held>): String? = group.firstOrNull { SordinaListener.replyAction(it.key) != null }?.key
+    fun replyKey(group: List<Held>): String? = group.firstOrNull { Demo.isDemo(it.key) || SordinaListener.replyAction(it.key) != null }?.key
 
     /** "Rispondi a voce": la prossima frase detta è la risposta */
     fun replyByVoice(group: List<Held>) {
@@ -707,7 +755,10 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
         screenManager.push(SayScreen(carContext, tr(R.string.auto_reply_to, name), "“$text”", null) { s ->
             listOf(carContext.button(tr(R.string.cancel)) { s.finish() }, carContext.button(tr(R.string.auto_send), primary = true) {
                 s.finish()
-                say(if (SordinaListener.reply(key, text)) tr(R.string.auto_sent, name) else tr(R.string.auto_send_failed))
+                val sent = Demo.isDemo(key) || SordinaListener.reply(key, text)
+                say(if (sent) tr(R.string.auto_sent, name) else tr(R.string.auto_send_failed))
+                // Risposto: la chat è letta, esce da In sordina (i suoi messaggi non tornano)
+                if (sent) group.forEach(::markRead)
             })
         })
     }

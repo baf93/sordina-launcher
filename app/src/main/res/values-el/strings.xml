@@ -1314,15 +1314,12 @@
     <string name="auto_tab_sordina">Σε αναμονή</string>
     <string name="auto_tab_sordina_n">Σε αναμονή · %1$d</string>
     <string name="auto_tab_agenda">Ατζέντα</string>
-    <string name="auto_tab_talk">Μίλα</string>
     <string name="auto_no_routines">Επίλεξε ρουτίνες στο τηλέφωνο: Ρυθμίσεις › Home Assistant › Ρουτίνες, «Και στο αυτοκίνητο»</string>
     <string name="auto_no_ha">Σύνδεσε το Home Assistant στις ρυθμίσεις του Sordina στο τηλέφωνο</string>
     <string name="auto_routine_arm">οπλίζει %1$s</string>
     <string name="auto_routine_disarm">αφοπλίζει %1$s</string>
-    <string name="auto_pass_important">Περνούν μόνο τα σημαντικά</string>
     <string name="auto_pass_important_sub">Απενεργοποίησέ το για να περνούν όλα για μία ώρα</string>
     <string name="auto_pass_all_until">Περνούν όλα έως τις %1$s</string>
-    <string name="auto_pass_all_sub">Ενεργοποίησέ το για να περνούν ξανά μόνο τα σημαντικά</string>
     <string name="auto_n_waiting">%1$d σε αναμονή</string>
     <string name="auto_nothing_waiting">Δεν περιμένει τίποτα</string>
     <string name="auto_listen">Άκου</string>
@@ -1365,14 +1362,13 @@
     <string name="auto_ask_google">Αυτό ρώτα το στο Google</string>
     <string name="auto_s_screen">Στην οθόνη του αυτοκινήτου</string>
     <string name="auto_s_screen_hint">Android Auto. Κράτα πατημένο και σύρε για να αλλάξεις τη σειρά. Μία μένει πάντα ενεργή.</string>
-    <string name="auto_s_voice">Καρτέλα Μίλα</string>
-    <string name="auto_s_voice_hint">Ρουτίνες, σπίτι, ό,τι περιμένει και κλήσεις, με φωνή</string>
     <string name="routine_car">Και στο αυτοκίνητο</string>
     <string name="routine_car_hint">Ένα πλακίδιο στο Σπίτι στην οθόνη του αυτοκινήτου</string>
     <string name="ch_car">Επιβεβαιώσεις από το αυτοκίνητο</string>
     <string name="auto_no_events_week">Δεν έχεις τίποτα στο ημερολόγιο τις επόμενες μέρες</string>
     <string name="auto_alarm_on">Οπλισμένος · %1$s</string>
     <string name="auto_alarm_off">Αφοπλισμένος</string>
+    <string name="auto_alarm_arming">Ενεργοποιείται…</string>
     <string name="auto_running">Σε εξέλιξη…</string>
     <string name="auto_search_hint">Ρουτίνες, συνομιλίες, ραντεβού</string>
     <string name="auto_section_alarms">Συναγερμοί</string>
@@ -1380,7 +1376,6 @@
     <string name="auto_search_none">Τίποτα εδώ. Πάτησε Enter και θα δοκιμάσει η Ομιλία</string>
     <string name="auto_since_car_none">Τίποτα από τότε που μπήκες στο αυτοκίνητο</string>
     <string name="auto_older_on_phone">Τις παλαιότερες θα τις βρεις στο τηλέφωνο</string>
-    <string name="auto_go">Πάμε</string>
     <string name="auto_alarm_triggered">Χτύπησε!</string>
     <string name="auto_arm">Όπλιση</string>
     <!-- Il calendario di Sordina -->

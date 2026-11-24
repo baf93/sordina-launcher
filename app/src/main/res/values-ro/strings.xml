@@ -1331,15 +1331,12 @@
     <string name="auto_tab_sordina">În așteptare</string>
     <string name="auto_tab_sordina_n">În așteptare · %1$d</string>
     <string name="auto_tab_agenda">Agendă</string>
-    <string name="auto_tab_talk">Vorbește</string>
     <string name="auto_no_routines">Alege rutine pe telefon: Setări › Home Assistant › Rutine, „Și în mașină”</string>
     <string name="auto_no_ha">Conectează Home Assistant în setările Sordina de pe telefon</string>
     <string name="auto_routine_arm">armează %1$s</string>
     <string name="auto_routine_disarm">dezarmează %1$s</string>
-    <string name="auto_pass_important">Trec doar cele importante</string>
     <string name="auto_pass_important_sub">Dezactivează ca să treacă toate timp de o oră</string>
     <string name="auto_pass_all_until">Trec toate până la %1$s</string>
-    <string name="auto_pass_all_sub">Activează ca să treacă iar doar cele importante</string>
     <string name="auto_n_waiting">%1$d în așteptare</string>
     <string name="auto_nothing_waiting">Nu așteaptă nimic</string>
     <string name="auto_listen">Ascultă</string>
@@ -1382,14 +1379,13 @@
     <string name="auto_ask_google">Pe asta întreab-o pe Google</string>
     <string name="auto_s_screen">Pe ecranul mașinii</string>
     <string name="auto_s_screen_hint">Android Auto. Ține apăsat și trage ca să schimbi ordinea. Una rămâne mereu activă.</string>
-    <string name="auto_s_voice">Fila Vorbește</string>
-    <string name="auto_s_voice_hint">Rutine, casă, ce așteaptă și apeluri, vocal</string>
     <string name="routine_car">Și în mașină</string>
     <string name="routine_car_hint">O casetă în Acasă pe ecranul mașinii</string>
     <string name="ch_car">Confirmări din mașină</string>
     <string name="auto_no_events_week">Nu ai nimic în calendar în zilele următoare</string>
     <string name="auto_alarm_on">Armată · %1$s</string>
     <string name="auto_alarm_off">Dezarmată</string>
+    <string name="auto_alarm_arming">Se armează…</string>
     <string name="auto_running">În curs…</string>
     <string name="auto_search_hint">Rutine, conversații, întâlniri</string>
     <string name="auto_section_alarms">Alarme</string>
@@ -1397,7 +1393,6 @@
     <string name="auto_search_none">Nimic aici. Apasă Enter și încearcă Vorbește</string>
     <string name="auto_since_car_none">Nimic de când ești în mașină</string>
     <string name="auto_older_on_phone">Pe cele mai vechi le găsești pe telefon</string>
-    <string name="auto_go">Mergi</string>
     <string name="auto_alarm_triggered">S-a declanșat!</string>
     <string name="auto_arm">Armează</string>
     <!-- Il calendario di Sordina -->

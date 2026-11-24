@@ -1314,15 +1314,12 @@
     <string name="auto_tab_sordina">इंतज़ार में</string>
     <string name="auto_tab_sordina_n">इंतज़ार में · %1$d</string>
     <string name="auto_tab_agenda">एजेंडा</string>
-    <string name="auto_tab_talk">बोलें</string>
     <string name="auto_no_routines">फ़ोन पर रूटीन चुनें: सेटिंग › Home Assistant › रूटीन, “कार में भी”</string>
     <string name="auto_no_ha">फ़ोन पर Sordina सेटिंग में Home Assistant जोड़ें</string>
     <string name="auto_routine_arm">%1$s का अलार्म चालू करता है</string>
     <string name="auto_routine_disarm">%1$s का अलार्म बंद करता है</string>
-    <string name="auto_pass_important">सिर्फ़ ज़रूरी वाले आते हैं</string>
     <string name="auto_pass_important_sub">बंद करें तो एक घंटे तक सब आएँगे</string>
     <string name="auto_pass_all_until">%1$s तक सब आते हैं</string>
-    <string name="auto_pass_all_sub">चालू करें तो फिर सिर्फ़ ज़रूरी वाले</string>
     <string name="auto_n_waiting">%1$d इंतज़ार में</string>
     <string name="auto_nothing_waiting">कुछ इंतज़ार में नहीं</string>
     <string name="auto_listen">सुनें</string>
@@ -1365,14 +1362,13 @@
     <string name="auto_ask_google">यह Google से पूछें</string>
     <string name="auto_s_screen">कार की स्क्रीन पर</string>
     <string name="auto_s_screen_hint">Android Auto. क्रम बदलने के लिए दबाकर रखें और खींचें। एक हमेशा चालू रहता है।</string>
-    <string name="auto_s_voice">बोलें टैब</string>
-    <string name="auto_s_voice_hint">रूटीन, घर, इंतज़ार वाली चीज़ें और कॉल, आवाज़ से</string>
     <string name="routine_car">कार में भी</string>
     <string name="routine_car_hint">कार की स्क्रीन पर घर में एक टाइल</string>
     <string name="ch_car">कार से पुष्टि</string>
     <string name="auto_no_events_week">अगले कुछ दिनों में कैलेंडर में कुछ नहीं है</string>
     <string name="auto_alarm_on">चालू · %1$s</string>
     <string name="auto_alarm_off">बंद</string>
+    <string name="auto_alarm_arming">चालू हो रहा है…</string>
     <string name="auto_running">चल रहा है…</string>
     <string name="auto_search_hint">रूटीन, चैट, अपॉइंटमेंट</string>
     <string name="auto_section_alarms">अलार्म</string>
@@ -1380,7 +1376,6 @@
     <string name="auto_search_none">यहाँ कुछ नहीं। Enter दबाएँ, बोलें कोशिश करेगा</string>
     <string name="auto_since_car_none">कार में बैठने के बाद से कुछ नहीं</string>
     <string name="auto_older_on_phone">पुरानी सूचनाएँ फ़ोन पर मिलेंगी</string>
-    <string name="auto_go">चलें</string>
     <string name="auto_alarm_triggered">बज उठा!</string>
     <string name="auto_arm">चालू करें</string>
     <!-- Il calendario di Sordina -->

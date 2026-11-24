@@ -1348,15 +1348,12 @@
     <string name="auto_tab_sordina">Ждёт</string>
     <string name="auto_tab_sordina_n">Ждёт · %1$d</string>
     <string name="auto_tab_agenda">Календарь</string>
-    <string name="auto_tab_talk">Говорить</string>
     <string name="auto_no_routines">Выберите сценарии на телефоне: Настройки › Home Assistant › Сценарии, «Также в машине»</string>
     <string name="auto_no_ha">Подключите Home Assistant в настройках Sordina на телефоне</string>
     <string name="auto_routine_arm">ставит %1$s на охрану</string>
     <string name="auto_routine_disarm">снимает %1$s с охраны</string>
-    <string name="auto_pass_important">Проходят только важные</string>
     <string name="auto_pass_important_sub">Выключите, чтобы час пропускать всё</string>
     <string name="auto_pass_all_until">Всё проходит до %1$s</string>
-    <string name="auto_pass_all_sub">Включите, чтобы снова пропускать только важные</string>
     <string name="auto_n_waiting">Ждёт: %1$d</string>
     <string name="auto_nothing_waiting">Ничего не ждёт</string>
     <string name="auto_listen">Прослушать</string>
@@ -1399,14 +1396,13 @@
     <string name="auto_ask_google">Это лучше спросить у Google</string>
     <string name="auto_s_screen">На экране машины</string>
     <string name="auto_s_screen_hint">Android Auto. Удерживайте и перетаскивайте, чтобы изменить порядок. Одна вкладка всегда включена.</string>
-    <string name="auto_s_voice">Вкладка «Говорить»</string>
-    <string name="auto_s_voice_hint">Сценарии, дом, что ждёт, и звонки, голосом</string>
     <string name="routine_car">Также в машине</string>
     <string name="routine_car_hint">Плитка в разделе Дом на экране машины</string>
     <string name="ch_car">Подтверждения из машины</string>
     <string name="auto_no_events_week">В ближайшие дни в календаре ничего нет</string>
     <string name="auto_alarm_on">Включена · %1$s</string>
     <string name="auto_alarm_off">Выключена</string>
+    <string name="auto_alarm_arming">Постановка на охрану…</string>
     <string name="auto_running">Выполняется…</string>
     <string name="auto_search_hint">Сценарии, чаты, встречи</string>
     <string name="auto_section_alarms">Сигнализации</string>
@@ -1414,7 +1410,6 @@
     <string name="auto_search_none">Ничего нет. Нажмите Enter — попробует «Говорить»</string>
     <string name="auto_since_car_none">Ничего с тех пор, как вы в машине</string>
     <string name="auto_older_on_phone">Более ранние — на телефоне</string>
-    <string name="auto_go">Ехать</string>
     <string name="auto_alarm_triggered">Сработала!</string>
     <string name="auto_arm">Включить</string>
     <!-- Il calendario di Sordina -->

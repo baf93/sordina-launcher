@@ -1320,15 +1320,12 @@
     <string name="auto_tab_sordina">En espera</string>
     <string name="auto_tab_sordina_n">En espera · %1$d</string>
     <string name="auto_tab_agenda">Agenda</string>
-    <string name="auto_tab_talk">Habla</string>
     <string name="auto_no_routines">Elige rutinas en el teléfono: Ajustes › Home Assistant › Rutinas, “También en el coche”</string>
     <string name="auto_no_ha">Conecta Home Assistant en los ajustes de Sordina en el teléfono</string>
     <string name="auto_routine_arm">activa %1$s</string>
     <string name="auto_routine_disarm">desactiva %1$s</string>
-    <string name="auto_pass_important">Solo pasan las importantes</string>
     <string name="auto_pass_important_sub">Desactívalo para que pasen todas durante una hora</string>
     <string name="auto_pass_all_until">Pasan todas hasta las %1$s</string>
-    <string name="auto_pass_all_sub">Actívalo para volver a solo las importantes</string>
     <string name="auto_n_waiting">%1$d en espera</string>
     <string name="auto_nothing_waiting">No hay nada en espera</string>
     <string name="auto_listen">Escuchar</string>
@@ -1371,14 +1368,13 @@
     <string name="auto_ask_google">Esto pregúntaselo a Google</string>
     <string name="auto_s_screen">En la pantalla del coche</string>
     <string name="auto_s_screen_hint">Android Auto. Mantén pulsado y arrastra para cambiar el orden. Siempre queda una activa.</string>
-    <string name="auto_s_voice">Pestaña Habla</string>
-    <string name="auto_s_voice_hint">Rutinas, casa, lo que espera y llamadas, por voz</string>
     <string name="routine_car">También en el coche</string>
     <string name="routine_car_hint">Un recuadro en Casa en la pantalla del coche</string>
     <string name="ch_car">Confirmaciones desde el coche</string>
     <string name="auto_no_events_week">No tienes nada en el calendario en los próximos días</string>
     <string name="auto_alarm_on">Activada · %1$s</string>
     <string name="auto_alarm_off">Desactivada</string>
+    <string name="auto_alarm_arming">Activándose…</string>
     <string name="auto_running">En curso…</string>
     <string name="auto_search_hint">Rutinas, chats, citas</string>
     <string name="auto_section_alarms">Alarmas</string>
@@ -1386,7 +1382,6 @@
     <string name="auto_search_none">Nada aquí. Pulsa Intro y lo intentará Hablar</string>
     <string name="auto_since_car_none">Nada desde que subiste al coche</string>
     <string name="auto_older_on_phone">Las anteriores están en el teléfono</string>
-    <string name="auto_go">Ir</string>
     <string name="auto_alarm_triggered">¡Ha saltado!</string>
     <string name="auto_arm">Activar</string>
     <!-- Il calendario di Sordina -->

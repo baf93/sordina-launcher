@@ -1318,15 +1318,12 @@
     <string name="auto_tab_sordina">Wartet</string>
     <string name="auto_tab_sordina_n">Wartet · %1$d</string>
     <string name="auto_tab_agenda">Termine</string>
-    <string name="auto_tab_talk">Sprechen</string>
     <string name="auto_no_routines">Wähle Routinen auf dem Handy: Einstellungen › Home Assistant › Routinen, „Auch im Auto“</string>
     <string name="auto_no_ha">Verbinde Home Assistant in den Einstellungen von Sordina auf dem Handy</string>
     <string name="auto_routine_arm">schaltet %1$s scharf</string>
     <string name="auto_routine_disarm">schaltet %1$s aus</string>
-    <string name="auto_pass_important">Nur Wichtiges kommt durch</string>
     <string name="auto_pass_important_sub">Ausschalten, um eine Stunde lang alles durchzulassen</string>
     <string name="auto_pass_all_until">Alles kommt durch bis %1$s</string>
-    <string name="auto_pass_all_sub">Einschalten, um wieder nur Wichtiges durchzulassen</string>
     <string name="auto_n_waiting">%1$d wartet</string>
     <string name="auto_nothing_waiting">Nichts wartet</string>
     <string name="auto_listen">Anhören</string>
@@ -1369,14 +1366,13 @@
     <string name="auto_ask_google">Das frag lieber Google</string>
     <string name="auto_s_screen">Auf dem Autodisplay</string>
     <string name="auto_s_screen_hint">Android Auto. Gedrückt halten und ziehen, um die Reihenfolge zu ändern. Einer bleibt immer an.</string>
-    <string name="auto_s_voice">Tab Sprechen</string>
-    <string name="auto_s_voice_hint">Routinen, Zuhause, was wartet und Anrufe, per Sprache</string>
     <string name="routine_car">Auch im Auto</string>
     <string name="routine_car_hint">Eine Kachel in Zuhause auf dem Autodisplay</string>
     <string name="ch_car">Bestätigungen aus dem Auto</string>
     <string name="auto_no_events_week">In den nächsten Tagen steht nichts im Kalender</string>
     <string name="auto_alarm_on">Scharf · %1$s</string>
     <string name="auto_alarm_off">Unscharf</string>
+    <string name="auto_alarm_arming">Wird scharf geschaltet…</string>
     <string name="auto_running">Läuft…</string>
     <string name="auto_search_hint">Routinen, Chats, Termine</string>
     <string name="auto_section_alarms">Alarmanlagen</string>
@@ -1384,7 +1380,6 @@
     <string name="auto_search_none">Nichts gefunden. Drück Enter, dann versucht es Sprechen</string>
     <string name="auto_since_car_none">Nichts, seit du im Auto bist</string>
     <string name="auto_older_on_phone">Ältere findest du auf dem Handy</string>
-    <string name="auto_go">Los</string>
     <string name="auto_alarm_triggered">Ausgelöst!</string>
     <string name="auto_arm">Scharf schalten</string>
     <!-- Il calendario di Sordina -->

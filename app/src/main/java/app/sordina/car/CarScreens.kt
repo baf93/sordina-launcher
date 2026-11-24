@@ -18,6 +18,7 @@ import androidx.car.app.model.Template
 import androidx.car.app.model.signin.InputSignInMethod
 import androidx.car.app.model.signin.SignInTemplate
 import androidx.core.graphics.drawable.IconCompat
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.lifecycleScope
 import app.sordina.R
 import app.sordina.data.Held
@@ -32,8 +33,20 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** Un'icona di Sordina per l'auto; [tint]: nel colore del testo dell'auto (le icone a una tinta, non la mascotte) */
-internal fun CarContext.icon(res: Int, tint: Boolean = true): CarIcon =
-    CarIcon.Builder(IconCompat.createWithResource(this, res)).apply { if (tint) setTint(CarColor.DEFAULT) }.build()
+private val icons = HashMap<Pair<Int, Boolean>, CarIcon>()
+
+/**
+ * Un'icona di Sordina per l'auto, già disegnata: se Android Auto la cercasse tra le risorse dell'app, dopo un
+ * aggiornamento potrebbe prendere quella sbagliata (tiene in memoria la vecchia numerazione).
+ * [tint]: bianca, e l'auto la colora come le sue; senza, coi suoi colori (la mascotte).
+ */
+internal fun CarContext.icon(res: Int, tint: Boolean = true): CarIcon = icons.getOrPut(res to tint) {
+    val d = androidx.core.content.ContextCompat.getDrawable(this, res)!!.mutate()
+    if (tint) d.setTint(android.graphics.Color.WHITE)
+    val size = if (tint) 96 else 192
+    CarIcon.Builder(IconCompat.createWithBitmap(d.toBitmap(size, size)))
+        .apply { if (tint) setTint(CarColor.DEFAULT) }.build()
+}
 
 /** Un pulsante. [primary]: quello evidenziato (Car API 4). [parked]: solo da fermi, se no Android Auto lo dice lui */
 internal fun CarContext.button(title: String, primary: Boolean = false, parked: Boolean = false, onClick: () -> Unit): Action =

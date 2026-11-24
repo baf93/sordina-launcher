@@ -1298,15 +1298,12 @@
     <string name="auto_tab_sordina">等待中</string>
     <string name="auto_tab_sordina_n">等待中 · %1$d</string>
     <string name="auto_tab_agenda">日程</string>
-    <string name="auto_tab_talk">说话</string>
     <string name="auto_no_routines">在手机上选择例程：设置 › Home Assistant › 例程，“车上也可用”</string>
     <string name="auto_no_ha">在手机上的 Sordina 设置中连接 Home Assistant</string>
     <string name="auto_routine_arm">布防 %1$s</string>
     <string name="auto_routine_disarm">撤防 %1$s</string>
-    <string name="auto_pass_important">只放行重要的</string>
     <string name="auto_pass_important_sub">关闭后一小时内全部放行</string>
     <string name="auto_pass_all_until">%1$s 前全部放行</string>
-    <string name="auto_pass_all_sub">打开后重新只放行重要的</string>
     <string name="auto_n_waiting">%1$d 条等待中</string>
     <string name="auto_nothing_waiting">没有等待中的内容</string>
     <string name="auto_listen">收听</string>
@@ -1349,14 +1346,13 @@
     <string name="auto_ask_google">这个问 Google 吧</string>
     <string name="auto_s_screen">车载屏幕</string>
     <string name="auto_s_screen_hint">Android Auto。长按并拖动可调整顺序。至少保留一个开启。</string>
-    <string name="auto_s_voice">“说话”标签</string>
-    <string name="auto_s_voice_hint">用语音运行例程、控制家、查看等待内容和打电话</string>
     <string name="routine_car">车上也可用</string>
     <string name="routine_car_hint">在车载屏幕的“家”中显示磁贴</string>
     <string name="ch_car">来自车上的确认</string>
     <string name="auto_no_events_week">未来几天日历上没有安排</string>
     <string name="auto_alarm_on">已布防 · %1$s</string>
     <string name="auto_alarm_off">已撤防</string>
+    <string name="auto_alarm_arming">正在布防…</string>
     <string name="auto_running">进行中…</string>
     <string name="auto_search_hint">例行程序、聊天、日程</string>
     <string name="auto_section_alarms">警报</string>
@@ -1364,7 +1360,6 @@
     <string name="auto_search_none">没有结果。按回车，让“说话”试试</string>
     <string name="auto_since_car_none">上车后还没有新通知</string>
     <string name="auto_older_on_phone">更早的请在手机上查看</string>
-    <string name="auto_go">出发</string>
     <string name="auto_alarm_triggered">已触发!</string>
     <string name="auto_arm">布防</string>
     <!-- Il calendario di Sordina -->

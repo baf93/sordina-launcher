@@ -1298,15 +1298,12 @@
     <string name="auto_tab_sordina">รออยู่</string>
     <string name="auto_tab_sordina_n">รออยู่ · %1$d</string>
     <string name="auto_tab_agenda">กำหนดการ</string>
-    <string name="auto_tab_talk">พูด</string>
     <string name="auto_no_routines">เลือกรูทีนในโทรศัพท์: การตั้งค่า › Home Assistant › รูทีน, “ในรถด้วย”</string>
     <string name="auto_no_ha">เชื่อมต่อ Home Assistant ในการตั้งค่า Sordina บนโทรศัพท์</string>
     <string name="auto_routine_arm">เปิดสัญญาณกันขโมย %1$s</string>
     <string name="auto_routine_disarm">ปิดสัญญาณกันขโมย %1$s</string>
-    <string name="auto_pass_important">ผ่านเฉพาะเรื่องสำคัญ</string>
     <string name="auto_pass_important_sub">ปิดเพื่อให้ทุกอย่างผ่านหนึ่งชั่วโมง</string>
     <string name="auto_pass_all_until">ทุกอย่างผ่านได้จนถึง %1$s</string>
-    <string name="auto_pass_all_sub">เปิดเพื่อกลับไปผ่านเฉพาะเรื่องสำคัญ</string>
     <string name="auto_n_waiting">รออยู่ %1$d</string>
     <string name="auto_nothing_waiting">ไม่มีอะไรรออยู่</string>
     <string name="auto_listen">ฟัง</string>
@@ -1349,14 +1346,13 @@
     <string name="auto_ask_google">ถามเรื่องนี้กับ Google</string>
     <string name="auto_s_screen">บนหน้าจอรถ</string>
     <string name="auto_s_screen_hint">Android Auto กดค้างแล้วลากเพื่อเปลี่ยนลำดับ ต้องเปิดไว้อย่างน้อยหนึ่งแท็บ</string>
-    <string name="auto_s_voice">แท็บพูด</string>
-    <string name="auto_s_voice_hint">รูทีน บ้าน สิ่งที่รออยู่ และการโทร ด้วยเสียง</string>
     <string name="routine_car">ในรถด้วย</string>
     <string name="routine_car_hint">ไทล์ในบ้านบนหน้าจอรถ</string>
     <string name="ch_car">การยืนยันจากรถ</string>
     <string name="auto_no_events_week">ไม่มีนัดในปฏิทินในอีกไม่กี่วันข้างหน้า</string>
     <string name="auto_alarm_on">เปิดอยู่ · %1$s</string>
     <string name="auto_alarm_off">ปิดอยู่</string>
+    <string name="auto_alarm_arming">กำลังเปิดใช้…</string>
     <string name="auto_running">กำลังทำงาน…</string>
     <string name="auto_search_hint">รูทีน แชท นัดหมาย</string>
     <string name="auto_section_alarms">สัญญาณกันขโมย</string>
@@ -1364,7 +1360,6 @@
     <string name="auto_search_none">ไม่พบ กด Enter แล้ว พูด จะลองให้</string>
     <string name="auto_since_car_none">ไม่มีอะไรตั้งแต่ขึ้นรถ</string>
     <string name="auto_older_on_phone">อันเก่ากว่าดูได้ในโทรศัพท์</string>
-    <string name="auto_go">ไป</string>
     <string name="auto_alarm_triggered">สัญญาณดัง!</string>
     <string name="auto_arm">เปิด</string>
     <!-- Il calendario di Sordina -->

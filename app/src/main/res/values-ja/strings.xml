@@ -1298,15 +1298,12 @@
     <string name="auto_tab_sordina">待機中</string>
     <string name="auto_tab_sordina_n">待機中 · %1$d</string>
     <string name="auto_tab_agenda">予定</string>
-    <string name="auto_tab_talk">話す</string>
     <string name="auto_no_routines">スマホでルーティンを選んでください：設定 › Home Assistant › ルーティン、「車でも」</string>
     <string name="auto_no_ha">スマホの Sordina 設定で Home Assistant に接続してください</string>
     <string name="auto_routine_arm">%1$s を警戒にします</string>
     <string name="auto_routine_disarm">%1$s の警戒を解除します</string>
-    <string name="auto_pass_important">重要なものだけ通します</string>
     <string name="auto_pass_important_sub">オフにすると1時間すべて通します</string>
     <string name="auto_pass_all_until">%1$s まですべて通します</string>
-    <string name="auto_pass_all_sub">オンにすると重要なものだけに戻ります</string>
     <string name="auto_n_waiting">%1$d 件待機中</string>
     <string name="auto_nothing_waiting">待機中のものはありません</string>
     <string name="auto_listen">聞く</string>
@@ -1349,14 +1346,13 @@
     <string name="auto_ask_google">それは Google に聞いてください</string>
     <string name="auto_s_screen">車の画面</string>
     <string name="auto_s_screen_hint">Android Auto。長押ししてドラッグすると並べ替えられます。1つは常にオンのままです。</string>
-    <string name="auto_s_voice">「話す」タブ</string>
-    <string name="auto_s_voice_hint">ルーティン、家、待機中のもの、電話を音声で</string>
     <string name="routine_car">車でも</string>
     <string name="routine_car_hint">車の画面のホームにタイルを表示</string>
     <string name="ch_car">車からの確認</string>
     <string name="auto_no_events_week">この先数日、予定はありません</string>
     <string name="auto_alarm_on">警戒中 · %1$s</string>
     <string name="auto_alarm_off">解除中</string>
+    <string name="auto_alarm_arming">警戒開始中…</string>
     <string name="auto_running">実行中…</string>
     <string name="auto_search_hint">ルーティン、チャット、予定</string>
     <string name="auto_section_alarms">アラーム</string>
@@ -1364,7 +1360,6 @@
     <string name="auto_search_none">見つかりません。Enterで「話す」が試します</string>
     <string name="auto_since_car_none">車に乗ってからは何もありません</string>
     <string name="auto_older_on_phone">それより前のものはスマホで</string>
-    <string name="auto_go">行く</string>
     <string name="auto_alarm_triggered">作動しました!</string>
     <string name="auto_arm">警戒する</string>
     <!-- Il calendario di Sordina -->

@@ -1348,15 +1348,12 @@
     <string name="auto_tab_sordina">Čeká</string>
     <string name="auto_tab_sordina_n">Čeká · %1$d</string>
     <string name="auto_tab_agenda">Kalendář</string>
-    <string name="auto_tab_talk">Mluv</string>
     <string name="auto_no_routines">Vyberte rutiny v telefonu: Nastavení › Home Assistant › Rutiny, „I v autě“</string>
     <string name="auto_no_ha">Připojte Home Assistant v nastavení Sordiny v telefonu</string>
     <string name="auto_routine_arm">zapne %1$s</string>
     <string name="auto_routine_disarm">vypne %1$s</string>
-    <string name="auto_pass_important">Projdou jen důležité</string>
     <string name="auto_pass_important_sub">Vypněte a hodinu projde všechno</string>
     <string name="auto_pass_all_until">Všechno projde do %1$s</string>
-    <string name="auto_pass_all_sub">Zapněte a zase projdou jen důležité</string>
     <string name="auto_n_waiting">Čeká: %1$d</string>
     <string name="auto_nothing_waiting">Nic nečeká</string>
     <string name="auto_listen">Poslechnout</string>
@@ -1399,14 +1396,13 @@
     <string name="auto_ask_google">Na tohle se zeptejte Googlu</string>
     <string name="auto_s_screen">Na obrazovce auta</string>
     <string name="auto_s_screen_hint">Android Auto. Podržte a přetáhněte pro změnu pořadí. Jedna zůstane vždy zapnutá.</string>
-    <string name="auto_s_voice">Karta Mluv</string>
-    <string name="auto_s_voice_hint">Rutiny, domov, co čeká, a hovory, hlasem</string>
     <string name="routine_car">I v autě</string>
     <string name="routine_car_hint">Dlaždice v Domově na obrazovce auta</string>
     <string name="ch_car">Potvrzení z auta</string>
     <string name="auto_no_events_week">V příštích dnech nemáte v kalendáři nic</string>
     <string name="auto_alarm_on">Zapnuto · %1$s</string>
     <string name="auto_alarm_off">Vypnuto</string>
+    <string name="auto_alarm_arming">Zapíná se…</string>
     <string name="auto_running">Probíhá…</string>
     <string name="auto_search_hint">Rutiny, chaty, schůzky</string>
     <string name="auto_section_alarms">Alarmy</string>
@@ -1414,7 +1410,6 @@
     <string name="auto_search_none">Nic tu není. Stiskněte Enter a zkusí to Mluvit</string>
     <string name="auto_since_car_none">Od nástupu do auta nic</string>
     <string name="auto_older_on_phone">Starší najdete v telefonu</string>
-    <string name="auto_go">Jet</string>
     <string name="auto_alarm_triggered">Spustil se!</string>
     <string name="auto_arm">Zapnout</string>
     <!-- Il calendario di Sordina -->

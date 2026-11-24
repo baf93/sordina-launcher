@@ -1382,15 +1382,12 @@
     <string name="auto_tab_sordina">في الانتظار</string>
     <string name="auto_tab_sordina_n">في الانتظار · %1$d</string>
     <string name="auto_tab_agenda">المواعيد</string>
-    <string name="auto_tab_talk">تحدّث</string>
     <string name="auto_no_routines">اختر الروتينات على الهاتف: الإعدادات › Home Assistant › الروتينات، «في السيارة أيضًا»</string>
     <string name="auto_no_ha">اربط Home Assistant من إعدادات Sordina على الهاتف</string>
     <string name="auto_routine_arm">يفعّل إنذار %1$s</string>
     <string name="auto_routine_disarm">يوقف إنذار %1$s</string>
-    <string name="auto_pass_important">تمرّ المهمة فقط</string>
     <string name="auto_pass_important_sub">أوقفه ليمرّ الجميع لمدة ساعة</string>
     <string name="auto_pass_all_until">يمرّ الجميع حتى %1$s</string>
-    <string name="auto_pass_all_sub">شغّله لتعود المهمة فقط</string>
     <string name="auto_n_waiting">%1$d في الانتظار</string>
     <string name="auto_nothing_waiting">لا شيء في الانتظار</string>
     <string name="auto_listen">استمع</string>
@@ -1433,14 +1430,13 @@
     <string name="auto_ask_google">اسأل Google عن هذا</string>
     <string name="auto_s_screen">على شاشة السيارة</string>
     <string name="auto_s_screen_hint">Android Auto. اضغط مطولًا واسحب لتغيير الترتيب. تبقى واحدة مفعّلة دائمًا.</string>
-    <string name="auto_s_voice">علامة تبويب تحدّث</string>
-    <string name="auto_s_voice_hint">الروتينات والمنزل وما ينتظر والمكالمات، بالصوت</string>
     <string name="routine_car">في السيارة أيضًا</string>
     <string name="routine_car_hint">مربع في المنزل على شاشة السيارة</string>
     <string name="ch_car">تأكيدات من السيارة</string>
     <string name="auto_no_events_week">لا شيء في تقويمك في الأيام القادمة</string>
     <string name="auto_alarm_on">مُفعّل · %1$s</string>
     <string name="auto_alarm_off">غير مُفعّل</string>
+    <string name="auto_alarm_arming">جارٍ التفعيل…</string>
     <string name="auto_running">قيد التشغيل…</string>
     <string name="auto_search_hint">الروتينات، الدردشات، المواعيد</string>
     <string name="auto_section_alarms">أجهزة الإنذار</string>
@@ -1448,7 +1444,6 @@
     <string name="auto_search_none">لا شيء هنا. اضغط إدخال وسيحاول «تحدّث»</string>
     <string name="auto_since_car_none">لا شيء منذ ركبت السيارة</string>
     <string name="auto_older_on_phone">الأقدم تجدها على الهاتف</string>
-    <string name="auto_go">انطلق</string>
     <string name="auto_alarm_triggered">انطلق الإنذار!</string>
     <string name="auto_arm">تفعيل</string>
     <!-- Il calendario di Sordina -->

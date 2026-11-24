@@ -1314,15 +1314,12 @@
     <string name="auto_tab_sordina">Wacht</string>
     <string name="auto_tab_sordina_n">Wacht · %1$d</string>
     <string name="auto_tab_agenda">Agenda</string>
-    <string name="auto_tab_talk">Praten</string>
     <string name="auto_no_routines">Kies routines op je telefoon: Instellingen › Home Assistant › Routines, ‘Ook in de auto\'</string>
     <string name="auto_no_ha">Verbind Home Assistant in de instellingen van Sordina op je telefoon</string>
     <string name="auto_routine_arm">schakelt %1$s in</string>
     <string name="auto_routine_disarm">schakelt %1$s uit</string>
-    <string name="auto_pass_important">Alleen belangrijke komen door</string>
     <string name="auto_pass_important_sub">Uitzetten om een uur lang alles door te laten</string>
     <string name="auto_pass_all_until">Alles komt door tot %1$s</string>
-    <string name="auto_pass_all_sub">Aanzetten om terug te gaan naar alleen belangrijke</string>
     <string name="auto_n_waiting">%1$d wachtend</string>
     <string name="auto_nothing_waiting">Er wacht niets</string>
     <string name="auto_listen">Luisteren</string>
@@ -1365,14 +1362,13 @@
     <string name="auto_ask_google">Vraag dit maar aan Google</string>
     <string name="auto_s_screen">Op het autoscherm</string>
     <string name="auto_s_screen_hint">Android Auto. Houd vast en sleep om de volgorde te wijzigen. Er blijft er altijd één aan.</string>
-    <string name="auto_s_voice">Tab Praten</string>
-    <string name="auto_s_voice_hint">Routines, thuis, wat wacht en bellen, met je stem</string>
     <string name="routine_car">Ook in de auto</string>
     <string name="routine_car_hint">Een tegel in Thuis op het autoscherm</string>
     <string name="ch_car">Bevestigingen vanuit de auto</string>
     <string name="auto_no_events_week">De komende dagen staat er niets in je agenda</string>
     <string name="auto_alarm_on">Ingeschakeld · %1$s</string>
     <string name="auto_alarm_off">Uitgeschakeld</string>
+    <string name="auto_alarm_arming">Wordt ingeschakeld…</string>
     <string name="auto_running">Bezig…</string>
     <string name="auto_search_hint">Routines, chats, afspraken</string>
     <string name="auto_section_alarms">Alarmen</string>
@@ -1380,7 +1376,6 @@
     <string name="auto_search_none">Niets gevonden. Druk op Enter en Praten probeert het</string>
     <string name="auto_since_car_none">Niets sinds je in de auto zit</string>
     <string name="auto_older_on_phone">Oudere vind je op je telefoon</string>
-    <string name="auto_go">Gaan</string>
     <string name="auto_alarm_triggered">Afgegaan!</string>
     <string name="auto_arm">Inschakelen</string>
     <!-- Il calendario di Sordina -->

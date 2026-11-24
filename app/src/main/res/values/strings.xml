@@ -1319,15 +1319,12 @@
     <string name="auto_tab_sordina">Waiting</string>
     <string name="auto_tab_sordina_n">Waiting · %1$d</string>
     <string name="auto_tab_agenda">Agenda</string>
-    <string name="auto_tab_talk">Talk</string>
     <string name="auto_no_routines">Pick routines on your phone: Settings › Home Assistant › Routines, “Also in the car”</string>
     <string name="auto_no_ha">Connect Home Assistant in Sordina\'s settings on your phone</string>
     <string name="auto_routine_arm">arms %1$s</string>
     <string name="auto_routine_disarm">turns off %1$s</string>
-    <string name="auto_pass_important">Only important ones come through</string>
     <string name="auto_pass_important_sub">Turn off to let everyone through for an hour</string>
     <string name="auto_pass_all_until">Everyone comes through until %1$s</string>
-    <string name="auto_pass_all_sub">Turn on to go back to important ones only</string>
     <string name="auto_n_waiting">%1$d waiting</string>
     <string name="auto_nothing_waiting">Nothing is waiting</string>
     <string name="auto_listen">Listen</string>
@@ -1370,14 +1367,13 @@
     <string name="auto_ask_google">Ask Google for this one</string>
     <string name="auto_s_screen">On the car screen</string>
     <string name="auto_s_screen_hint">Android Auto. Touch and hold to drag the order. One stays on.</string>
-    <string name="auto_s_voice">Talk tab</string>
-    <string name="auto_s_voice_hint">Routines, your home, what\'s waiting and calls, by voice</string>
     <string name="routine_car">Also in the car</string>
     <string name="routine_car_hint">A tile in Home on the car screen</string>
     <string name="ch_car">Confirmations from the car</string>
     <string name="auto_no_events_week">Nothing on your calendar in the next few days</string>
     <string name="auto_alarm_on">Armed · %1$s</string>
     <string name="auto_alarm_off">Disarmed</string>
+    <string name="auto_alarm_arming">Arming…</string>
     <string name="auto_running">Running…</string>
     <string name="auto_search_hint">Routines, chats, appointments</string>
     <string name="auto_section_alarms">Alarms</string>
@@ -1385,7 +1381,6 @@
     <string name="auto_search_none">Nothing here. Press Enter and Talk will try</string>
     <string name="auto_since_car_none">Nothing since you got in the car</string>
     <string name="auto_older_on_phone">Older ones are on your phone</string>
-    <string name="auto_go">Go</string>
     <string name="auto_alarm_triggered">Triggered!</string>
     <string name="auto_arm">Arm</string>
     <!-- Il calendario di Sordina -->

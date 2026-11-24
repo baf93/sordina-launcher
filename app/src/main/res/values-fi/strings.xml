@@ -1314,15 +1314,12 @@
     <string name="auto_tab_sordina">Odottaa</string>
     <string name="auto_tab_sordina_n">Odottaa · %1$d</string>
     <string name="auto_tab_agenda">Kalenteri</string>
-    <string name="auto_tab_talk">Puhu</string>
     <string name="auto_no_routines">Valitse rutiinit puhelimessa: Asetukset › Home Assistant › Rutiinit, ”Myös autossa”</string>
     <string name="auto_no_ha">Yhdistä Home Assistant Sordinan asetuksissa puhelimessa</string>
     <string name="auto_routine_arm">kytkee päälle: %1$s</string>
     <string name="auto_routine_disarm">kytkee pois: %1$s</string>
-    <string name="auto_pass_important">Vain tärkeät pääsevät läpi</string>
     <string name="auto_pass_important_sub">Poista käytöstä, niin kaikki pääsevät läpi tunnin ajan</string>
     <string name="auto_pass_all_until">Kaikki pääsevät läpi klo %1$s asti</string>
-    <string name="auto_pass_all_sub">Ota käyttöön, niin vain tärkeät pääsevät taas läpi</string>
     <string name="auto_n_waiting">%1$d odottaa</string>
     <string name="auto_nothing_waiting">Mikään ei odota</string>
     <string name="auto_listen">Kuuntele</string>
@@ -1365,14 +1362,13 @@
     <string name="auto_ask_google">Kysy tätä Googlelta</string>
     <string name="auto_s_screen">Auton näytöllä</string>
     <string name="auto_s_screen_hint">Android Auto. Pidä painettuna ja vedä vaihtaaksesi järjestystä. Yksi on aina käytössä.</string>
-    <string name="auto_s_voice">Välilehti Puhu</string>
-    <string name="auto_s_voice_hint">Rutiinit, koti, odottavat ja puhelut, äänellä</string>
     <string name="routine_car">Myös autossa</string>
     <string name="routine_car_hint">Ruutu Kodissa auton näytöllä</string>
     <string name="ch_car">Vahvistukset autosta</string>
     <string name="auto_no_events_week">Kalenterissa ei ole mitään lähipäivinä</string>
     <string name="auto_alarm_on">Päällä · %1$s</string>
     <string name="auto_alarm_off">Pois päältä</string>
+    <string name="auto_alarm_arming">Viritetään…</string>
     <string name="auto_running">Käynnissä…</string>
     <string name="auto_search_hint">Rutiinit, keskustelut, tapaamiset</string>
     <string name="auto_section_alarms">Hälytykset</string>
@@ -1380,7 +1376,6 @@
     <string name="auto_search_none">Ei tuloksia. Paina Enter, niin Puhu yrittää</string>
     <string name="auto_since_car_none">Ei mitään sen jälkeen kun nousit autoon</string>
     <string name="auto_older_on_phone">Vanhemmat löydät puhelimesta</string>
-    <string name="auto_go">Aja</string>
     <string name="auto_alarm_triggered">Laukesi!</string>
     <string name="auto_arm">Kytke päälle</string>
     <!-- Il calendario di Sordina -->

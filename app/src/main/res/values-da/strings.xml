@@ -1314,15 +1314,12 @@
     <string name="auto_tab_sordina">Venter</string>
     <string name="auto_tab_sordina_n">Venter · %1$d</string>
     <string name="auto_tab_agenda">Kalender</string>
-    <string name="auto_tab_talk">Tal</string>
     <string name="auto_no_routines">Vælg rutiner på telefonen: Indstillinger › Home Assistant › Rutiner, “Også i bilen”</string>
     <string name="auto_no_ha">Forbind Home Assistant i Sordinas indstillinger på telefonen</string>
     <string name="auto_routine_arm">slår %1$s til</string>
     <string name="auto_routine_disarm">slår %1$s fra</string>
-    <string name="auto_pass_important">Kun vigtige slipper igennem</string>
     <string name="auto_pass_important_sub">Slå fra for at lukke alle igennem i en time</string>
     <string name="auto_pass_all_until">Alle slipper igennem til %1$s</string>
-    <string name="auto_pass_all_sub">Slå til for kun at lukke vigtige igennem igen</string>
     <string name="auto_n_waiting">%1$d venter</string>
     <string name="auto_nothing_waiting">Intet venter</string>
     <string name="auto_listen">Lyt</string>
@@ -1365,14 +1362,13 @@
     <string name="auto_ask_google">Spørg Google om det her</string>
     <string name="auto_s_screen">På bilens skærm</string>
     <string name="auto_s_screen_hint">Android Auto. Hold nede og træk for at ændre rækkefølgen. Én er altid slået til.</string>
-    <string name="auto_s_voice">Fanen Tal</string>
-    <string name="auto_s_voice_hint">Rutiner, hjemmet, det der venter og opkald, med stemmen</string>
     <string name="routine_car">Også i bilen</string>
     <string name="routine_car_hint">En flise i Hjem på bilens skærm</string>
     <string name="ch_car">Bekræftelser fra bilen</string>
     <string name="auto_no_events_week">Intet i kalenderen de næste dage</string>
     <string name="auto_alarm_on">Tilkoblet · %1$s</string>
     <string name="auto_alarm_off">Frakoblet</string>
+    <string name="auto_alarm_arming">Aktiveres…</string>
     <string name="auto_running">I gang…</string>
     <string name="auto_search_hint">Rutiner, chats, aftaler</string>
     <string name="auto_section_alarms">Alarmer</string>
@@ -1380,7 +1376,6 @@
     <string name="auto_search_none">Intet her. Tryk Enter, så prøver Tal</string>
     <string name="auto_since_car_none">Intet siden du satte dig i bilen</string>
     <string name="auto_older_on_phone">De ældre finder du på telefonen</string>
-    <string name="auto_go">Kør</string>
     <string name="auto_alarm_triggered">Udløst!</string>
     <string name="auto_arm">Tilkobl</string>
     <!-- Il calendario di Sordina -->

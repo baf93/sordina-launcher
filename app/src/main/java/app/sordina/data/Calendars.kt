@@ -104,7 +104,18 @@ class Calendars(private val context: Context, private val prefs: Prefs) {
     }
 }
 
-data class Upcoming(val id: Long, val title: String, val begin: Long, val end: Long, val location: String?, val link: String?, val allDay: Boolean)
+/** [dialIn]: il numero per entrare nella riunione online solo con l'audio ("+39 02 1234 5678,,123456789#"), se l'invito lo dà */
+data class Upcoming(val id: Long, val title: String, val begin: Long, val end: Long, val location: String?, val link: String?, val allDay: Boolean, val dialIn: String? = null)
+
+/**
+ * Il numero per partecipare solo audio, come lo scrivono gli inviti di Teams (e Zoom, Webex): un numero con il
+ * prefisso internazionale, due virgole e il codice della riunione con "#". Spazi e trattini tolti.
+ */
+internal val DIAL_IN = Regex("(\\+[\\d][\\d ()\\-]{6,20}\\d),,(\\d{4,})#")
+
+internal fun dialIn(text: String): String? = DIAL_IN.find(text)?.let { m ->
+    m.groupValues[1].filter { it.isDigit() || it == '+' } + ",," + m.groupValues[2] + "#"
+}
 
 /** Eventi da 2 ore prima dell'inizio fino alla fine. Basta il permesso di lettura. */
 fun Calendars.upcoming(context: Context, now: Long = System.currentTimeMillis()): List<Upcoming> {
@@ -176,14 +187,18 @@ fun Calendars.agenda(context: Context, now: Long = System.currentTimeMillis()): 
         context.contentResolver.query(
             b.build(),
             arrayOf(CalendarContract.Instances.EVENT_ID, CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN,
-                CalendarContract.Instances.END, CalendarContract.Instances.EVENT_LOCATION),
+                CalendarContract.Instances.END, CalendarContract.Instances.EVENT_LOCATION, CalendarContract.Instances.DESCRIPTION),
             "${shown()} AND ${CalendarContract.Instances.ALL_DAY}=0", null,
             "${CalendarContract.Instances.BEGIN} ASC",
         )?.use { c ->
             while (c.moveToNext() && out.size < 3) {
                 if (c.getLong(3) <= now) continue
+                // Il link della riunione online (Teams, Meet, Zoom), nel luogo o nella descrizione
+                val loc = c.getString(4)?.trim()?.takeIf { it.isNotBlank() }
+                val desc = c.getString(5).orEmpty()
+                val url = CardDetector.MEETING_LINK.find(loc.orEmpty())?.value ?: CardDetector.MEETING_LINK.find(desc)?.value
                 out += Upcoming(c.getLong(0), c.getString(1).orEmpty().ifBlank { tr(R.string.event) }, c.getLong(2), c.getLong(3),
-                    c.getString(4)?.takeIf { it.isNotBlank() }, null, false)
+                    loc?.takeIf { url == null || !it.startsWith("http") }, url, false, url?.let { dialIn(desc) })
             }
         }
     }
@@ -202,14 +217,18 @@ fun Calendars.today(context: Context, now: Long = System.currentTimeMillis(), da
         context.contentResolver.query(
             b.build(),
             arrayOf(CalendarContract.Instances.EVENT_ID, CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN,
-                CalendarContract.Instances.END, CalendarContract.Instances.EVENT_LOCATION),
+                CalendarContract.Instances.END, CalendarContract.Instances.EVENT_LOCATION, CalendarContract.Instances.DESCRIPTION),
             "${shown()} AND ${CalendarContract.Instances.ALL_DAY}=0", null,
             "${CalendarContract.Instances.BEGIN} ASC",
         )?.use { c ->
             while (c.moveToNext()) {
                 if (c.getLong(3) <= now || c.getLong(2) >= endOfDay) continue
+                // Il link della riunione online (Teams, Meet, Zoom), nel luogo o nella descrizione
+                val loc = c.getString(4)?.trim()?.takeIf { it.isNotBlank() }
+                val desc = c.getString(5).orEmpty()
+                val url = CardDetector.MEETING_LINK.find(loc.orEmpty())?.value ?: CardDetector.MEETING_LINK.find(desc)?.value
                 out += Upcoming(c.getLong(0), c.getString(1).orEmpty().ifBlank { tr(R.string.event) }, c.getLong(2), c.getLong(3),
-                    c.getString(4)?.takeIf { it.isNotBlank() }, null, false)
+                    loc?.takeIf { url == null || !it.startsWith("http") }, url, false, url?.let { dialIn(desc) })
             }
         }
     }
@@ -230,14 +249,18 @@ fun Calendars.tomorrow(context: Context, limit: Int = 3): List<Upcoming> {
         context.contentResolver.query(
             b.build(),
             arrayOf(CalendarContract.Instances.EVENT_ID, CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN,
-                CalendarContract.Instances.END, CalendarContract.Instances.EVENT_LOCATION),
+                CalendarContract.Instances.END, CalendarContract.Instances.EVENT_LOCATION, CalendarContract.Instances.DESCRIPTION),
             "${shown()} AND ${CalendarContract.Instances.ALL_DAY}=0", null,
             "${CalendarContract.Instances.BEGIN} ASC",
         )?.use { c ->
             while (c.moveToNext() && out.size < limit) {
                 if (c.getLong(2) < from) continue
+                // Il link della riunione online (Teams, Meet, Zoom), nel luogo o nella descrizione
+                val loc = c.getString(4)?.trim()?.takeIf { it.isNotBlank() }
+                val desc = c.getString(5).orEmpty()
+                val url = CardDetector.MEETING_LINK.find(loc.orEmpty())?.value ?: CardDetector.MEETING_LINK.find(desc)?.value
                 out += Upcoming(c.getLong(0), c.getString(1).orEmpty().ifBlank { tr(R.string.event) }, c.getLong(2), c.getLong(3),
-                    c.getString(4)?.takeIf { it.isNotBlank() }, null, false)
+                    loc?.takeIf { url == null || !it.startsWith("http") }, url, false, url?.let { dialIn(desc) })
             }
         }
     }

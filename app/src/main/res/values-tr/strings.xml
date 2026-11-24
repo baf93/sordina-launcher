@@ -1314,15 +1314,12 @@
     <string name="auto_tab_sordina">Bekleyen</string>
     <string name="auto_tab_sordina_n">Bekleyen · %1$d</string>
     <string name="auto_tab_agenda">Ajanda</string>
-    <string name="auto_tab_talk">Konuş</string>
     <string name="auto_no_routines">Rutinleri telefonda seçin: Ayarlar › Home Assistant › Rutinler, “Arabada da”</string>
     <string name="auto_no_ha">Home Assistant\'ı telefondaki Sordina ayarlarından bağlayın</string>
     <string name="auto_routine_arm">%1$s alarmını kurar</string>
     <string name="auto_routine_disarm">%1$s alarmını kapatır</string>
-    <string name="auto_pass_important">Yalnızca önemliler geçer</string>
     <string name="auto_pass_important_sub">Bir saat boyunca herkesin geçmesi için kapatın</string>
     <string name="auto_pass_all_until">%1$s saatine kadar herkes geçer</string>
-    <string name="auto_pass_all_sub">Yalnızca önemlilere dönmek için açın</string>
     <string name="auto_n_waiting">%1$d bekliyor</string>
     <string name="auto_nothing_waiting">Bekleyen bir şey yok</string>
     <string name="auto_listen">Dinle</string>
@@ -1365,14 +1362,13 @@
     <string name="auto_ask_google">Bunu Google\'a sorun</string>
     <string name="auto_s_screen">Araç ekranında</string>
     <string name="auto_s_screen_hint">Android Auto. Sırayı değiştirmek için basılı tutup sürükleyin. Biri her zaman açık kalır.</string>
-    <string name="auto_s_voice">Konuş sekmesi</string>
-    <string name="auto_s_voice_hint">Rutinler, ev, bekleyenler ve aramalar, sesle</string>
     <string name="routine_car">Arabada da</string>
     <string name="routine_car_hint">Araç ekranında Ev\'de bir kutucuk</string>
     <string name="ch_car">Araçtan onaylar</string>
     <string name="auto_no_events_week">Önümüzdeki günlerde takviminizde bir şey yok</string>
     <string name="auto_alarm_on">Kurulu · %1$s</string>
     <string name="auto_alarm_off">Devre dışı</string>
+    <string name="auto_alarm_arming">Kuruluyor…</string>
     <string name="auto_running">Çalışıyor…</string>
     <string name="auto_search_hint">Rutinler, sohbetler, randevular</string>
     <string name="auto_section_alarms">Alarmlar</string>
@@ -1380,7 +1376,6 @@
     <string name="auto_search_none">Burada bir şey yok. Enter\'a bas, Konuş denesin</string>
     <string name="auto_since_car_none">Arabaya bindiğinden beri bir şey yok</string>
     <string name="auto_older_on_phone">Eskileri telefonda bulabilirsin</string>
-    <string name="auto_go">Git</string>
     <string name="auto_alarm_triggered">Çaldı!</string>
     <string name="auto_arm">Kur</string>
     <!-- Il calendario di Sordina -->

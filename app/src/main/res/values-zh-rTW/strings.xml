@@ -1298,15 +1298,12 @@
     <string name="auto_tab_sordina">等待中</string>
     <string name="auto_tab_sordina_n">等待中 · %1$d</string>
     <string name="auto_tab_agenda">行程</string>
-    <string name="auto_tab_talk">說話</string>
     <string name="auto_no_routines">在手機上選擇例行程序：設定 › Home Assistant › 例行程序，「車上也可用」</string>
     <string name="auto_no_ha">在手機上的 Sordina 設定中連結 Home Assistant</string>
     <string name="auto_routine_arm">設防 %1$s</string>
     <string name="auto_routine_disarm">解除 %1$s 防護</string>
-    <string name="auto_pass_important">只放行重要的</string>
     <string name="auto_pass_important_sub">關閉後一小時內全部放行</string>
     <string name="auto_pass_all_until">%1$s 前全部放行</string>
-    <string name="auto_pass_all_sub">開啟後重新只放行重要的</string>
     <string name="auto_n_waiting">%1$d 則等待中</string>
     <string name="auto_nothing_waiting">沒有等待中的內容</string>
     <string name="auto_listen">收聽</string>
@@ -1349,14 +1346,13 @@
     <string name="auto_ask_google">這個問 Google 吧</string>
     <string name="auto_s_screen">車用螢幕</string>
     <string name="auto_s_screen_hint">Android Auto。長按並拖曳可調整順序。至少保留一個開啟。</string>
-    <string name="auto_s_voice">「說話」分頁</string>
-    <string name="auto_s_voice_hint">用語音執行例行程序、控制家、查看等待內容和打電話</string>
     <string name="routine_car">車上也可用</string>
     <string name="routine_car_hint">在車用螢幕的「家」中顯示圖塊</string>
     <string name="ch_car">來自車上的確認</string>
     <string name="auto_no_events_week">未來幾天行事曆上沒有安排</string>
     <string name="auto_alarm_on">已設防 · %1$s</string>
     <string name="auto_alarm_off">已解除</string>
+    <string name="auto_alarm_arming">正在設防…</string>
     <string name="auto_running">進行中…</string>
     <string name="auto_search_hint">例行程序、聊天、行程</string>
     <string name="auto_section_alarms">警報</string>
@@ -1364,7 +1360,6 @@
     <string name="auto_search_none">沒有結果。按 Enter，讓「說話」試試</string>
     <string name="auto_since_car_none">上車後還沒有新通知</string>
     <string name="auto_older_on_phone">更早的請在手機上查看</string>
-    <string name="auto_go">出發</string>
     <string name="auto_alarm_triggered">已觸發!</string>
     <string name="auto_arm">設防</string>
     <!-- Il calendario di Sordina -->

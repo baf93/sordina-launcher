@@ -1298,15 +1298,12 @@
     <string name="auto_tab_sordina">Đang chờ</string>
     <string name="auto_tab_sordina_n">Đang chờ · %1$d</string>
     <string name="auto_tab_agenda">Lịch</string>
-    <string name="auto_tab_talk">Nói</string>
     <string name="auto_no_routines">Chọn quy trình trên điện thoại: Cài đặt › Home Assistant › Quy trình, “Cả trên xe”</string>
     <string name="auto_no_ha">Kết nối Home Assistant trong cài đặt Sordina trên điện thoại</string>
     <string name="auto_routine_arm">bật báo động %1$s</string>
     <string name="auto_routine_disarm">tắt báo động %1$s</string>
-    <string name="auto_pass_important">Chỉ cho qua tin quan trọng</string>
     <string name="auto_pass_important_sub">Tắt để cho tất cả qua trong một giờ</string>
     <string name="auto_pass_all_until">Cho tất cả qua đến %1$s</string>
-    <string name="auto_pass_all_sub">Bật để lại chỉ cho qua tin quan trọng</string>
     <string name="auto_n_waiting">%1$d đang chờ</string>
     <string name="auto_nothing_waiting">Không có gì đang chờ</string>
     <string name="auto_listen">Nghe</string>
@@ -1349,14 +1346,13 @@
     <string name="auto_ask_google">Hãy hỏi Google điều đó</string>
     <string name="auto_s_screen">Trên màn hình xe</string>
     <string name="auto_s_screen_hint">Android Auto. Nhấn giữ và kéo để đổi thứ tự. Luôn có một mục được bật.</string>
-    <string name="auto_s_voice">Thẻ Nói</string>
-    <string name="auto_s_voice_hint">Quy trình, nhà, những gì đang chờ và cuộc gọi, bằng giọng nói</string>
     <string name="routine_car">Cả trên xe</string>
     <string name="routine_car_hint">Một ô trong Nhà trên màn hình xe</string>
     <string name="ch_car">Xác nhận từ xe</string>
     <string name="auto_no_events_week">Vài ngày tới lịch của bạn trống</string>
     <string name="auto_alarm_on">Đã bật · %1$s</string>
     <string name="auto_alarm_off">Đã tắt</string>
+    <string name="auto_alarm_arming">Đang bật…</string>
     <string name="auto_running">Đang chạy…</string>
     <string name="auto_search_hint">Quy trình, trò chuyện, cuộc hẹn</string>
     <string name="auto_section_alarms">Báo động</string>
@@ -1364,7 +1360,6 @@
     <string name="auto_search_none">Không có gì. Nhấn Enter để Nói thử</string>
     <string name="auto_since_car_none">Chưa có gì từ khi bạn lên xe</string>
     <string name="auto_older_on_phone">Thông báo cũ hơn có trên điện thoại</string>
-    <string name="auto_go">Đi</string>
     <string name="auto_alarm_triggered">Đã kêu!</string>
     <string name="auto_arm">Bật</string>
     <!-- Il calendario di Sordina -->
