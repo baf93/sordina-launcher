@@ -1,4 +1,4 @@
-# Note di rilascio 0.3.2 (20)
+# Note di rilascio 0.3.3 (21)
 
 ## it-IT
 <it-IT>
