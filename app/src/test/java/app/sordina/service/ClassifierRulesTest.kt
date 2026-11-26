@@ -38,6 +38,14 @@ class ClassifierRulesTest {
         assertEquals(Classifier.REASON_DEFAULT, reason(app(pkg = "com.other"), s))
     }
 
+    @Test fun mediaStaysEvenWhenItsTypeIsOff() {
+        // Spotify: la notifica coi controlli passa anche se il suo canale è stato spento; le altre di quel canale no
+        val s = base.copy(offTypes = setOf("com.spotify.music|playback"))
+        val player = NotifInfo("com.spotify.music", Notification.CATEGORY_TRANSPORT, true, true, false, null, null, "Artista", "Brano", false, 1, channel = "playback")
+        assertNull(level(player, s))
+        assertEquals(Classifier.REASON_CHANNEL, reason(app(pkg = "com.spotify.music", channel = "playback"), s))
+    }
+
     @Test fun offTypeIsAnExceptionEvenForStickyButNeverForSecurity() {
         val s = base.copy(inApps = setOf("com.bank"), offTypes = setOf("com.bank|alerts"))
         assertEquals(Classifier.REASON_CHANNEL, reason(app(pkg = "com.bank", channel = "alerts"), s))

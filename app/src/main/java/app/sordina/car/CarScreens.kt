@@ -115,7 +115,8 @@ internal class CodeScreen(
         val input = InputSignInMethod.Builder(object : InputCallback {
             override fun onInputSubmitted(text: String) { submit(text) }
         })
-            .setInputType(InputSignInMethod.INPUT_TYPE_DEFAULT)
+            // Il codice dell'allarme non si legge sullo schermo dell'auto: pallini, come una password
+            .setInputType(InputSignInMethod.INPUT_TYPE_PASSWORD)
             .setKeyboardType(InputSignInMethod.KEYBOARD_NUMBER)
             .setHint(tr(R.string.auto_code_hint))
             .setShowKeyboardByDefault(true)

@@ -304,11 +304,13 @@ object Classifier {
         val otp = guess && securityOtp(n)
         val payAlert = guess && !n.isMessage && isPaymentAlert(all)
         val security = otp || payAlert
+        // La musica con i suoi controlli resta sempre nella tendina, anche se il suo tipo è stato spento: in sordina
+        // resterebbe solo il fumetto, senza pausa e avanti dalla tendina e dalla schermata di blocco
+        if (n.isMedia) return Verdict(null, "musica")
         if (!security && channelKey(n.pkg, n.channel) in s.offTypes) return Verdict(Level.RIEPILOGO, REASON_CHANNEL)
 
         if (n.system && s.systemPass) return Verdict(null, "sistema")
         if (n.category in PASS_CATEGORIES) return Verdict(null, "chiamata, sveglia o servizio")
-        if (n.isMedia) return Verdict(null, "musica")
         if (n.ongoing) return Verdict(null, "in corso")
 
         val who = personKey(n)
@@ -499,7 +501,9 @@ object Classifier {
             peer = if (isMessage) peerName?.let { clean(it) } else null,
             category = n.category,
             ongoing = sbn.isOngoing || (n.flags and Notification.FLAG_FOREGROUND_SERVICE) != 0,
-            isMedia = e.containsKey(Notification.EXTRA_MEDIA_SESSION),
+            // La musica: con la sessione, o col disegno da lettore (Spotify in pausa da un po' perde la sessione ma
+            // resta il lettore; in sordina non tornerebbe più quando riparte, gli aggiornamenti non si vedono)
+            isMedia = e.containsKey(Notification.EXTRA_MEDIA_SESSION) || e.getString(Notification.EXTRA_TEMPLATE).orEmpty().let { it.endsWith("MediaStyle") || it.endsWith("MediaCustomViewStyle") },
             isGroupSummary = (n.flags and Notification.FLAG_GROUP_SUMMARY) != 0,
             person = person?.trim()?.ifBlank { null },
             conversation = conversation?.trim()?.ifBlank { null },

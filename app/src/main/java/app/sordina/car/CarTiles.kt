@@ -42,13 +42,16 @@ internal object CarTiles {
     private const val ALARM_RED = 0xFFE53935.toInt()
     private const val AMBER = 0xFFB9791A.toInt()
 
-    enum class State { IDLE, RUNNING, ARMING, ARMED, DISARMED, TRIGGERED }
+    enum class State { IDLE, RUNNING, ARMING, ARMED, DISARMED, TRIGGERED, ON }
 
     /** Il colore d'accento scelto in Sordina ("automatico": il verde acqua di Sordina) */
     fun accent(prefs: app.sordina.data.Prefs): Int = prefs.accent.takeIf { it != 0 && it != 1 } ?: 0xFF2E9C93.toInt()
 
     private data class Key(val glyph: Int, val state: State, val accent: Int, val name: String?, val caption: String?)
     private val cache = HashMap<Key, CarIcon>()
+
+    /** Il titolo "vuoto" sotto un riquadro grande: Android Auto vuole un titolo (senza si chiude), il nome sta dentro */
+    const val NO_TITLE = "\u00A0"
 
     /** Quante lettere stanno su una riga sotto un riquadro grande */
     private const val LINE = 9
@@ -109,6 +112,7 @@ internal object CarTiles {
             val c = Canvas(bmp)
             val fill = when (state) {
                 State.RUNNING -> ColorUtils.blendARGB(DARK, accent, 0.55f)
+                State.ON -> ColorUtils.blendARGB(DARK, accent, 0.35f)
                 State.ARMING -> AMBER
                 State.ARMED -> RED
                 State.TRIGGERED -> ALARM_RED
@@ -124,8 +128,10 @@ internal object CarTiles {
             frame(c, SIZE, fill, edge)
             val ink = inkOn(fill)
             val inner = (MARGIN + BORDER + 12).toInt()
-            val icon = if (name != null) 64 else 84
-            val label = name?.let { text(it, 34f, ink, true, SIZE - 2 * inner, 1) }
+            // Un nome lungo ("Buonanotte casa") va su due righe, un po' più piccolo; l'icona si fa da parte
+            val long = name != null && name.length > 10
+            val icon = when { name == null -> 84; long -> 52; else -> 64 }
+            val label = name?.let { text(it, if (long) 30f else 34f, ink, true, SIZE - 2 * inner, if (long) 2 else 1) }
             val sub = caption?.let { text(it, 26f, ColorUtils.setAlphaComponent(ink, 0xE0), label == null, SIZE - 2 * inner, if (label == null) 2 else 1) }
             val h = icon + (label?.let { 10 + it.height } ?: 0) + (sub?.let { (if (label == null) 12 else 4) + it.height } ?: 0)
             var y = (SIZE - h) / 2f
@@ -157,6 +163,21 @@ internal object CarTiles {
             c.drawBitmap(d.toBitmap(s, s), x.toFloat(), x.toFloat(), Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
             CarIcon.Builder(IconCompat.createWithBitmap(bmp)).build()
         }.getOrNull()
+    }
+
+    /** L'icona di uno stato di casa: termometro, lampadina, lucchetto, garage, porta, casa */
+    fun glyphFor(e: app.sordina.data.HaEntity?, id: String): Int {
+        val domain = id.substringBefore('.')
+        val dc = e?.deviceClass
+        return when {
+            domain == "lock" -> if (e?.state == "unlocked") app.sordina.R.drawable.car_unlock else app.sordina.R.drawable.car_lock
+            domain == "light" || domain == "switch" -> app.sordina.R.drawable.car_bulb
+            dc == "temperature" || domain == "climate" || domain == "water_heater" || e?.unit?.startsWith("°") == true -> app.sordina.R.drawable.car_thermo
+            dc == "illuminance" || dc == "irradiance" -> app.sordina.R.drawable.car_sun
+            dc == "garage_door" || dc == "garage" || dc == "gate" || domain == "cover" -> app.sordina.R.drawable.car_garage
+            dc == "door" || dc == "window" || dc == "opening" -> app.sordina.R.drawable.car_enter
+            else -> app.sordina.R.drawable.car_home
+        }
     }
 
     private val glyphs = HashMap<Int, CarIcon>()

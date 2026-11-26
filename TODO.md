@@ -54,6 +54,16 @@ Niente di aperto.
 - Allarme da solo in Casa (Impostazioni › Home Assistant › l'allarme › "Anche in auto"): sotto il nome lo stato; inserito → tocco disinserisce (codice o impronta, da fermi), disinserito → conferma e inserisce nella modalità predefinita (solo se "Anche inserire" è acceso).
 
 
+## Da provare (26/11)
+
+- Impostazioni › Home Assistant: in Routine solo quelle accese + "Aggiungi una routine" (pagina con ricerca); "In auto › Stati in Casa" (max 6) e "Ordine dei riquadri".
+- Auto, scheda Casa: stati (temperatura, porta, luce) nei riquadri, un tocco li rilegge; nomi dentro il riquadro, centrati; l'ordine scelto.
+- Auto, codice allarme: pallini al posto delle cifre. Tastiera numerica: `KEYBOARD_NUMBER` c'era già, vedere se Android Auto la rispetta; se no, tastierino a riquadri.
+- Notifiche: nessun gruppo vuoto ("WhatsApp · 3 messaggi") nella tendina quando tutte le chat sono in sordina; un nuovo messaggio nella stessa chat arriva entro un minuto a schermo acceso.
+- Fumetto riunione Teams avvisata da Outlook: "Partecipa" apre Teams (link dal calendario o l'app), non Outlook.
+- Calendario di Sordina acceso da solo con un calendario di Home Assistant scelto.
+- Luogo di un impegno: suggerimenti di indirizzi mentre scrivi, tondo con la mappa che apre Google Maps.
+
 ## Da provare: il calendario di Sordina
 
 - Impostazioni › Home › Calendario di Sordina: in Casa la data apre il calendario, un impegno apre il suo foglio; i nuovi si fanno dal + del calendario.

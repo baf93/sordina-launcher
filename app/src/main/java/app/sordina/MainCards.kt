@@ -92,6 +92,7 @@ import app.sordina.data.CardKind
 import app.sordina.data.CardOp
 import app.sordina.data.Upcoming
 import app.sordina.data.upcoming
+import app.sordina.data.MeetingApps
 import app.sordina.data.agenda
 import app.sordina.data.Level
 import app.sordina.data.Moment
@@ -216,7 +217,19 @@ internal fun MainActivity.cardAction(card: Card, a: CardAction) {
         is CardOp.Navigate -> start(Intent(Intent.ACTION_VIEW, Uri.parse("google.navigation:q=" + Uri.encode(op.place))))
             || start(Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=" + Uri.encode(op.place))))
         is CardOp.OpenUrl -> openUrl(op.url)
-        is CardOp.Join -> SordinaListener.open(this, op.key)
+        is CardOp.Join -> {
+            // La riunione avvisata da Outlook senza link: il link dal calendario del telefono (stessa ora), se no l'app
+            // della riunione nominata (Teams); solo se non c'è nessuna delle due, la notifica (che apre Outlook)
+            val at = card.startsAt
+            val url = at?.let { t -> runCatching { app.calendars.upcoming(this) }.getOrDefault(emptyList())
+                .firstOrNull { kotlin.math.abs(it.begin - t) <= 10 * 60_000L && it.link?.startsWith("http") == true }?.link }
+            val inApp = MeetingApps.appFor(this, listOfNotNull(card.label, card.title, card.subtitle).joinToString(" "))
+            when {
+                url != null -> openUrl(url)
+                inApp != null && start(inApp.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) -> Unit
+                else -> SordinaListener.open(this, op.key)
+            }
+        }
         is CardOp.OpenEvent -> start(Intent(Intent.ACTION_VIEW, android.content.ContentUris.withAppendedId(android.provider.CalendarContract.Events.CONTENT_URI, op.id)))
         is CardOp.AddEvent -> {
             if (!app.calendars.hasPermission()) { request(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR); return }

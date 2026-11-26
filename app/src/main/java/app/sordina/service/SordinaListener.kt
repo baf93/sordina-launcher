@@ -81,21 +81,25 @@ class SordinaListener : NotificationListenerService() {
     }
 
     /**
-     * Mettendo in sordina l'ultima chat visibile Android può posticipare anche il riassunto del gruppo (e prima di
-     * questa versione lo faceva Sordina). Per le chat il riassunto deve restare: si fa tornare fra mezzo secondo.
+     * Messa in sordina l'ultima notifica visibile di un gruppo, nella tendina resterebbe il riassunto vuoto
+     * ("WhatsApp · 3 messaggi"): fra un attimo, se il gruppo non ha più niente di visibile, va in sordina anche lui.
+     * Torna da solo quando l'app pubblica qualcosa che passa.
      */
-    private val freeing = HashSet<String>()
-    private val freeRun = Runnable {
-        val pkgs = HashSet(freeing); freeing.clear()
-        val snoozed = Faults.guard("free.snoozed") { snoozedNotifications }.orEmpty()
-        for (s in snoozed) if (s.packageName in pkgs && (s.notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY) != 0)
-            runCatching { snoozeNotification(s.key, 500) }
+    private val emptying = HashSet<String>()
+    private val emptyRun = Runnable {
+        val pkgs = HashSet(emptying); emptying.clear()
+        val active = Faults.guard("empty.active") { activeNotifications }.orEmpty().filter { it.packageName in pkgs }
+        val summaries = active.filter { (it.notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY) != 0 }
+        for (s in summaries) {
+            val children = active.any { it.key != s.key && it.groupKey == s.groupKey }
+            if (!children) runCatching { snoozeNotification(s.key, HOLD_MILLIS) }
+        }
     }
 
-    private fun freeSummariesSoon(pkg: String) {
-        freeing += pkg
-        main.removeCallbacks(freeRun)
-        main.postDelayed(freeRun, 1_000)
+    private fun hideEmptySummariesSoon(pkg: String) {
+        emptying += pkg
+        main.removeCallbacks(emptyRun)
+        main.postDelayed(emptyRun, 1_000)
     }
 
     /** Le app che sono state davanti da [since]: poche righe di eventi, solo quelle con qualcosa in sordina. */
@@ -140,7 +144,7 @@ class SordinaListener : NotificationListenerService() {
         rulesWatch = SordinaApp.of(this).prefs.watchRules { main.removeCallbacks(rulesRun); main.postDelayed(rulesRun, 400) }
         main.post {
             Faults.guard("reconcile") { reconcile() }
-            SordinaApp.of(this).store.held.value.values.filter { it.isMessage && it.releaseAt > 0 }.forEach { freeSummariesSoon(it.pkg) }
+            SordinaApp.of(this).store.held.value.values.filter { it.releaseAt > 0 }.map { it.pkg }.distinct().forEach { hideEmptySummariesSoon(it) }
             startPolling()
         }
         contexts = Contexts(this).also { it.start() }
@@ -259,7 +263,7 @@ class SordinaListener : NotificationListenerService() {
         val ranking = Faults.guard("ranking") { Ranking().takeIf { currentRanking.getRanking(key, it) } }
         val importance = ranking?.importance ?: NotificationManager.IMPORTANCE_DEFAULT
         // I tipi e le chat di ogni app, per spegnerli dalla sua pagina in Impostazioni → Notifiche
-        if (fresh && !info.system && !info.isGroupSummary && sbn.packageName != packageName) Faults.guard("kinds") {
+        if (fresh && !info.system && !info.isGroupSummary && !info.isMedia && sbn.packageName != packageName) Faults.guard("kinds") {
             val who = Classifier.personKey(info)
             if (who != null) app.kinds.chat(info.pkg, who, info.conversation ?: info.person)
             else app.kinds.channel(info.pkg, info.channel, ranking?.channel?.name?.toString())
@@ -300,13 +304,12 @@ class SordinaListener : NotificationListenerService() {
         val label = label(sbn.packageName)
 
         if (info.isGroupSummary) {
-            // Il riassunto del gruppo segue i suoi messaggi: sparisce solo se tutti i suoi messaggi sono in sordina.
-            // Le chat no: Android aggiorna in silenzio le notifiche posticipate, e il riassunto che l'app ripubblica a
-            // ogni messaggio è l'unico segnale che ne è arrivato uno (vedi [dirty]). Resta, e Sordina ricontrolla subito
-            val mine = store.held.value.values.filter { it.pkg == sbn.packageName }
-            val allWaiting = mine.isNotEmpty() && mine.all { it.releaseAt > 0 }
-            val chats = whole.isMessage || mine.any { it.isMessage }
-            if (level == Level.RIEPILOGO && allWaiting && !chats) Faults.guard("snooze.summary") { snoozeNotification(key, HOLD_MILLIS) }
+            // Il riassunto del gruppo segue i suoi messaggi: sparisce se tutti i suoi messaggi sono in sordina, anche per
+            // le chat (un gruppo vuoto nella tendina non serve a niente). Android aggiorna in silenzio le chat posticipate:
+            // i messaggi nuovi li riprende il giro di ogni minuto a schermo acceso ([pollTick]) e lo sblocco
+            val mine = store.held.value.values.filter { it.pkg == sbn.packageName && it.key != key }
+            val visible = Faults.guard("summary.active") { activeNotifications?.any { it.packageName == sbn.packageName && it.key != key && it.groupKey == sbn.groupKey } } ?: true
+            if (mine.isNotEmpty() && mine.any { it.releaseAt > 0 } && !visible) Faults.guard("snooze.summary") { snoozeNotification(key, HOLD_MILLIS) }
             return
         }
         if (info.text.isBlank() && info.title.isBlank()) return
@@ -316,7 +319,7 @@ class SordinaListener : NotificationListenerService() {
         val until = if (level == Level.RIEPILOGO) now + HOLD_MILLIS else 0L
         val held = heldOf(sbn, info, label, level, until, verdict.reason, ranking?.channel?.name?.toString())
         if (until > 0) Faults.guard("snooze") { snoozeNotification(key, HOLD_MILLIS) }
-        if (until > 0 && info.isMessage) freeSummariesSoon(sbn.packageName)
+        if (until > 0) hideEmptySummariesSoon(sbn.packageName)
         if (fresh && until > 0 && existing == null) Tally.add("held")
         store.put(held, sbn.notification.contentIntent)
         if (until > 0) { Scheduler.plan(this); startPolling() }
@@ -387,6 +390,9 @@ class SordinaListener : NotificationListenerService() {
                 if (h.key !in active) { store.remove(h.key); app.status.cancelAlert(h.key) }
                 continue
             }
+            // La musica non aspetta mai (una notifica messa in sordina prima di questa versione, o prima che diventasse
+            // il lettore): torna nella tendina coi suoi controlli
+            if (Classifier.read(sbn).isMedia) { store.remove(h.key); runCatching { snoozeNotification(h.key, 500) }; continue }
             // Aggiornata in silenzio: i messaggi già letti restano fuori; se sono tutti letti, si chiude
             val info = ReadLines.unread(info(sbn, app), store.seenLines(h.key)) ?: run {
                 store.remove(h.key); runCatching { cancelNotification(h.key) }; null
@@ -490,6 +496,10 @@ class SordinaListener : NotificationListenerService() {
         // Anche quelle in sordina: dopo un aggiornamento o un riavvio le schede tornano, non solo alla prossima notifica
         for (sbn in snoozed.values) if (store.get(sbn.key) != null && sbn.key !in mutedKeys) card(sbn, scanPlans = false)
         for (sbn in active.values) if (store.get(sbn.key) == null) Faults.guard("reconcile.handle") { handle(sbn, fresh = false) }
+        // La musica rimasta in sordina (anche senza scheda in Sordina, messa lì da una regola del tipo): torna coi suoi controlli
+        for (sbn in snoozed.values) if (Faults.guard("reconcile.media") { Classifier.read(sbn).isMedia } == true) {
+            store.remove(sbn.key); runCatching { snoozeNotification(sbn.key, 500) }
+        }
     }
 
     private fun find(key: String): StatusBarNotification? =
@@ -610,7 +620,8 @@ class SordinaListener : NotificationListenerService() {
         fun tray(postedBefore: Long = Long.MAX_VALUE): List<app.sordina.data.RuleTarget> {
             val l = instance ?: return emptyList()
             val sbns = runCatching { l.activeNotifications?.toList() }.getOrNull().orEmpty()
-            return sbns.filter { it.packageName != l.packageName && it.postTime < postedBefore && !Classifier.read(it).isGroupSummary }
+            // Non la musica: i suoi controlli restano sempre nella tendina, non c'è niente da mettere in sordina
+            return sbns.filter { it.packageName != l.packageName && it.postTime < postedBefore && Classifier.read(it).let { i -> !i.isGroupSummary && !i.isMedia } }
                 .sortedByDescending { it.postTime }
                 .map { sbn ->
                     val info = Classifier.read(sbn)

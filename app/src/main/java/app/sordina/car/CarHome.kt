@@ -37,6 +37,8 @@ import app.sordina.data.Contact
 import app.sordina.data.Held
 import app.sordina.data.HeldLine
 import app.sordina.data.HomeRun
+import app.sordina.data.HaStates
+import app.sordina.data.HaEntity
 import app.sordina.data.Prefs
 import app.sordina.data.ReadLines
 import app.sordina.data.Search
@@ -173,11 +175,29 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
     /** Lo stato degli allarmi in Casa ("armed_away", "disarmed"…), letto quando la schermata si apre e dopo ogni comando */
     private var alarmStates: Map<String, String?> = emptyMap()
 
+    /** Gli stati di casa scelti per l'auto (temperature, porte, luci), letti insieme agli allarmi */
+    private var homeStates: Map<String, HaEntity> = emptyMap()
+
+    /**
+     * Si sta leggendo casa: allarmi e stati sono riquadri "in caricamento". Android Auto, quando la scheda si aggiorna,
+     * non ridisegna un'immagine cambiata nello stesso riquadro (lo stato non comparirebbe): da "in caricamento" a
+     * immagine invece sì.
+     */
+    private var reading = true
+
     private fun loadAlarmStates() {
         val ids = carAlarms().keys
-        if (ids.isEmpty()) return
+        val states = prefs.haCarStates.keys
+        if (ids.isEmpty() && states.isEmpty()) { reading = false; return }
+        if (!reading) { reading = true; if (shown(Prefs.CAR_TAB_HOME)) invalidate() }
         lifecycleScope.launch {
-            alarmStates = withContext(Dispatchers.IO) { ids.associateWith { HomeRun.state(app, it) } }
+            withContext(Dispatchers.IO) {
+                // Tutto in una richiesta sola (ricca, ma una): allarmi e stati
+                val all = runCatching { app.ha.entities(force = true) }.getOrDefault(emptyList()).associateBy { it.id }
+                alarmStates = ids.associateWith { all[it]?.state ?: HomeRun.state(app, it) }
+                homeStates = states.mapNotNull { id -> all[id]?.let { id to it } }.toMap()
+            }
+            reading = false
             if (shown(Prefs.CAR_TAB_HOME)) invalidate()
         }
     }
@@ -187,17 +207,23 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
      * che scorrono (il nome sotto, su due righe; lo stato dentro); prima la griglia normale, coi riquadri da 64dp.
      */
     private fun homeGrid(): Template {
+        // I nomi scelti da te per l'auto (Impostazioni › Home Assistant › Riquadri in auto)
+        val names = prefs.carNames
         val room = limit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID, 6)
         // Con le sezioni la griglia scorre: tutti; prima, quanti ne entrano
         val big = carContext.carAppApiLevel >= 8
         val accent = CarTiles.accent(prefs)
         // Grande: nome e stato dentro il riquadro (sotto, l'auto li taglierebbe); piccolo: sotto, come sempre
         fun item(name: String, caption: String?, glyph: Int, state: CarTiles.State, inner: String? = null, onClick: () -> Unit): GridItem {
-            // Grande: l'auto taglia il titolo a una riga stretta; il nome va a capo tra titolo e testo, lo stato nel riquadro
-            val (first, rest) = if (big) CarTiles.split(name) else name to caption
-            return GridItem.Builder().setTitle(first)
-                .apply { rest?.let { setText(it) } }
-                .setImage(CarTiles.tile(carContext, glyph, state, accent, if (big) caption else null, if (big) inner else null), GridItem.IMAGE_TYPE_LARGE)
+            // Grande: nome e stato dentro il riquadro, centrati; sotto un titolo vuoto (l'auto allinea a sinistra e taglia,
+            // ma senza titolo Android Auto si chiude: "A title must be set on the row")
+            if (big) return GridItem.Builder().setTitle(CarTiles.NO_TITLE)
+                .setImage(CarTiles.tile(carContext, glyph, state, accent, caption, inner ?: name), GridItem.IMAGE_TYPE_LARGE)
+                .setOnClickListener(onClick)
+                .build()
+            return GridItem.Builder().setTitle(name)
+                .apply { caption?.let { setText(it) } }
+                .setImage(CarTiles.tile(carContext, glyph, state, accent), GridItem.IMAGE_TYPE_LARGE)
                 .setOnClickListener(onClick)
                 .build()
         }
@@ -220,8 +246,9 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
                 else -> tr(R.string.auto_alarm_off)
             }
             // Grande: sotto il riquadro "Allarme", dentro il nome corto ("Centrale Naboo" → "Naboo") e lo stato
-            if (big) item(tr(R.string.alarm_topic), text, R.drawable.car_shield, state, CarTiles.shortName(a.name)) { alarmTile(id) }
-            else item(a.name, text, R.drawable.car_shield, state) { alarmTile(id) }
+            if (big && (reading || running == id)) GridItem.Builder().setTitle(CarTiles.NO_TITLE).setLoading(true).build()
+            else if (big) item(a.name, text, R.drawable.car_shield, state, names[id] ?: CarTiles.shortName(a.name) ?: a.name) { alarmTile(id) }
+            else item(names[id] ?: a.name, text, R.drawable.car_shield, state) { alarmTile(id) }
         }
         val routines = carRoutines().entries.let { if (big) it else it.take((room - alarms.size).coerceAtLeast(0)) }.map { (id, r) ->
             val alarm = r.alarm?.let { prefs.haAlarms[it]?.name }
@@ -231,18 +258,40 @@ class CarHome(cc: CarContext, private val motion: CarMotion) : Screen(cc) {
                 alarm != null -> tr(if (r.arm) R.string.auto_routine_arm else R.string.auto_routine_disarm, alarm)
                 else -> null
             }
-            item(r.name, text, R.drawable.car_play, if (running == id) CarTiles.State.RUNNING else CarTiles.State.IDLE) { routine(id) }
+            // In corso: "in caricamento" (un'immagine nuova nello stesso riquadro Android Auto non la ridisegna)
+            if (big && running == id) GridItem.Builder().setTitle(CarTiles.NO_TITLE).setLoading(true).build()
+            else item(names[id] ?: r.name, text, R.drawable.car_play, if (running == id) CarTiles.State.RUNNING else CarTiles.State.IDLE) { routine(id) }
         }
-        if (big && (alarms.isNotEmpty() || routines.isNotEmpty())) {
+        // Gli stati di casa: dentro il riquadro il valore grande ("21,5°C", "Aperto") e sotto il nome; un tocco li rilegge
+        val states = prefs.haCarStates.entries.let { if (big) it else it.take((room - alarms.size - routines.size).coerceAtLeast(0)) }.map { (id, ha) ->
+            val name = names[id] ?: ha
+            val e = homeStates[id]
+            val value = e?.let(HaStates::label) ?: "…"
+            val st = if (e != null && HaStates.active(e)) CarTiles.State.ON else CarTiles.State.IDLE
+            if (big && reading) GridItem.Builder().setTitle(CarTiles.NO_TITLE).setLoading(true).build()
+            else if (big) GridItem.Builder().setTitle(CarTiles.NO_TITLE)
+                .setImage(CarTiles.tile(carContext, CarTiles.glyphFor(e, id), st, accent, name, value), GridItem.IMAGE_TYPE_LARGE)
+                .setOnClickListener { loadAlarmStates() }
+                .build()
+            else GridItem.Builder().setTitle(name).setText(value)
+                .setImage(CarTiles.tile(carContext, CarTiles.glyphFor(e, id), st, accent), GridItem.IMAGE_TYPE_LARGE)
+                .setOnClickListener { loadAlarmStates() }
+                .build()
+        }
+        // L'ordine è il tuo (Impostazioni › Home Assistant › Ordine dei riquadri); quelli nuovi vanno in fondo
+        val order = prefs.carTileOrder
+        val ids = carAlarms().keys.toList().take(alarms.size) + carRoutines().keys.toList().take(routines.size) + prefs.haCarStates.keys.toList().take(states.size)
+        val tiles = (ids zip (alarms + routines + states)).sortedBy { (id, _) -> order.indexOf(id).let { if (it < 0) Int.MAX_VALUE else it } }.map { it.second }
+        if (big && tiles.isNotEmpty()) {
             // Una griglia sola, prima gli allarmi: i titoli delle sezioni l'auto li fa grigi e quasi invisibili
             return SectionedItemTemplate.Builder()
-                .addSection(GridSection.Builder().setItems(alarms + routines).setItemSize(GridSection.ITEM_SIZE_LARGE).build())
+                .addSection(GridSection.Builder().setItems(tiles).setItemSize(GridSection.ITEM_SIZE_LARGE).build())
                 .apply { searchFab()?.let(::addAction) }
                 .build()
         }
         val list = ItemList.Builder()
-        (alarms + routines).forEach(list::addItem)
-        if (alarms.isEmpty() && routines.isEmpty()) list.setNoItemsMessage(tr(if (app.ha.configured) R.string.auto_no_routines else R.string.auto_no_ha))
+        tiles.forEach(list::addItem)
+        if (alarms.isEmpty() && routines.isEmpty() && states.isEmpty()) list.setNoItemsMessage(tr(if (app.ha.configured) R.string.auto_no_routines else R.string.auto_no_ha))
         return GridTemplate.Builder().setSingleList(list.build()).large().apply { searchFab()?.let(::addAction) }.build()
     }
 

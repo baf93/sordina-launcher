@@ -1,5 +1,9 @@
 package app.sordina.ui
 
+import app.sordina.data.Search
+import app.sordina.car.CarTiles
+import app.sordina.data.SavedAlarm
+import app.sordina.data.HaStates
 import android.content.ClipboardManager
 import android.content.Intent
 import android.net.Uri
@@ -19,7 +23,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Accessibility
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ContentPaste
 import androidx.compose.material.icons.rounded.DirectionsCar
@@ -80,7 +86,8 @@ import kotlinx.coroutines.withContext
  * Il secondo livello resta chiuso finché non lo chiedi.
  */
 @Composable
-internal fun HaSettings(app: SordinaApp, ops: Ops, onAlarm: (String, String) -> Unit = { _, _ -> }, onRoutine: (String, String) -> Unit = { _, _ -> }, onChange: () -> Unit) {
+internal fun HaSettings(app: SordinaApp, ops: Ops, onAlarm: (String, String) -> Unit = { _, _ -> }, onRoutine: (String, String) -> Unit = { _, _ -> },
+                        onAllRoutines: () -> Unit = {}, onStates: () -> Unit = {}, onOrder: () -> Unit = {}, onChange: () -> Unit) {
     val prefs = app.prefs
     val ctx = LocalContext.current
     var on by remember { mutableStateOf(prefs.haEnabled) }
@@ -134,7 +141,8 @@ internal fun HaSettings(app: SordinaApp, ops: Ops, onAlarm: (String, String) -> 
             onConfirm = { AlarmCode.forgetAll(prefs); app.ha.setToken(""); prefs.haUrl = ""; prefs.haLocalUrl = ""; prefs.haStatusEntity = ""; prefs.haCalendar = ""; prefs.haCalendarName = ""; connected = false; open = false; ask = false; changed() },
             onDismiss = { ask = false })
         AlarmCodes(app, onAlarm)
-        RoutinePicks(app, onRoutine)
+        RoutinePicks(app, onRoutine, onAllRoutines)
+        CarStates(app, onStates, onOrder)
         return
     }
 
@@ -302,7 +310,7 @@ internal fun HaAlarmPage(app: SordinaApp, id: String, name: String, onGone: () -
         }
         return
     }
-    fun update(a: app.sordina.data.SavedAlarm) { prefs.haAlarms = prefs.haAlarms + (id to a); saved = prefs.haAlarms[id] }
+    fun update(a: SavedAlarm) { prefs.haAlarms = prefs.haAlarms + (id to a); saved = prefs.haAlarms[id] }
     val modes = e?.armModes?.takeIf { it.isNotEmpty() } ?: listOfNotNull(s.mode)
     Spacer(Modifier.height(8.dp))
     Group {
@@ -330,32 +338,155 @@ internal fun HaAlarmPage(app: SordinaApp, id: String, name: String, onGone: () -
 }
 
 /**
- * Le routine di Home Assistant (scene e script): ti mostro quelle che vedo; ognuna ha la sua pagina ([HaRoutinePage]).
+ * Le routine di Home Assistant (scene e script): qui solo quelle che hai acceso, ognuna con la sua pagina
+ * ([HaRoutinePage]). Tutte le altre, che possono essere decine, in [HaRoutinesPage], con la ricerca.
  */
 @Composable
-private fun RoutinePicks(app: SordinaApp, onRoutine: (String, String) -> Unit) {
+private fun RoutinePicks(app: SordinaApp, onRoutine: (String, String) -> Unit, onAll: () -> Unit) {
     val prefs = app.prefs
     Topic(tr(R.string.routine_topic), tr(R.string.routine_topic_hint))
     var found by remember { mutableStateOf<List<HaEntity>?>(null) }
     LaunchedEffect(Unit) { found = withContext(Dispatchers.IO) { runCatching { app.ha.routines() }.getOrDefault(emptyList()) } }
     val list = found ?: return
-    val enabled = prefs.haRoutines
-    // Anche quelle salvate che adesso Home Assistant non elenca: si possono spegnere
-    val ids = (list.sortedBy { it.name.lowercase() }.map { it.id } + enabled.keys).distinct()
+    val on = prefs.haRoutines.filter { it.value.on }.entries.sortedBy { it.value.name.lowercase() }
     Group {
-        if (ids.isEmpty()) Line(tr(R.string.routine_none), icon = Icons.Rounded.PlayArrow)
-        ids.forEach { id ->
-            val name = list.firstOrNull { it.id == id }?.name ?: enabled[id]?.name ?: id
-            val r = enabled[id]?.takeIf { it.on }
-            val value = when { r == null -> tr(R.string.routine_value_off); r.auth || r.alarm != null -> tr(R.string.routine_auth); else -> tr(R.string.routine_free) }
-            // Sotto: l'allarme legato e le tue frasi ("e disattiva Centrale · «sto entrando»")
-            val hint = listOfNotNull(
-                r?.alarm?.let { a -> prefs.haAlarms[a]?.name }?.let { tr(if (r.arm) R.string.routine_hint_arm else R.string.routine_hint_alarm, it) },
-                r?.phrases?.takeIf { it.isNotEmpty() }?.joinToString(", ") { "«$it»" },
-            ).joinToString(" · ").ifEmpty { null }
-            Line(name, value, hint, if (r != null) Icons.Rounded.PlayArrow else null) { onRoutine(id, name) }
+        if (on.isEmpty()) Line(tr(R.string.routine_none_on), icon = Icons.Rounded.PlayArrow)
+        on.forEach { (id, r) -> RoutineLine(app, id, list.firstOrNull { it.id == id }?.name ?: r.name, onRoutine) }
+        // Accanto, quante se ne possono ancora aggiungere
+        val more = list.count { prefs.haRoutines[it.id]?.on != true }
+        if (list.isNotEmpty() || on.isNotEmpty()) Line(tr(R.string.routine_add), more.takeIf { it > 0 }?.toString().orEmpty(), icon = Icons.Rounded.Add) { onAll() }
+        else Line(tr(R.string.routine_none), icon = Icons.Rounded.PlayArrow)
+    }
+}
+
+/** Una riga di routine: il nome, se va da sola o con l'impronta, e sotto l'allarme legato e le tue frasi */
+@Composable
+private fun RoutineLine(app: SordinaApp, id: String, name: String, onRoutine: (String, String) -> Unit) {
+    val prefs = app.prefs
+    val r = prefs.haRoutines[id]?.takeIf { it.on }
+    val value = when { r == null -> tr(R.string.routine_value_off); r.auth || r.alarm != null -> tr(R.string.routine_auth); else -> tr(R.string.routine_free) }
+    val hint = listOfNotNull(
+        r?.alarm?.let { a -> prefs.haAlarms[a]?.name }?.let { tr(if (r.arm) R.string.routine_hint_arm else R.string.routine_hint_alarm, it) },
+        r?.phrases?.takeIf { it.isNotEmpty() }?.joinToString(", ") { "«$it»" },
+    ).joinToString(" · ").ifEmpty { null }
+    Line(name, value, hint, if (r != null) Icons.Rounded.PlayArrow else null) { onRoutine(id, name) }
+}
+
+/**
+ * I nomi dei riquadri in auto: uno per riga, vuoto vuol dire il nome di Home Assistant. Si salva mentre scrivi,
+ * senza ricostruire la pagina (si perderebbe il campo).
+ */
+@Composable
+internal fun CarTileNames(app: SordinaApp) {
+    val prefs = app.prefs
+    val tiles = remember { carTiles(app, own = false) }
+    var names by remember { mutableStateOf(prefs.carNames) }
+    Topic(tr(R.string.hs_names), tr(R.string.hs_names_hint))
+    Group {
+        tiles.forEach { (id, original) ->
+            // Il nome che l'auto userebbe da sola: per gli allarmi quello corto ("Centrale Naboo" → "Naboo")
+            val default = if (id.startsWith("alarm_control_panel.")) CarTiles.shortName(original) ?: original else original
+            InputRow(Icons.Rounded.Edit, original, names[id].orEmpty(), default, KeyboardType.Text, { v ->
+                names = names + (id to v)
+                prefs.carNames = names
+            })
         }
     }
+    Spacer(Modifier.height(26.dp))
+}
+
+/** Il campo per cercare in una lista lunga, nella sua scheda */
+@Composable
+private fun SearchBox(q: String, onChange: (String) -> Unit) {
+    Spacer(Modifier.height(8.dp))
+    Group { Column(Modifier.background(S.c.card).padding(horizontal = 16.dp, vertical = 6.dp)) { Field(q, onChange, tr(R.string.ha_search)) } }
+}
+
+/** Le routine di casa da aggiungere, con la ricerca */
+@Composable
+internal fun HaRoutinesPage(app: SordinaApp, onRoutine: (String, String) -> Unit) {
+    var found by remember { mutableStateOf<List<HaEntity>?>(null) }
+    LaunchedEffect(Unit) { found = withContext(Dispatchers.IO) { runCatching { app.ha.routines() }.getOrDefault(emptyList()) } }
+    var q by remember { mutableStateOf("") }
+    SearchBox(q) { q = it }
+    val list = found ?: return
+    val enabled = app.prefs.haRoutines
+    val n = Search.normalize(q)
+    // Solo quelle da aggiungere: le accese sono già nella pagina di Home Assistant, e si spengono da lì
+    val ids = list.filter { enabled[it.id]?.on != true }.sortedBy { it.name.lowercase() }.map { it.id to it.name }
+        .filter { (id, name) -> n.isEmpty() || n in Search.normalize(name) || n in id }
+    Spacer(Modifier.height(8.dp))
+    Group {
+        if (ids.isEmpty()) Line(tr(R.string.routine_none), icon = Icons.Rounded.PlayArrow)
+        ids.forEach { (id, name) -> RoutineLine(app, id, name, onRoutine) }
+    }
+    Spacer(Modifier.height(26.dp))
+}
+
+/**
+ * In auto: gli stati di casa scelti, ognuno con la crocetta per toglierlo; sotto "Aggiungi uno stato" ([HaStatesPage])
+ * e l'ordine dei riquadri.
+ */
+@Composable
+private fun CarStates(app: SordinaApp, onStates: () -> Unit, onOrder: () -> Unit) {
+    val prefs = app.prefs
+    var chosen by remember { mutableStateOf(prefs.haCarStates) }
+    var found by remember { mutableStateOf<Map<String, HaEntity>>(emptyMap()) }
+    LaunchedEffect(Unit) { found = withContext(Dispatchers.IO) { runCatching { app.ha.entities() }.getOrDefault(emptyList()) }.associateBy { it.id } }
+    Topic(tr(R.string.hs_topic), tr(R.string.hs_topic_hint))
+    Group {
+        chosen.forEach { (id, name) ->
+            val e = found[id]
+            Line(e?.name ?: name, e?.let(HaStates::label).orEmpty(), icon = Icons.Rounded.DirectionsCar, trailing = {
+                RoundIcon(Icons.Rounded.Close, tr(R.string.hs_remove)) {
+                    chosen = chosen - id
+                    prefs.haCarStates = chosen
+                    prefs.carTileOrder = prefs.carTileOrder - id
+                }
+            })
+        }
+        if (chosen.size < HaStates.MAX) Line(tr(R.string.hs_add), icon = Icons.Rounded.Add) { onStates() }
+        // Ordine e nomi dei riquadri: appena ce n'è uno
+        if (carTiles(app).isNotEmpty()) Line(tr(R.string.hs_order), icon = Icons.Rounded.Tune) { onOrder() }
+    }
+}
+
+/** I riquadri di Casa in auto, nell'ordine in cui compaiono: entità → nome (quello scelto per l'auto, se c'è) */
+internal fun carTiles(app: SordinaApp, own: Boolean = true): List<Pair<String, String>> {
+    val p = app.prefs
+    val names = if (own) p.carNames else emptyMap()
+    val all = (p.haAlarms.filter { it.value.car }.map { it.key to it.value.name } +
+        p.haRoutines.filter { it.value.on && it.value.car }.map { it.key to it.value.name } +
+        p.haCarStates.map { it.key to it.value }).map { (id, n) -> id to (names[id] ?: n) }
+    val order = p.carTileOrder
+    return all.sortedBy { (id, _) -> order.indexOf(id).let { if (it < 0) Int.MAX_VALUE else it } }
+}
+
+/** Gli stati da aggiungere in auto: solo quelli non ancora scelti, con la ricerca. Un tocco lo aggiunge e torna indietro */
+@Composable
+internal fun HaStatesPage(app: SordinaApp, onAdded: () -> Unit) {
+    val prefs = app.prefs
+    var found by remember { mutableStateOf<List<HaEntity>?>(null) }
+    LaunchedEffect(Unit) { found = withContext(Dispatchers.IO) { runCatching { app.ha.entities(force = true) }.getOrDefault(emptyList()) } }
+    var q by remember { mutableStateOf("") }
+    val chosen = prefs.haCarStates
+    Hint(tr(R.string.hs_page_sub, HaStates.MAX), Modifier.padding(start = 12.dp, top = 8.dp))
+    SearchBox(q) { q = it }
+    val all = found ?: return
+    val n = Search.normalize(q)
+    fun hit(e: HaEntity) = n.isEmpty() || n in e.normalized || n in e.id || (e.area?.let { n in Search.normalize(it) } ?: false)
+    val others = all.filter { it.id !in chosen && HaStates.candidate(it) && hit(it) }.sortedBy { it.name.lowercase() }
+        .let { if (n.isEmpty()) it.take(80) else it }
+    Spacer(Modifier.height(8.dp))
+    Group {
+        others.forEach { e ->
+            Line(e.name, HaStates.label(e), e.area, Icons.Rounded.Add) {
+                if (prefs.haCarStates.size < HaStates.MAX) prefs.haCarStates = prefs.haCarStates + (e.id to e.name)
+                onAdded()
+            }
+        }
+    }
+    Spacer(Modifier.height(26.dp))
 }
 
 /**

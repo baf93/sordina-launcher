@@ -23,7 +23,9 @@ data class HaEntity(val id: String, val name: String, val state: String, val are
                     /** Per gli allarmi: "number", "text" o null (non chiede codice) */
                     val codeFormat: String? = null,
                     /** Per gli allarmi: le modalità che sa inserire (bit di Home Assistant) e se vuole il codice anche per inserire */
-                    val features: Int = 0, val codeArmRequired: Boolean = true) {
+                    val features: Int = 0, val codeArmRequired: Boolean = true,
+                    /** L'unità dei sensori ("°C", "%"), vuota per il resto */
+                    val unit: String = "") {
     /** Le modalità di inserimento che l'allarme supporta, nell'ordine in cui si propongono */
     val armModes: List<String> get() = ARM_MODES.filter { (_, bit) -> (features and bit) != 0 }.map { it.first }
     val domain: String get() = id.substringBefore('.')
@@ -201,7 +203,8 @@ class HomeAssistant(private val context: Context, private val prefs: Prefs) {
             out += HaEntity(id, name, o.optString("state"), attrs?.optString("area")?.takeIf { it.isNotBlank() },
                 attrs?.optString("device_class")?.takeIf { it.isNotBlank() },
                 attrs?.takeIf { !it.isNull("code_format") }?.optString("code_format")?.takeIf { it.isNotBlank() },
-                attrs?.optInt("supported_features", 0) ?: 0, attrs?.optBoolean("code_arm_required", true) ?: true)
+                attrs?.optInt("supported_features", 0) ?: 0, attrs?.optBoolean("code_arm_required", true) ?: true,
+                attrs?.optString("unit_of_measurement").orEmpty())
         }
         cache = out
         cacheAt = System.currentTimeMillis()

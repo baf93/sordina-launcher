@@ -126,7 +126,7 @@ private enum class Sub(val parent: String?) {
     MAIN(null),
     NOTIF("MAIN"), HOME("MAIN"), BRAKE("MAIN"), SEARCH("MAIN"), THEMES("MAIN"), GENERAL("MAIN"), PROGRESS("MAIN"),
     PEOPLE("NOTIF"), TODAY("NOTIF"), ALWAYS("NOTIF"), TRAY("NOTIF"), KINDS("NOTIF"), ORDER("NOTIF"), SECURITY("NOTIF"), CAR("HOME"),
-    BRAKED("BRAKE"), HIDDEN("BRAKE"), MASCOTS("HOME"), PINNED("SEARCH"), EXCLUDED("SEARCH"), HA("MAIN"), HA_ALARM("HA"), HA_ROUTINE("HA"), CAR_APPS("CAR"), CAR_PEOPLE("CAR"), PERMS("GENERAL"), CREDITS("GENERAL"), LANG("GENERAL"), FAULTS("GENERAL"), WHY("GENERAL"),
+    BRAKED("BRAKE"), HIDDEN("BRAKE"), MASCOTS("HOME"), PINNED("SEARCH"), EXCLUDED("SEARCH"), HA("MAIN"), HA_ALARM("HA"), HA_ROUTINE("HA"), HA_ROUTINES("HA"), HA_STATES("HA"), HA_ORDER("HA"), CAR_APPS("CAR"), CAR_PEOPLE("CAR"), PERMS("GENERAL"), CREDITS("GENERAL"), LANG("GENERAL"), FAULTS("GENERAL"), WHY("GENERAL"),
 }
 
 private fun hm(min: Int) = Moments.fmt(min)
@@ -585,7 +585,19 @@ fun SettingsScreen(
                 Sub.HA -> Page(tr(R.string.s_ha), null, back, scrollOf(page)) {
                     HaSettings(app, ops,
                         onAlarm = { id, n -> haItem = id; haName = n; sub = Sub.HA_ALARM },
-                        onRoutine = { id, n -> haItem = id; haName = n; sub = Sub.HA_ROUTINE }) { tick++ }
+                        onRoutine = { id, n -> haItem = id; haName = n; sub = Sub.HA_ROUTINE },
+                        onAllRoutines = { sub = Sub.HA_ROUTINES }, onStates = { sub = Sub.HA_STATES }, onOrder = { sub = Sub.HA_ORDER }) { tick++ }
+                }
+                Sub.HA_ROUTINES -> Page(tr(R.string.routine_all), null, back, scrollOf(page)) {
+                    HaRoutinesPage(app) { id, n -> haItem = id; haName = n; sub = Sub.HA_ROUTINE }
+                }
+                Sub.HA_STATES -> Page(tr(R.string.hs_add), null, back, scrollOf(page)) { HaStatesPage(app, onAdded = back) }
+                // I riquadri di Casa in auto: allarmi, routine e stati, nell'ordine che vuoi
+                Sub.HA_ORDER -> Page(tr(R.string.hs_order), tr(R.string.hs_order_sub), back, scrollOf(page)) {
+                    val tiles = carTiles(app)
+                    Spacer(Modifier.height(8.dp))
+                    if (tiles.size >= 2) DragList(tiles.map { it.second }) { o -> change { prefs.carTileOrder = o.map { tiles[it].first } } }
+                    CarTileNames(app)
                 }
                 Sub.HA_ALARM -> haItem?.let { id -> Page(haName, null, back, scrollOf(page)) { HaAlarmPage(app, id, haName, onGone = back) } }
                 Sub.HA_ROUTINE -> haItem?.let { id -> Page(haName, null, back, scrollOf(page)) { HaRoutinePage(app, id, haName) } }

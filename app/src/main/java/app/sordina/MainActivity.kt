@@ -92,6 +92,7 @@ import app.sordina.data.CardKind
 import app.sordina.data.CardOp
 import app.sordina.data.Upcoming
 import app.sordina.data.upcoming
+import app.sordina.data.MeetingApps
 import app.sordina.data.agenda
 import app.sordina.data.Level
 import app.sordina.data.Moment
@@ -753,7 +754,7 @@ class MainActivity : ComponentActivity(), Ops {
     override fun request(vararg permissions: String) { permLauncher.launch(arrayOf(*permissions)) }
     override fun exportSettings() { runCatching { exportLauncher.launch("sordina.json") } }
     override fun importSettings() { runCatching { importLauncher.launch(arrayOf("application/json", "text/plain", "*/*")) } }
-    override fun openUrl(url: String) { start(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+    override fun openUrl(url: String) { start(MeetingApps.view(this, url).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) || start(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
 
     /** Lo sfondo di Casa anche sulla schermata di blocco: disegnato a piena misura e dato ad Android. */
     override fun setLockWallpaper(paper: Int) {

@@ -414,6 +414,21 @@ class Prefs(context: Context) {
         }.getOrDefault(emptyMap())
         set(v) = put { putString("haRoutines", JSONObject().apply { v.forEach { (k, r) -> put(k, JSONObject().put("n", r.name).put("a", r.auth).put("al", r.alarm ?: "").put("f", org.json.JSONArray(r.phrases)).put("ar", r.arm).put("on", r.on).put("c", r.car)) } }.toString()) }
 
+    /** Gli stati di casa da vedere in auto, nella scheda Casa: entità → nome, nell'ordine in cui li hai scelti. Solo su questo telefono */
+    var haCarStates: Map<String, String>
+        get() = runCatching { JSONObject(str("haCarStates", "{}")).let { o -> o.keys().asSequence().associateWith { o.getString(it) } } }.getOrDefault(emptyMap())
+        set(v) = put { putString("haCarStates", JSONObject().apply { v.forEach { (k, n) -> put(k, n) } }.toString()) }
+
+    /** I nomi dei riquadri di Casa in auto scelti da te ("Casa" al posto di "Naboo stato casa"): entità → nome */
+    var carNames: Map<String, String>
+        get() = runCatching { JSONObject(str("carNames", "{}")).let { o -> o.keys().asSequence().associateWith { o.getString(it) } } }.getOrDefault(emptyMap())
+        set(v) = put { putString("carNames", JSONObject().apply { v.filterValues { it.isNotBlank() }.forEach { (k, n) -> put(k, n.trim()) } }.toString()) }
+
+    /** L'ordine dei riquadri di Casa in auto (allarmi, routine e stati insieme): le entità, nell'ordine scelto da te */
+    var carTileOrder: List<String>
+        get() = str("carTileOrder", "").split('\n').filter { it.isNotBlank() }
+        set(v) = put { putString("carTileOrder", v.joinToString("\n")) }
+
     /** I nomi delle entità di casa che aprono o disarmano (serrature, allarmi, garage, cancelli): vedi [HomeRisk]. Solo su questo telefono */
     var haGuarded: Set<String>
         get() = sp.getStringSet("haGuarded", emptySet())!!.toSet()
@@ -587,7 +602,8 @@ class Prefs(context: Context) {
         set(v) = put { putString("haCalendarName", v) }
     /** Il calendario di Sordina: gli impegni di Casa si aprono qui */
     var sordinaCalendar: Boolean
-        get() = sp.getBoolean("sordinaCalendar", false)
+        // Acceso da solo quando usi un calendario di Home Assistant (Android non lo vede): finché non lo spegni tu
+        get() = sp.getBoolean("sordinaCalendar", haCalendar.isNotBlank())
         set(v) = put { putBoolean("sordinaCalendar", v) }
     /** Promemoria di Sordina per gli impegni, 15 minuti prima: spenti finché non li accendi (spesso li fa già Home Assistant) */
     var calendarReminders: Boolean

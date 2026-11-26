@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -671,7 +672,8 @@ private fun Editor(app: SordinaApp, books: List<CalBook>, original: CalEvent?, i
         }
     }
 
-    Column(Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 16.dp)) {
+    // imePadding: con la tastiera aperta la pagina si accorcia e scorre, il campo che scrivi resta sopra la tastiera
+    Column(Modifier.fillMaxSize().systemBarsPadding().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 16.dp)) {
         Header(tr(if (original == null) R.string.cal_new else R.string.cal_edit), onClose)
 
         Group {
@@ -694,7 +696,7 @@ private fun Editor(app: SordinaApp, books: List<CalBook>, original: CalEvent?, i
             // Il calendario si sceglie solo per un impegno nuovo: spostarlo da un calendario all'altro non lo fa nessuno dei due
             if (original == null && creatable.size > 1) Pick(tr(R.string.cal_calendar), chosen?.name.orEmpty(), creatable.map { Option(it.name, if (it.home) tr(R.string.cal_home_hint) else null) }, { creatable[it].key == book }) { book = creatable[it].key }
             else Line(tr(R.string.cal_calendar), chosen?.name.orEmpty())
-            EditField(place, { place = it }, tr(R.string.cal_place))
+            PlaceField(place, { place = it }, tr(R.string.cal_place))
             EditField(notes, { notes = it }, tr(R.string.cal_notes), lines = 6)
         }
         if (chosen?.home == true && !app.diary.reachable) Text(tr(R.string.cal_offline_save), Modifier.padding(start = 12.dp, top = 10.dp), style = TextStyle(fontSize = 14.sp, color = c.soft))
